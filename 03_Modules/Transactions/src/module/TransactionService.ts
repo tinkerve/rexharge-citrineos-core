@@ -182,16 +182,17 @@ export class TransactionService {
   async validateOcpp16IdToken(
     idToken: string,
     startTransaction: boolean,
-  ): Promise<OCPP1_6_Mapper.IdTagInfoMapper> {
-    const idTagInfoMapper = new OCPP1_6_Mapper.IdTagInfoMapper(
-      OCPP1_6.AuthorizeResponseStatus.Invalid,
-    );
+  ): Promise<OCPP1_6.IdTagInfo> {
+
     try {
       // Find authorization
       const authorization = await this._authorizeRepository.readOnlyOneByQuerystring({
         idToken: idToken,
         type: null,
       });
+
+      const idTagInfo: OCPP1_6.IdTagInfo = OCPP1_6Mapper.fromModel(authorization);
+
       if (!authorization) {
         this._logger.error(`Found no authorization for idToken: ${idToken}`);
         return idTagInfoMapper;
@@ -225,10 +226,7 @@ export class TransactionService {
 
       // Accept the idToken
       idTagInfoMapper.status = OCPP1_6.AuthorizeResponseStatus.Accepted;
-      idTagInfoMapper.expiryDate = idTokenInfo.cacheExpiryDateTime;
-      idTagInfoMapper.parentIdTag = idTokenInfo.groupIdToken
-        ? OCPP1_6_Mapper.IdTokenMapper.fromModel(idTokenInfo.groupIdToken)
-        : undefined;
+
       return idTagInfoMapper;
     } catch (e) {
       this._logger.error(
