@@ -1,8 +1,6 @@
 import {
   Boot,
   IBootRepository,
-  OCPP2_0_1_Mapper,
-  OCPP1_6_Mapper,
 } from '@citrineos/data';
 import {
   BOOT_STATUS,
@@ -18,6 +16,7 @@ import {
   SystemConfig,
 } from '@citrineos/base';
 import { ILogObj, Logger } from 'tslog';
+import {StatusInfoType} from "@citrineos/base/dist/ocpp/model/2.0.1/types/BootNotificationResponse";
 
 type Configuration = SystemConfig['modules']['configuration'];
 
@@ -42,7 +41,7 @@ export class BootNotificationService {
   }
 
   determineBootStatus(
-    bootConfig: OCPP2_0_1_Mapper.BootMapper | undefined,
+      bootConfig: Boot | undefined,
   ): OCPP2_0_1.RegistrationStatusEnumType {
     let bootStatus = bootConfig
       ? bootConfig.status
@@ -79,7 +78,7 @@ export class BootNotificationService {
         bootStatus = OCPP2_0_1.RegistrationStatusEnumType.Accepted;
       }
     }
-    return bootStatus;
+    return bootStatus as OCPP2_0_1.RegistrationStatusEnumType;
   }
 
   async createBootNotificationResponse(
@@ -87,20 +86,20 @@ export class BootNotificationService {
   ): Promise<OCPP2_0_1.BootNotificationResponse> {
     // Unknown chargers, chargers without a BootConfig, will use SystemConfig.unknownChargerStatus for status.
     const boot = await this._bootRepository.readByKey(stationId);
-    const mapper = boot
-      ? OCPP2_0_1_Mapper.BootMapper.fromModel(boot)
-      : undefined;
-    const bootStatus = this.determineBootStatus(mapper);
+    // const mapper = boot
+    //   ? OCPP2_0_1_Mapper.BootMapper.fromModel(boot)
+    //   : undefined;
+    const bootStatus = this.determineBootStatus(boot);
 
     // When any BootConfig field is not set, the corresponding field on the SystemConfig will be used.
     return {
       currentTime: new Date().toISOString(),
       status: bootStatus,
-      statusInfo: mapper?.statusInfo,
+      statusInfo: boot?.statusInfo as StatusInfoType,
       interval:
         bootStatus === OCPP2_0_1.RegistrationStatusEnumType.Accepted
-          ? mapper?.heartbeatInterval || this._config.heartbeatInterval
-          : mapper?.bootRetryInterval || this._config.bootRetryInterval,
+          ? boot?.heartbeatInterval || this._config.heartbeatInterval
+          : boot?.bootRetryInterval || this._config.bootRetryInterval,
     };
   }
 
@@ -255,7 +254,7 @@ export class BootNotificationService {
    */
 
   determineOcpp16BootStatus(
-    bootConfig: OCPP1_6_Mapper.BootMapper | undefined,
+      bootConfig: Boot | undefined,
   ): OCPP1_6.BootNotificationResponseStatus {
     let bootStatus = bootConfig
       ? bootConfig.status
@@ -287,23 +286,22 @@ export class BootNotificationService {
       }
     }
 
-    return bootStatus;
+    return bootStatus as OCPP1_6.BootNotificationResponseStatus;
   }
 
   async createOcpp16BootNotificationResponse(
     stationId: string,
   ): Promise<OCPP1_6.BootNotificationResponse> {
     const boot = await this._bootRepository.readByKey(stationId);
-    const mapper = boot ? OCPP1_6_Mapper.BootMapper.fromModel(boot) : undefined;
-    const status = this.determineOcpp16BootStatus(mapper);
+    const status = this.determineOcpp16BootStatus(boot);
 
     return {
       currentTime: new Date().toISOString(),
       status,
       interval:
         status === OCPP1_6.BootNotificationResponseStatus.Accepted
-          ? mapper?.heartbeatInterval || this._config.heartbeatInterval
-          : mapper?.bootRetryInterval || this._config.bootRetryInterval,
+          ? boot?.heartbeatInterval || this._config.heartbeatInterval
+          : boot?.bootRetryInterval || this._config.bootRetryInterval,
     };
   }
 
