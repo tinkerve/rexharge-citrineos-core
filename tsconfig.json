@@ -8,7 +8,8 @@
     "./dist/**/*",
     "**/node_modules/**",
     "DirectusExtensions", // todo for now
-    "Swarm" // todo for now
+    "Swarm", // todo for now
+    "migrations" // lack of sequelize support for ESM, have to build separately
   ],
   "references": [
     {

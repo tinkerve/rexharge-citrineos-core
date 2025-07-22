@@ -1,17 +1,9 @@
 {
-  "exclude": [
-    "**/*.test.ts",
-    "**/*.stub.ts",
-    "./node_modules",
-    "**/__tests__/*",
-    "./dist",
-    "./**/dist",
-    "./**/**/dist"
-  ],
+  "include": ["**/*.ts"],
   "compilerOptions": {
     "target": "esnext",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "commonjs",
+    "outDir": "../dist/migrations",
     "strict": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,

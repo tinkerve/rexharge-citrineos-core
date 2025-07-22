@@ -1,7 +1,7 @@
 process.env.APP_ENV = 'local'; // needs to be before systemConfig import - careful with prettier formatter!
 
 import { DefaultSequelizeInstance } from '@citrineos/data';
-import { getSystemConfig } from './Server/src/config';
+import { getSystemConfig } from './Server/src/config/index.js';
 import { loadBootstrapConfig } from '@citrineos/base';
 
 async function initializeDatabase() {
