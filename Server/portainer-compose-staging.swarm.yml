@@ -10,8 +10,7 @@ x-common-environment: &common-environment
 
 x-common-depends: &common-depends
   depends_on:
-    amqp-broker:
-      condition: service_healthy
+    - amqp-broker
 
 x-common-build: &common-build
   build:
