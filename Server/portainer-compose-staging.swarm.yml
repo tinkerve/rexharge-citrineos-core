@@ -62,8 +62,6 @@ services:
       - 8080:8080
       - 8081:8081
       - 8082:8082
-    expose:
-      - 8080-8082
     environment:
       APP_NAME: 'general'
       <<: *common-environment
@@ -73,8 +71,6 @@ services:
     <<: [*common-build, *common-depends]
     ports:
       - 8083:8083
-    expose:
-      - 8083
     environment:
       APP_NAME: 'certificates'
       <<: *common-environment
@@ -84,8 +80,6 @@ services:
     <<: [*common-build, *common-depends]
     ports:
       - 8084:8084
-    expose:
-      - 8084
     volumes:
       - ./:/usr/configuration
       - /usr/configuration/node_modules
@@ -98,8 +92,6 @@ services:
     <<: [*common-build, *common-depends]
     ports:
       - 8085:8085
-    expose:
-      - 8085
     volumes:
       - ./:/usr/evdriver
       - /usr/evdriver/node_modules
@@ -112,8 +104,6 @@ services:
     <<: [*common-build, *common-depends]
     ports:
       - 8086:8086
-    expose:
-      - 8086
     volumes:
       - ./:/usr/monitoring
       - /usr/monitoring/node_modules
@@ -126,8 +116,6 @@ services:
     <<: [*common-build, *common-depends]
     ports:
       - 8087:8087
-    expose:
-      - 8087
     volumes:
       - ./:/usr/reporting
       - /usr/reporting/node_modules
@@ -140,8 +128,6 @@ services:
     <<: [*common-build, *common-depends]
     ports:
       - 8088:8088
-    expose:
-      - 8088
     volumes:
       - ./:/usr/smartcharging
       - /usr/smartcharging/node_modules
@@ -154,8 +140,6 @@ services:
     <<: [*common-build, *common-depends]
     ports:
       - 8090:8090
-    expose:
-      - 8090
     volumes:
       - ./:/usr/tenant
       - /usr/tenant/node_modules
@@ -168,8 +152,6 @@ services:
     <<: [*common-build, *common-depends]
     ports:
       - 8089:8089
-    expose:
-      - 8089
     volumes:
       - ./:/usr/transactions
       - /usr/transactions/node_modules
