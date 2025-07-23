@@ -1,0 +1,185 @@
+x-common-environment: &common-environment
+  APP_ENV: 'docker'
+  BOOTSTRAP_CITRINEOS_DATABASE_HOST: 'ocpp-db'
+  BOOTSTRAP_CITRINEOS_CONFIG_FILENAME: 'config.json'
+  BOOTSTRAP_CITRINEOSFILE_FILE_ACCESS_TYPE: 'directus'
+  BOOTSTRAP_CITRINEOSFILE_FILE_ACCESS_DIRECTUS_HOST: 'directus'
+  BOOTSTRAP_CITRINEOSFILE_FILE_ACCESS_DIRECTUS_PORT: '8055'
+  BOOTSTRAP_CITRINEOSFILE_FILE_ACCESS_DIRECTUS_TOKEN: 'MY_DIRECTUS_STATIC_TOKEN'
+  BOOTSTRAP_CITRINEOSFILE_FILE_ACCESS_DIRECTUS_GENERATE_FLOWS: 'false'
+
+x-common-depends: &common-depends
+  depends_on:
+    amqp-broker:
+      condition: service_healthy
+
+x-common-build: &common-build
+  build:
+    context: ../
+    dockerfile: ./Server/deploy.Dockerfile
+
+services:
+  amqp-broker:
+    image: rabbitmq:3-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+    environment:
+      RABBITMQ_DEFAULT_USER: 'guest'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+    networks:
+      - rexharge_network
+    volumes:
+      - ./data/rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+  directus:
+    image: directus/directus:latest
+    ports:
+      - 8055:8055
+    volumes:
+      - ./data/directus/uploads:/directus/uploads
+      - ./data/directus/extensions:/directus/extensions
+    environment:
+      KEY: '1234567890'
+      SECRET: '0987654321'
+      ADMIN_EMAIL: 'admin@citrineos.com'
+      ADMIN_PASSWORD: 'CitrineOS!'
+      DB_CLIENT: 'pg'
+      DB_HOST: ocpp-db
+      DB_PORT: 5432
+      DB_DATABASE: 'citrine'
+      DB_USER: 'citrine'
+      DB_PASSWORD: 'citrine'
+      WEBSOCKETS_ENABLED: 'true'
+    networks:
+      - rexharge_network
+  citrine:
+    <<: [*common-build, *common-depends]
+    ports:
+      - 8080:8080
+      - 8081:8081
+      - 8082:8082
+    expose:
+      - 8080-8082
+    environment:
+      APP_NAME: 'general'
+      <<: *common-environment
+    networks:
+      - rexharge_network
+  certificates:
+    <<: [*common-build, *common-depends]
+    ports:
+      - 8083:8083
+    expose:
+      - 8083
+    environment:
+      APP_NAME: 'certificates'
+      <<: *common-environment
+    networks:
+      - rexharge_network
+  configuration:
+    <<: [*common-build, *common-depends]
+    ports:
+      - 8084:8084
+    expose:
+      - 8084
+    volumes:
+      - ./:/usr/configuration
+      - /usr/configuration/node_modules
+    environment:
+      APP_NAME: 'configuration'
+      <<: *common-environment
+    networks:
+      - rexharge_network
+  evdriver:
+    <<: [*common-build, *common-depends]
+    ports:
+      - 8085:8085
+    expose:
+      - 8085
+    volumes:
+      - ./:/usr/evdriver
+      - /usr/evdriver/node_modules
+    environment:
+      APP_NAME: 'evdriver'
+      <<: *common-environment
+    networks:
+      - rexharge_network
+  monitoring:
+    <<: [*common-build, *common-depends]
+    ports:
+      - 8086:8086
+    expose:
+      - 8086
+    volumes:
+      - ./:/usr/monitoring
+      - /usr/monitoring/node_modules
+    environment:
+      APP_NAME: 'monitoring'
+      <<: *common-environment
+    networks:
+      - rexharge_network
+  reporting:
+    <<: [*common-build, *common-depends]
+    ports:
+      - 8087:8087
+    expose:
+      - 8087
+    volumes:
+      - ./:/usr/reporting
+      - /usr/reporting/node_modules
+    environment:
+      APP_NAME: 'reporting'
+      <<: *common-environment
+    networks:
+      - rexharge_network
+  smartcharging:
+    <<: [*common-build, *common-depends]
+    ports:
+      - 8088:8088
+    expose:
+      - 8088
+    volumes:
+      - ./:/usr/smartcharging
+      - /usr/smartcharging/node_modules
+    environment:
+      APP_NAME: 'smartcharging'
+      <<: *common-environment
+    networks:
+      - rexharge_network
+  tenant:
+    <<: [*common-build, *common-depends]
+    ports:
+      - 8090:8090
+    expose:
+      - 8090
+    volumes:
+      - ./:/usr/tenant
+      - /usr/tenant/node_modules
+    environment:
+      APP_NAME: 'tenant'
+      <<: *common-environment
+    networks:
+      - rexharge_network
+  transactions:
+    <<: [*common-build, *common-depends]
+    ports:
+      - 8089:8089
+    expose:
+      - 8089
+    volumes:
+      - ./:/usr/transactions
+      - /usr/transactions/node_modules
+    environment:
+      APP_NAME: 'transactions'
+      <<: *common-environment
+    networks:
+      - rexharge_network
+
+networks:
+  rexharge_network:
+    external: true
