@@ -12,10 +12,8 @@ x-common-depends: &common-depends
   depends_on:
     - amqp-broker
 
-x-common-build: &common-build
-  build:
-    context: ../
-    dockerfile: ./Server/deploy.Dockerfile
+x-common-image: &common-image
+  image: ghcr.io/citrineos/citrineos-server:v1.7.1
 
 services:
   amqp-broker:
@@ -57,7 +55,7 @@ services:
     networks:
       - rexharge_network
   citrine:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     ports:
       - 8080:8080
       - 8081:8081
@@ -68,7 +66,7 @@ services:
     networks:
       - rexharge_network
   certificates:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     ports:
       - 8083:8083
     environment:
@@ -77,7 +75,7 @@ services:
     networks:
       - rexharge_network
   configuration:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     ports:
       - 8084:8084
     volumes:
@@ -89,7 +87,7 @@ services:
     networks:
       - rexharge_network
   evdriver:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     ports:
       - 8085:8085
     volumes:
@@ -101,7 +99,7 @@ services:
     networks:
       - rexharge_network
   monitoring:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     ports:
       - 8086:8086
     volumes:
@@ -113,7 +111,7 @@ services:
     networks:
       - rexharge_network
   reporting:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     ports:
       - 8087:8087
     volumes:
@@ -125,7 +123,7 @@ services:
     networks:
       - rexharge_network
   smartcharging:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     ports:
       - 8088:8088
     volumes:
@@ -137,7 +135,7 @@ services:
     networks:
       - rexharge_network
   tenant:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     ports:
       - 8090:8090
     volumes:
@@ -149,7 +147,7 @@ services:
     networks:
       - rexharge_network
   transactions:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     ports:
       - 8089:8089
     volumes:
