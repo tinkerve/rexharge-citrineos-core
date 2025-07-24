@@ -91,6 +91,7 @@ export class DefaultSequelizeInstance {
       try {
         await this.instance!.authenticate();
         this.logger.info('Database connection has been established successfully');
+        this.config.database.sync = true;
         await this.syncDb();
 
         break;
