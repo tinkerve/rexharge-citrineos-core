@@ -14,6 +14,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
+    networks:
+      - citrineos-network
 
   # ocpp-db:
   #   image: postgis/postgis:16-3.5
@@ -112,6 +114,7 @@ services:
       - 8092:8092
     networks:
       - rexharge-network
+      - citrineos-network
 
   minio:
     image: minio/minio
@@ -183,5 +186,8 @@ services:
       - rexharge-network
 
 networks:
+  citrineos-network:
+    name: citrineos-network
+    driver: bridge
   rexharge-network:
     external: true
