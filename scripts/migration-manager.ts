@@ -276,6 +276,110 @@ class MigrationManager {
   }
 
   /**
+   * Extract migration logic from a migration file content
+   */
+  private extractMigrationLogic(content: string): { up: string; down: string; imports: string[] } {
+    const imports: string[] = [];
+    let upLogic = '';
+    let downLogic = '';
+
+    // Extract import statements (handle various import formats)
+    const importRegex = /^import\s+.*?from\s+['"][^'"]*['"];?\s*$/gm;
+    const importMatches = content.match(importRegex);
+    if (importMatches) {
+      imports.push(...importMatches.filter(imp => 
+        // Exclude imports that are already included in the main template
+        !imp.includes("'sequelize'") && 
+        !imp.includes('"sequelize"') &&
+        !imp.includes("'sequelize-cli'") &&
+        !imp.includes('"sequelize-cli"')
+      ));
+    }
+
+    // Extract constant declarations and other top-level code that migrations might need
+    const constRegex = /^const\s+[A-Z_][A-Z0-9_]*\s*=.*?;$/gm;
+    const constMatches = content.match(constRegex);
+    if (constMatches) {
+      imports.push(...constMatches);
+    }
+
+    // Extract up method logic with better pattern matching
+    const upMethodRegex = /up:\s*async\s*\([^)]*\)\s*=>\s*{([\s\S]*?)},?\s*(?=down:|$)/;
+    const upMatch = content.match(upMethodRegex);
+    if (upMatch) {
+      let extracted = upMatch[1].trim();
+      
+      // Clean up the extracted logic - remove outer transaction handling
+      // but keep inner transaction usage
+      extracted = this.cleanMigrationLogic(extracted);
+      upLogic = extracted;
+    }
+
+    // Extract down method logic with better pattern matching  
+    const downMethodRegex = /down:\s*async\s*\([^)]*\)\s*=>\s*{([\s\S]*?)}\s*(?:,\s*)?};?/;
+    const downMatch = content.match(downMethodRegex);
+    if (downMatch) {
+      let extracted = downMatch[1].trim();
+      
+      // Clean up the extracted logic
+      extracted = this.cleanMigrationLogic(extracted);
+      downLogic = extracted;
+    }
+
+    return { up: upLogic, down: downLogic, imports };
+  }
+
+  /**
+   * Clean migration logic by removing outer transaction handling
+   * but preserving the actual migration operations
+   */
+  private cleanMigrationLogic(logic: string): string {
+    // Remove outer try-catch blocks that handle transactions
+    let cleaned = logic.replace(/^\s*try\s*{\s*([\s\S]*?)\s*}\s*catch\s*\([^)]*\)\s*{[\s\S]*?}\s*$/g, '$1');
+    
+    // Remove transaction creation/commit/rollback at the method level
+    cleaned = cleaned.replace(/^\s*const\s+transaction\s*=\s*await\s+queryInterface\.sequelize\.transaction\(\);\s*$/gm, '');
+    cleaned = cleaned.replace(/^\s*await\s+transaction\.(commit|rollback)\(\);\s*$/gm, '');
+    
+    // More precise transaction parameter handling
+    // Handle queryInterface method calls
+    cleaned = cleaned.replace(
+      /(queryInterface\.(?:createTable|dropTable|addColumn|removeColumn|addIndex|removeIndex|bulkInsert|bulkDelete|bulkUpdate))\s*\(\s*([^)]+)\s*\)/g,
+      (match, method, params) => {
+        // Check if transaction is already included
+        if (match.includes('transaction')) {
+          return match;
+        }
+        // Add transaction parameter at the end
+        return `${method}(${params}, { transaction })`;
+      }
+    );
+
+    // Handle sequelize.query calls more carefully
+    cleaned = cleaned.replace(
+      /(queryInterface\.sequelize\.query)\s*\(\s*([^,)]+)(?:,\s*([^)]*))?\s*\)/g,
+      (match, method, query, options) => {
+        if (match.includes('transaction')) {
+          return match;
+        }
+        if (options) {
+          // Merge transaction into existing options
+          if (options.trim() === '') {
+            return `${method}(${query}, { transaction })`;
+          } else {
+            // Parse and merge options - simplified approach
+            return `${method}(${query}, { ...${options}, transaction })`;
+          }
+        } else {
+          return `${method}(${query}, { transaction })`;
+        }
+      }
+    );
+
+    return cleaned.trim();
+  }
+
+  /**
    * Generate consolidated migration for custom selection
    */
   private generateCustomConsolidatedMigration(
@@ -292,9 +396,48 @@ class MigrationManager {
         ? `${migrationTimestamps[0]} to ${migrationTimestamps[migrationTimestamps.length - 1]}`
         : migrationTimestamps[0];
 
+    // Extract logic from all selected migrations
+    const allImports = new Set<string>();
+    const upLogicParts: string[] = [];
+    const downLogicParts: string[] = [];
+
+    for (const migration of migrations) {
+      const { up, down, imports } = this.extractMigrationLogic(migration.content);
+      
+      // Collect unique imports (deduplicate by content)
+      imports.forEach(imp => {
+        const cleanedImport = imp.trim();
+        if (cleanedImport && !Array.from(allImports).some(existingImport => 
+          existingImport.trim() === cleanedImport)) {
+          allImports.add(cleanedImport);
+        }
+      });
+      
+      if (up.trim()) {
+        upLogicParts.push(`      // From ${migration.filename}\n      ${up.replace(/\n/g, '\n      ')}`);
+      }
+      
+      if (down.trim()) {
+        downLogicParts.push(`      // From ${migration.filename}\n      ${down.replace(/\n/g, '\n      ')}`);
+      }
+    }
+
+    // Reverse the downLogicParts for proper rollback order
+    downLogicParts.reverse();
+
+    const consolidatedImports = Array.from(allImports).join('\n');
+    const consolidatedUpLogic = upLogicParts.length > 0 
+      ? upLogicParts.join('\n\n') 
+      : '      // No migration logic found in selected files\n      console.log(\'No operations to perform\');';
+    
+    const consolidatedDownLogic = downLogicParts.length > 0 
+      ? downLogicParts.join('\n\n') 
+      : '      // No rollback logic found in selected files\n      console.log(\'No rollback operations to perform\');';
+
     return `'use strict';
 
 import { QueryInterface } from 'sequelize';
+${consolidatedImports}
 
 /**
  * CitrineOS Custom Migration Batch: ${batchName}
@@ -316,12 +459,7 @@ export = {
       console.log('Description: ${description}');
       console.log('Migrations included: ${migrations.length}');
 
-      // TODO: Implement consolidated migration logic for selected migrations
-      // Extract and combine the 'up' logic from the following files:
-${migrations.map((m) => `      // - ${m.filename}`).join('\n')}
-      
-      // IMPORTANT: Implement the actual migration logic here
-      // This is a template - you must add the actual database operations
+${consolidatedUpLogic}
       
       await transaction.commit();
       console.log('Custom migration batch ${batchName} completed successfully!');
@@ -339,16 +477,7 @@ ${migrations.map((m) => `      // - ${m.filename}`).join('\n')}
     try {
       console.log('Rolling back custom migration batch: ${batchName}...');
 
-      // TODO: Implement rollback logic for selected migrations (in reverse order)
-      // Extract and combine the 'down' logic from the following files (in reverse):
-${migrations
-  .slice()
-  .reverse()
-  .map((m) => `      // - ${m.filename}`)
-  .join('\n')}
-      
-      // IMPORTANT: Implement the actual rollback logic here
-      // This is a template - you must add the actual database operations
+${consolidatedDownLogic}
 
       await transaction.commit();
       console.log('Custom migration batch ${batchName} rollback completed!');
@@ -365,9 +494,48 @@ ${migrations
   private generateConsolidatedMigration(version: string, migrations: MigrationInfo[]): string {
     const migrationList = migrations.map((m) => `// - ${m.filename}`).join('\n');
 
+    // Extract logic from all migrations for this version
+    const allImports = new Set<string>();
+    const upLogicParts: string[] = [];
+    const downLogicParts: string[] = [];
+
+    for (const migration of migrations) {
+      const { up, down, imports } = this.extractMigrationLogic(migration.content);
+      
+      // Collect unique imports (deduplicate by content)
+      imports.forEach(imp => {
+        const cleanedImport = imp.trim();
+        if (cleanedImport && !Array.from(allImports).some(existingImport => 
+          existingImport.trim() === cleanedImport)) {
+          allImports.add(cleanedImport);
+        }
+      });
+      
+      if (up.trim()) {
+        upLogicParts.push(`      // From ${migration.filename}\n      ${up.replace(/\n/g, '\n      ')}`);
+      }
+      
+      if (down.trim()) {
+        downLogicParts.push(`      // From ${migration.filename}\n      ${down.replace(/\n/g, '\n      ')}`);
+      }
+    }
+
+    // Reverse the downLogicParts for proper rollback order
+    downLogicParts.reverse();
+
+    const consolidatedImports = Array.from(allImports).join('\n');
+    const consolidatedUpLogic = upLogicParts.length > 0 
+      ? upLogicParts.join('\n\n') 
+      : '      // No migration logic found in files\n      console.log(\'No operations to perform\');';
+    
+    const consolidatedDownLogic = downLogicParts.length > 0 
+      ? downLogicParts.join('\n\n') 
+      : '      // No rollback logic found in files\n      console.log(\'No rollback operations to perform\');';
+
     return `'use strict';
 
 import { QueryInterface } from 'sequelize';
+${consolidatedImports}
 
 /**
  * CitrineOS ${version} Consolidated Migration
@@ -383,8 +551,7 @@ export = {
     try {
       console.log('Starting CitrineOS ${version} consolidated migration...');
 
-      // TODO: Implement consolidated migration logic
-      // Combine all individual migration 'up' logic here
+${consolidatedUpLogic}
       
       await transaction.commit();
       console.log('CitrineOS ${version} consolidated migration completed successfully!');
@@ -402,8 +569,7 @@ export = {
     try {
       console.log('Rolling back CitrineOS ${version} consolidated migration...');
 
-      // TODO: Implement consolidated rollback logic
-      // Combine all individual migration 'down' logic here (in reverse order)
+${consolidatedDownLogic}
 
       await transaction.commit();
       console.log('CitrineOS ${version} consolidated migration rollback completed!');
