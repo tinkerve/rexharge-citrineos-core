@@ -76,7 +76,7 @@ services:
       retries: 20
       start_period: 5s
     networks:
-      - rexharge-network
+      - rexharge_network
   # citrine:
   #   <<: [*common-image, *common-depends]
   #   ports:
