@@ -52,8 +52,6 @@ services:
     image: hasura/graphql-engine:v2.40.3.cli-migrations-v3
     volumes:
       - ./hasura-metadata:/hasura-metadata
-    ports:
-      - 8090:8080
     deploy:
       labels:
         - traefik.enable=true
