@@ -68,6 +68,7 @@ services:
       <<: *common-environment
     networks:
       - rexharge_network
+      - traefik_proxy
   graphql-engine:
     image: hasura/graphql-engine:v2.40.3.cli-migrations-v3
     volumes:
