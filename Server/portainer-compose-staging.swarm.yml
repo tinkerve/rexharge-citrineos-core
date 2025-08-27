@@ -17,9 +17,13 @@ x-common-image: &common-image
 services:
   amqp-broker:
     image: rabbitmq:3-management
-    ports:
-      - 15672:15672
-      - 5672:5672
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.rexharge-gateway.entrypoints=websecure
+        - traefik.http.routers.rexharge-gateway.rule=Host(`citrine-rabbitmq-ui.app.rexharge.net`)
+        - traefik.http.routers.rexharge-gateway.tls.certresolver=leresolver
+        - traefik.http.services.rexharge-gateway.loadbalancer.server.port=15672
     environment:
       RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_DEFAULT_PASS}
@@ -56,7 +60,7 @@ services:
       labels:
         - traefik.enable=true
         - traefik.http.routers.rexharge-gateway.entrypoints=websecure
-        - traefik.http.routers.rexharge-gateway.rule=Host(`citrine.hasura.rexharge.net`)
+        - traefik.http.routers.rexharge-gateway.rule=Host(`citrine-hasura.app.rexharge.net`)
         - traefik.http.routers.rexharge-gateway.tls.certresolver=leresolver
         - traefik.http.services.rexharge-gateway.loadbalancer.server.port=8080
     restart: unless-stopped
