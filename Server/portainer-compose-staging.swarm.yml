@@ -54,7 +54,14 @@ services:
       - ./hasura-metadata:/hasura-metadata
     ports:
       - 8090:8080
-    restart: always
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.rexharge-gateway.entrypoints=websecure
+        - traefik.http.routers.rexharge-gateway.rule=Host(`citrine.hasura.rexharge.net`)
+        - traefik.http.routers.rexharge-gateway.tls.certresolver=leresolver
+        - traefik.http.services.rexharge-gateway.loadbalancer.server.port=8080
+    restart: unless-stopped
     environment:
       ## postgres database to store Hasura metadata
       HASURA_GRAPHQL_DATABASE_URL: ${DOCKER_HASURA_GRAPHQL_DATABASE_URL}
@@ -77,6 +84,7 @@ services:
       start_period: 5s
     networks:
       - rexharge_network
+      - traefik_proxy
   # citrine:
   #   <<: [*common-image, *common-depends]
   #   ports:
@@ -184,4 +192,6 @@ services:
 
 networks:
   rexharge_network:
+    external: true
+  traefik_proxy:
     external: true
