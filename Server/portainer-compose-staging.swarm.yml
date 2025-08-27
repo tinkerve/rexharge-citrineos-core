@@ -6,6 +6,7 @@ x-common-environment: &common-environment
   BOOTSTRAP_CITRINEOS_CONFIG_FILENAME: 'config.json'
   BOOTSTRAP_CITRINEOS_FILE_ACCESS_TYPE: 'local'
   BOOTSTRAP_CITRINEOS_FILE_ACCESS_LOCAL_DEFAULT_FILE_PATH: '/data'
+  CITRINEOS_util_messageBroker_amqp_url: ${DOCKER_RABBITMQ_URL}
 
 x-common-depends: &common-depends
   depends_on:
@@ -20,10 +21,10 @@ services:
     deploy:
       labels:
         - traefik.enable=true
-        - traefik.http.routers.rexharge-gateway.entrypoints=websecure
-        - traefik.http.routers.rexharge-gateway.rule=Host(`citrine-rabbitmq-ui.app.rexharge.net`)
-        - traefik.http.routers.rexharge-gateway.tls.certresolver=leresolver
-        - traefik.http.services.rexharge-gateway.loadbalancer.server.port=15672
+        - traefik.http.routers.citrine-rabbitmq.entrypoints=websecure
+        - traefik.http.routers.citrine-rabbitmq.rule=Host(`citrine-rabbitmq-ui.app.rexharge.net`)
+        - traefik.http.routers.citrine-rabbitmq.tls.certresolver=leresolver
+        - traefik.http.services.citrine-rabbitmq.loadbalancer.server.port=15672
     environment:
       RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_DEFAULT_PASS}
@@ -39,15 +40,29 @@ services:
       retries: 3
   citrine:
     <<: [*common-image, *common-depends]
-    ports:
-      - 8080:8080
-      - 8081:8081
-      - 8082:8082
-      - 8085:8085
-      - 8443:8443
-      - 8444:8444
-      - 9229:9229
-      - 8092:8092
+    # ports:
+    #   - 8080:8080
+    #   - 8081:8081
+    #   - 8082:8082
+    #   - 8085:8085
+    #   - 8443:8443
+    #   - 8444:8444
+    #   - 9229:9229
+    #   - 8092:8092
+    deploy:
+      labels:
+        # HTTP API Swagger UI
+        - traefik.enable=true
+        - traefik.http.routers.citrine-core.entrypoints=websecure
+        - traefik.http.routers.citrine-core.rule=Host(`citrine-core.app.rexharge.net`)
+        - traefik.http.routers.citrine-core.tls.certresolver=leresolver
+        - traefik.http.services.citrine-core.loadbalancer.server.port=8080
+        # OCPP WebSocket(With Basic HTTP Auth)
+        - traefik.http.routers.citrine-ocpp-ws.entrypoints=websecure
+        - traefik.http.routers.citrine-ocpp-ws.rule=Host(`citrine-ocpp.app.rexharge.net`)
+        - traefik.http.routers.citrine-ocpp-ws.tls.certresolver=leresolver
+        - traefik.http.services.citrine-ocpp-ws.loadbalancer.server.port=8082
+
     environment:
       APP_NAME: 'all'
       <<: *common-environment
@@ -60,10 +75,10 @@ services:
     deploy:
       labels:
         - traefik.enable=true
-        - traefik.http.routers.rexharge-gateway.entrypoints=websecure
-        - traefik.http.routers.rexharge-gateway.rule=Host(`citrine-hasura.app.rexharge.net`)
-        - traefik.http.routers.rexharge-gateway.tls.certresolver=leresolver
-        - traefik.http.services.rexharge-gateway.loadbalancer.server.port=8080
+        - traefik.http.routers.citrine-hasura.entrypoints=websecure
+        - traefik.http.routers.citrine-hasura.rule=Host(`citrine-hasura.app.rexharge.net`)
+        - traefik.http.routers.citrine-hasura.tls.certresolver=leresolver
+        - traefik.http.services.citrine-hasura.loadbalancer.server.port=8080
     restart: unless-stopped
     environment:
       ## postgres database to store Hasura metadata
