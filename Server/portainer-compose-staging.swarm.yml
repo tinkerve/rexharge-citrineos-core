@@ -30,7 +30,7 @@ services:
     networks:
       - rexharge_network
     volumes:
-      - ./data/rabbitmq:/var/lib/rabbitmq
+      - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 10s
@@ -197,3 +197,7 @@ networks:
     external: true
   traefik_proxy:
     external: true
+
+volumes:
+  rabbitmq_data:
+    driver: local
