@@ -29,6 +29,7 @@ services:
       RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_DEFAULT_PASS}
     networks:
       - rexharge_network
+      - traefik_proxy
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
