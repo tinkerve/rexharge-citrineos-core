@@ -53,11 +53,13 @@ services:
       labels:
         # HTTP API Swagger UI
         - traefik.enable=true
+        - traefik.http.routers.citrine-core.service=citrine-core
         - traefik.http.routers.citrine-core.entrypoints=websecure
         - traefik.http.routers.citrine-core.rule=Host(`citrine-core.app.rexharge.net`)
         - traefik.http.routers.citrine-core.tls.certresolver=leresolver
         - traefik.http.services.citrine-core.loadbalancer.server.port=8080
         # OCPP WebSocket(With Basic HTTP Auth)
+        - traefik.http.routers.citrine-ocpp-ws.service=citrine-ocpp-ws
         - traefik.http.routers.citrine-ocpp-ws.entrypoints=websecure
         - traefik.http.routers.citrine-ocpp-ws.rule=Host(`citrine-ocpp.app.rexharge.net`)
         - traefik.http.routers.citrine-ocpp-ws.tls.certresolver=leresolver
