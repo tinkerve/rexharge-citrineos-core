@@ -13,7 +13,7 @@ x-common-depends: &common-depends
     - amqp-broker
 
 x-common-image: &common-image
-  image: ghcr.io/citrineos/citrineos-server:v1.7.1
+  image: ghcr.io/citrineos/citrineos-server:v1.7.2
 
 services:
   amqp-broker:
@@ -61,9 +61,9 @@ services:
         # OCPP WebSocket(With Basic HTTP Auth)
         - traefik.http.routers.citrine-ocpp-ws.service=citrine-ocpp-ws
         - traefik.http.routers.citrine-ocpp-ws.entrypoints=websecure
-        - traefik.http.routers.citrine-ocpp-ws.rule=Host(`citrine-ocpp.app.rexharge.net`)
+        - traefik.http.routers.citrine-ocpp-ws.rule=Host(`citrine-ws.app.rexharge.net`)
         - traefik.http.routers.citrine-ocpp-ws.tls.certresolver=leresolver
-        - traefik.http.services.citrine-ocpp-ws.loadbalancer.server.port=8082
+        - traefik.http.services.citrine-ocpp-ws.loadbalancer.server.port=8081
 
     environment:
       APP_NAME: 'all'
