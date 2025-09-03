@@ -12,8 +12,10 @@ x-common-depends: &common-depends
   depends_on:
     - amqp-broker
 
-x-common-image: &common-image
-  image: ghcr.io/citrineos/citrineos-server:v1.7.2
+x-common-image: &common-image # image: ghcr.io/citrineos/citrineos-server:v1.7.2
+  build:
+    context: ../
+    dockerfile: ./Server/deploy.Dockerfile
 
 services:
   amqp-broker:
