@@ -13,7 +13,7 @@ x-common-depends: &common-depends
     - amqp-broker
 
 x-common-image: &common-image
-  image: ghcr.io/citrineos/citrineos-server:v1.7.1
+  image: ghcr.io/citrineos/citrineos-server:v1.7.2
 
 services:
   amqp-broker:
