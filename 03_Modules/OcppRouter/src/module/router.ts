@@ -1,6 +1,6 @@
-// Copyright Contributors to the CitrineOS Project
+// SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
-// SPDX-License-Identifier: Apache 2.0
+// SPDX-License-Identifier: Apache-2.0
 /* eslint-disable */
 
 import {
@@ -49,6 +49,7 @@ import {
   getStationIdFromIdentifier,
   getTenantIdFromIdentifier,
 } from '@citrineos/base';
+import { OidcTokenProvider } from '@citrineos/util';
 
 /**
  * Implementation of the ocpp router
@@ -70,6 +71,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
   protected static readonly DEFAULT_MAX_RECONNECT_DELAY = 30; // seconds
   protected _maxReconnectDelay: number;
   protected _failingReconnectDelay: number = 1; // start with 1 second
+  private readonly _oidcTokenProvider?: OidcTokenProvider;
 
   /**
    * Constructor for the class.
@@ -114,6 +116,9 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     this.subscriptionRepository =
       subscriptionRepository || new sequelize.SequelizeSubscriptionRepository(config, this._logger);
     this._handler.initConnection();
+    if (this._config.oidcClient) {
+      this._oidcTokenProvider = new OidcTokenProvider(this._config.oidcClient, this._logger);
+    }
     if (circuitBreakerOptions) {
       this._circuitBreaker = new CircuitBreaker({
         ...circuitBreakerOptions,
@@ -174,11 +179,26 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
   async deregisterConnection(tenantId: number, stationId: string): Promise<boolean> {
     this._webhookDispatcher.deregister(tenantId, stationId);
 
-    const offlineCharger = await this._locationRepository.setChargingStationIsOnlineAndOCPPVersion(
+    let protocol: OCPPVersion | null = null;
+    try {
+      const chargingStation = await this._locationRepository.readChargingStationByStationId(
+        tenantId,
+        stationId,
+      );
+      if (chargingStation?.protocol) {
+        protocol = chargingStation.protocol as OCPPVersion;
+      }
+    } catch (e: any) {
+      this._logger?.warn?.(
+        `Could not read charging station ${stationId} of tenant ${tenantId} to determine protocol: ${e.message}`,
+      );
+    }
+
+    await this._locationRepository.setChargingStationIsOnlineAndOCPPVersion(
       tenantId,
       stationId,
       false,
-      null,
+      protocol,
     );
 
     const connectionIdentifier = createIdentifier(tenantId, stationId);
@@ -805,11 +825,23 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
       AbstractModule.CALLBACK_URL_CACHE_PREFIX + message.context.stationId,
     );
     if (url) {
+      const headers: { [key: string]: string } = {
+        'Content-Type': 'application/json',
+      };
+
+      if (this._oidcTokenProvider) {
+        try {
+          const token = await this._oidcTokenProvider.getToken();
+          headers['Authorization'] = `Bearer ${token}`;
+        } catch (error) {
+          this._logger.error('Failed to get OIDC token for callback:', error);
+          return;
+        }
+      }
+
       await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(message.payload),
       });
     }

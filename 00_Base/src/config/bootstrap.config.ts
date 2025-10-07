@@ -1,6 +1,6 @@
-// Copyright Contributors to the CitrineOS Project
+// SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
-// SPDX-License-Identifier: Apache 2.0
+// SPDX-License-Identifier: Apache-2.0
 
 import { z } from 'zod';
 import { BOOTSTRAP_CONFIG_ENV_VAR_PREFIX } from './defineConfig';
@@ -18,8 +18,15 @@ export const bootstrapConfigSchema = z.object({
     dialect: z.string().default('postgres'),
     username: z.string().default('citrine'),
     password: z.string().default('citrine'),
+    pool: z
+      .object({
+        max: z.number().int().positive().optional(),
+        min: z.number().int().nonnegative().optional(),
+      })
+      .optional(),
     sync: z.boolean().default(false),
     alter: z.boolean().default(false),
+    force: z.boolean().default(false),
     maxRetries: z.number().int().positive().default(3),
     retryDelay: z.number().int().positive().default(1000),
   }),
@@ -113,6 +120,7 @@ export function loadBootstrapConfig(): BootstrapConfig {
       password: getEnvVarValue('database_password'),
       sync: getEnvVarValue('database_sync') && parseEnvValue(getEnvVarValue('database_sync')!),
       alter: getEnvVarValue('database_alter') && parseEnvValue(getEnvVarValue('database_alter')!),
+      force: getEnvVarValue('database_force') && parseEnvValue(getEnvVarValue('database_force')!),
       maxRetries:
         getEnvVarValue('database_max_retries') &&
         parseInt(getEnvVarValue('database_max_retries')!, 10),
@@ -125,6 +133,13 @@ export function loadBootstrapConfig(): BootstrapConfig {
       type: getEnvVarValue('file_access_type') || 'local',
     },
   };
+  const pool = {
+    max: getEnvVarValue('database_pool_max') && parseInt(getEnvVarValue('database_pool_max')!, 10),
+    min: getEnvVarValue('database_pool_min') && parseInt(getEnvVarValue('database_pool_min')!, 10),
+  };
+  if (Object.keys(pool).length > 0) {
+    config.database.pool = pool;
+  }
 
   // File access configuration
   switch (config.fileAccess.type) {

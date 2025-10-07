@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
@@ -293,7 +296,6 @@ export = {
     await queryInterface.sequelize.query(
       'ALTER TABLE "Evses" DROP CONSTRAINT IF EXISTS "Evses_pkey";',
     );
-    await queryInterface.removeColumn('Evses', 'databaseId');
 
     // Populate EvseTypes from existing data before adding foreign keys
     await queryInterface.sequelize.query(`
@@ -305,6 +307,14 @@ export = {
     // Truncate Evses table after migration
     await queryInterface.sequelize.query('TRUNCATE TABLE "Evses" CASCADE;');
 
+    await queryInterface.removeColumn('Evses', 'databaseId');
+    await queryInterface.removeColumn('Evses', 'connectorId');
+    await queryInterface.removeColumn('Evses', 'id');
+    // Sequelize does not support adding a primary key via addColumn, so we do it in two steps
+    await queryInterface.addColumn('Evses', 'id', {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+    });
     await queryInterface.sequelize.query(
       'ALTER TABLE "Evses" ADD CONSTRAINT "Evses_pkey" PRIMARY KEY (id);',
     );
