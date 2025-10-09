@@ -12,12 +12,8 @@ x-common-depends: &common-depends
   depends_on:
     - amqp-broker
 
-# x-common-image: &common-image
-#   image: ghcr.io/citrineos/citrineos-server:v1.7.2
-
-x-common-build: &common-build
-  context: ../
-  dockerfile: ./Server/deploy.Dockerfile
+x-common-image: &common-image
+  image: ghcr.io/tinkerve/citrineos-server:v1.8.0
 
 services:
   amqp-broker:
@@ -43,7 +39,7 @@ services:
       timeout: 10s
       retries: 3
   citrine:
-    <<: [*common-build, *common-depends]
+    <<: [*common-image, *common-depends]
     # ports:
     #   - 8080:8080
     #   - 8081:8081
