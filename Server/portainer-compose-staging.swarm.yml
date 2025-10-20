@@ -63,13 +63,23 @@ services:
         - traefik.http.routers.citrine-ocpp-ws.rule=Host(`citrine-ws.app.rexharge.net`)
         - traefik.http.routers.citrine-ocpp-ws.tls.certresolver=leresolver
         - traefik.http.services.citrine-ocpp-ws.loadbalancer.server.port=8081
-
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "const net = require(\"net\"); const client = net.createConnection(8080, \"127.0.0.1\", () => { client.end(); process.exit(0); }); client.on(\"error\", () => process.exit(1)); client.setTimeout(5000, () => { client.destroy(); process.exit(1); });"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     environment:
       APP_NAME: 'all'
       <<: *common-environment
     networks:
       - rexharge_network
       - traefik_proxy
+
   graphql-engine:
     image: hasura/graphql-engine:v2.40.3.cli-migrations-v3
     volumes:
