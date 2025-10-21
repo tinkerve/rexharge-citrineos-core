@@ -22,7 +22,7 @@ services:
       labels:
         - traefik.enable=true
         - traefik.http.routers.citrine-rabbitmq.entrypoints=websecure
-        - traefik.http.routers.citrine-rabbitmq.rule=Host(`citrine-rabbitmq-ui.app.rexharge.net`)
+        - traefik.http.routers.citrine-rabbitmq.rule=Host(`citrine-rabbitmq-ui.staging-app.rexharge.net`)
         - traefik.http.routers.citrine-rabbitmq.tls.certresolver=leresolver
         - traefik.http.services.citrine-rabbitmq.loadbalancer.server.port=15672
     environment:
@@ -54,13 +54,13 @@ services:
         - traefik.enable=true
         - traefik.http.routers.citrine-core.service=citrine-core
         - traefik.http.routers.citrine-core.entrypoints=websecure
-        - traefik.http.routers.citrine-core.rule=Host(`citrine-core.app.rexharge.net`)
+        - traefik.http.routers.citrine-core.rule=Host(`citrine-core.staging-app.rexharge.net`)
         - traefik.http.routers.citrine-core.tls.certresolver=leresolver
         - traefik.http.services.citrine-core.loadbalancer.server.port=8080
         # OCPP WebSocket(With Basic HTTP Auth)
         - traefik.http.routers.citrine-ocpp-ws.service=citrine-ocpp-ws
         - traefik.http.routers.citrine-ocpp-ws.entrypoints=websecure
-        - traefik.http.routers.citrine-ocpp-ws.rule=Host(`citrine-ws.app.rexharge.net`)
+        - traefik.http.routers.citrine-ocpp-ws.rule=Host(`citrine-ws.staging-app.rexharge.net`)
         - traefik.http.routers.citrine-ocpp-ws.tls.certresolver=leresolver
         - traefik.http.services.citrine-ocpp-ws.loadbalancer.server.port=8081
     healthcheck:
@@ -88,7 +88,7 @@ services:
       labels:
         - traefik.enable=true
         - traefik.http.routers.citrine-hasura.entrypoints=websecure
-        - traefik.http.routers.citrine-hasura.rule=Host(`citrine-hasura.app.rexharge.net`)
+        - traefik.http.routers.citrine-hasura.rule=Host(`citrine-hasura.staging-app.rexharge.net`)
         - traefik.http.routers.citrine-hasura.tls.certresolver=leresolver
         - traefik.http.services.citrine-hasura.loadbalancer.server.port=8080
     restart: unless-stopped
