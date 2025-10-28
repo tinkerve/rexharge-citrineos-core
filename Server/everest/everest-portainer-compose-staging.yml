@@ -52,4 +52,3 @@ services:
 networks:
   everest_net:
     driver: bridge
-    enable_ipv6: true
