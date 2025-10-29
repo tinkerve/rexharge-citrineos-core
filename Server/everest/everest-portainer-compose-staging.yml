@@ -12,11 +12,7 @@ services:
       - everest_net
 
   manager:
-    build:
-      dockerfile: Dockerfile
-      args:
-        - EVEREST_TARGET_URL=${EVEREST_TARGET_URL}
-        - EVEREST_IMAGE_TAG=${EVEREST_IMAGE_TAG}
+    image: pudifyhuman/everest-manager-custom:0.0.23
     ports:
       - 8888:8888
     deploy:
