@@ -48,3 +48,4 @@ services:
 networks:
   everest_net:
     driver: overlay
+    enable_ipv6: true
