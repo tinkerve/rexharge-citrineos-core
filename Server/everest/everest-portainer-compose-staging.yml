@@ -47,4 +47,4 @@ services:
 
 networks:
   everest_net:
-    driver: bridge
+    driver: overlay
