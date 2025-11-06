@@ -33,12 +33,12 @@ services:
       - traefik_proxy
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+    # healthcheck:
+    #   test: rabbitmq-diagnostics -q ping
+    #   interval: 10s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 60s
   citrine:
     <<: [*common-image, *common-depends]
     ports:
