@@ -394,10 +394,10 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
       HttpMethod.Get,
     );
 
-    const systemConfigJsonSchema = zodToJsonSchema(systemConfigSchema, {
+    const systemConfigJsonSchema: any = zodToJsonSchema(systemConfigSchema, {
       name: 'SystemConfigSchema',
       $refStrategy: 'none',
-    }) as Record<string, any>;
+    });
     this._addDataRoute.call(
       this,
       OCPP2_0_1_Namespace.SystemConfig,
