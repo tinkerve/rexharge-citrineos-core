@@ -32,6 +32,8 @@ export class WebsocketNetworkConnection {
   protected _config: SystemConfig;
   protected _logger: Logger<ILogObj>;
   private _identifierConnections: Map<string, WebSocket> = new Map();
+  // Map to track ping timeout timers for each connection
+  private _pingTimeouts: Map<string, NodeJS.Timeout> = new Map();
   // websocketServers id as key and http server as value
   private _httpServersMap: Map<string, http.Server | https.Server>;
   private _authenticator: IAuthenticator;
@@ -371,6 +373,12 @@ export class WebsocketNetworkConnection {
     ws.once('close', () => {
       // Unregister client
       this._logger.info('Connection closed for', identifier);
+      // Clear any pending ping timeout
+      const pingTimeout = this._pingTimeouts.get(identifier);
+      if (pingTimeout) {
+        clearTimeout(pingTimeout);
+        this._pingTimeouts.delete(identifier);
+      }
       this._cache.remove(identifier, CacheNamespace.Connections);
       this._identifierConnections.delete(identifier);
       this._router.deregisterConnection(
@@ -386,6 +394,14 @@ export class WebsocketNetworkConnection {
 
     ws.on('pong', async () => {
       this._logger.debug('Pong received for', identifier);
+
+      // Clear the ping timeout since we received a pong
+      const pingTimeout = this._pingTimeouts.get(identifier);
+      if (pingTimeout) {
+        clearTimeout(pingTimeout);
+        this._pingTimeouts.delete(identifier);
+      }
+
       const clientConnection: string | null = await this._cache.get(
         identifier,
         CacheNamespace.Connections,
@@ -444,7 +460,7 @@ export class WebsocketNetworkConnection {
    *
    * @param {string} identifier - The identifier of the client connection.
    * @param {WebSocket} ws - The WebSocket connection to ping.
-   * @param {number} pingInterval - The ping interval in milliseconds.
+   * @param {number} pingInterval - The ping interval in seconds.
    * @return {void} This function does not return anything.
    */
   private async _ping(identifier: string, ws: WebSocket, pingInterval: number): Promise<void> {
@@ -455,15 +471,23 @@ export class WebsocketNetworkConnection {
       );
       if (clientConnection) {
         this._logger.debug('Pinging client', identifier);
-        // Set connection expiration and send ping to client
-        await this._cache.set(
-          identifier,
-          clientConnection,
-          CacheNamespace.Connections,
-          pingInterval * 2,
-        );
+
+        // Send the ping
         ws.ping();
+
+        // Set a timeout to close the connection if no pong is received within pingInterval seconds
+        const pongTimeout = setTimeout(() => {
+          this._logger.warn(
+            `No pong received from ${identifier} within ${pingInterval} seconds. Closing connection.`,
+          );
+          this._pingTimeouts.delete(identifier);
+          ws.close(1011, 'No pong received - connection timeout');
+        }, pingInterval * 1000);
+
+        // Store the timeout so it can be cleared when pong is received
+        this._pingTimeouts.set(identifier, pongTimeout);
       } else {
+        this._logger.debug('Cache entry not found for', identifier, '- closing connection');
         ws.close(1011, 'Client is not alive');
       }
     }, pingInterval * 1000);
