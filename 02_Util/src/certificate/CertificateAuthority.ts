@@ -3,18 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ICache, SystemConfig } from '@citrineos/base';
 import { OCPP2_1 } from '@citrineos/base';
-import type {
-  IChargingStationCertificateAuthorityClient,
-  IV2GCertificateAuthorityClient,
-} from './client/interface.js';
-import { Hubject } from './client/hubject.js';
-import { Acme } from './client/acme.js';
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
-import * as pkijs from 'pkijs';
-import { Certificate } from 'pkijs';
+import { Crypto } from '@peculiar/webcrypto';
 import jsrsasign, { KJUR, X509 } from 'jsrsasign';
 import moment from 'moment';
+import * as pkijs from 'pkijs';
+import { Certificate } from 'pkijs';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
 import {
   createPemBlock,
   dateTimeFormat,
@@ -23,7 +18,12 @@ import {
   parseCertificateChainPem,
   sendOCSPRequest,
 } from './CertificateUtil.js';
-import { Crypto } from '@peculiar/webcrypto';
+import { Acme } from './client/acme.js';
+import { Hubject } from './client/hubject.js';
+import type {
+  IChargingStationCertificateAuthorityClient,
+  IV2GCertificateAuthorityClient,
+} from './client/interface.js';
 import OCSPRequest = jsrsasign.KJUR.asn1.ocsp.OCSPRequest;
 import Request = jsrsasign.KJUR.asn1.ocsp.Request;
 
@@ -138,7 +138,6 @@ export class CertificateAuthorityService {
     const certificatePems: string[] = parseCertificateChainPem(certificateChainPem);
     this._logger.debug(`Found ${certificatePems.length} certificates in chain.`);
     if (certificatePems.length < 1) {
-      return OCPP2_1.AuthorizeCertificateStatusEnumType.NoCertificateAvailable;
       return OCPP2_1.AuthorizeCertificateStatusEnumType.NoCertificateAvailable;
     }
 
