@@ -38,7 +38,9 @@ import {
   ChargingStationSequence,
   CompositeSchedule,
   Connector,
+  DeleteCertificateAttempt,
   EvseType,
+  InstallCertificateAttempt,
   InstalledCertificate,
   LocalListVersion,
   MessageInfo,
@@ -420,6 +422,10 @@ export interface ICertificateRepository extends CrudRepository<Certificate> {
 }
 
 export interface IInstalledCertificateRepository extends CrudRepository<InstalledCertificate> {}
+export interface IInstallCertificateAttemptRepository
+  extends CrudRepository<InstallCertificateAttempt> {}
+export interface IDeleteCertificateAttemptRepository
+  extends CrudRepository<DeleteCertificateAttempt> {}
 
 export interface IChargingProfileRepository extends CrudRepository<ChargingProfile> {
   createOrUpdateChargingProfile(
@@ -464,7 +470,13 @@ export interface IReservationRepository extends CrudRepository<Reservation> {
   ): Promise<Reservation | undefined>;
 }
 
-export interface IOCPPMessageRepository extends CrudRepository<OCPPMessage> {}
+export interface IOCPPMessageRepository extends CrudRepository<OCPPMessage> {
+  createOCPPMessage(tenantId: number, message: OCPPMessageDto): Promise<OCPPMessage>;
+  getRequestByCorrelationId(
+    tenantId: number,
+    correlationId: string,
+  ): Promise<OCPPMessage | undefined>;
+}
 
 export interface IChargingStationSecurityInfoRepository
   extends CrudRepository<ChargingStationSecurityInfo> {

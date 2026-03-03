@@ -84,6 +84,7 @@ export class MonitoringModule extends AbstractModule {
     sender?: IMessageSender,
     handler?: IMessageHandler,
     logger?: Logger<ILogObj>,
+    ocppValidator?: OCPPValidator,
     deviceModelRepository?: IDeviceModelRepository,
     variableMonitoringRepository?: IVariableMonitoringRepository,
     idGenerator?: IdGenerator,
@@ -95,6 +96,7 @@ export class MonitoringModule extends AbstractModule {
       sender || new RabbitMqSender(config, logger),
       EventGroup.Monitoring,
       logger,
+      ocppValidator,
     );
 
     this._requests = config.modules.monitoring.requests;

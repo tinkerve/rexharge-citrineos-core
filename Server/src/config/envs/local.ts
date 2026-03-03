@@ -189,6 +189,7 @@ export function createLocalConfig() {
             port: 8081,
             protocol: 'ocpp2.0.1',
             tenantId: DEFAULT_TENANT_ID,
+            dynamicTenantResolution: true,
           },
           {
             id: '1',
@@ -199,6 +200,7 @@ export function createLocalConfig() {
             port: 8082,
             protocol: 'ocpp2.0.1',
             tenantId: DEFAULT_TENANT_ID,
+            dynamicTenantResolution: true,
           },
           {
             id: '2',
@@ -209,6 +211,7 @@ export function createLocalConfig() {
             port: 8092,
             protocol: 'ocpp1.6',
             tenantId: DEFAULT_TENANT_ID,
+            dynamicTenantResolution: true,
           },
         ],
       },

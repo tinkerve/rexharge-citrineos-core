@@ -28,6 +28,7 @@ import {
   OCPP_CallAction,
   OCPP2_1,
   OcppError,
+  OCPPValidator,
   OCPPVersion,
   OCPP_2_VER_LIST,
 } from '@citrineos/base';
@@ -38,6 +39,7 @@ import type {
   ILocationRepository,
   IMessageInfoRepository,
   IOCPPMessageRepository,
+  ITenantRepository,
 } from '@citrineos/data';
 import {
   Boot,
@@ -125,6 +127,7 @@ export class ConfigurationModule extends AbstractModule {
     sender?: IMessageSender,
     handler?: IMessageHandler,
     logger?: Logger<ILogObj>,
+    ocppValidator?: OCPPValidator,
     bootRepository?: IBootRepository,
     deviceModelRepository?: IDeviceModelRepository,
     messageInfoRepository?: IMessageInfoRepository,
@@ -132,6 +135,7 @@ export class ConfigurationModule extends AbstractModule {
     changeConfigurationRepository?: IChangeConfigurationRepository,
     ocppMessageRepository?: IOCPPMessageRepository,
     idGenerator?: IdGenerator,
+    tenantRepository?: ITenantRepository,
   ) {
     super(
       config,
@@ -140,6 +144,7 @@ export class ConfigurationModule extends AbstractModule {
       sender || new RabbitMqSender(config, logger),
       EventGroup.Configuration,
       logger,
+      ocppValidator,
     );
 
     this._requests = config.modules.configuration.requests;
@@ -159,6 +164,9 @@ export class ConfigurationModule extends AbstractModule {
     this._ocppMessageRepository =
       ocppMessageRepository || new SequelizeOCPPMessageRepository(config, this._logger);
 
+    this._tenantRepository =
+      tenantRepository || new sequelize.SequelizeTenantRepository(config, this._logger);
+
     this._deviceModelService = new DeviceModelService(this._deviceModelRepository);
 
     this._bootService = new BootNotificationService(
@@ -171,6 +179,12 @@ export class ConfigurationModule extends AbstractModule {
     this._idGenerator =
       idGenerator ||
       new IdGenerator(new SequelizeChargingStationSequenceRepository(config, this._logger));
+  }
+
+  protected _tenantRepository: ITenantRepository;
+
+  get tenantRepository(): ITenantRepository {
+    return this._tenantRepository;
   }
 
   protected _bootRepository: IBootRepository;

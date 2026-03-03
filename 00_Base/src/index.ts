@@ -51,6 +51,7 @@ export {
   AbstractModule,
   AsHandler,
   CircuitBreaker,
+  OCPPValidator,
   type CircuitBreakerOptions,
   type CircuitBreakerState,
 } from './interfaces/modules/index.js';
@@ -99,13 +100,13 @@ export type { ConfigStore } from './config/ConfigStore.js';
 export { DEFAULT_TENANT_ID, defineConfig } from './config/defineConfig.js';
 export { SignedMeterValuesConfig } from './config/signedMeterValuesConfig.js';
 export {
-  RbacRulesSchema,
-  systemConfigSchema,
+  HUBJECT_DEFAULT_AUTH_TOKEN,
   HUBJECT_DEFAULT_BASEURL,
-  HUBJECT_DEFAULT_TOKENURL,
   HUBJECT_DEFAULT_CLIENTID,
   HUBJECT_DEFAULT_CLIENTSECRET,
-  HUBJECT_DEFAULT_AUTH_TOKEN,
+  HUBJECT_DEFAULT_TOKENURL,
+  RbacRulesSchema,
+  systemConfigSchema,
 } from './config/types.js';
 export type { RbacRules, SystemConfig, WebsocketServerConfig } from './config/types.js';
 
@@ -309,12 +310,16 @@ export * from './interfaces/dto/async.job.dto.js';
 export * from './interfaces/dto/authorization.dto.js';
 export * from './interfaces/dto/boot.dto.js';
 export * from './interfaces/dto/certificate.dto.js';
+export * from './interfaces/dto/change.configuration.dto.js';
+export * from './interfaces/dto/charging.needs.dto.js';
 export * from './interfaces/dto/charging.profile.dto.js';
 export * from './interfaces/dto/charging.schedule.dto.js';
 export * from './interfaces/dto/charging.station.dto.js';
+export * from './interfaces/dto/charging.station.security.info.dto.js';
 export * from './interfaces/dto/charging.station.network.profile.dto.js';
 export * from './interfaces/dto/charging.station.sequence.dto.js';
 export * from './interfaces/dto/component.dto.js';
+export * from './interfaces/dto/composite.schedule.dto.js';
 export * from './interfaces/dto/connector.dto.js';
 export * from './interfaces/dto/event.data.dto.js';
 export * from './interfaces/dto/evse.dto.js';
@@ -327,6 +332,7 @@ export * from './interfaces/dto/meter.value.dto.js';
 export * from './interfaces/dto/ocpp.message.dto.js';
 export * from './interfaces/dto/reservation.dto.js';
 export * from './interfaces/dto/sales.tariff.dto.js';
+export * from './interfaces/dto/security.event.dto.js';
 export * from './interfaces/dto/server.network.profile.dto.js';
 export * from './interfaces/dto/set.network.profile.dto.js';
 export * from './interfaces/dto/start.transaction.dto.js';
@@ -340,12 +346,15 @@ export * from './interfaces/dto/transaction.dto.js';
 export * from './interfaces/dto/transaction.event.dto.js';
 export * from './interfaces/dto/types/authorization.js';
 export * from './interfaces/dto/types/base.dto.js';
+export * from './interfaces/dto/types/charging.parameters.js';
 export * from './interfaces/dto/types/enums.js';
 export * from './interfaces/dto/types/hours.js';
 export * from './interfaces/dto/types/location.js';
+export * from './interfaces/dto/types/message.info.js';
 export * from './interfaces/dto/types/ocpi.registration.js';
 export * from './interfaces/dto/types/sales.tariff.js';
 export * from './interfaces/dto/types/sampled.value.dto.js';
+export * from './interfaces/dto/types/transaction.type.js';
 export * from './interfaces/dto/variable.attribute.dto.js';
 export * from './interfaces/dto/variable.characteristics.dto.js';
 export * from './interfaces/dto/variable.dto.js';
@@ -357,3 +366,5 @@ export type { CurrencyCode } from './money/Currency.js';
 export { Money } from './money/Money.js';
 export { addFormats, Ajv };
 export declare type Constructable<T> = new (...args: any[]) => T;
+export { IMessageQuerystringSchema } from './interfaces/api/MessageQuerystring.js';
+export type { IMessageQuerystring } from './interfaces/api/MessageQuerystring.js';

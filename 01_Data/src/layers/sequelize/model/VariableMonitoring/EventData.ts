@@ -38,7 +38,7 @@ export class EventData extends Model implements OCPP2_1.EventDataType, EventData
   declare eventId: number;
 
   @Column(DataType.STRING)
-  declare trigger: OCPP2_0_1.EventTriggerEnumType;
+  declare trigger: EventTriggerEnumType;
 
   @Column(DataType.INTEGER)
   declare cause?: number | null;
@@ -71,7 +71,7 @@ export class EventData extends Model implements OCPP2_1.EventDataType, EventData
   declare variableMonitoringId?: number | null;
 
   @Column(DataType.STRING)
-  declare eventNotificationType: OCPP2_0_1.EventNotificationEnumType;
+  declare eventNotificationType: EventNotificationEnumType;
 
   /**
    * Relations

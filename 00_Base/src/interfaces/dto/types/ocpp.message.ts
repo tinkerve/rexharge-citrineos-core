@@ -8,8 +8,10 @@ import { MessageOrigin } from '../../messages/index.js';
 
 export const CallActionSchema = z.enum(OCPP_CallAction);
 export const MessageOriginSchema = z.enum(MessageOrigin);
+export const MessageStateSchema = z.enum(MessageState);
 export const OCPPVersionSchema = z.enum(OCPPVersion);
 
 export type CallActionEnumType = z.infer<typeof CallActionSchema>;
 export type MessageOriginEnumType = z.infer<typeof MessageOriginSchema>;
+export type MessageStateEnumType = z.infer<typeof MessageStateSchema>;
 export type OCPPVersionEnumType = z.infer<typeof OCPPVersionSchema>;

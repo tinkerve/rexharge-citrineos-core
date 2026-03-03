@@ -205,6 +205,7 @@ export function createDockerConfig() {
             port: 8081,
             protocol: 'ocpp2.0.1',
             tenantId: DEFAULT_TENANT_ID,
+            dynamicTenantResolution: true,
           },
           {
             id: '1',
@@ -215,6 +216,7 @@ export function createDockerConfig() {
             port: 8082,
             protocol: 'ocpp2.0.1',
             tenantId: DEFAULT_TENANT_ID,
+            dynamicTenantResolution: true,
           },
         ],
       },
@@ -242,8 +244,8 @@ export function createDockerConfig() {
       },
     },
     logLevel: 2, // debug
-    maxCallLengthSeconds: 5,
-    maxCachingSeconds: 10,
+    maxCallLengthSeconds: 20,
+    maxCachingSeconds: 30,
     ocpiServer: {
       host: '0.0.0.0',
       port: 8085,
