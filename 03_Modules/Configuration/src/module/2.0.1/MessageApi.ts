@@ -55,15 +55,15 @@ export class ConfigurationOcpp201Api
     identifier: string[],
     request: OCPP2_0_1.SetNetworkProfileRequest,
     callbackUrl?: string,
-    extraQueries?: Record<string, any>,
     tenantId: number = DEFAULT_TENANT_ID,
+    extraQueries?: Record<string, any>,
   ): Promise<IMessageConfirmation[]> {
     const correlationId = uuidv4();
     if (extraQueries) {
       const websocketServerConfigId =
         extraQueries[SetNetworkProfileExtraQuerystrings.websocketServerConfigId];
       await SetNetworkProfile.build({
-        stationId: identifier,
+        stationId: identifier[0],
         tenantId,
         correlationId,
         configurationSlot: request.configurationSlot,
