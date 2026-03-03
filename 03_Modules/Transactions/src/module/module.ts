@@ -13,6 +13,8 @@ import type {
   IMessageSender,
   MeterValueDto,
   SystemConfig,
+  OCPP2_request_types,
+  OCPP2_response_types,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -498,7 +500,7 @@ export class TransactionsModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.StatusNotification)
   protected async _handleStatusNotification(
-    message: IMessage<OCPP2_1.StatusNotificationRequest>,
+    message: IMessage<OCPP2_request_types.StatusNotificationRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('StatusNotification received:', message, props);
@@ -514,7 +516,7 @@ export class TransactionsModule extends AbstractModule {
       });
 
     // Create response
-    const response: OCPP2_1.StatusNotificationResponse = {};
+    const response: OCPP2_response_types.StatusNotificationResponse = {};
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('StatusNotification response sent: ', messageConfirmation);
   }
@@ -525,7 +527,7 @@ export class TransactionsModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.CostUpdated)
   protected _handleCostUpdated(
-    message: IMessage<OCPP2_1.CostUpdatedResponse>,
+    message: IMessage<OCPP2_response_types.CostUpdatedResponse>,
     props?: HandlerProperties,
   ): void {
     this._logger.debug('CostUpdated response received:', message, props);
@@ -533,7 +535,7 @@ export class TransactionsModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetTransactionStatus)
   protected async _handleGetTransactionStatus(
-    message: IMessage<OCPP2_1.GetTransactionStatusResponse>,
+    message: IMessage<OCPP2_response_types.GetTransactionStatusResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('GetTransactionStatus response received:', message, props);

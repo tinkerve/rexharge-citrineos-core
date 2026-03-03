@@ -77,6 +77,9 @@ export type {
   CallResult,
   OCPPVersionType,
 } from './ocpp/rpc/message.js';
+export * as OCPP2_common_types from './ocpp/rpc/types.js';
+export * as OCPP2_request_types from './ocpp/rpc/requests.js';
+export * as OCPP2_response_types from './ocpp/rpc/responses.js';
 
 // Persistence Interfaces
 

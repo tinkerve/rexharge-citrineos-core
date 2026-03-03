@@ -247,14 +247,8 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
         default: {
           let errorCode;
           switch (protocol) {
-            case OCPPVersion.OCPP1_6: {
-              errorCode = ErrorCode.FormationViolation;
-              break;
-            }
-            case OCPPVersion.OCPP2_0_1: {
-              errorCode = ErrorCode.FormatViolation;
-              break;
-            }
+            case OCPPVersion.OCPP1_6:
+            case OCPPVersion.OCPP2_0_1:
             case OCPPVersion.OCPP2_1: {
               errorCode = ErrorCode.FormatViolation;
               break;

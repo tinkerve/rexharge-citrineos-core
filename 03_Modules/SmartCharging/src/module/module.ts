@@ -10,6 +10,8 @@ import type {
   IMessageHandler,
   IMessageSender,
   SystemConfig,
+  OCPP2_request_types,
+  OCPP2_response_types,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -156,7 +158,7 @@ export class SmartChargingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.NotifyEVChargingNeeds)
   protected async _handleNotifyEVChargingNeeds(
-    message: IMessage<OCPP2_1.NotifyEVChargingNeedsRequest>,
+    message: IMessage<OCPP2_request_types.NotifyEVChargingNeedsRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('NotifyEVChargingNeeds received:', message, props);
@@ -192,7 +194,7 @@ export class SmartChargingModule extends AbstractModule {
     if (!activeTransaction || !hasAcOrDcChargingParameters || !matchedChargingType) {
       await this.sendCallResultWithMessage(message, {
         status: OCPP2_1.NotifyEVChargingNeedsStatusEnumType.Rejected,
-      } as OCPP2_1.NotifyEVChargingNeedsResponse);
+      } as OCPP2_response_types.NotifyEVChargingNeedsResponse);
       return;
     }
 
@@ -208,7 +210,7 @@ export class SmartChargingModule extends AbstractModule {
       this._logger.error(`Failed to calculate charging profile: ${error}`);
       await this.sendCallResultWithMessage(message, {
         status: OCPP2_1.NotifyEVChargingNeedsStatusEnumType.Rejected,
-      } as OCPP2_1.NotifyEVChargingNeedsResponse);
+      } as OCPP2_response_types.NotifyEVChargingNeedsResponse);
       return;
     }
 
@@ -221,7 +223,7 @@ export class SmartChargingModule extends AbstractModule {
 
     await this.sendCallResultWithMessage(message, {
       status: OCPP2_1.NotifyEVChargingNeedsStatusEnumType.Accepted,
-    } as OCPP2_1.NotifyEVChargingNeedsResponse);
+    } as OCPP2_response_types.NotifyEVChargingNeedsResponse);
 
     const storedChargingProfile =
       await this.chargingProfileRepository.createOrUpdateChargingProfile(
@@ -243,7 +245,7 @@ export class SmartChargingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.NotifyEVChargingSchedule)
   protected async _handleNotifyEVChargingSchedule(
-    message: IMessage<OCPP2_1.NotifyEVChargingScheduleRequest>,
+    message: IMessage<OCPP2_request_types.NotifyEVChargingScheduleRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('NotifyEVChargingSchedule received:', message, props);
@@ -256,7 +258,7 @@ export class SmartChargingModule extends AbstractModule {
     // We use (1) in our code, i.e., always return Accepted in response
     await this.sendCallResultWithMessage(message, {
       status: OCPP2_1.GenericStatusEnumType.Accepted,
-    } as OCPP2_1.NotifyEVChargingScheduleResponse);
+    } as OCPP2_response_types.NotifyEVChargingScheduleResponse);
 
     const activeTransaction =
       await this._transactionEventRepository.getActiveTransactionByStationIdAndEvseId(
@@ -303,13 +305,13 @@ export class SmartChargingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.NotifyChargingLimit)
   protected async _handleNotifyChargingLimit(
-    message: IMessage<OCPP2_1.NotifyChargingLimitRequest>,
+    message: IMessage<OCPP2_request_types.NotifyChargingLimitRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('NotifyChargingLimit received:', message, props);
 
     // Create response
-    const response: OCPP2_1.NotifyChargingLimitResponse = {};
+    const response: OCPP2_response_types.NotifyChargingLimitResponse = {};
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('NotifyChargingLimit response sent: ', messageConfirmation);
@@ -317,7 +319,7 @@ export class SmartChargingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ReportChargingProfiles)
   protected async _handleReportChargingProfiles(
-    message: IMessage<OCPP2_1.ReportChargingProfilesRequest>,
+    message: IMessage<OCPP2_request_types.ReportChargingProfilesRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('ReportChargingProfiles received:', message, props);
@@ -336,7 +338,7 @@ export class SmartChargingModule extends AbstractModule {
     }
 
     // Create response
-    const response: OCPP2_1.ReportChargingProfilesResponse = {};
+    const response: OCPP2_response_types.ReportChargingProfilesResponse = {};
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('ReportChargingProfiles response sent: ', messageConfirmation);
@@ -348,7 +350,7 @@ export class SmartChargingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ClearChargingProfile)
   protected async _handleClearChargingProfile(
-    message: IMessage<OCPP2_1.ClearChargingProfileResponse>,
+    message: IMessage<OCPP2_response_types.ClearChargingProfileResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('ClearChargingProfile response received:', message, props);
@@ -400,7 +402,7 @@ export class SmartChargingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetChargingProfiles)
   protected _handleGetChargingProfiles(
-    message: IMessage<OCPP2_1.GetChargingProfilesResponse>,
+    message: IMessage<OCPP2_response_types.GetChargingProfilesResponse>,
     props?: HandlerProperties,
   ): void {
     this._logger.debug('GetChargingProfiles response received:', message, props);
@@ -408,12 +410,12 @@ export class SmartChargingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.SetChargingProfile)
   protected async _handleSetChargingProfile(
-    message: IMessage<OCPP2_1.SetChargingProfileResponse>,
+    message: IMessage<OCPP2_response_types.SetChargingProfileResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('SetChargingProfile response received:', message, props);
     const tenantId = message.context.tenantId;
-    const response: OCPP2_1.SetChargingProfileResponse = message.payload;
+    const response: OCPP2_response_types.SetChargingProfileResponse = message.payload;
     if (response.status === OCPP2_1.ChargingProfileStatusEnumType.Rejected) {
       this._logger.error(`Failed to set charging profile: ${JSON.stringify(response)}`);
     } else {
@@ -456,12 +458,12 @@ export class SmartChargingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ClearedChargingLimit)
   protected async _handleClearedChargingLimit(
-    message: IMessage<OCPP2_1.ClearedChargingLimitRequest>,
+    message: IMessage<OCPP2_request_types.ClearedChargingLimitRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('ClearedChargingLimit request received:', message, props);
 
-    const response: OCPP2_1.ClearedChargingLimitResponse = {};
+    const response: OCPP2_response_types.ClearedChargingLimitResponse = {};
     await this.sendCallResultWithMessage(message, response);
   }
 

@@ -10,6 +10,8 @@ import type {
   IMessageHandler,
   IMessageSender,
   SystemConfig,
+  OCPP2_request_types,
+  OCPP2_response_types,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -154,11 +156,11 @@ export class CertificatesModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.Get15118EVCertificate)
   protected async _handleGet15118EVCertificate(
-    message: IMessage<OCPP2_1.Get15118EVCertificateRequest>,
+    message: IMessage<OCPP2_request_types.Get15118EVCertificateRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('Get15118EVCertificate received:', message, props);
-    const request: OCPP2_1.Get15118EVCertificateRequest = message.payload;
+    const request: OCPP2_request_types.Get15118EVCertificateRequest = message.payload;
 
     try {
       const exiResponse = await this._certificateAuthorityService.getSignedContractData(
@@ -168,7 +170,7 @@ export class CertificatesModule extends AbstractModule {
       await this.sendCallResultWithMessage(message, {
         status: OCPP2_1.Iso15118EVCertificateStatusEnumType.Accepted,
         exiResponse: exiResponse,
-      } as OCPP2_1.Get15118EVCertificateResponse);
+      } as OCPP2_response_types.Get15118EVCertificateResponse);
     } catch (error) {
       await this.sendCallResultWithMessage(message, {
         status: OCPP2_1.Iso15118EVCertificateStatusEnumType.Failed,
@@ -177,13 +179,13 @@ export class CertificatesModule extends AbstractModule {
           additionalInfo: error instanceof Error ? error.message : undefined,
         },
         exiResponse: '',
-      } as OCPP2_1.Get15118EVCertificateResponse);
+      } as OCPP2_response_types.Get15118EVCertificateResponse);
     }
   }
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetCertificateStatus)
   protected async _handleGetCertificateStatus(
-    message: IMessage<OCPP2_1.GetCertificateStatusRequest>,
+    message: IMessage<OCPP2_request_types.GetCertificateStatusRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('GetCertificateStatusRequest received:', message, props);
@@ -199,19 +201,19 @@ export class CertificatesModule extends AbstractModule {
       await this.sendCallResultWithMessage(message, {
         status: OCPP2_1.GetCertificateStatusEnumType.Accepted,
         ocspResponse: ocspResponse,
-      } as OCPP2_1.GetCertificateStatusResponse);
+      } as OCPP2_response_types.GetCertificateStatusResponse);
     } catch (error) {
       this._logger.error(`GetCertificateStatus failed: ${error}`);
       await this.sendCallResultWithMessage(message, {
         status: OCPP2_1.GetCertificateStatusEnumType.Failed,
         statusInfo: { reasonCode: ErrorCode.GenericError },
-      } as OCPP2_1.GetCertificateStatusResponse);
+      } as OCPP2_response_types.GetCertificateStatusResponse);
     }
   }
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.SignCertificate)
   protected async _handleSignCertificate(
-    message: IMessage<OCPP2_1.SignCertificateRequest>,
+    message: IMessage<OCPP2_request_types.SignCertificateRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('Sign certificate request received:', message, props);
@@ -241,7 +243,7 @@ export class CertificatesModule extends AbstractModule {
     //  And the other sendCallResultWithMessage for SignCertificateResponse can be uncommented
     await this.sendCallResultWithMessage(message, {
       status: OCPP2_1.GenericStatusEnumType.Accepted,
-    } as OCPP2_1.SignCertificateResponse);
+    } as OCPP2_response_types.SignCertificateResponse);
 
     let certificateChainPem: string;
     try {
@@ -295,7 +297,7 @@ export class CertificatesModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.CertificateSigned)
   protected _handleCertificateSigned(
-    message: IMessage<OCPP2_1.CertificateSignedResponse>,
+    message: IMessage<OCPP2_response_types.CertificateSignedResponse>,
     props?: HandlerProperties,
   ): void {
     this._logger.debug('CertificateSigned received:', message, props);
@@ -305,7 +307,7 @@ export class CertificatesModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.DeleteCertificate)
   protected async _handleDeleteCertificate(
-    message: IMessage<OCPP2_1.DeleteCertificateResponse>,
+    message: IMessage<OCPP2_response_types.DeleteCertificateResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('DeleteCertificate received:', message, props);
@@ -313,7 +315,7 @@ export class CertificatesModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetInstalledCertificateIds)
   protected async _handleGetInstalledCertificateIds(
-    message: IMessage<OCPP2_1.GetInstalledCertificateIdsResponse>,
+    message: IMessage<OCPP2_response_types.GetInstalledCertificateIdsResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('GetInstalledCertificateIds received:', message, props);
@@ -360,7 +362,7 @@ export class CertificatesModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.InstallCertificate)
   protected async _handleInstallCertificate(
-    message: IMessage<OCPP2_1.InstallCertificateResponse>,
+    message: IMessage<OCPP2_response_types.InstallCertificateResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('InstallCertificate received:', message, props);

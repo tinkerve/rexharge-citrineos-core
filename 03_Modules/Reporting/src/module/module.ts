@@ -11,6 +11,8 @@ import type {
   IMessageSender,
   OCPP2_0_1,
   SystemConfig,
+  OCPP2_request_types,
+  OCPP2_response_types,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -138,7 +140,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.LogStatusNotification)
   protected async _handleLogStatusNotification(
-    message: IMessage<OCPP2_1.LogStatusNotificationRequest>,
+    message: IMessage<OCPP2_request_types.LogStatusNotificationRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('LogStatusNotification received:', message, props);
@@ -159,7 +161,7 @@ export class ReportingModule extends AbstractModule {
       return;
     }
     // Create response
-    const response: OCPP2_1.LogStatusNotificationResponse = {};
+    const response: OCPP2_response_types.LogStatusNotificationResponse = {};
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('LogStatusNotification response sent: ', messageConfirmation);
@@ -167,7 +169,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.NotifyCustomerInformation)
   protected async _handleNotifyCustomerInformation(
-    message: IMessage<OCPP2_1.NotifyCustomerInformationRequest>,
+    message: IMessage<OCPP2_request_types.NotifyCustomerInformationRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('NotifyCustomerInformation request received:', message, props);
@@ -203,7 +205,7 @@ export class ReportingModule extends AbstractModule {
     }
 
     // Create response
-    const response: OCPP2_1.NotifyCustomerInformationResponse = {};
+    const response: OCPP2_response_types.NotifyCustomerInformationResponse = {};
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('NotifyCustomerInformation response sent: ', messageConfirmation);
@@ -245,7 +247,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.NotifyReport)
   protected async _handleNotifyReport(
-    message: IMessage<OCPP2_1.NotifyReportRequest>,
+    message: IMessage<OCPP2_request_types.NotifyReportRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.info('NotifyReport received:', message, props);
@@ -323,7 +325,7 @@ export class ReportingModule extends AbstractModule {
     }
 
     // Create response
-    const response: OCPP2_1.NotifyReportResponse = {};
+    const response: OCPP2_response_types.NotifyReportResponse = {};
 
     await this.sendCallResultWithMessage(message, response);
     this._logger.debug('NotifyReport response sent:', message, props);
@@ -331,7 +333,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.SecurityEventNotification)
   protected async _handleSecurityEventNotification(
-    message: IMessage<OCPP2_1.SecurityEventNotificationRequest>,
+    message: IMessage<OCPP2_request_types.SecurityEventNotificationRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('SecurityEventNotification request received:', message, props);
@@ -340,7 +342,10 @@ export class ReportingModule extends AbstractModule {
       message.payload,
       message.context.stationId,
     );
-    await this.sendCallResultWithMessage(message, {} as OCPP2_1.SecurityEventNotificationResponse);
+    await this.sendCallResultWithMessage(
+      message,
+      {} as OCPP2_response_types.SecurityEventNotificationResponse,
+    );
   }
 
   /**
@@ -349,7 +354,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetBaseReport)
   protected _handleGetBaseReport(
-    message: IMessage<OCPP2_1.GetBaseReportResponse>,
+    message: IMessage<OCPP2_response_types.GetBaseReportResponse>,
     props?: HandlerProperties,
   ): void {
     this._logger.debug('GetBaseReport response received:', message, props);
@@ -357,7 +362,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetReport)
   protected _handleGetReport(
-    message: IMessage<OCPP2_1.GetReportResponse>,
+    message: IMessage<OCPP2_response_types.GetReportResponse>,
     props?: HandlerProperties,
   ): void {
     this._logger.debug('GetReport response received:', message, props);
@@ -379,7 +384,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetMonitoringReport)
   protected async _handleGetMonitoringReport(
-    message: IMessage<OCPP2_1.GetMonitoringReportResponse>,
+    message: IMessage<OCPP2_response_types.GetMonitoringReportResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('GetMonitoringReport response received:', message, props);
@@ -401,7 +406,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetLog)
   protected _handleGetLog(
-    message: IMessage<OCPP2_1.GetLogResponse>,
+    message: IMessage<OCPP2_response_types.GetLogResponse>,
     props?: HandlerProperties,
   ): void {
     this._logger.debug('GetLog response received:', message, props);
@@ -409,7 +414,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.CustomerInformation)
   protected _handleCustomerInformation(
-    message: IMessage<OCPP2_1.CustomerInformationResponse>,
+    message: IMessage<OCPP2_response_types.CustomerInformationResponse>,
     props?: HandlerProperties,
   ): void {
     this._logger.debug('CustomerInformation response received:', message, props);

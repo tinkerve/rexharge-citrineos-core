@@ -10,6 +10,8 @@ import type {
   IMessageHandler,
   IMessageSender,
   SystemConfig,
+  OCPP2_response_types,
+  OCPP2_request_types,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -128,7 +130,7 @@ export class MonitoringModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.NotifyEvent)
   protected async _handleNotifyEvent(
-    message: IMessage<OCPP2_1.NotifyEventRequest>,
+    message: IMessage<OCPP2_request_types.NotifyEventRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('NotifyEvent received:', message, props);
@@ -167,7 +169,7 @@ export class MonitoringModule extends AbstractModule {
     }
 
     // Create response
-    const response: OCPP2_1.NotifyEventResponse = {};
+    const response: OCPP2_response_types.NotifyEventResponse = {};
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('NotifyEvent response sent:', messageConfirmation);
@@ -198,7 +200,7 @@ export class MonitoringModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ClearVariableMonitoring)
   protected async _handleClearVariableMonitoring(
-    message: IMessage<OCPP2_1.ClearVariableMonitoringResponse>,
+    message: IMessage<OCPP2_response_types.ClearVariableMonitoringResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('ClearVariableMonitoring response received:', message, props);
@@ -235,7 +237,7 @@ export class MonitoringModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.SetMonitoringLevel)
   protected _handleSetMonitoringLevel(
-    message: IMessage<OCPP2_1.SetMonitoringLevelResponse>,
+    message: IMessage<OCPP2_response_types.SetMonitoringLevelResponse>,
     props?: HandlerProperties,
   ): void {
     this._logger.debug('SetMonitoringLevel response received:', message, props);
@@ -254,7 +256,7 @@ export class MonitoringModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.SetMonitoringBase)
   protected async _handleSetMonitoringBase(
-    message: IMessage<OCPP2_1.SetMonitoringBaseResponse>,
+    message: IMessage<OCPP2_response_types.SetMonitoringBaseResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('SetMonitoringBase response received:', message, props);
@@ -302,7 +304,7 @@ export class MonitoringModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetVariables)
   protected async _handleGetVariables(
-    message: IMessage<OCPP2_1.GetVariablesResponse>,
+    message: IMessage<OCPP2_response_types.GetVariablesResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('GetVariables response received:', message, props);
@@ -316,7 +318,7 @@ export class MonitoringModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.SetVariables)
   protected async _handleSetVariables(
-    message: IMessage<OCPP2_1.SetVariablesResponse>,
+    message: IMessage<OCPP2_response_types.SetVariablesResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('SetVariables response received:', message, props);

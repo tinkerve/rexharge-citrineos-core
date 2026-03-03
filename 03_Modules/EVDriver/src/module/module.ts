@@ -14,6 +14,9 @@ import type {
   IMessageHandler,
   IMessageSender,
   SystemConfig,
+  OCPP2_common_types,
+  OCPP2_response_types,
+  OCPP2_request_types,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -267,13 +270,13 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.Authorize)
   protected async _handleAuthorize(
-    message: IMessage<OCPP2_1.AuthorizeRequest>,
+    message: IMessage<OCPP2_request_types.AuthorizeRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('Authorize received:', message, props);
-    const request: OCPP2_1.AuthorizeRequest = message.payload;
+    const request: OCPP2_request_types.AuthorizeRequest = message.payload;
     const context = message.context;
-    const response: OCPP2_1.AuthorizeResponse = {
+    const response: OCPP2_response_types.AuthorizeResponse = {
       idTokenInfo: {
         status: OCPP2_1.AuthorizationStatusEnumType.Unknown,
         // TODO determine how/if to set personalMessage
@@ -494,14 +497,14 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ReservationStatusUpdate)
   protected async _handleReservationStatusUpdate(
-    message: IMessage<OCPP2_1.ReservationStatusUpdateRequest>,
+    message: IMessage<OCPP2_request_types.ReservationStatusUpdateRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('ReservationStatusUpdateRequest received:', message, props);
 
     try {
       const status = message.payload
-        .reservationUpdateStatus as OCPP2_1.ReservationUpdateStatusEnumType;
+        .reservationUpdateStatus as OCPP2_common_types.ReservationUpdateStatusEnumType;
       const reservation = await this._reservationRepository.readOnlyOneByQuery(
         message.context.tenantId,
         {
@@ -533,7 +536,7 @@ export class EVDriverModule extends AbstractModule {
     }
 
     // Create response
-    const response: OCPP2_1.ReservationStatusUpdateResponse = {};
+    const response: OCPP2_response_types.ReservationStatusUpdateResponse = {};
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('ReservationStatusUpdate response sent: ', messageConfirmation);
@@ -545,7 +548,7 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.RequestStartTransaction)
   protected async _handleRequestStartTransaction(
-    message: IMessage<OCPP2_1.RequestStartTransactionResponse>,
+    message: IMessage<OCPP2_response_types.RequestStartTransactionResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('RequestStartTransactionResponse received:', message, props);
@@ -594,7 +597,7 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.RequestStopTransaction)
   protected async _handleRequestStopTransaction(
-    message: IMessage<OCPP2_1.RequestStopTransactionResponse>,
+    message: IMessage<OCPP2_response_types.RequestStopTransactionResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('RequestStopTransactionResponse received:', message, props);
@@ -602,7 +605,7 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.CancelReservation)
   protected async _handleCancelReservation(
-    message: IMessage<OCPP2_1.CancelReservationResponse>,
+    message: IMessage<OCPP2_response_types.CancelReservationResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('CancelReservationResponse received:', message, props);
@@ -632,7 +635,7 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ReserveNow)
   protected async _handleReserveNow(
-    message: IMessage<OCPP2_1.ReserveNowResponse>,
+    message: IMessage<OCPP2_response_types.ReserveNowResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('ReserveNowResponse received:', message, props);
@@ -664,7 +667,7 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.UnlockConnector)
   protected async _handleUnlockConnector(
-    message: IMessage<OCPP2_1.UnlockConnectorResponse>,
+    message: IMessage<OCPP2_response_types.UnlockConnectorResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('UnlockConnectorResponse received:', message, props);
@@ -672,7 +675,7 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ClearCache)
   protected async _handleClearCache(
-    message: IMessage<OCPP2_1.ClearCacheResponse>,
+    message: IMessage<OCPP2_response_types.ClearCacheResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('ClearCacheResponse received:', message, props);
@@ -680,7 +683,7 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.SendLocalList)
   protected async _handleSendLocalList(
-    message: IMessage<OCPP2_1.SendLocalListResponse>,
+    message: IMessage<OCPP2_response_types.SendLocalListResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('SendLocalListResponse received:', message, props);
@@ -747,7 +750,7 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetLocalListVersion)
   protected async _handleGetLocalListVersion(
-    message: IMessage<OCPP2_1.GetLocalListVersionResponse>,
+    message: IMessage<OCPP2_response_types.GetLocalListVersionResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('GetLocalListVersionResponse received:', message, props);

@@ -113,6 +113,7 @@ export function createLocalConfig() {
           OCPP_CallAction.GetReport,
           OCPP_CallAction.GetBaseReport,
           OCPP_CallAction.GetMonitoringReport,
+          OCPP_CallAction.GetDiagnostics,
         ],
         requests: [
           OCPP_CallAction.LogStatusNotification,
@@ -120,6 +121,7 @@ export function createLocalConfig() {
           OCPP_CallAction.NotifyReport,
           OCPP_CallAction.SecurityEventNotification,
           OCPP_CallAction.NotifyMonitoringReport,
+          OCPP_CallAction.DiagnosticsStatusNotification,
         ],
       },
       smartcharging: {
