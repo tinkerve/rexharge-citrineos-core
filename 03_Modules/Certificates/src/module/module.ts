@@ -20,7 +20,6 @@ import {
   OCPP_2_VER_LIST,
   OcppError,
   OCPPValidator,
-  OCPPVersion,
   type SystemConfig,
   OCPP2_1,
   OCPP2_response_types,
