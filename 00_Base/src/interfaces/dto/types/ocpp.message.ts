@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { OCPP_CallAction, OCPPVersion } from '../../../ocpp/rpc/message.js';
-import { MessageOrigin } from '../../messages/index.js';
+import { MessageOrigin, MessageState } from '../../messages/index.js';
 
 export const CallActionSchema = z.enum(OCPP_CallAction);
 export const MessageOriginSchema = z.enum(MessageOrigin);

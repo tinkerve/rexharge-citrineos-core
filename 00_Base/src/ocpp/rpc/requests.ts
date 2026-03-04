@@ -78,3 +78,11 @@ export type ReserveNowRequest = OCPP2_1.ReserveNowRequest | OCPP2_0_1.ReserveNow
 export type TransactionEventRequest =
   | OCPP2_1.TransactionEventRequest
   | OCPP2_0_1.TransactionEventRequest;
+
+export type CertificateSignedRequest =
+  | OCPP2_1.CertificateSignedRequest
+  | OCPP2_0_1.CertificateSignedRequest;
+
+export type GetInstalledCertificateIdsRequest =
+  | OCPP2_1.GetInstalledCertificateIdsRequest
+  | OCPP2_0_1.GetInstalledCertificateIdsRequest;

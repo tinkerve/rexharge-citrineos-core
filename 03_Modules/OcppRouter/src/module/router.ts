@@ -50,6 +50,7 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
 import { WebhookDispatcher } from './webhook.dispatcher.js';
+import { NO_ACTION } from '@citrineos/base';
 
 /**
  * Implementation of the ocpp router

@@ -1,18 +1,6 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type {
-  BootstrapConfig,
-  CallAction,
-  HandlerProperties,
-  ICache,
-  IMessage,
-  IMessageHandler,
-  IMessageSender,
-  SystemConfig,
-  OCPP2_request_types,
-  OCPP2_response_types,
-} from '@citrineos/base';
 import {
   AbstractModule,
   AsHandler,
@@ -20,11 +8,25 @@ import {
   type CallAction,
   ErrorCode,
   EventGroup,
-  OCPP2_1,
+  type HandlerProperties,
+  type ICache,
+  type IFileStorage,
+  type IMessage,
+  type IMessageHandler,
+  type IMessageSender,
+  MessageOrigin,
+  OCPP2_0_1,
   OCPP_CallAction,
-  OCPP2_0_1_Namespace,
   OCPP_2_VER_LIST,
   OcppError,
+  OCPPValidator,
+  OCPPVersion,
+  type SystemConfig,
+  OCPP2_1,
+  OCPP2_response_types,
+  OCPP2_request_types,
+  OCPP2_common_types,
+  type CertificateUseEnumType,
 } from '@citrineos/base';
 import type {
   ICertificateRepository,
@@ -282,7 +284,7 @@ export class CertificatesModule extends AbstractModule {
     const tenantId = message.context.tenantId;
     const stationId: string = message.context.stationId;
     const csrString: string = message.payload.csr.replace(/\n/g, '');
-    const certificateType: OCPP2_1.CertificateSigningUseEnumType | undefined | null =
+    const certificateType: OCPP2_common_types.CertificateSigningUseEnumType | undefined | null =
       message.payload.certificateType;
 
     // Validate PEM format
@@ -341,35 +343,29 @@ export class CertificatesModule extends AbstractModule {
       tenantId,
       stationId,
       certificateChainPem,
-      certificateType as unknown as OCPP2_0_1.InstallCertificateUseEnumType,
+      certificateType as unknown as CertificateUseEnumType,
     );
 
-    await this.sendCall(
-      stationId,
-      message.context.tenantId,
-      message.protocol,
-      OCPP_CallAction.CertificateSigned,
-      {
-        certificateChain: certificateChainPem,
-        certificateType: certificateType,
-      } as OCPP2_1.CertificateSignedRequest,
-    );
+    await this.sendCall(stationId, tenantId, message.protocol, OCPP_CallAction.CertificateSigned, {
+      certificateChain: certificateChainPem,
+      certificateType: certificateType,
+    } as OCPP2_request_types.CertificateSignedRequest);
   }
 
   /**
    * Handle responses
    */
 
-  @AsHandler(OCPPVersion.OCPP2_0_1, OCPP2_0_1_CallAction.CertificateSigned)
+  @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.CertificateSigned)
   protected async _handleCertificateSigned(
-    message: IMessage<OCPP2_response_types.CertificateSignedResponse.CertificateSignedResponse>,
+    message: IMessage<OCPP2_response_types.CertificateSignedResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('CertificateSigned received:', message, props);
     await this.installCertificateHelperService.finalizeInstalledCertificate(
       message.context.tenantId,
       message.context.stationId,
-      message.payload.status as unknown as OCPP2_0_1.InstallCertificateStatusEnumType,
+      message.payload.status as unknown as OCPP2_common_types.InstallCertificateStatusEnumType,
     );
     // TODO: If rejected, retry and/or send to callbackUrl if originally part of a triggered refresh
     // TODO: If accepted, revoke old certificate
@@ -424,36 +420,23 @@ export class CertificatesModule extends AbstractModule {
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('GetInstalledCertificateIds received:', message, props);
-    const certificateHashDataList: OCPP2_1.CertificateHashDataChainType[] =
+    const tenantId = message.context.tenantId;
+    const stationId = message.context.stationId;
+    const correlationId = message.context.correlationId;
+    const certificateHashDataList: OCPP2_common_types.CertificateHashDataChainType[] =
       message.payload.certificateHashDataChain!;
-    // persist installed certificate information
-    if (certificateHashDataList && certificateHashDataList.length > 0) {
-      // delete previous hashes for station
-      await this.deleteExistingMatchingCertificateHashes(
-        message.context.tenantId,
-        message.context.stationId,
-        certificateHashDataList,
-      );
-      // save new hashes
-      const records = certificateHashDataList.map(
-        (certificateHashDataWrap: OCPP2_1.CertificateHashDataChainType) => {
-          const certificateHashData = certificateHashDataWrap.certificateHashData;
-          const certificateType = certificateHashDataWrap.certificateType;
-          return {
-            tenantId: message.context.tenantId,
-            stationId: message.context.stationId,
-            hashAlgorithm: certificateHashData.hashAlgorithm,
-            issuerNameHash: certificateHashData.issuerNameHash,
-            issuerKeyHash: certificateHashData.issuerKeyHash,
-            serialNumber: certificateHashData.serialNumber,
-            certificateType: certificateType,
-          } as InstalledCertificate;
+    if (message.payload.status === OCPP2_1.GetInstalledCertificateStatusEnumType.NotFound) {
+      const request = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
+        where: {
+          stationId,
+          correlationId,
+          origin: MessageOrigin.ChargingStationManagementSystem,
         },
       });
       if (request) {
         // should always be true
         const getInstalledCertificateIdsRequest = request
-          .message[3] as OCPP2_0_1.GetInstalledCertificateIdsRequest;
+          .message[3] as OCPP2_request_types.GetInstalledCertificateIdsRequest;
         let certificateType;
         if (
           getInstalledCertificateIdsRequest &&
@@ -487,7 +470,8 @@ export class CertificatesModule extends AbstractModule {
     if (certificateHashDataList && certificateHashDataList.length > 0) {
       for (const certificateHashDataWrap of certificateHashDataList) {
         const certificateHashData = certificateHashDataWrap.certificateHashData;
-        const certificateType = certificateHashDataWrap.certificateType;
+        const certificateType =
+          certificateHashDataWrap.certificateType as unknown as CertificateUseEnumType;
         let existingInstalledCertificate =
           await this._installedCertificateRepository.readOnlyOneByQuery(tenantId, {
             where: {
@@ -522,7 +506,7 @@ export class CertificatesModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.InstallCertificate)
   protected async _handleInstallCertificate(
-    message: IMessage<OCPP2_response_types.InstallCertificateResponse>,
+    message: IMessage<OCPP2_0_1.InstallCertificateResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('InstallCertificate received:', message, props);
@@ -537,7 +521,7 @@ export class CertificatesModule extends AbstractModule {
     csrString: string,
     tenantId: number,
     stationId: string,
-    certificateType?: OCPP2_1.CertificateSigningUseEnumType | null,
+    certificateType?: OCPP2_common_types.CertificateSigningUseEnumType | null,
   ): Promise<void> {
     // Verify certificate type
     if (
@@ -583,33 +567,5 @@ export class CertificatesModule extends AbstractModule {
     }
 
     this._logger.info(`Verified SignCertRequest for station ${stationId} successfully.`);
-  }
-
-  private async deleteExistingMatchingCertificateHashes(
-    tenantId: number,
-    stationId: string,
-    certificateHashDataList: OCPP2_1.CertificateHashDataChainType[],
-  ) {
-    try {
-      const certificateTypes = certificateHashDataList.map((certificateHashData) => {
-        return certificateHashData.certificateType;
-      });
-      if (certificateTypes && certificateTypes.length > 0) {
-        await this._installedCertificateRepository.deleteAllByQuery(tenantId, {
-          where: {
-            tenantId,
-            stationId,
-            certificateType: {
-              [Op.in]: certificateTypes,
-            },
-          },
-        });
-      }
-    } catch (error: any) {
-      this._logger.error(
-        'GetInstalledCertificateIds failed to delete previous certificates',
-        error,
-      );
-    }
   }
 }

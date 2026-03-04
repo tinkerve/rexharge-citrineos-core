@@ -14,6 +14,7 @@ import type {
   ChargingProfilePurposeEnumType,
   OCPP2_common_types,
   OCPP2_request_types,
+  OCPPMessageDto,
 } from '@citrineos/base';
 import type {
   Authorization,
@@ -359,8 +360,7 @@ export interface ITransactionEventRepository extends CrudRepository<TransactionE
   ): Promise<Transaction | undefined>;
 }
 
-export interface IVariableMonitoringRepository
-  extends CrudRepository<OCPP2_common_types.VariableMonitoringType> {
+export interface IVariableMonitoringRepository extends CrudRepository<VariableMonitoring> {
   createOrUpdateByMonitoringDataTypeAndStationId(
     tenantId: number,
     value: OCPP2_common_types.MonitoringDataType,
@@ -400,7 +400,7 @@ export interface IVariableMonitoringRepository
   ): Promise<EventData>;
 }
 
-export interface IMessageInfoRepository extends CrudRepository<OCPP2_common_types.MessageInfoType> {
+export interface IMessageInfoRepository extends CrudRepository<MessageInfo> {
   deactivateAllByStationId(tenantId: number, stationId: string): Promise<void>;
   createOrUpdateByMessageInfoTypeAndStationId(
     tenantId: number,

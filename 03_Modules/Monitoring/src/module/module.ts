@@ -23,6 +23,7 @@ import {
   OCPP_2_VER_LIST,
   OCPP_CallAction,
   OCPPVersion,
+  OCPPValidator,
 } from '@citrineos/base';
 import type { IDeviceModelRepository, IVariableMonitoringRepository } from '@citrineos/data';
 import {

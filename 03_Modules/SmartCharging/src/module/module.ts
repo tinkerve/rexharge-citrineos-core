@@ -12,17 +12,21 @@ import type {
   SystemConfig,
   OCPP2_request_types,
   OCPP2_response_types,
+  OCPPValidator,
 } from '@citrineos/base';
 import {
   AbstractModule,
   AsHandler,
   ChargingStationSequenceTypeEnum,
   EventGroup,
+  OCPP1_6,
   OCPP2_1,
   OCPP2_0_1,
   OCPP_2_VER_LIST,
   OCPP_CallAction,
   OCPPVersion,
+  ChargingLimitSourceEnum,
+  MessageOrigin,
 } from '@citrineos/base';
 import type {
   IChargingProfileRepository,
@@ -559,7 +563,7 @@ export class SmartChargingModule extends AbstractModule {
    * OCPP 1.6 response handlers
    */
 
-  @AsHandler(OCPPVersion.OCPP1_6, OCPP1_6_CallAction.SetChargingProfile)
+  @AsHandler([OCPPVersion.OCPP1_6], OCPP_CallAction.SetChargingProfile)
   protected async _handleOcpp16SetChargingProfile(
     message: IMessage<OCPP1_6.SetChargingProfileResponse>,
     props?: HandlerProperties,
@@ -605,7 +609,7 @@ export class SmartChargingModule extends AbstractModule {
     }
   }
 
-  @AsHandler(OCPPVersion.OCPP1_6, OCPP1_6_CallAction.ClearChargingProfile)
+  @AsHandler([OCPPVersion.OCPP1_6], OCPP_CallAction.ClearChargingProfile)
   protected async _handleOcpp16ClearChargingProfile(
     message: IMessage<OCPP1_6.ClearChargingProfileResponse>,
     props?: HandlerProperties,
@@ -637,7 +641,7 @@ export class SmartChargingModule extends AbstractModule {
     }
   }
 
-  @AsHandler(OCPPVersion.OCPP1_6, OCPP1_6_CallAction.GetCompositeSchedule)
+  @AsHandler([OCPPVersion.OCPP1_6], OCPP_CallAction.GetCompositeSchedule)
   protected async _handleOcpp16GetCompositeSchedule(
     message: IMessage<OCPP1_6.GetCompositeScheduleResponse>,
     props?: HandlerProperties,

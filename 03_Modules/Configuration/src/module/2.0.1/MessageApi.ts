@@ -284,7 +284,7 @@ export class ConfigurationOcpp201Api
     return Promise.all(results);
   }
 
-  @AsMessageEndpoint(OCPP2_0_1_CallAction.DataTransfer, OCPP2_0_1.DataTransferRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.DataTransfer, OCPP2_0_1.DataTransferRequestSchema)
   dataTransfer(
     identifier: string[],
     request: OCPP2_0_1.DataTransferRequest,
@@ -296,7 +296,7 @@ export class ConfigurationOcpp201Api
         id,
         tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.DataTransfer,
+        OCPP_CallAction.DataTransfer,
         request,
         callbackUrl,
       ),

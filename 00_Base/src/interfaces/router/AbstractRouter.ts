@@ -23,15 +23,10 @@ import type {
 import {
   MessageOrigin,
   MessageState,
-  OCPP1_6_CALL_RESULT_SCHEMA_RECORD,
-  OCPP1_6_CALL_SCHEMA_RECORD,
-  OCPP_CallAction,
-  OCPP2_0_1_CALL_RESULT_SCHEMA_RECORD,
-  OCPP2_0_1_CALL_SCHEMA_RECORD,
-  OCPP2_1_CALL_SCHEMA_RECORD,
-  OCPP2_1_CALL_RESULT_SCHEMA_RECORD,
   OcppError,
   OCPPVersion,
+  OCPPValidator,
+  ErrorCode,
 } from '../../index.js';
 import type { IMessageRouter } from './Router.js';
 
@@ -233,57 +228,17 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
     let protocolEnum: OCPPVersion | undefined;
     switch (protocol) {
       case OCPPVersion.OCPP1_6:
-        schema = OCPP1_6_CALL_SCHEMA_RECORD[action];
+        protocolEnum = OCPPVersion.OCPP1_6;
         break;
       case OCPPVersion.OCPP2_0_1:
-        schema = OCPP2_0_1_CALL_SCHEMA_RECORD[action];
-        break;
-      case OCPPVersion.OCPP2_1:
-        schema = OCPP2_1_CALL_SCHEMA_RECORD[action];
+        protocolEnum = OCPPVersion.OCPP2_0_1;
         break;
       default:
         this._logger.error('Unknown subprotocol', protocol);
         return { isValid: false };
     }
 
-    if (schema) {
-      let validate = this._ajv.getSchema(schema['$id']);
-      if (!validate) {
-        schema['$id'] = `${protocol}-${schema['$id']}`;
-        this._logger.debug(`Updated call result schema id: ${schema['$id']}`);
-        validate = this._ajv.compile(schema);
-      }
-      const result = validate(payload);
-      if (!result) {
-        const validationErrorsDeepCopy = JSON.parse(JSON.stringify(validate.errors));
-        this._logger.debug('Validate Call failed', validationErrorsDeepCopy);
-        return { isValid: false, errors: validationErrorsDeepCopy };
-      } else {
-        if (action === OCPP_CallAction.DataTransfer) {
-          const dataTransferRequest: { vendorId: string; messageId?: string; data: string } =
-            payload as any;
-          const dataTransferPayloadValidate = this._ajv.getSchema(
-            `${protocol}-${dataTransferRequest.vendorId}${dataTransferRequest.messageId ? `-${dataTransferRequest.messageId}` : ''}`,
-          );
-          if (dataTransferPayloadValidate) {
-            const dataTransferPayloadResult = dataTransferPayloadValidate(
-              JSON.parse(dataTransferRequest.data),
-            );
-            if (!dataTransferPayloadResult) {
-              const validationErrorsDeepCopy = JSON.parse(
-                JSON.stringify(dataTransferPayloadValidate.errors),
-              );
-              this._logger.debug('Validate DataTransfer payload failed', validationErrorsDeepCopy);
-              return { isValid: false, errors: validationErrorsDeepCopy };
-            }
-          }
-        }
-        return { isValid: true };
-      }
-    } else {
-      this._logger.error('No schema found for action', action, message);
-      return { isValid: false }; // TODO: Implement config for this behavior
-    }
+    return this._ocppValidator.validateOCPPRequest(action, payload, protocolEnum);
   }
 
   /**
@@ -306,13 +261,13 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
     let protocolEnum: OCPPVersion | undefined;
     switch (protocol) {
       case OCPPVersion.OCPP1_6:
-        schema = OCPP1_6_CALL_RESULT_SCHEMA_RECORD[action];
+        protocolEnum = OCPPVersion.OCPP1_6;
         break;
       case OCPPVersion.OCPP2_0_1:
-        schema = OCPP2_0_1_CALL_RESULT_SCHEMA_RECORD[action];
+        protocolEnum = OCPPVersion.OCPP2_0_1;
         break;
       case OCPPVersion.OCPP2_1:
-        schema = OCPP2_1_CALL_RESULT_SCHEMA_RECORD[action];
+        protocolEnum = OCPPVersion.OCPP2_1;
         break;
       default:
         this._logger.error('Unknown subprotocol', protocol);

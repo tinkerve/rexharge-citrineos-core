@@ -37,3 +37,21 @@ export type DataTransferStatusEnumType =
 export type ReservationUpdateStatusEnumType =
   | OCPP2_1.ReservationUpdateStatusEnumType
   | OCPP2_0_1.ReservationUpdateStatusEnumType;
+
+export type InstallCertificateUseEnumType =
+  | OCPP2_1.InstallCertificateUseEnumType
+  | OCPP2_0_1.InstallCertificateUseEnumType;
+export type InstallCertificateStatusEnumType =
+  | OCPP2_1.InstallCertificateStatusEnumType
+  | OCPP2_0_1.InstallCertificateStatusEnumType;
+export type Iso15118EVCertificateStatusEnumType =
+  | OCPP2_1.Iso15118EVCertificateStatusEnumType
+  | OCPP2_0_1.Iso15118EVCertificateStatusEnumType;
+
+export type CertificateSigningUseEnumType =
+  | OCPP2_1.CertificateSigningUseEnumType
+  | OCPP2_0_1.CertificateSigningUseEnumType;
+
+export type CertificateHashDataChainType =
+  | OCPP2_1.CertificateHashDataChainType
+  | OCPP2_0_1.CertificateHashDataChainType;

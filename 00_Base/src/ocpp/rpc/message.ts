@@ -4,7 +4,6 @@
 
 import { Expose } from 'class-transformer';
 import type { OcppRequest, OcppResponse } from '../../index.js';
-import { Expose } from 'class-transformer';
 
 /**
  * Definition of Call Message (4.2.1 CALL)
