@@ -1,3 +1,14 @@
+// SPDX-FileCopyrightText: 2026 Contributors to the CitrineOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+
+/**
+ * APN. APN_ Authentication. APN_ Authentication_ Code
+ * urn:x-oca:ocpp:uid:1:568828
+ * Authentication method.
+ *
+ */
+
 import type { OCPP2_0_1, OCPP2_1 } from '../../index.js';
 export type EventDataType = OCPP2_1.EventDataType | OCPP2_0_1.EventDataType;
 export type UpdateEnumType = OCPP2_1.UpdateEnumType | OCPP2_0_1.UpdateEnumType;
