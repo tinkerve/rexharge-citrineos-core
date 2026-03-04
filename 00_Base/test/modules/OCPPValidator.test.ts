@@ -636,7 +636,7 @@ describe('OCPPValidator', () => {
         version === OCPPVersion.OCPP2_0_1
           ? OCPP2_0_1_CALL_SCHEMA_RECORD
           : OCPP1_6_CALL_SCHEMA_RECORD;
-      expect(schemaMap.get(action)).toBeDefined();
+      expect(schemaMap[action]).toBeDefined();
     });
 
     it.each([

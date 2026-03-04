@@ -389,7 +389,7 @@ describe('MessageRouterImpl', () => {
 
         expect(networkHook).toHaveBeenCalled();
         const sentMessage = JSON.parse(networkHook.mock.calls[0][1]);
-        expect(sentMessage[2]).toBe(ErrorCode.FormationViolation);
+        expect(sentMessage[2]).toBe(ErrorCode.FormatViolation);
       });
 
       it('should send CallError with FormatViolation for ocpp2.0.1 unknown message type', async () => {

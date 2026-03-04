@@ -132,15 +132,33 @@ export interface OcppResponse {}
 export const OCPP1_6_CALL_SCHEMA_RECORD: Record<string, object> = {
   [OCPP_CallAction.Authorize]: OCPP1_6.AuthorizeRequestSchema,
   [OCPP_CallAction.BootNotification]: OCPP1_6.BootNotificationRequestSchema,
+  [OCPP_CallAction.CancelReservation]: OCPP1_6.CancelReservationRequestSchema,
+  [OCPP_CallAction.ChangeAvailability]: OCPP1_6.ChangeAvailabilityRequestSchema,
+  [OCPP_CallAction.ChangeConfiguration]: OCPP1_6.ChangeConfigurationRequestSchema,
+  [OCPP_CallAction.ClearCache]: OCPP1_6.ClearCacheRequestSchema,
+  [OCPP_CallAction.ClearChargingProfile]: OCPP1_6.ClearChargingProfileRequestSchema,
   [OCPP_CallAction.DataTransfer]: OCPP1_6.DataTransferRequestSchema,
   [OCPP_CallAction.DiagnosticsStatusNotification]:
     OCPP1_6.DiagnosticsStatusNotificationRequestSchema,
   [OCPP_CallAction.FirmwareStatusNotification]: OCPP1_6.FirmwareStatusNotificationRequestSchema,
+  [OCPP_CallAction.GetCompositeSchedule]: OCPP1_6.GetCompositeScheduleRequestSchema,
+  [OCPP_CallAction.GetConfiguration]: OCPP1_6.GetConfigurationRequestSchema,
+  [OCPP_CallAction.GetDiagnostics]: OCPP1_6.GetDiagnosticsRequestSchema,
+  [OCPP_CallAction.GetLocalListVersion]: OCPP1_6.GetLocalListVersionRequestSchema,
   [OCPP_CallAction.Heartbeat]: OCPP1_6.HeartbeatRequestSchema,
   [OCPP_CallAction.MeterValues]: OCPP1_6.MeterValuesRequestSchema,
+  [OCPP_CallAction.RemoteStartTransaction]: OCPP1_6.RemoteStartTransactionRequestSchema,
+  [OCPP_CallAction.RemoteStopTransaction]: OCPP1_6.RemoteStopTransactionRequestSchema,
+  [OCPP_CallAction.ReserveNow]: OCPP1_6.ReserveNowRequestSchema,
+  [OCPP_CallAction.Reset]: OCPP1_6.ResetRequestSchema,
+  [OCPP_CallAction.SendLocalList]: OCPP1_6.SendLocalListRequestSchema,
+  [OCPP_CallAction.SetChargingProfile]: OCPP1_6.SetChargingProfileRequestSchema,
   [OCPP_CallAction.StartTransaction]: OCPP1_6.StartTransactionRequestSchema,
   [OCPP_CallAction.StatusNotification]: OCPP1_6.StatusNotificationRequestSchema,
   [OCPP_CallAction.StopTransaction]: OCPP1_6.StopTransactionRequestSchema,
+  [OCPP_CallAction.TriggerMessage]: OCPP1_6.TriggerMessageRequestSchema,
+  [OCPP_CallAction.UnlockConnector]: OCPP1_6.UnlockConnectorRequestSchema,
+  [OCPP_CallAction.UpdateFirmware]: OCPP1_6.UpdateFirmwareRequestSchema,
 };
 
 // Action requests supported by OCPP 2.0.1
@@ -292,6 +310,16 @@ export const OCPP2_1_CALL_SCHEMA_RECORD: Record<string, object> = {
 };
 
 export const OCPP1_6_CALL_RESULT_SCHEMA_RECORD: Record<string, object> = {
+  [OCPP_CallAction.Authorize]: OCPP1_6.AuthorizeResponseSchema,
+  [OCPP_CallAction.BootNotification]: OCPP1_6.BootNotificationResponseSchema,
+  [OCPP_CallAction.CancelReservation]: OCPP1_6.CancelReservationResponseSchema,
+  [OCPP_CallAction.ChangeAvailability]: OCPP1_6.ChangeAvailabilityResponseSchema,
+  [OCPP_CallAction.ChangeConfiguration]: OCPP1_6.ChangeConfigurationResponseSchema,
+  [OCPP_CallAction.ClearCache]: OCPP1_6.ClearCacheResponseSchema,
+  [OCPP_CallAction.ClearChargingProfile]: OCPP1_6.ClearChargingProfileResponseSchema,
+  [OCPP_CallAction.DataTransfer]: OCPP1_6.DataTransferResponseSchema,
+  [OCPP_CallAction.DiagnosticsStatusNotification]:
+    OCPP1_6.DiagnosticsStatusNotificationResponseSchema,
   [OCPP_CallAction.FirmwareStatusNotification]: OCPP1_6.FirmwareStatusNotificationResponseSchema,
   [OCPP_CallAction.GetCompositeSchedule]: OCPP1_6.GetCompositeScheduleResponseSchema,
   [OCPP_CallAction.GetConfiguration]: OCPP1_6.GetConfigurationResponseSchema,
