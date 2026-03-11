@@ -13,7 +13,7 @@ import {
   Namespace,
   OCPP1_6_Namespace,
   OCPP2_0_1,
-  OCPP2_0_1_CallAction,
+  OCPP_CallAction,
   OCPP2_0_1_Namespace,
   OCPPVersion,
   type WebsocketServerConfig,
@@ -331,7 +331,7 @@ export class CertificatesDataApi
         installReq.stationId,
         installReq.tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.InstallCertificate,
+        OCPP_CallAction.InstallCertificate,
         {
           certificateType: installReq.certificateType,
           certificate: rootCAPem,

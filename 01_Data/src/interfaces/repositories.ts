@@ -5,20 +5,17 @@
 import type {
   BootConfig,
   CallAction,
-  ChargingLimitSourceEnumType,
-  ChargingProfilePurposeEnumType,
   ChargingStationSequenceTypeEnumType,
   CrudRepository,
   MeterValueDto,
   OCPP1_6,
-  OCPP2_0_1,
-  OCPPMessageDto,
   OCPPVersion,
+  ChargingLimitSourceEnumType,
+  ChargingProfilePurposeEnumType,
+  OCPP2_common_types,
+  OCPP2_request_types,
+  OCPPMessageDto,
 } from '@citrineos/base';
-import type {
-  ChargingProfileInput,
-  CompositeScheduleInput,
-} from '../layers/sequelize/mapper/2.0.1/ChargingProfileMapper.js';
 import type {
   Authorization,
   Boot,
@@ -64,6 +61,10 @@ import {
 import type { VariableAttributeQuerystring } from './index.js';
 import type { AuthorizationQuerystring } from './queries/Authorization.js';
 import type { TariffQueryString } from './queries/Tariff.js';
+import type {
+  ChargingProfileInput,
+  CompositeScheduleInput,
+} from '../layers/sequelize/mapper/2.0.1/ChargingProfileMapper.js';
 
 export interface IAuthorizationRepository extends CrudRepository<Authorization> {
   readAllByQuerystring: (
@@ -87,8 +88,8 @@ export interface IBootRepository extends CrudRepository<BootConfig> {
   ) => Promise<Boot | undefined>;
   updateStatusByKey: (
     tenantId: number,
-    status: OCPP2_0_1.RegistrationStatusEnumType,
-    statusInfo: OCPP2_0_1.StatusInfoType | undefined,
+    status: OCPP2_common_types.RegistrationStatusEnumType,
+    statusInfo: OCPP2_common_types.StatusInfoType | undefined,
     key: string,
   ) => Promise<Boot | undefined>;
   updateLastBootTimeByKey: (
@@ -101,35 +102,36 @@ export interface IBootRepository extends CrudRepository<BootConfig> {
   deleteByKey: (tenantId: number, key: string) => Promise<Boot | undefined>;
 }
 
-export interface IDeviceModelRepository extends CrudRepository<OCPP2_0_1.VariableAttributeType> {
+export interface IDeviceModelRepository
+  extends CrudRepository<OCPP2_common_types.VariableAttributeType> {
   createOrUpdateDeviceModelByStationId(
     tenantId: number,
-    value: OCPP2_0_1.ReportDataType,
+    value: OCPP2_common_types.ReportDataType,
     stationId: string,
     isoTimestamp: string,
   ): Promise<VariableAttribute[]>;
   createOrUpdateByGetVariablesResultAndStationId(
     tenantId: number,
-    getVariablesResult: OCPP2_0_1.GetVariableResultType[],
+    getVariablesResult: OCPP2_common_types.GetVariableResultType[],
     stationId: string,
     isoTimestamp: string,
   ): Promise<VariableAttribute[]>;
   createOrUpdateBySetVariablesDataAndStationId(
     tenantId: number,
-    setVariablesData: OCPP2_0_1.SetVariableDataType[],
+    setVariablesData: OCPP2_common_types.SetVariableDataType[],
     stationId: string,
     isoTimestamp: string,
   ): Promise<VariableAttribute[]>;
   updateResultByStationId(
     tenantId: number,
-    result: OCPP2_0_1.SetVariableResultType,
+    result: OCPP2_common_types.SetVariableResultType,
     stationId: string,
     isoTimestamp: string,
   ): Promise<VariableAttribute | undefined>;
   readAllSetVariableByStationId(
     tenantId: number,
     stationId: string,
-  ): Promise<OCPP2_0_1.SetVariableDataType[]>;
+  ): Promise<OCPP2_common_types.SetVariableDataType[]>;
   readAllByQuerystring(
     tenantId: number,
     query: VariableAttributeQuerystring,
@@ -141,17 +143,17 @@ export interface IDeviceModelRepository extends CrudRepository<OCPP2_0_1.Variabl
   ): Promise<VariableAttribute[]>;
   findComponentAndVariable(
     tenantId: number,
-    componentType: OCPP2_0_1.ComponentType,
-    variableType: OCPP2_0_1.VariableType,
+    componentType: OCPP2_common_types.ComponentType,
+    variableType: OCPP2_common_types.VariableType,
   ): Promise<[Component | undefined, Variable | undefined]>;
   findOrCreateEvseAndComponentAndVariable(
     tenantId: number,
-    componentType: OCPP2_0_1.ComponentType,
-    variableType: OCPP2_0_1.VariableType,
+    componentType: OCPP2_common_types.ComponentType,
+    variableType: OCPP2_common_types.VariableType,
   ): Promise<[Component, Variable]>;
   findOrCreateEvseAndComponent(
     tenantId: number,
-    componentType: OCPP2_0_1.ComponentType,
+    componentType: OCPP2_common_types.ComponentType,
     stationId: string,
   ): Promise<Component>;
   findEvseByIdAndConnectorId(
@@ -181,9 +183,9 @@ export interface ILocalAuthListRepository extends CrudRepository<LocalListVersio
     tenantId: number,
     stationId: string,
     correlationId: string,
-    updateType: OCPP2_0_1.UpdateEnumType,
+    updateType: OCPP2_common_types.UpdateEnumType,
     versionNumber: number,
-    localAuthorizationList?: OCPP2_0_1.AuthorizationData[],
+    localAuthorizationList?: OCPP2_common_types.AuthorizationData[],
   ): Promise<SendLocalList>;
   /**
    * Used to process GetLocalListVersionResponse, if version is unknown it will create or update LocalListVersion with the new version and an empty localAuthorizationList.
@@ -234,7 +236,7 @@ export interface ILocationRepository extends CrudRepository<Location> {
   readConnectorByStationIdAndOcpp201EvseType: (
     tenantId: number,
     stationId: string,
-    ocpp201EvseType: OCPP2_0_1.EVSEType,
+    ocpp201EvseType: OCPP2_common_types.EVSEType,
   ) => Promise<Connector | undefined>;
   setChargingStationIsOnlineAndOCPPVersion: (
     tenantId: number,
@@ -268,7 +270,7 @@ export interface ILocationRepository extends CrudRepository<Location> {
 export interface ISecurityEventRepository extends CrudRepository<SecurityEvent> {
   createByStationId: (
     tenantId: number,
-    value: OCPP2_0_1.SecurityEventNotificationRequest,
+    value: OCPP2_request_types.SecurityEventNotificationRequest,
     stationId: string,
   ) => Promise<SecurityEvent>;
   readByStationIdAndTimestamps: (
@@ -289,12 +291,12 @@ export interface ISubscriptionRepository extends CrudRepository<Subscription> {
 export interface ITransactionEventRepository extends CrudRepository<TransactionEvent> {
   createOrUpdateTransactionByTransactionEventAndStationId(
     tenantId: number,
-    value: OCPP2_0_1.TransactionEventRequest,
+    value: OCPP2_request_types.TransactionEventRequest,
     stationId: string,
   ): Promise<Transaction>;
   createMeterValue(
     tenantId: number,
-    value: OCPP2_0_1.MeterValueType,
+    value: OCPP2_common_types.MeterValueType,
     transactionDatabaseId?: number | null,
     transactionId?: string | null,
     tariffId?: number | null,
@@ -323,8 +325,8 @@ export interface ITransactionEventRepository extends CrudRepository<TransactionE
   readAllTransactionsByStationIdAndEvseAndChargingStates(
     tenantId: number,
     stationId: string,
-    evse: OCPP2_0_1.EVSEType,
-    chargingStates?: OCPP2_0_1.ChargingStateEnumType[],
+    evse: OCPP2_common_types.EVSEType,
+    chargingStates?: OCPP2_common_types.ChargingStateEnumType[],
   ): Promise<Transaction[]>;
   readAllActiveTransactionsByAuthorizationId(
     tenantId: number,
@@ -361,14 +363,14 @@ export interface ITransactionEventRepository extends CrudRepository<TransactionE
 export interface IVariableMonitoringRepository extends CrudRepository<VariableMonitoring> {
   createOrUpdateByMonitoringDataTypeAndStationId(
     tenantId: number,
-    value: OCPP2_0_1.MonitoringDataType,
+    value: OCPP2_common_types.MonitoringDataType,
     componentId: string,
     variableId: string,
     stationId: string,
   ): Promise<VariableMonitoring[]>;
   createOrUpdateBySetMonitoringDataTypeAndStationId(
     tenantId: number,
-    value: OCPP2_0_1.SetMonitoringDataType,
+    value: OCPP2_common_types.SetMonitoringDataType,
     componentId: string,
     variableId: string,
     stationId: string,
@@ -386,12 +388,12 @@ export interface IVariableMonitoringRepository extends CrudRepository<VariableMo
   ): Promise<void>;
   updateResultByStationId(
     tenantId: number,
-    result: OCPP2_0_1.SetMonitoringResultType,
+    result: OCPP2_common_types.SetMonitoringResultType,
     stationId: string,
   ): Promise<VariableMonitoring>;
   createEventDatumByComponentIdAndVariableIdAndStationId(
     tenantId: number,
-    event: OCPP2_0_1.EventDataType,
+    event: OCPP2_common_types.EventDataType,
     componentId: string,
     variableId: string,
     stationId: string,
@@ -402,7 +404,7 @@ export interface IMessageInfoRepository extends CrudRepository<MessageInfo> {
   deactivateAllByStationId(tenantId: number, stationId: string): Promise<void>;
   createOrUpdateByMessageInfoTypeAndStationId(
     tenantId: number,
-    value: OCPP2_0_1.MessageInfoType,
+    value: OCPP2_common_types.MessageInfoType,
     stationId: string,
     componentId?: number,
   ): Promise<MessageInfo>;
@@ -436,7 +438,7 @@ export interface IChargingProfileRepository extends CrudRepository<ChargingProfi
   ): Promise<ChargingProfile>;
   createChargingNeeds(
     tenantId: number,
-    chargingNeeds: OCPP2_0_1.NotifyEVChargingNeedsRequest,
+    chargingNeeds: OCPP2_request_types.NotifyEVChargingNeedsRequest,
     stationId: string,
   ): Promise<ChargingNeeds>;
   findChargingNeedsByEvseDBIdAndTransactionDBId(
@@ -462,7 +464,7 @@ export interface IChargingProfileRepository extends CrudRepository<ChargingProfi
 export interface IReservationRepository extends CrudRepository<Reservation> {
   createOrUpdateReservation(
     tenantId: number,
-    reserveNowRequest: OCPP2_0_1.ReserveNowRequest,
+    reserveNowRequest: OCPP2_request_types.ReserveNowRequest,
     stationId: string,
     isActive?: boolean,
   ): Promise<Reservation | undefined>;

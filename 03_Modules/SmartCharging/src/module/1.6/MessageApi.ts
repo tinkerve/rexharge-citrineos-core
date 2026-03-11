@@ -12,7 +12,7 @@ import {
   AsMessageEndpoint,
   DEFAULT_TENANT_ID,
   OCPP1_6,
-  OCPP1_6_CallAction,
+  OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
 import type { FastifyInstance } from 'fastify';
@@ -39,7 +39,7 @@ export class SmartChargingOcpp16Api
     super(smartChargingModule, server, OCPPVersion.OCPP1_6, logger);
   }
 
-  @AsMessageEndpoint(OCPP1_6_CallAction.SetChargingProfile, OCPP1_6.SetChargingProfileRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.SetChargingProfile, OCPP1_6.SetChargingProfileRequestSchema)
   setChargingProfile(
     identifier: string[],
     request: OCPP1_6.SetChargingProfileRequest,
@@ -52,7 +52,7 @@ export class SmartChargingOcpp16Api
           id,
           tenantId,
           OCPPVersion.OCPP1_6,
-          OCPP1_6_CallAction.SetChargingProfile,
+          OCPP_CallAction.SetChargingProfile,
           request,
           callbackUrl,
         ),
@@ -61,7 +61,7 @@ export class SmartChargingOcpp16Api
   }
 
   @AsMessageEndpoint(
-    OCPP1_6_CallAction.ClearChargingProfile,
+    OCPP_CallAction.ClearChargingProfile,
     OCPP1_6.ClearChargingProfileRequestSchema,
   )
   clearChargingProfile(
@@ -76,7 +76,7 @@ export class SmartChargingOcpp16Api
           id,
           tenantId,
           OCPPVersion.OCPP1_6,
-          OCPP1_6_CallAction.ClearChargingProfile,
+          OCPP_CallAction.ClearChargingProfile,
           request,
           callbackUrl,
         ),
@@ -85,7 +85,7 @@ export class SmartChargingOcpp16Api
   }
 
   @AsMessageEndpoint(
-    OCPP1_6_CallAction.GetCompositeSchedule,
+    OCPP_CallAction.GetCompositeSchedule,
     OCPP1_6.GetCompositeScheduleRequestSchema,
   )
   getCompositeSchedule(
@@ -100,7 +100,7 @@ export class SmartChargingOcpp16Api
           id,
           tenantId,
           OCPPVersion.OCPP1_6,
-          OCPP1_6_CallAction.GetCompositeSchedule,
+          OCPP_CallAction.GetCompositeSchedule,
           request,
           callbackUrl,
         ),

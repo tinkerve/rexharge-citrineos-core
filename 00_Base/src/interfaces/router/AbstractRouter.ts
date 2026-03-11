@@ -20,8 +20,14 @@ import type {
   OCPPVersionType,
   SystemConfig,
 } from '../../index.js';
-import { ErrorCode, MessageOrigin, MessageState, OcppError, OCPPVersion } from '../../index.js';
-import { OCPPValidator } from '../modules/OCPPValidator.js';
+import {
+  MessageOrigin,
+  MessageState,
+  OcppError,
+  OCPPVersion,
+  OCPPValidator,
+  ErrorCode,
+} from '../../index.js';
 import type { IMessageRouter } from './Router.js';
 
 export abstract class AbstractMessageRouter implements IMessageRouter {
@@ -259,6 +265,9 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
         break;
       case OCPPVersion.OCPP2_0_1:
         protocolEnum = OCPPVersion.OCPP2_0_1;
+        break;
+      case OCPPVersion.OCPP2_1:
+        protocolEnum = OCPPVersion.OCPP2_1;
         break;
       default:
         this._logger.error('Unknown subprotocol', protocol);

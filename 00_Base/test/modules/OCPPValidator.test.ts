@@ -5,12 +5,11 @@
 import { Ajv } from 'ajv';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  OCPP1_6_CALL_RESULT_SCHEMA_MAP,
-  OCPP1_6_CALL_SCHEMA_MAP,
-  OCPP1_6_CallAction,
-  OCPP2_0_1_CALL_RESULT_SCHEMA_MAP,
-  OCPP2_0_1_CALL_SCHEMA_MAP,
-  OCPP2_0_1_CallAction,
+  OCPP1_6_CALL_RESULT_SCHEMA_RECORD,
+  OCPP1_6_CALL_SCHEMA_RECORD,
+  OCPP2_0_1_CALL_RESULT_SCHEMA_RECORD,
+  OCPP2_0_1_CALL_SCHEMA_RECORD,
+  OCPP_CallAction,
   OCPPVersion,
 } from '../../src/index.js';
 import { OCPPValidator } from '../../src/interfaces/modules/OCPPValidator.js';
@@ -121,7 +120,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPRequest(
-          OCPP1_6_CallAction.BootNotification,
+          OCPP_CallAction.BootNotification,
           payload,
           OCPPVersion.OCPP1_6,
         );
@@ -136,7 +135,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPRequest(
-          OCPP1_6_CallAction.BootNotification,
+          OCPP_CallAction.BootNotification,
           payload,
           OCPPVersion.OCPP1_6,
         );
@@ -148,7 +147,7 @@ describe('OCPPValidator', () => {
 
       it('should validate a valid Heartbeat request', () => {
         const result = validator.validateOCPPRequest(
-          OCPP1_6_CallAction.Heartbeat,
+          OCPP_CallAction.Heartbeat,
           {},
           OCPPVersion.OCPP1_6,
         );
@@ -162,7 +161,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPRequest(
-          OCPP1_6_CallAction.Authorize,
+          OCPP_CallAction.Authorize,
           payload,
           OCPPVersion.OCPP1_6,
         );
@@ -172,7 +171,7 @@ describe('OCPPValidator', () => {
 
       it('should return invalid for Authorize request missing idTag', () => {
         const result = validator.validateOCPPRequest(
-          OCPP1_6_CallAction.Authorize,
+          OCPP_CallAction.Authorize,
           {},
           OCPPVersion.OCPP1_6,
         );
@@ -185,7 +184,7 @@ describe('OCPPValidator', () => {
     describe('OCPP 2.0.1', () => {
       it('should validate a valid Heartbeat request', () => {
         const result = validator.validateOCPPRequest(
-          OCPP2_0_1_CallAction.Heartbeat,
+          OCPP_CallAction.Heartbeat,
           {},
           OCPPVersion.OCPP2_0_1,
         );
@@ -197,7 +196,7 @@ describe('OCPPValidator', () => {
     describe('OCPP 2.0.1', () => {
       it('should validate a valid RequestStartTransaction request', () => {
         const result = validator.validateOCPPRequest(
-          OCPP2_0_1_CallAction.RequestStartTransaction,
+          OCPP_CallAction.RequestStartTransaction,
           {
             remoteStartId: 0,
             evseId: 1,
@@ -215,7 +214,7 @@ describe('OCPPValidator', () => {
 
     it('should return invalid for unknown protocol version', () => {
       const result = validator.validateOCPPRequest(
-        OCPP2_0_1_CallAction.Heartbeat,
+        OCPP_CallAction.Heartbeat,
         {},
         'ocpp1.1' as OCPPVersion,
       );
@@ -226,7 +225,7 @@ describe('OCPPValidator', () => {
 
     it('should return invalid when no schema is found for the action', () => {
       const result = validator.validateOCPPRequest(
-        'UnknownAction' as OCPP2_0_1_CallAction,
+        'UnknownAction' as OCPP_CallAction,
         {},
         OCPPVersion.OCPP2_0_1,
       );
@@ -241,7 +240,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPRequest(
-          OCPP2_0_1_CallAction.DataTransfer,
+          OCPP_CallAction.DataTransfer,
           payload,
           OCPPVersion.OCPP2_0_1,
         );
@@ -255,7 +254,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPRequest(
-          OCPP1_6_CallAction.DataTransfer,
+          OCPP_CallAction.DataTransfer,
           payload,
           OCPPVersion.OCPP1_6,
         );
@@ -280,7 +279,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPRequest(
-          OCPP2_0_1_CallAction.DataTransfer,
+          OCPP_CallAction.DataTransfer,
           payload,
           OCPPVersion.OCPP2_0_1,
         );
@@ -305,7 +304,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPRequest(
-          OCPP2_0_1_CallAction.DataTransfer,
+          OCPP_CallAction.DataTransfer,
           payload,
           OCPPVersion.OCPP2_0_1,
         );
@@ -332,7 +331,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPRequest(
-          OCPP2_0_1_CallAction.DataTransfer,
+          OCPP_CallAction.DataTransfer,
           payload,
           OCPPVersion.OCPP2_0_1,
         );
@@ -347,7 +346,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPRequest(
-          OCPP2_0_1_CallAction.DataTransfer,
+          OCPP_CallAction.DataTransfer,
           payload,
           OCPPVersion.OCPP2_0_1,
         );
@@ -367,7 +366,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPResponse(
-          OCPP1_6_CallAction.BootNotification,
+          OCPP_CallAction.BootNotification,
           payload,
           OCPPVersion.OCPP1_6,
         );
@@ -382,7 +381,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPResponse(
-          OCPP1_6_CallAction.BootNotification,
+          OCPP_CallAction.BootNotification,
           payload,
           OCPPVersion.OCPP1_6,
         );
@@ -398,7 +397,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPResponse(
-          OCPP1_6_CallAction.Heartbeat,
+          OCPP_CallAction.Heartbeat,
           payload,
           OCPPVersion.OCPP1_6,
         );
@@ -408,7 +407,7 @@ describe('OCPPValidator', () => {
 
       it('should return invalid for Heartbeat response missing currentTime', () => {
         const result = validator.validateOCPPResponse(
-          OCPP1_6_CallAction.Heartbeat,
+          OCPP_CallAction.Heartbeat,
           {},
           OCPPVersion.OCPP1_6,
         );
@@ -425,7 +424,7 @@ describe('OCPPValidator', () => {
         };
 
         const result = validator.validateOCPPResponse(
-          OCPP2_0_1_CallAction.Heartbeat,
+          OCPP_CallAction.Heartbeat,
           payload,
           OCPPVersion.OCPP2_0_1,
         );
@@ -435,7 +434,7 @@ describe('OCPPValidator', () => {
 
       it('should return invalid for a malformed Heartbeat response', () => {
         const result = validator.validateOCPPResponse(
-          OCPP2_0_1_CallAction.Heartbeat,
+          OCPP_CallAction.Heartbeat,
           {},
           OCPPVersion.OCPP2_0_1,
         );
@@ -447,7 +446,7 @@ describe('OCPPValidator', () => {
 
     it('should return invalid for unknown protocol version', () => {
       const result = validator.validateOCPPResponse(
-        OCPP2_0_1_CallAction.Heartbeat,
+        OCPP_CallAction.Heartbeat,
         { currentTime: '2024-01-01T00:00:00Z' },
         'ocpp1.1' as OCPPVersion,
       );
@@ -458,7 +457,7 @@ describe('OCPPValidator', () => {
 
     it('should return invalid when no schema is found for the action', () => {
       const result = validator.validateOCPPResponse(
-        'UnknownAction' as OCPP2_0_1_CallAction,
+        'UnknownAction' as OCPP_CallAction,
         {},
         OCPPVersion.OCPP2_0_1,
       );
@@ -586,14 +585,14 @@ describe('OCPPValidator', () => {
 
       // First call compiles the schema
       const result1 = validator.validateOCPPRequest(
-        OCPP1_6_CallAction.BootNotification,
+        OCPP_CallAction.BootNotification,
         payload,
         OCPPVersion.OCPP1_6,
       );
 
       // Second call should reuse cached schema
       const result2 = validator.validateOCPPRequest(
-        OCPP1_6_CallAction.BootNotification,
+        OCPP_CallAction.BootNotification,
         { ...payload },
         OCPPVersion.OCPP1_6,
       );
@@ -605,7 +604,7 @@ describe('OCPPValidator', () => {
     it('should return errors as a deep copy that do not affect the cached validator', () => {
       // First call - get validation errors
       const result1 = validator.validateOCPPRequest(
-        OCPP1_6_CallAction.BootNotification,
+        OCPP_CallAction.BootNotification,
         {},
         OCPPVersion.OCPP1_6,
       );
@@ -617,7 +616,7 @@ describe('OCPPValidator', () => {
 
       // Second call - errors should not be affected by the mutation
       const result2 = validator.validateOCPPRequest(
-        OCPP1_6_CallAction.BootNotification,
+        OCPP_CallAction.BootNotification,
         {},
         OCPPVersion.OCPP1_6,
       );
@@ -630,23 +629,25 @@ describe('OCPPValidator', () => {
 
   describe('cross-version validation', () => {
     it.each([
-      [OCPP2_0_1_CallAction.BootNotification, OCPPVersion.OCPP2_0_1, 'OCPP 2.0.1'],
-      [OCPP1_6_CallAction.BootNotification, OCPPVersion.OCPP1_6, 'OCPP 1.6'],
+      [OCPP_CallAction.BootNotification, OCPPVersion.OCPP2_0_1, 'OCPP 2.0.1'],
+      [OCPP_CallAction.BootNotification, OCPPVersion.OCPP1_6, 'OCPP 1.6'],
     ])('should have request schemas for %s in %s', (action, version) => {
       const schemaMap =
-        version === OCPPVersion.OCPP2_0_1 ? OCPP2_0_1_CALL_SCHEMA_MAP : OCPP1_6_CALL_SCHEMA_MAP;
-      expect(schemaMap.get(action)).toBeDefined();
+        version === OCPPVersion.OCPP2_0_1
+          ? OCPP2_0_1_CALL_SCHEMA_RECORD
+          : OCPP1_6_CALL_SCHEMA_RECORD;
+      expect(schemaMap[action]).toBeDefined();
     });
 
     it.each([
-      [OCPP2_0_1_CallAction.BootNotification, OCPPVersion.OCPP2_0_1, 'OCPP 2.0.1'],
-      [OCPP1_6_CallAction.BootNotification, OCPPVersion.OCPP1_6, 'OCPP 1.6'],
+      [OCPP_CallAction.BootNotification, OCPPVersion.OCPP2_0_1, 'OCPP 2.0.1'],
+      [OCPP_CallAction.BootNotification, OCPPVersion.OCPP1_6, 'OCPP 1.6'],
     ])('should have response schemas for %s in %s', (action, version) => {
       const schemaMap =
         version === OCPPVersion.OCPP2_0_1
-          ? OCPP2_0_1_CALL_RESULT_SCHEMA_MAP
-          : OCPP1_6_CALL_RESULT_SCHEMA_MAP;
-      expect(schemaMap.get(action)).toBeDefined();
+          ? OCPP2_0_1_CALL_RESULT_SCHEMA_RECORD
+          : OCPP1_6_CALL_RESULT_SCHEMA_RECORD;
+      expect(schemaMap[action]).toBeDefined();
     });
   });
 });

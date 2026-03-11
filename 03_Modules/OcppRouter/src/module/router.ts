@@ -35,9 +35,8 @@ import {
   MessageOrigin,
   MessageState,
   MessageTypeId,
-  NO_ACTION,
-  OCPP2_0_1,
-  OCPP2_0_1_CallAction,
+  OCPP2_1,
+  OCPP_CallAction,
   OcppError,
   OCPPValidator,
   OCPPVersion,
@@ -51,6 +50,7 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
 import { WebhookDispatcher } from './webhook.dispatcher.js';
+import { NO_ACTION } from '@citrineos/base';
 
 /**
  * Implementation of the ocpp router
@@ -250,11 +250,9 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
         default: {
           let errorCode;
           switch (protocol) {
-            case 'ocpp1.6': {
-              errorCode = ErrorCode.FormationViolation;
-              break;
-            }
-            case 'ocpp2.0.1': {
+            case OCPPVersion.OCPP1_6:
+            case OCPPVersion.OCPP2_0_1:
+            case OCPPVersion.OCPP2_1: {
               errorCode = ErrorCode.FormatViolation;
               break;
             }
@@ -795,12 +793,12 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
   ): Promise<boolean> {
     const status = await this._cache.get<string>(BOOT_STATUS, identifier);
     if (
-      status === OCPP2_0_1.RegistrationStatusEnumType.Rejected &&
+      status === OCPP2_1.RegistrationStatusEnumType.Rejected &&
       // TriggerMessage<BootNotification> is the only message allowed to be sent during Rejected BootStatus B03.FR.08
       !(
-        mapToCallAction(protocol, message[2]) === OCPP2_0_1_CallAction.TriggerMessage &&
-        (message[3] as OCPP2_0_1.TriggerMessageRequest).requestedMessage ==
-          OCPP2_0_1.MessageTriggerEnumType.BootNotification
+        mapToCallAction(protocol, message[2]) === OCPP_CallAction.TriggerMessage &&
+        (message[3] as OCPP2_1.TriggerMessageRequest).requestedMessage ==
+          OCPP2_1.MessageTriggerEnumType.BootNotification
       )
     ) {
       return false;
