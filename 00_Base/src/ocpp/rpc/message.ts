@@ -420,7 +420,7 @@ export function mapToCallAction(version: OCPPVersionType, action: string): CallA
         return OCPP_CallAction[action as keyof typeof OCPP_CallAction];
       }
       throw new Error(`Invalid OCPP 2.1 action: ${action}`);
-      
+
     default:
       throw new Error(`Unsupported OCPP version: ${version}`);
   }

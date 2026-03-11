@@ -233,8 +233,8 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
       case OCPPVersion.OCPP2_0_1:
         protocolEnum = OCPPVersion.OCPP2_0_1;
         break;
-      case OCPPVersion.OCPP2_1: //Placeholder for 2.1, TODO
-        schema = OCPP2_0_1_CALL_SCHEMA_MAP.get(action);
+      case OCPPVersion.OCPP2_1:
+        protocolEnum = OCPPVersion.OCPP2_1;
         break;
       default:
         this._logger.error('Unknown subprotocol', protocol);
@@ -271,9 +271,6 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
         break;
       case OCPPVersion.OCPP2_1:
         protocolEnum = OCPPVersion.OCPP2_1;
-        break;
-      case OCPPVersion.OCPP2_1: //Placeholder for 2.1, TODO
-        schema = OCPP2_0_1_CALL_RESULT_SCHEMA_MAP.get(action);
         break;
       default:
         this._logger.error('Unknown subprotocol', protocol);
