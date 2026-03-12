@@ -53,7 +53,7 @@ base/src/ocpp/persistence/schemas/UpdateChargingStationPasswordRequestSchema.jso
 
 # Other schemas
 core/src/dal/interfaces/projections/schemas/AuthorizationRestrictionsSchema.json
-core/src/dalinterfaces/projections/schemas/TariffSchema.json
+core/src/dal/interfaces/projections/schemas/TariffSchema.json
 
 # Certificate files
 core/src/util/test/resources/ChargingStationCSRSample.pem
