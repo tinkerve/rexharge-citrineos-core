@@ -32,7 +32,7 @@ let createdCertificateInstances: any[] = [];
 let createdInstallCertificateAttemptInstances: any[] = [];
 let createdInstalledCertificateInstances: any[] = [];
 
-vi.mock('@citrineos/util', async (importOriginal) => {
+vi.mock('@citrineos/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@citrineos/core')>();
   return {
     ...actual,
@@ -40,7 +40,7 @@ vi.mock('@citrineos/util', async (importOriginal) => {
   };
 });
 
-vi.mock('@data/index.js', async (importOriginal) => {
+vi.mock('@citrineos/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@citrineos/core')>();
 
   class MockCertificate {

@@ -25,7 +25,7 @@ vi.mock('fs', async () => {
     readFileSync: fakeReadFileSync, // for `import { readFileSync } from 'fs'`
   };
 });
-vi.mock('../../../src/certificate/CertificateUtil');
+vi.mock('../../../certificate/CertificateUtil');
 
 describe('ACME', () => {
   const mockTlsCertificateChain = faker.lorem.word();

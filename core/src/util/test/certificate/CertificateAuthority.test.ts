@@ -17,7 +17,7 @@ import { readFile } from '../utils/FileUtil.js';
 import { KJUR } from 'jsrsasign';
 import { beforeAll, describe, expect, it, Mock, Mocked, vi } from 'vitest';
 
-vi.mock('../../src/certificate/CertificateUtil');
+vi.mock('../../certificate/CertificateUtil');
 vi.spyOn(KJUR.asn1.ocsp.OCSPUtil, 'getOCSPResponseInfo').mockImplementation(() => {
   // Provide a mock implementation
   return {

@@ -16,7 +16,7 @@ describe('CostCalculator', () => {
 
   beforeEach(() => {
     tariffRepository = {
-      findByStationId: vi.fn(),
+      findByConnectorId: vi.fn(),
     } as unknown as Mocked<ITariffRepository>;
 
     transactionService = {
@@ -27,7 +27,7 @@ describe('CostCalculator', () => {
   });
 
   afterEach(() => {
-    tariffRepository.findByStationId.mockReset();
+    tariffRepository.findByConnectorId.mockReset();
     transactionService.recalculateTotalKwh.mockReset();
   });
 
@@ -41,9 +41,7 @@ describe('CostCalculator', () => {
       { tariff: aTariff({ pricePerKwh: 0.61 }), kwh: 20, expectedCost: 12.2 },
     ])('should calculate cost using provided kWh', async ({ tariff, kwh, expectedCost }) => {
       givenTariff(tariff);
-      expect(
-        await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, tariff.stationId, kwh),
-      ).toBe(expectedCost);
+      expect(await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, 1, kwh)).toBe(expectedCost);
     });
 
     it.each([
@@ -79,9 +77,7 @@ describe('CostCalculator', () => {
       },
     ])('should floor cost to 2 decimal places', async ({ tariff, kwh, expectedCost }) => {
       givenTariff(tariff);
-      expect(
-        await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, tariff.stationId, kwh),
-      ).toBe(expectedCost);
+      expect(await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, 1, kwh)).toBe(expectedCost);
     });
 
     it('should return 0 when tariff not found', async () => {
@@ -93,16 +89,12 @@ describe('CostCalculator', () => {
 
     it('should return 0 when pricePerKwh is 0', async () => {
       const tariff = givenTariff(aTariff({ pricePerKwh: 0.0 }));
-      expect(
-        await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, tariff.stationId, 20.99),
-      ).toBe(0);
+      expect(await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, 1, 20.99)).toBe(0);
     });
 
     it('should return 0 when kWh is 0', async () => {
       const tariff = givenTariff(aTariff({ pricePerKwh: 0.61 }));
-      expect(await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, tariff.stationId, 0)).toBe(
-        0,
-      );
+      expect(await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, 1, 0)).toBe(0);
     });
 
     it.each([
@@ -111,14 +103,12 @@ describe('CostCalculator', () => {
       { tariff: aTariff({ pricePerKwh: 0.23 }), kwh: 0.02 },
     ])('should return 0 when calculated cost is less than 0.01', async ({ tariff, kwh }) => {
       givenTariff(tariff);
-      expect(
-        await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, tariff.stationId, kwh),
-      ).toBe(0);
+      expect(await costCalculator.calculateTotalCost(DEFAULT_TENANT_ID, 1, kwh)).toBe(0);
     });
   });
 
   function givenTariff(tariff: Tariff) {
-    tariffRepository.findByStationId.mockResolvedValue(tariff);
+    tariffRepository.findByConnectorId.mockResolvedValue(tariff);
     return tariff;
   }
 });
