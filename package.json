@@ -33,25 +33,35 @@
     "**/*.{js,ts,jsx,tsx,json,md}": "prettier --write"
   },
   "workspaces": [
-    "00_Base",
-    "01_Data",
-    "02_Util",
-    "03_Modules/Certificates",
-    "03_Modules/Configuration",
-    "03_Modules/EVDriver",
-    "03_Modules/Monitoring",
-    "03_Modules/OcppRouter",
-    "03_Modules/Reporting",
-    "03_Modules/SmartCharging",
-    "03_Modules/Tenant",
-    "03_Modules/Transactions",
+    "base",
+    "core",
     "Server"
   ],
   "engines": {
     "node": ">=24.4.1"
   },
   "devDependencies": {
+    "@types/jsrsasign": "^10.5.15",
+    "@types/node": "^25.3.3",
+    "madge": "^8.0.0",
+    "openapi-types": "^12.1.3",
     "sequelize-cli": "^6.6.2",
     "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.5",
+    "@google-cloud/storage": "^7.19.0",
+    "@peculiar/webcrypto": "^1.5.0",
+    "acme-client": "^5.4.0",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
+    "asn1js": "^3.0.7",
+    "jsrsasign": "^11.1.1",
+    "jwks-rsa": "^4.0.1",
+    "pkijs": "^3.3.3",
+    "pvutils": "^1.1.5",
+    "redis": "^4.7.1",
+    "sequelize-typescript": "^2.1.6"
   }
 }

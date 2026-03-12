@@ -23,40 +23,32 @@ import {
   type IAuthenticator,
   OCPPValidator,
 } from '@citrineos/base';
-import {
-  CertificatesDataApi,
-  CertificatesModule,
-  CertificatesOcpp201Api,
-} from '@citrineos/certificates';
+import { CertificatesDataApi, CertificatesModule, CertificatesOcpp201Api } from '@citrineos/core';
 import {
   ConfigurationDataApi,
   ConfigurationModule,
   ConfigurationOcpp16Api,
   ConfigurationOcpp201Api,
-} from '@citrineos/configuration';
-import { RepositoryStore, sequelize, Sequelize } from '@citrineos/data';
+} from '@citrineos/core';
+import { RepositoryStore, sequelize, Sequelize } from '@citrineos/core';
 import {
   EVDriverDataApi,
   EVDriverModule,
   EVDriverOcpp16Api,
   EVDriverOcpp201Api,
-} from '@citrineos/evdriver';
-import { MonitoringDataApi, MonitoringModule, MonitoringOcpp201Api } from '@citrineos/monitoring';
-import { AdminApi, MessageRouterImpl, WebhookDispatcher } from '@citrineos/ocpprouter';
-import { ReportingModule, ReportingOcpp16Api, ReportingOcpp201Api } from '@citrineos/reporting';
-import type { ISmartCharging } from '@citrineos/smartcharging';
+} from '@citrineos/core';
+import { MonitoringDataApi, MonitoringModule, MonitoringOcpp201Api } from '@citrineos/core';
+import { AdminApi, MessageRouterImpl, WebhookDispatcher } from '@citrineos/core';
+import { ReportingModule, ReportingOcpp16Api, ReportingOcpp201Api } from '@citrineos/core';
+import type { ISmartCharging } from '@citrineos/core';
 import {
   InternalSmartCharging,
   SmartChargingModule,
   SmartChargingOcpp16Api,
   SmartChargingOcpp201Api,
-} from '@citrineos/smartcharging';
-import { TenantDataApi, TenantModule } from '@citrineos/tenant';
-import {
-  TransactionsDataApi,
-  TransactionsModule,
-  TransactionsOcpp201Api,
-} from '@citrineos/transactions';
+} from '@citrineos/core';
+import { TenantDataApi, TenantModule } from '@citrineos/core';
+import { TransactionsDataApi, TransactionsModule, TransactionsOcpp201Api } from '@citrineos/core';
 import {
   apiAuthPluginFp,
   Authenticator,
@@ -78,7 +70,7 @@ import {
   RedisCache,
   UnknownStationFilter,
   WebsocketNetworkConnection,
-} from '@citrineos/util';
+} from '@citrineos/core';
 import cors from '@fastify/cors';
 import { type JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts';
 import type { FastifyInstance } from 'fastify';

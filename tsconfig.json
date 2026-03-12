@@ -7,6 +7,12 @@
   "exclude": ["./dist/**/*", "**/node_modules/**", "**/vitest.config.ts", "**/test/**"],
   "references": [
     {
+      "path": "./base"
+    },
+    {
+      "path": "./core"
+    },
+    {
       "path": "./Server"
     }
   ]

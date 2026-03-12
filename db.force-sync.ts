@@ -5,7 +5,7 @@
 
 process.env.APP_ENV = 'local';
 
-import { DefaultSequelizeInstance } from '@citrineos/data';
+import { DefaultSequelizeInstance } from '@citrineos/core';
 import { loadBootstrapConfig } from '@citrineos/base';
 
 async function initializeDatabase() {

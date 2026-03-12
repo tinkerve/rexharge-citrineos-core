@@ -1,0 +1,61 @@
+// SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+import type { ChargingStationDto, ConnectorDto, EvseDto, TenantDto } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
+import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+
+@Table
+export class Evse extends Model implements EvseDto {
+  static readonly MODEL_NAME: string = Namespace.Evse;
+
+  @Column({
+    type: DataType.STRING,
+    unique: 'stationId_evseTypeId',
+  })
+  declare stationId: string;
+
+  @Column({
+    type: DataType.INTEGER,
+    unique: 'stationId_evseTypeId',
+  })
+  declare evseTypeId?: number; // This is the serial int used in OCPP 2.0.1 to refer to the EVSE.
+
+  @Column(DataType.STRING)
+  declare evseId: string; // This is the eMI3 compliant EVSE ID
+
+  @Column(DataType.STRING)
+  declare physicalReference?: string | null; // Any identifier printed directly on the EVSE
+
+  @Column(DataType.BOOLEAN)
+  declare removed?: boolean;
+
+  declare chargingStation?: ChargingStationDto;
+
+  declare connectors?: ConnectorDto[] | null;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    onUpdate: 'CASCADE',
+    onDelete: 'RESTRICT',
+  })
+  declare tenantId: number;
+
+  declare tenant?: TenantDto;
+
+  @BeforeUpdate
+  @BeforeCreate
+  static setDefaultTenant(instance: Evse) {
+    if (instance.tenantId == null) {
+      instance.tenantId = DEFAULT_TENANT_ID;
+    }
+  }
+
+  constructor(...args: any[]) {
+    super(...args);
+    if (this.tenantId == null) {
+      this.tenantId = DEFAULT_TENANT_ID;
+    }
+  }
+}
