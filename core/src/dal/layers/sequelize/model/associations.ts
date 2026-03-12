@@ -56,10 +56,8 @@ import { ChargingStationSecurityInfo } from './ChargingStationSecurityInfo.js';
 import { ChargingStationSequence } from './ChargingStationSequence/ChargingStationSequence.js';
 import { DeleteCertificateAttempt } from './Certificate/DeleteCertificateAttempt.js';
 import { InstallCertificateAttempt } from './Certificate/InstallCertificateAttempt.js';
-import type { Logger } from 'tslog';
-import type { ILogObj } from 'tslog';
 
-export function defineAssociations(logger: Logger<ILogObj>) {
+export function defineAssociations() {
   // Tenant associations
   Tenant.hasMany(TenantPartner, { foreignKey: 'tenantId' });
   TenantPartner.belongsTo(Tenant, { foreignKey: 'tenantId' });

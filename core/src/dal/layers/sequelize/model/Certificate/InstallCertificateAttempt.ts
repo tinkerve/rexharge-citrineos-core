@@ -10,8 +10,6 @@ import {
   type TenantDto,
   type ChargingStationDto,
 } from '@citrineos/base';
-import { ChargingStation } from '../Location/ChargingStation.js';
-import { Tenant } from '../Tenant.js';
 
 @Table
 export class InstallCertificateAttempt extends Model {

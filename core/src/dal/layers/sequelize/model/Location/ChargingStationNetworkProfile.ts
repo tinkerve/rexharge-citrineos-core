@@ -4,15 +4,7 @@
 
 import type { ChargingStationNetworkProfileDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
-import {
-  BeforeCreate,
-  BeforeUpdate,
-  Column,
-  DataType,
-  Model,
-  Table,
-  ForeignKey,
-} from 'sequelize-typescript';
+import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 import { ServerNetworkProfile } from './ServerNetworkProfile.js';
 import { SetNetworkProfile } from './SetNetworkProfile.js';
 

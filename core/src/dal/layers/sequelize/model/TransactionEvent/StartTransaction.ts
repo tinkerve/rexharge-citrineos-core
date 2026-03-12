@@ -6,7 +6,6 @@ import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 import { Transaction } from './Transaction.js';
 import { Connector } from '../Location/index.js';
-import { Tenant } from '../Tenant.js';
 
 @Table
 export class StartTransaction extends Model implements StartTransactionDto {

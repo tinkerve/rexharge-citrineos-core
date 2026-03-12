@@ -9,8 +9,6 @@ import {
   type TenantDto,
   type ChargingStationDto,
 } from '@citrineos/base';
-import { ChargingStation } from '../Location/index.js';
-import { Tenant } from '../Tenant.js';
 
 @Table
 export class DeleteCertificateAttempt extends Model {

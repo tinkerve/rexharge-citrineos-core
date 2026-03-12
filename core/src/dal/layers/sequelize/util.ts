@@ -94,7 +94,7 @@ export class DefaultSequelizeInstance {
         this.logger.info('Database connection has been established successfully');
 
         // Define associations AFTER connection but BEFORE sync
-        defineAssociations(this.logger);
+        defineAssociations();
 
         await this.syncDb();
 

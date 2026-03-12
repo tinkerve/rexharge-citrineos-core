@@ -11,15 +11,11 @@ import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 import { Authorization } from '../Authorization/Authorization.js';
 import { Tariff } from '../Tariff/Tariffs.js';
-import { Tenant } from '../Tenant.js';
-import {
-  type ChargingStation as ChargingStationType,
-  ChargingStation,
-} from '../Location/ChargingStation.js';
+import { type ChargingStation as ChargingStationType } from '../Location/ChargingStation.js';
 // keep the direct import to avoid circular dependency
 import { Connector } from '../Location/Connector.js';
 import { Evse } from '../Location/Evse.js';
-import { type Location as LocationType, Location } from '../Location/Location.js';
+import { type Location as LocationType } from '../Location/Location.js';
 
 import { MeterValue } from './MeterValue.js';
 import { TransactionEvent } from './TransactionEvent.js';
