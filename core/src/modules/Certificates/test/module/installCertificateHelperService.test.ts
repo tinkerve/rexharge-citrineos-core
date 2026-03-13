@@ -32,8 +32,8 @@ let createdCertificateInstances: any[] = [];
 let createdInstallCertificateAttemptInstances: any[] = [];
 let createdInstalledCertificateInstances: any[] = [];
 
-vi.mock('@citrineos/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@citrineos/core')>();
+vi.mock('../../../../util/index.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../util/index.js')>();
   return {
     ...actual,
     extractCertificateDetails: mockExtractCertificateDetails,
@@ -89,6 +89,7 @@ vi.mock('@citrineos/core', async (importOriginal) => {
 
   return {
     ...actual,
+    extractCertificateDetails: mockExtractCertificateDetails,
     Certificate: MockCertificate,
     InstallCertificateAttempt: MockInstallCertificateAttempt,
     InstalledCertificate: MockInstalledCertificate,
