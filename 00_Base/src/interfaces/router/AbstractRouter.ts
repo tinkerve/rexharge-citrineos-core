@@ -233,6 +233,9 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
       case OCPPVersion.OCPP2_0_1:
         protocolEnum = OCPPVersion.OCPP2_0_1;
         break;
+      case OCPPVersion.OCPP2_1:
+        protocolEnum = OCPPVersion.OCPP2_1;
+        break;
       default:
         this._logger.error('Unknown subprotocol', protocol);
         return { isValid: false };

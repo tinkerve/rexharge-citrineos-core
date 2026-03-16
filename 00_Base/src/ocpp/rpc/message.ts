@@ -415,6 +415,12 @@ export function mapToCallAction(version: OCPPVersionType, action: string): CallA
       }
       throw new Error(`Invalid OCPP 2.0.1 action: ${action}`);
 
+    case OCPPVersion.OCPP2_1:
+      if (action in OCPP_CallAction && ALLOWED_ACTIONS[OCPPVersion.OCPP2_1].has(action)) {
+        return OCPP_CallAction[action as keyof typeof OCPP_CallAction];
+      }
+      throw new Error(`Invalid OCPP 2.1 action: ${action}`);
+
     default:
       throw new Error(`Unsupported OCPP version: ${version}`);
   }

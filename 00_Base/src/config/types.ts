@@ -93,6 +93,18 @@ export const systemConfigInputSchema = z.object({
           autoAccept: z.boolean().default(true).optional(), // If false, only data endpoint can update boot status to accepted
         })
         .optional(),
+      ocpp2_1: z
+        .object({
+          unknownChargerStatus: z
+            .enum([
+              OCPP2_0_1.RegistrationStatusEnumType.Accepted, //Placeholder for 2.1, TODO
+              OCPP2_0_1.RegistrationStatusEnumType.Pending,
+              OCPP2_0_1.RegistrationStatusEnumType.Rejected,
+            ])
+            .default(OCPP2_0_1.RegistrationStatusEnumType.Accepted)
+            .optional(), // Unknown chargers have no entry in BootConfig table
+        })
+        .optional(),
       ocpp1_6: z
         .object({
           unknownChargerStatus: z
@@ -391,6 +403,18 @@ export const systemConfigSchema = z
               autoAccept: z.boolean(),
             })
             .optional(),
+          ocpp2_1: z
+            .object({
+              unknownChargerStatus: z
+                .enum([
+                  OCPP2_0_1.RegistrationStatusEnumType.Accepted,
+                  OCPP2_0_1.RegistrationStatusEnumType.Pending,
+                  OCPP2_0_1.RegistrationStatusEnumType.Rejected,
+                ])
+                .default(OCPP2_0_1.RegistrationStatusEnumType.Accepted)
+                .optional(), // Unknown chargers have no entry in BootConfig table
+            })
+            .optional(),
           ocpp1_6: z
             .object({
               unknownChargerStatus: z.enum([
@@ -406,7 +430,7 @@ export const systemConfigSchema = z
           requests: z.array(CallActionSchema),
           responses: z.array(CallActionSchema),
         })
-        .refine((obj) => obj.ocpp1_6 || obj.ocpp2_0_1, {
+        .refine((obj) => obj.ocpp1_6 || obj.ocpp2_0_1 || obj.ocpp2_1, {
           message: 'A protocol configuration must be set',
         }), // Configuration module is required
       monitoring: z.object({
