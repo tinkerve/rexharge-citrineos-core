@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-export { Location } from './Location';
 export { ChargingStation } from './ChargingStation';
-export { Evse } from './Evse';
 export { ChargingStationNetworkProfile } from './ChargingStationNetworkProfile';
+export { Connector } from './Connector';
+export { Evse } from './Evse';
 export { LatestStatusNotification } from './LatestStatusNotification';
-export { StatusNotification } from './StatusNotification';
+export { Location } from './Location';
 export { ServerNetworkProfile } from './ServerNetworkProfile';
 export { SetNetworkProfile } from './SetNetworkProfile';
-export { Connector } from './Connector';
+export { StatusNotification } from './StatusNotification';
+export { TenantPartnerLocation } from './TenantPartnerLocation';

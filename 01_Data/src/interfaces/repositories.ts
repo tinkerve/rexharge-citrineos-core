@@ -11,7 +11,7 @@ import {
   OCPP2_0_1,
   OCPPVersion,
 } from '@citrineos/base';
-import { type AuthorizationQuerystring } from './queries/Authorization';
+import { type VariableAttributeQuerystring } from '.';
 import {
   type Authorization,
   type Boot,
@@ -42,6 +42,7 @@ import {
   Subscription,
   Tariff,
   Tenant,
+  TenantPartner,
   type Transaction,
   TransactionEvent,
   type Variable,
@@ -49,7 +50,7 @@ import {
   VariableCharacteristics,
   type VariableMonitoring,
 } from '../layers/sequelize';
-import { type VariableAttributeQuerystring } from '.';
+import { type AuthorizationQuerystring } from './queries/Authorization';
 import { TariffQueryString } from './queries/Tariff';
 
 export interface IAuthorizationRepository extends CrudRepository<Authorization> {
@@ -458,3 +459,18 @@ export interface IChangeConfigurationRepository extends CrudRepository<ChangeCon
 }
 
 export interface ITenantRepository extends CrudRepository<Tenant> {}
+
+export interface ITenantPartnerRepository extends CrudRepository<TenantPartner> {
+  assignLocationToTenantPartner(
+    tenantId: number,
+    tenantPartnerId: number,
+    locationId: number,
+  ): Promise<void>;
+  removeLocationFromTenantPartner(
+    tenantId: number,
+    tenantPartnerId: number,
+    locationId: number,
+  ): Promise<void>;
+  readLocationsByTenantPartnerId(tenantId: number, tenantPartnerId: number): Promise<Location[]>;
+  readTenantPartnersByLocationId(tenantId: number, locationId: number): Promise<TenantPartner[]>;
+}

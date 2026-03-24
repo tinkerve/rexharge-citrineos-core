@@ -3,16 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-  LocationHours,
   ILocationDto,
   LocationFacilityType,
+  LocationHours,
   LocationParkingType,
   OCPP2_0_1_Namespace,
 } from '@citrineos/base';
-import { Column, DataType, HasMany, Table } from 'sequelize-typescript';
-import { ChargingStation } from './ChargingStation';
 import { Point } from 'geojson';
+import { BelongsToMany, Column, DataType, HasMany, Table } from 'sequelize-typescript';
 import { BaseModelWithTenant } from '../BaseModelWithTenant';
+import { TenantPartner } from '../TenantPartner';
+import { ChargingStation } from './ChargingStation';
+import { TenantPartnerLocation } from './TenantPartnerLocation';
 
 /**
  * Represents a location.
@@ -79,4 +81,7 @@ export class Location extends BaseModelWithTenant implements ILocationDto {
 
   @HasMany(() => ChargingStation)
   declare chargingPool: [ChargingStation, ...ChargingStation[]];
+
+  @BelongsToMany(() => TenantPartner, () => TenantPartnerLocation)
+  declare tenantPartners?: TenantPartner[] | null;
 }
