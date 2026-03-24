@@ -2,12 +2,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import { OCPP2_0_1 } from '@citrineos/base';
-import type { IDeviceModelRepository, ILocalAuthListRepository } from '@citrineos/core';
-import { LocalListAuthorization } from '@citrineos/core';
-import { LocalListVersion } from '@citrineos/core';
-import { SendLocalList } from '@citrineos/core';
-import { VariableAttribute } from '@citrineos/core';
-import { VariableCharacteristics } from '@citrineos/core';
+import type {
+  IDeviceModelRepository,
+  ILocalAuthListRepository,
+} from '@dal/interfaces/repositories.js';
+import {
+  SendLocalList,
+  VariableAttribute,
+  VariableCharacteristics,
+  LocalListVersion,
+  LocalListAuthorization,
+} from '@dal/layers/sequelize/index.js';
 
 export class LocalAuthListService {
   protected _localAuthListRepository: ILocalAuthListRepository;

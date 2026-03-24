@@ -29,15 +29,19 @@ import type {
   IInstallCertificateAttemptRepository,
   IInstalledCertificateRepository,
   IOCPPMessageRepository,
-} from '@citrineos/core';
-import { InstalledCertificate, sequelize, SequelizeOCPPMessageRepository } from '@citrineos/core';
+} from '@dal/interfaces/repositories.js';
+import {
+  InstalledCertificate,
+  SequelizeOCPPMessageRepository,
+} from '@dal/layers/sequelize/index.js';
+import { sequelize } from '@dal/index.js';
 import {
   parseCSRForVerification,
   sendOCSPRequest,
   validatePEMEncodedCSR,
   WebsocketNetworkConnection,
-} from '@citrineos/core';
-import { CertificateAuthorityService } from '@citrineos/core';
+  CertificateAuthorityService,
+} from '@util/index.js';
 import { Crypto } from '@peculiar/webcrypto';
 import jsrsasign from 'jsrsasign';
 import * as pkijs from 'pkijs';

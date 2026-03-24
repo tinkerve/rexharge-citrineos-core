@@ -3,8 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ISmartCharging } from './SmartCharging.js';
 import { ChargingProfilePurposeEnum, OCPP2_0_1 } from '@citrineos/base';
-import type { IChargingProfileRepository } from '@citrineos/core';
-import { ChargingProfile, ChargingSchedule, Transaction } from '@citrineos/core';
+import type { IChargingProfileRepository } from '@dal/interfaces/repositories.js';
+import {
+  ChargingProfile,
+  ChargingSchedule,
+} from '@dal/layers/sequelize/model/ChargingProfile/index.js';
+import { Transaction } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 

@@ -2,19 +2,18 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ICache, SystemConfig } from '../../../index.js';
-import { OcppError } from '../../../index.js';
-import type { OcppRequest, OcppResponse } from '../../ocpp/internal-types.js';
-import type { CallAction, OCPPVersionType } from '../../ocpp/rpc/message.js';
-import type {
-  HandlerProperties,
-  IMessage,
-  IMessageConfirmation,
-  IMessageHandler,
-  IMessageSender,
-} from '../messages/index.js';
-import { MessageOrigin } from '../messages/internal-types.js';
-import type { OCPPValidator } from './OCPPValidator.js';
+import type { ICache } from '@interfaces/cache/cache.js';
+import type { SystemConfig } from '@config/types.js';
+import { OcppError } from '@ocpp/rpc/message.js';
+import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
+import type { CallAction, OCPPVersionType } from '@ocpp/rpc/message.js';
+import type { HandlerProperties } from '@interfaces/messages/internal-types.js';
+import type { IMessage } from '@interfaces/messages/Message.js';
+import type { IMessageConfirmation } from '@interfaces/messages/MessageConfirmation.js';
+import type { IMessageHandler } from '@interfaces/messages/MessageHandler.js';
+import type { IMessageSender } from '@interfaces/messages/MessageSender.js';
+import { MessageOrigin } from '@interfaces/messages/internal-types.js';
+import type { OCPPValidator } from '@interfaces/modules/OCPPValidator.js';
 
 /**
  * Base interface for all OCPP modules.

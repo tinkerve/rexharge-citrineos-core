@@ -16,7 +16,7 @@ import {
   OCPPVersion,
 } from '@citrineos/base';
 import type { FastifyInstance } from 'fastify';
-import { getBatches, getSizeOfRequest } from '../../../../../util/index.js';
+import { getBatches, getSizeOfRequest } from '@util/index.js';
 
 /**
  * Server API for the Monitoring module.

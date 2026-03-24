@@ -9,8 +9,11 @@ import {
   MessageOrigin,
   MessageState,
 } from '@citrineos/base';
-import type { IOCPPMessageRepository, ISubscriptionRepository } from '@citrineos/core';
-import { Subscription } from '@citrineos/core';
+import type {
+  IOCPPMessageRepository,
+  ISubscriptionRepository,
+} from '@dal/interfaces/repositories.js';
+import { Subscription } from '@dal/layers/sequelize/model/Subscription/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';

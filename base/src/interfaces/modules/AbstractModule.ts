@@ -6,25 +6,25 @@ import 'reflect-metadata';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
-import type { SystemConfig } from '../../config/types.js';
-import type { OcppRequest, OcppResponse } from '../../ocpp/internal-types.js';
-import type { CallAction, OCPPVersionType } from '../../ocpp/rpc/message.js';
-import { ErrorCode, OcppError, OCPPVersion } from '../../ocpp/rpc/message.js';
-import { RequestBuilder } from '../../util/request.js';
-import type { ICache } from '../../interfaces/cache/cache.js';
-import type { IWebsocketConnection } from '../../interfaces/cache/types.js';
-import { CacheNamespace, createIdentifier } from '../../interfaces/cache/types.js';
+import type { SystemConfig } from '@config/types.js';
+import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
+import type { CallAction, OCPPVersionType } from '@ocpp/rpc/message.js';
+import { ErrorCode, OcppError, OCPPVersion } from '@ocpp/rpc/message.js';
+import { RequestBuilder } from '@base-util/request.js';
+import type { ICache } from '@interfaces/cache/cache.js';
+import type { IWebsocketConnection } from '@interfaces/cache/types.js';
+import { CacheNamespace, createIdentifier } from '@interfaces/cache/types.js';
 import type {
   IMessage,
   IMessageConfirmation,
   IMessageHandler,
   IMessageSender,
-} from '../../interfaces/messages/index.js';
-import type { HandlerProperties } from '../messages/internal-types.js';
-import { EventGroup, MessageOrigin, MessageState } from '../messages/internal-types.js';
-import type { IModule } from './Module.js';
-import type { IHandlerDefinition } from './HandlerDefinition.js';
-import { AS_HANDLER_METADATA } from './AsHandler.js';
+} from '@interfaces/messages/index.js';
+import type { HandlerProperties } from '@interfaces/messages/internal-types.js';
+import { EventGroup, MessageOrigin, MessageState } from '@interfaces/messages/internal-types.js';
+import type { IModule } from '@interfaces/modules/Module.js';
+import type { IHandlerDefinition } from '@interfaces/modules/HandlerDefinition.js';
+import { AS_HANDLER_METADATA } from '@interfaces/modules/AsHandler.js';
 import { OCPPValidator } from './OCPPValidator.js';
 
 export abstract class AbstractModule implements IModule {

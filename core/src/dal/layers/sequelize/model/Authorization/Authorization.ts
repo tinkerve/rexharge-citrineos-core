@@ -21,7 +21,6 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
-import { TenantPartner } from '../TenantPartner.js';
 
 @Table
 export class Authorization extends Model implements AuthorizationDto {
@@ -99,7 +98,7 @@ export class Authorization extends Model implements AuthorizationDto {
   @Column(DataType.INTEGER)
   declare tenantPartnerId?: number | null;
 
-  declare tenantPartner?: TenantPartner | null;
+  declare tenantPartner?: any | null;
 
   @Column({
     type: DataType.INTEGER,

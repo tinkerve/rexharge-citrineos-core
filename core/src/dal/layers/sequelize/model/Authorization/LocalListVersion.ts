@@ -5,7 +5,6 @@
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
 import type { TenantDto } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
-import { LocalListAuthorization } from './LocalListAuthorization.js';
 
 @Table
 export class LocalListVersion extends Model {
@@ -20,9 +19,7 @@ export class LocalListVersion extends Model {
   @Column(DataType.INTEGER)
   declare versionNumber: number;
 
-  declare localAuthorizationList?:
-    | [LocalListAuthorization, ...LocalListAuthorization[]]
-    | undefined;
+  declare localAuthorizationList?: [any, ...any[]] | undefined;
 
   customData?: OCPP2_0_1.CustomDataType | null | undefined;
 

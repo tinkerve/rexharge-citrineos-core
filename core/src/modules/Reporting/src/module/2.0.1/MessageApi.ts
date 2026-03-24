@@ -16,7 +16,7 @@ import {
 import type { FastifyInstance } from 'fastify';
 import type { IReportingModuleApi } from '../interface.js';
 import { ReportingModule } from '../module.js';
-import { getBatches, getSizeOfRequest } from '../../../../../util/index.js';
+import { getBatches, getSizeOfRequest } from '@util/index.js';
 
 /**
  * Server API for the Reporting module.

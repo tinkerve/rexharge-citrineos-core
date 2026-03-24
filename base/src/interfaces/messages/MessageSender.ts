@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { IMessage, IMessageConfirmation } from '../../../index.js';
-import { OcppError } from '../../../index.js';
-import type { OcppRequest, OcppResponse } from '../../ocpp/internal-types.js';
-import { MessageState } from './internal-types.js';
+import type { IMessage } from '@interfaces/messages/Message.js';
+import type { IMessageConfirmation } from '@interfaces/messages/MessageConfirmation.js';
+import { OcppError } from '@ocpp/rpc/message.js';
+import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
+import { MessageState } from '@interfaces/messages/internal-types.js';
 
 /**
  * IMessageSender

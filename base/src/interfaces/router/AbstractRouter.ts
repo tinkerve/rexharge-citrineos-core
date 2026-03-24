@@ -6,22 +6,18 @@ import type { ErrorObject } from 'ajv';
 
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import type {
-  Call,
-  CallAction,
-  CallResult,
-  ICache,
-  IMessage,
-  IMessageConfirmation,
-  IMessageHandler,
-  IMessageSender,
-  OCPPVersionType,
-  SystemConfig,
-} from '../../../index.js';
-import { ErrorCode, MessageOrigin, MessageState, OcppError, OCPPVersion } from '../../../index.js';
-import type { OcppRequest, OcppResponse } from '../../ocpp/internal-types.js';
-import { OCPPValidator } from '../modules/OCPPValidator.js';
-import type { IMessageRouter } from './Router.js';
+import type { Call, CallAction, CallResult, OCPPVersionType } from '@ocpp/rpc/message.js';
+import type { ICache } from '@interfaces/cache/cache.js';
+import type { IMessage } from '@interfaces/messages/Message.js';
+import type { IMessageConfirmation } from '@interfaces/messages/MessageConfirmation.js';
+import type { IMessageHandler } from '@interfaces/messages/MessageHandler.js';
+import type { IMessageSender } from '@interfaces/messages/MessageSender.js';
+import type { SystemConfig } from '@config/types.js';
+import { ErrorCode, OcppError, OCPPVersion } from '@ocpp/rpc/message.js';
+import { MessageOrigin, MessageState } from '@interfaces/messages/internal-types.js';
+import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
+import { OCPPValidator } from '@interfaces/modules/OCPPValidator.js';
+import type { IMessageRouter } from '@interfaces/router/Router.js';
 
 export abstract class AbstractMessageRouter implements IMessageRouter {
   /**

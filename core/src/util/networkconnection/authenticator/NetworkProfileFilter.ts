@@ -3,8 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import type { IDeviceModelRepository } from '@citrineos/core';
-import { ChargingStationNetworkProfile, ServerNetworkProfile } from '@citrineos/core';
+import type { IDeviceModelRepository } from '@dal/interfaces/repositories.js';
+import {
+  ChargingStationNetworkProfile,
+  ServerNetworkProfile,
+} from '@dal/layers/sequelize/index.js';
 import { IncomingMessage } from 'http';
 import { AuthenticatorFilter } from './AuthenticatorFilter.js';
 import type { AuthenticationOptions } from '@citrineos/base';

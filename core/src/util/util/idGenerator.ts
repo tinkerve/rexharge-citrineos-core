@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type { ChargingStationSequenceTypeEnumType } from '@citrineos/base';
-import type { IChargingStationSequenceRepository } from '@citrineos/core';
+import type { IChargingStationSequenceRepository } from '@dal/interfaces/repositories.js';
 
 export class IdGenerator {
   private _stationSequenceRepository: IChargingStationSequenceRepository;

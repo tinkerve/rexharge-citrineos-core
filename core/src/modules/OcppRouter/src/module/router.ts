@@ -41,9 +41,9 @@ import {
   RequestBuilder,
   RetryMessageError,
 } from '@citrineos/base';
-import type { ILocationRepository } from '@citrineos/core';
-import { sequelize } from '@citrineos/core';
-import { OidcTokenProvider } from '../../../../util/authorization/index.js';
+import type { ILocationRepository } from '@dal/interfaces/repositories.js';
+import { sequelize } from '@dal/index.js';
+import { OidcTokenProvider } from '@util/authorization/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';

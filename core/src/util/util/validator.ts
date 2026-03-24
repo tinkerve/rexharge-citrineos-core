@@ -7,8 +7,8 @@ import type {
   IChargingProfileRepository,
   IDeviceModelRepository,
   ITransactionEventRepository,
-} from '@citrineos/core';
-import { VariableAttribute } from '@citrineos/core';
+} from '@dal/interfaces/repositories.js';
+import { VariableAttribute } from '@dal/layers/sequelize/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { calculateCheckDigit } from './emaidCheckDigitCalculator.js';

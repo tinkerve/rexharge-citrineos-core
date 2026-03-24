@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { IBootRepository } from '@citrineos/core';
-import { Boot, OCPP1_6_Mapper, OCPP2_0_1_Mapper } from '@citrineos/core';
+import type { IBootRepository } from '@dal/interfaces/repositories.js';
+import { Boot, OCPP1_6_Mapper, OCPP2_0_1_Mapper } from '@dal/layers/sequelize/index.js';
 import type { BootConfig, ICache, IMessageConfirmation, SystemConfig } from '@citrineos/base';
 import {
   BOOT_STATUS,

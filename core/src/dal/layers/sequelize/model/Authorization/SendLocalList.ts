@@ -6,8 +6,6 @@ import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/ba
 import type { TenantDto } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 
-import { LocalListAuthorization } from './LocalListAuthorization.js';
-
 @Table
 export class SendLocalList extends Model implements OCPP2_0_1.SendLocalListRequest {
   static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.SendLocalListRequest;
@@ -31,7 +29,7 @@ export class SendLocalList extends Model implements OCPP2_0_1.SendLocalListReque
 
   toSendLocalListRequest(): OCPP2_0_1.SendLocalListRequest {
     const localAuthList = (this.localAuthorizationList || [])
-      .map((localListAuth: LocalListAuthorization) => {
+      .map((localListAuth: any) => {
         return {
           idToken: {
             idToken: String(localListAuth.idToken), // ensure string

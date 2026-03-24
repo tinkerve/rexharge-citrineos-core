@@ -12,7 +12,6 @@ import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/ba
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 
 import { MeterValue } from './MeterValue.js';
-import { Transaction } from './Transaction.js';
 
 @Table
 export class TransactionEvent extends Model implements TransactionEventDto {
@@ -54,7 +53,7 @@ export class TransactionEvent extends Model implements TransactionEventDto {
 
   declare transactionDatabaseId?: number;
 
-  declare transaction?: Transaction;
+  declare transaction?: any;
 
   @Column(DataType.JSON)
   declare transactionInfo: TransactionType;

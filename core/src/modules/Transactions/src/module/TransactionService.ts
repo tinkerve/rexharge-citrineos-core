@@ -23,9 +23,11 @@ import type {
   IOCPPMessageRepository,
   IReservationRepository,
   ITransactionEventRepository,
-} from '@citrineos/core';
-import { MeterValue } from '@citrineos/core';
-import { OCPP1_6_Mapper, OCPP2_0_1_Mapper, Transaction } from '@citrineos/core';
+} from '@dal/interfaces/repositories.js';
+import { MeterValue } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
+import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
+import * as OCPP2_0_1_Mapper from '@dal/layers/sequelize/mapper/2.0.1/index.js';
+import { Transaction } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 

@@ -18,7 +18,6 @@ import { Evse } from '../Location/Evse.js';
 import { type Location as LocationType } from '../Location/Location.js';
 
 import { MeterValue } from './MeterValue.js';
-import { TransactionEvent } from './TransactionEvent.js';
 
 @Table
 export class Transaction extends Model implements TransactionDto {
@@ -68,10 +67,10 @@ export class Transaction extends Model implements TransactionDto {
   @Column(DataType.BOOLEAN)
   declare isActive: boolean;
 
-  declare transactionEvents?: TransactionEvent[];
+  declare transactionEvents?: any[];
 
   // required only for filtering, should not be used to pull transaction events
-  declare transactionEventsFilter?: TransactionEvent[];
+  declare transactionEventsFilter?: any[];
 
   declare meterValues?: MeterValue[];
 

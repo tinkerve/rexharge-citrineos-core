@@ -10,15 +10,15 @@ import {
   OCPP1_6_CALL_SCHEMA_MAP,
   OCPP2_0_1_CALL_RESULT_SCHEMA_MAP,
   OCPP2_0_1_CALL_SCHEMA_MAP,
-} from '../../../index.js';
-import type { OcppRequest, OcppResponse } from '../../ocpp/internal-types.js';
+} from '@interfaces/schema/MappingSchema.js';
+import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
 import {
   type CallAction,
   OCPP1_6_CallAction,
   OCPP2_0_1_CallAction,
   OcppError,
   OCPPVersion,
-} from '../../ocpp/rpc/message.js';
+} from '@ocpp/rpc/message.js';
 
 export class OCPPValidator {
   protected _ajv: Ajv;

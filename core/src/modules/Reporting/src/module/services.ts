@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { IDeviceModelRepository } from '@citrineos/core';
-import { VariableAttribute } from '@citrineos/core';
+import type { IDeviceModelRepository } from '@dal/interfaces/repositories.js';
+import { VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import { OCPP2_0_1 } from '@citrineos/base';
 
 export class DeviceModelService {

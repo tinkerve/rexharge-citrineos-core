@@ -31,15 +31,13 @@ import type {
   IDeviceModelRepository,
   IOCPPMessageRepository,
   ITransactionEventRepository,
-} from '@citrineos/core';
-import {
-  OCPP1_6_Mapper,
-  OCPP2_0_1_Mapper,
-  sequelize,
-  SequelizeChargingStationSequenceRepository,
-  Transaction,
-} from '@citrineos/core';
-import { IdGenerator } from '@citrineos/core';
+} from '@dal/interfaces/repositories.js';
+import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
+import * as OCPP2_0_1_Mapper from '@dal/layers/sequelize/mapper/2.0.1/index.js';
+import { sequelize } from '@dal/index.js';
+import { SequelizeChargingStationSequenceRepository } from '@dal/layers/sequelize/index.js';
+import { Transaction } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
+import { IdGenerator } from '@util/util/idGenerator.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { ISmartCharging } from './smartCharging/SmartCharging.js';

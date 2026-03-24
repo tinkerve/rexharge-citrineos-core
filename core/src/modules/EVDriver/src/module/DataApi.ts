@@ -15,9 +15,9 @@ import {
   OCPP1_6_Namespace,
   OCPP2_0_1_Namespace,
 } from '@citrineos/base';
-import type { ChargingStationKeyQuerystring } from '@citrineos/core';
-import { ChargingStationKeyQuerySchema } from '@citrineos/core';
-import { LocalListVersion } from '@citrineos/core';
+import type { ChargingStationKeyQuerystring } from '@dal/interfaces/queries/ChargingStation.js';
+import { ChargingStationKeyQuerySchema } from '@dal/interfaces/queries/ChargingStation.js';
+import { LocalListVersion } from '@dal/index.js';
 
 export class EVDriverDataApi
   extends AbstractModuleApi<EVDriverModule>

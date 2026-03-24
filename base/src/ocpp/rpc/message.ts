@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Expose } from 'class-transformer';
-import type { OcppRequest, OcppResponse } from '../internal-types.js';
+import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
 
 /**
  * Definition of Call Message (4.2.1 CALL)

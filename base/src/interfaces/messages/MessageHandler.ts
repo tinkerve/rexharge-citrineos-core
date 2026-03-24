@@ -2,11 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { IMessage } from '../../../index.js';
-import type { OcppRequest, OcppResponse } from '../../ocpp/internal-types.js';
-import type { CallAction } from '../../ocpp/rpc/message.js';
-import type { IModule } from '../modules/Module.js';
-import type { HandlerProperties } from './internal-types.js';
+import type { IMessage } from '@interfaces/messages/Message.js';
+import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
+import type { CallAction } from '@ocpp/rpc/message.js';
+import type { HandlerProperties } from '@interfaces/messages/internal-types.js';
 
 /**
  * MessageHandler
@@ -49,6 +48,6 @@ export interface IMessageHandler {
    */
   shutdown(): Promise<void>;
 
-  get module(): IModule | undefined;
-  set module(value: IModule | undefined);
+  get module(): any | undefined;
+  set module(value: any | undefined);
 }

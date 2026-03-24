@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import type { ILocationRepository } from '@citrineos/core';
+import type { ILocationRepository } from '@dal/interfaces/repositories.js';
 import { IncomingMessage } from 'http';
 import { AuthenticatorFilter } from './AuthenticatorFilter.js';
 import type { AuthenticationOptions } from '@citrineos/base';

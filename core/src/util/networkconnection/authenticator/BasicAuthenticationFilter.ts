@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { AuthenticationOptions } from '@citrineos/base';
 import { OCPP2_0_1 } from '@citrineos/base';
-import type { IDeviceModelRepository } from '@citrineos/core';
-import { CryptoUtils } from '@citrineos/core';
+import type { IDeviceModelRepository } from '@dal/interfaces/repositories.js';
+import { CryptoUtils } from '@dal/util/CryptoUtils.js';
 import { IncomingMessage } from 'http';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import { extractBasicCredentials } from '../../util/RequestOperations.js';
+import { extractBasicCredentials } from '@util/util/RequestOperations.js';
 import { AuthenticatorFilter } from './AuthenticatorFilter.js';
 import { UpgradeAuthenticationError } from './errors/AuthenticationError.js';
 

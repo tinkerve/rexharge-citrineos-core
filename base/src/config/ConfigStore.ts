@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { IFileStorage } from '../interfaces/files/fileStorage.js';
+import type { IFileStorage } from '@interfaces/files/fileStorage.js';
 import type { SystemConfig } from './types.js';
 
 export interface ConfigStore extends IFileStorage {

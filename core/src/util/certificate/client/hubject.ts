@@ -16,7 +16,7 @@ import {
 } from '@citrineos/base';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import { createPemBlock } from '../CertificateUtil.js';
+import { createPemBlock } from '@util/certificate/CertificateUtil.js';
 
 export class Hubject implements IV2GCertificateAuthorityClient {
   private readonly _baseUrl: string;

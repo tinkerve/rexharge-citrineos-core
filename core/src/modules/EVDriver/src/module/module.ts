@@ -42,21 +42,21 @@ import type {
   IReservationRepository,
   ITariffRepository,
   ITransactionEventRepository,
-} from '@citrineos/core';
+} from '@dal/interfaces/repositories.js';
 import {
   Authorization,
   OCPP1_6_Mapper,
   OCPP2_0_1_Mapper,
-  sequelize,
   SequelizeChargingStationSequenceRepository,
   VariableAttribute,
-} from '@citrineos/core';
+} from '@dal/layers/sequelize/index.js';
+import { sequelize } from '@dal/index.js';
 import {
   CertificateAuthorityService,
   IdGenerator,
   RealTimeAuthorizer,
   validateIdToken,
-} from '@citrineos/core';
+} from '@util/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { LocalAuthListService } from './LocalAuthListService.js';

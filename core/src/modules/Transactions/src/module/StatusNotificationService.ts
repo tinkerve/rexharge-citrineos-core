@@ -2,16 +2,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import { CrudRepository, OCPP1_6, OCPP2_0_1 } from '@citrineos/base';
-import {
-  Component,
-  Connector,
-  EvseType,
-  OCPP1_6_Mapper,
-  OCPP2_0_1_Mapper,
-  StatusNotification,
-  Variable,
-} from '@citrineos/core';
-import type { IDeviceModelRepository, ILocationRepository } from '@citrineos/core';
+import { Component } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import { Connector } from '@dal/layers/sequelize/model/Location/index.js';
+import { EvseType } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
+import * as OCPP2_0_1_Mapper from '@dal/layers/sequelize/mapper/2.0.1/index.js';
+import { StatusNotification } from '@dal/layers/sequelize/model/Location/index.js';
+import { Variable } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import type { IDeviceModelRepository, ILocationRepository } from '@dal/interfaces/repositories.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 

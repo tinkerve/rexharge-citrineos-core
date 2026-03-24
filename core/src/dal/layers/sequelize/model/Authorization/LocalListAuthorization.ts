@@ -5,11 +5,7 @@
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import type { TenantDto } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
-import { type AuthorizationRestrictions } from '../../../../interfaces/index.js';
-import { Authorization } from './Authorization.js';
-import { LocalListVersion } from './LocalListVersion.js';
-import { SendLocalList } from './SendLocalList.js';
-
+import { type AuthorizationRestrictions } from '@dal/interfaces/projections/AuthorizationRestrictions.js';
 /**
  *
  * This class represents static information about an authorization used in a local auth list.
@@ -60,16 +56,16 @@ export class LocalListAuthorization extends Model implements AuthorizationRestri
   @Column(DataType.INTEGER)
   declare groupAuthorizationId?: number | null;
 
-  declare groupAuthorization?: Authorization;
+  declare groupAuthorization?: any;
 
   @Column(DataType.INTEGER)
   declare authorizationId?: string;
 
-  declare authorization?: Authorization;
+  declare authorization?: any;
 
-  declare sendLocalLists?: SendLocalList[];
+  declare sendLocalLists?: any[];
 
-  declare localListVersions?: LocalListVersion[];
+  declare localListVersions?: any[];
 
   declare customData?: any | null;
 

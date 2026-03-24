@@ -1,18 +1,15 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type {
-  TariffQueryString,
-  TenantQueryString,
-  TransactionEventQuerystring,
-} from '@citrineos/core';
-import { Tariff, Transaction } from '@citrineos/core';
-import {
-  TariffQuerySchema,
-  TariffSchema,
-  TenantQuerySchema,
-  TransactionEventQuerySchema,
-} from '@citrineos/core';
+import type { TariffQueryString } from '@dal/interfaces/queries/Tariff.js';
+import type { TenantQueryString } from '@dal/interfaces/queries/Tenant.js';
+import type { TransactionEventQuerystring } from '@dal/interfaces/queries/TransactionEvent.js';
+import { Tariff } from '@dal/layers/sequelize/model/Tariff/index.js';
+import { Transaction } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
+import { TariffQuerySchema } from '@dal/interfaces/queries/Tariff.js';
+import { TenantQuerySchema } from '@dal/interfaces/queries/Tenant.js';
+import { TransactionEventQuerySchema } from '@dal/interfaces/queries/TransactionEvent.js';
+import { default as TariffSchema } from '@dal/interfaces/projections/schemas/TariffSchema.json' with { type: 'json' };
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { ITransactionsModuleApi } from './interface.js';

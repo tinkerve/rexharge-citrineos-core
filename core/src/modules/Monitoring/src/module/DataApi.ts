@@ -9,13 +9,13 @@ import { MonitoringModule } from './module.js';
 import type {
   CreateOrUpdateVariableAttributeQuerystring,
   VariableAttributeQuerystring,
-} from '@citrineos/core';
-import { Component, Variable } from '@citrineos/core';
+} from '@dal/interfaces/queries/VariableAttribute.js';
+import { Component, Variable } from '@dal/layers/sequelize/index.js';
 import {
   CreateOrUpdateVariableAttributeQuerySchema,
   VariableAttributeQuerySchema,
-} from '@citrineos/core';
-import { sequelize } from '@citrineos/core';
+} from '@dal/interfaces/queries/VariableAttribute.js';
+import { sequelize } from '@dal/index.js';
 import {
   AbstractModuleApi,
   AsDataEndpoint,

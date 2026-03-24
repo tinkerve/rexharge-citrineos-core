@@ -30,8 +30,10 @@ import type {
   IOCPPMessageRepository,
   ISecurityEventRepository,
   IVariableMonitoringRepository,
-} from '@citrineos/core';
-import { Component, sequelize, Variable } from '@citrineos/core';
+} from '@dal/interfaces/repositories.js';
+import { Component } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import { sequelize } from '@dal/index.js';
+import { Variable } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { DeviceModelService } from './services.js';

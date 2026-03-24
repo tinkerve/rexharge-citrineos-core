@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { IMessageEndpointDefinition } from './MessageEndpointDefinition.js';
-import { METADATA_MESSAGE_ENDPOINTS } from './metadata.js';
-import type { CallAction } from '../../ocpp/rpc/message.js';
+import type { IMessageEndpointDefinition } from '@interfaces/api/MessageEndpointDefinition.js';
+import { METADATA_MESSAGE_ENDPOINTS } from '@interfaces/api/metadata.js';
+import type { CallAction } from '@ocpp/rpc/message.js';
 
 /**
  * Decorator for use in module API class to expose methods as REST OCPP message endpoints.

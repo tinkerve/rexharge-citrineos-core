@@ -13,7 +13,6 @@ import type {
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
-import { Tariff } from '../Tariff/Tariffs.js';
 import { Evse } from './Evse.js';
 
 @Table
@@ -99,7 +98,7 @@ export class Connector extends Model implements ConnectorDto {
 
   declare evse?: Evse;
 
-  declare tariffs?: Tariff[];
+  declare tariffs?: any[];
 
   @Column({
     type: DataType.INTEGER,

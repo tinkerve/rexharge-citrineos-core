@@ -31,8 +31,8 @@ import type {
   WebsocketDeleteQuerystring,
   WebsocketGetQuerystring,
   WebsocketMappingQuerystring,
-} from '@citrineos/core';
-import { Subscription } from '@citrineos/core';
+} from '@dal/interfaces/index.js';
+import { Subscription } from '@dal/layers/sequelize/model/Subscription/index.js';
 import {
   ChargingStationKeyQuerySchema,
   ConnectionDeleteQuerySchema,
@@ -44,8 +44,8 @@ import {
   WebsocketRequestSchema,
   WebsocketMappingQuerySchema,
   WebsocketMappingRequestSchema,
-} from '@citrineos/core';
-import { sequelize } from '@citrineos/core';
+} from '@dal/interfaces/index.js';
+import { sequelize } from '@dal/index.js';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';

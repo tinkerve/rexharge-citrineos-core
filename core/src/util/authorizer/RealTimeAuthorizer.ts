@@ -12,7 +12,8 @@ import {
   type IMessageContext,
   type SystemConfig,
 } from '@citrineos/base';
-import type { ILocationRepository, Authorization } from '@citrineos/core';
+import type { Authorization } from '@dal/layers/sequelize/index.js';
+import type { ILocationRepository } from '@dal/interfaces/repositories.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { OidcTokenProvider } from '../authorization/index.js';

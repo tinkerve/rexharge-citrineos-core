@@ -15,8 +15,8 @@ import type { ITenantModuleApi } from './interface.js';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import { Tenant } from '@citrineos/core';
-import { CreateTenantQuerySchema, TenantQuerySchema } from '@citrineos/core';
+import { Tenant } from '@dal/layers/sequelize/model/Tenant.js';
+import { CreateTenantQuerySchema, TenantQuerySchema } from '@dal/interfaces/queries/Tenant.js';
 /**
  * Server API for the Tenant module.
  */

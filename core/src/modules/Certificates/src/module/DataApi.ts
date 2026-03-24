@@ -23,7 +23,7 @@ import {
   CountryNameEnumType,
   InstalledCertificate,
   SignatureAlgorithmEnumType,
-} from '@citrineos/core';
+} from '@dal/layers/sequelize/index.js';
 import {
   GenerateCertificateChainRequest,
   GenerateCertificateChainSchema,
@@ -39,8 +39,8 @@ import {
   type UpdateTlsCertificateQueryString,
   UploadExistingCertificate,
   UploadExistingCertificateSchema,
-} from '@citrineos/core';
-import { generateCertificate } from '../../../../util/index.js';
+} from '@dal/interfaces/index.js';
+import { generateCertificate } from '@util/index.js';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import jsrsasign from 'jsrsasign';
 import moment from 'moment';

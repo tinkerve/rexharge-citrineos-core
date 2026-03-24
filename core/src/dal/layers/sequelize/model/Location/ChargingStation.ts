@@ -25,7 +25,6 @@ import {
 
 import { StatusNotification } from './StatusNotification.js';
 import { InstalledCertificate } from '../Certificate/InstalledCertificate.js';
-import { SetNetworkProfile } from './SetNetworkProfile.js';
 
 /**
  * Represents a charging station.
@@ -117,7 +116,7 @@ export class ChargingStation extends Model implements ChargingStationDto {
    */
   declare location?: LocationDto;
 
-  declare networkProfiles?: SetNetworkProfile[] | null;
+  declare networkProfiles?: any[] | null;
 
   declare evses?: EvseDto[] | null;
 

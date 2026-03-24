@@ -15,9 +15,9 @@ import {
   OCPP2_0_1_Namespace,
   OCPPVersion,
 } from '@citrineos/base';
-import { OCPP2_0_1_Mapper } from '@citrineos/core';
-import { VariableAttribute } from '@citrineos/core';
-import { stringToSet, validateChargingProfileType } from '../../../../../util/index.js';
+import * as OCPP2_0_1_Mapper from '@dal/layers/sequelize/mapper/2.0.1/index.js';
+import { VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import { stringToSet, validateChargingProfileType } from '@util/index.js';
 import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';

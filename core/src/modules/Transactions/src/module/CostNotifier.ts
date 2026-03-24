@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import { AbstractModule, OCPP2_0_1_CallAction, OCPPVersion } from '@citrineos/base';
-import type { ITransactionEventRepository } from '@citrineos/core';
-import { Transaction } from '@citrineos/core';
+import type { ITransactionEventRepository } from '@dal/interfaces/repositories.js';
+import { Transaction } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { CostCalculator } from './CostCalculator.js';

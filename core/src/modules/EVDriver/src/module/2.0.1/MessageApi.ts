@@ -16,8 +16,8 @@ import {
   OCPP2_0_1_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
-import { validateChargingProfileType } from '../../../../../util/index.js';
-import { OCPP2_0_1_Mapper } from '@citrineos/core';
+import { validateChargingProfileType } from '@util/index.js';
+import { OCPP2_0_1_Mapper } from '@dal/index.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export class EVDriverOcpp201Api

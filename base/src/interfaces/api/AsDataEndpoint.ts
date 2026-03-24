@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { IDataEndpointDefinition } from './DataEndpointDefinition.js';
-import { HttpMethod } from './HttpMethods.js';
-import { METADATA_DATA_ENDPOINTS } from './metadata.js';
-import { Namespace, OCPP1_6_Namespace, OCPP2_0_1_Namespace } from '../../ocpp/persistence/index.js';
+import type { IDataEndpointDefinition } from '@interfaces/api/DataEndpointDefinition.js';
+import { HttpMethod } from '@interfaces/api/HttpMethods.js';
+import { METADATA_DATA_ENDPOINTS } from '@interfaces/api/metadata.js';
+import { Namespace, OCPP1_6_Namespace, OCPP2_0_1_Namespace } from '@ocpp/persistence/index.js';
 
 /**
  * Decorator for use in module API class to expose methods as REST data endpoints.

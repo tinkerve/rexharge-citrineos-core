@@ -9,7 +9,10 @@ import { Client } from 'acme-client';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import fs from 'fs';
-import { createSignedCertificateFromCSR, parseCertificateChainPem } from '../CertificateUtil.js';
+import {
+  createSignedCertificateFromCSR,
+  parseCertificateChainPem,
+} from '@util/certificate/CertificateUtil.js';
 
 export class Acme implements IChargingStationCertificateAuthorityClient {
   private readonly _directoryUrl: string = acme.directory.letsencrypt.staging;

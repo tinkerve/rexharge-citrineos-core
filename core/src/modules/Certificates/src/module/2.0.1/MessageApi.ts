@@ -15,7 +15,7 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { ICertificatesModuleApi } from '../interface.js';
 import { CertificatesModule } from '../module.js';
-import { DeleteCertificateAttempt } from '@citrineos/core';
+import { DeleteCertificateAttempt } from '@dal/index.js';
 
 /**
  * Server API for the Certificates module.

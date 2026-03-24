@@ -1,15 +1,15 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { MeterValueDto } from '../interfaces/dto/meter.value.dto.js';
+import type { MeterValueDto } from '@interfaces/dto/meter.value.dto.js';
 import {
   MeasurandEnum,
   PhaseEnum,
   ReadingContextEnum,
   type MeasurandEnumType,
   type ReadingContextEnumType,
-} from '../interfaces/dto/types/enums.js';
-import type { SampledValue } from '../interfaces/dto/types/sampled.value.dto.js';
+} from '@interfaces/dto/types/enums.js';
+import type { SampledValue } from '@interfaces/dto/types/sampled.value.dto.js';
 
 export class MeterValueUtils {
   private static readonly validContexts = new Set<ReadingContextEnumType>([

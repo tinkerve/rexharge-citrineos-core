@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { IModule } from '../../../index.js';
+import type { IModule } from '@interfaces/modules/Module.js';
 
 /**
  * Interface for the ocpp router

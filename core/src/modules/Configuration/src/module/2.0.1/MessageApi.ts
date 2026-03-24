@@ -16,8 +16,8 @@ import {
   OCPP2_0_1_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
-import { SetNetworkProfile } from '@citrineos/core';
-import { validateLanguageTag } from '../../../../../util/index.js';
+import { SetNetworkProfile } from '@dal/layers/sequelize/index.js';
+import { validateLanguageTag } from '@util/index.js';
 import { v4 as uuidv4 } from 'uuid';
 
 enum SetNetworkProfileExtraQuerystrings {

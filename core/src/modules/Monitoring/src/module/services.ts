@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { OCPP2_0_1 } from '@citrineos/base';
-import type { IDeviceModelRepository } from '@citrineos/core';
-import { VariableAttribute } from '@citrineos/core';
+import type { IDeviceModelRepository } from '@dal/interfaces/repositories.js';
+import { VariableAttribute } from '@dal/layers/sequelize/index.js';
 
 export class DeviceModelService {
   protected _deviceModelRepository: IDeviceModelRepository;

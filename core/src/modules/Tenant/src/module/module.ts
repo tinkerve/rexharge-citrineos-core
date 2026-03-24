@@ -16,7 +16,9 @@ import {
   EventGroup,
   OCPPValidator,
 } from '@citrineos/base';
-import { type ITenantRepository, SequelizeTenantRepository, Tenant } from '@citrineos/core';
+import type { ITenantRepository } from '@dal/interfaces/repositories.js';
+import { SequelizeTenantRepository } from '@dal/layers/sequelize/index.js';
+import { Tenant } from '@dal/layers/sequelize/model/Tenant.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 

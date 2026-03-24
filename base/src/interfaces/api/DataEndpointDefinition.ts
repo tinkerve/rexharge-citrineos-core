@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { HttpMethod } from './HttpMethods.js';
-import { Namespace } from '../../../index.js';
-import { OCPP1_6_Namespace, OCPP2_0_1_Namespace } from '../../ocpp/persistence/index.js';
+import { HttpMethod } from '@interfaces/api/HttpMethods.js';
+import { Namespace } from '@ocpp/persistence/namespace.js';
+import { OCPP1_6_Namespace, OCPP2_0_1_Namespace } from '@ocpp/persistence/index.js';
 
 /**
  * Interface for usage in {@link AsDataEndpoint} decorator.

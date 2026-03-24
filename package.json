@@ -6,7 +6,7 @@
   "scripts": {
     "install-all": "npm i --verbose",
     "copy-assets": "npm run copy-assets --prefix ./Server",
-    "build": "tsc --build --verbose",
+    "build": "tsc --build --verbose && tsc-alias -p core/tsconfig.json && tsc-alias -p base/tsconfig.json",
     "postbuild": "npm run copy-assets",
     "clear-cache": "npm cache clean --force",
     "remove-dependencies": "rm -rf package-lock.json **/package-lock.json **/**/package-lock.json node_modules **/node_modules **/**/node_modules",
@@ -46,6 +46,7 @@
     "madge": "^8.0.0",
     "openapi-types": "^12.1.3",
     "sequelize-cli": "^6.6.2",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.8.2"
   },
   "dependencies": {
@@ -62,6 +63,7 @@
     "pkijs": "^3.3.3",
     "pvutils": "^1.1.5",
     "redis": "^4.7.1",
-    "sequelize-typescript": "^2.1.6"
+    "sequelize-typescript": "^2.1.6",
+    "tsconfig-paths": "^4.2.0"
   }
 }

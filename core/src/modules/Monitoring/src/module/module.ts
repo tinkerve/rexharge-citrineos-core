@@ -21,13 +21,16 @@ import {
   OCPPValidator,
   OCPPVersion,
 } from '@citrineos/base';
-import type { IDeviceModelRepository, IVariableMonitoringRepository } from '@citrineos/core';
+import type {
+  IDeviceModelRepository,
+  IVariableMonitoringRepository,
+} from '@dal/interfaces/repositories.js';
 import {
   SequelizeChargingStationSequenceRepository,
   SequelizeDeviceModelRepository,
   SequelizeVariableMonitoringRepository,
-} from '@citrineos/core';
-import { IdGenerator } from '@citrineos/core';
+} from '@dal/layers/sequelize/index.js';
+import { IdGenerator } from '@util/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { MonitoringService } from './MonitoringService.js';

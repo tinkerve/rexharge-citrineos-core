@@ -30,21 +30,21 @@ import type {
   NetworkProfileDeleteQuerystring,
   NetworkProfileQuerystring,
   UpdateChargingStationPasswordQueryString,
-} from '@citrineos/core';
-import { Boot, Component, Variable, VariableAttribute } from '@citrineos/core';
+} from '@dal/interfaces/index.js';
+import { Boot, Component, Variable, VariableAttribute } from '@dal/layers/sequelize/index.js';
 import {
   ChargingStationKeyQuerySchema,
   NetworkProfileDeleteQuerySchema,
   NetworkProfileQuerySchema,
   UpdateChargingStationPasswordQuerySchema,
-} from '@citrineos/core';
+} from '@dal/interfaces/index.js';
 import {
   ChargingStationNetworkProfile,
   ServerNetworkProfile,
   SetNetworkProfile,
-} from '@citrineos/core';
+} from '@dal/layers/sequelize/index.js';
 import { Op } from 'sequelize';
-import { generatePassword, isValidPassword } from '../../../../util/index.js';
+import { generatePassword, isValidPassword } from '@util/index.js';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
