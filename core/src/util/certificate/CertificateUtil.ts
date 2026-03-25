@@ -36,9 +36,19 @@ export function createPemBlock(content: string) {
  */
 export function parseCertificateChainPem(pem: string): string[] {
   const certs: string[] = [];
-  pem
-    .match(/-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/g)
-    ?.forEach((certPem) => certs.push(certPem));
+  const beginMarker = '-----BEGIN CERTIFICATE-----';
+  const endMarker = '-----END CERTIFICATE-----';
+
+  let startIndex = pem.indexOf(beginMarker);
+  while (startIndex !== -1) {
+    const endIndex = pem.indexOf(endMarker, startIndex + beginMarker.length);
+    if (endIndex === -1) {
+      break;
+    }
+    certs.push(pem.substring(startIndex, endIndex + endMarker.length));
+    startIndex = pem.indexOf(beginMarker, endIndex + endMarker.length);
+  }
+
   return certs;
 }
 
