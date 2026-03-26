@@ -6,6 +6,7 @@ import type {
   StopTransactionDto,
   TenantDto,
   TransactionDto,
+  TransactionEventDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
@@ -67,10 +68,10 @@ export class Transaction extends Model implements TransactionDto {
   @Column(DataType.BOOLEAN)
   declare isActive: boolean;
 
-  declare transactionEvents?: any[];
+  declare transactionEvents?: TransactionEventDto[];
 
   // required only for filtering, should not be used to pull transaction events
-  declare transactionEventsFilter?: any[];
+  declare transactionEventsFilter?: TransactionEventDto[];
 
   declare meterValues?: MeterValue[];
 

@@ -188,6 +188,10 @@ export * from './src/interfaces/dto/variable.dto.js';
 export * from './src/interfaces/dto/variable.monitoring.dto.js';
 export * from './src/interfaces/dto/variable.monitoring.status.dto.js';
 export * from './src/interfaces/dto/variable.status.dto.js';
+export * from './src/interfaces/dto/local.list.authorization.dto.js';
+export * from './src/interfaces/dto/local.list.version.dto.js';
+export * from './src/interfaces/dto/send.list.dto.js';
+
 export { Currency } from './src/money/Currency.js';
 export type { CurrencyCode } from './src/money/Currency.js';
 export { Money } from './src/money/Money.js';

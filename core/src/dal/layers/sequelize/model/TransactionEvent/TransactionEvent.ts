@@ -7,6 +7,7 @@ import type {
   TransactionEventEnumType,
   TriggerReasonEnumType,
   TransactionType,
+  TransactionDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
@@ -53,7 +54,7 @@ export class TransactionEvent extends Model implements TransactionEventDto {
 
   declare transactionDatabaseId?: number;
 
-  declare transaction?: any;
+  declare transaction?: TransactionDto;
 
   @Column(DataType.JSON)
   declare transactionInfo: TransactionType;

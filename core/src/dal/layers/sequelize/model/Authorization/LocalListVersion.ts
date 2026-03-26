@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
-import type { TenantDto } from '@citrineos/base';
+import type { TenantDto, LocalListAuthorizationDto } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 
 @Table
@@ -19,7 +19,9 @@ export class LocalListVersion extends Model {
   @Column(DataType.INTEGER)
   declare versionNumber: number;
 
-  declare localAuthorizationList?: [any, ...any[]] | undefined;
+  declare localAuthorizationList?:
+    | [LocalListAuthorizationDto, ...LocalListAuthorizationDto[]]
+    | undefined;
 
   customData?: OCPP2_0_1.CustomDataType | null | undefined;
 

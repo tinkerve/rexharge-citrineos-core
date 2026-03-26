@@ -1,10 +1,14 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { PartnerProfile, TenantDto, TenantPartnerDto } from '@citrineos/base';
+import type {
+  PartnerProfile,
+  TenantDto,
+  TenantPartnerDto,
+  AuthorizationDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
-import { Authorization } from './Authorization/Authorization.js';
 
 @Table
 export class TenantPartner extends Model implements TenantPartnerDto {
@@ -19,7 +23,7 @@ export class TenantPartner extends Model implements TenantPartnerDto {
   @Column(DataType.JSONB)
   declare partnerProfileOCPI: PartnerProfile;
 
-  declare authorizations: Authorization[];
+  declare authorizations: AuthorizationDto[];
 
   @Column({
     type: DataType.INTEGER,

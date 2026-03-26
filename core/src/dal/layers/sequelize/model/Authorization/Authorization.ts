@@ -10,6 +10,7 @@ import type {
   IdTokenEnumType,
   RealTimeAuthLastAttempt,
   TenantDto,
+  TenantPartnerDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
@@ -98,7 +99,7 @@ export class Authorization extends Model implements AuthorizationDto {
   @Column(DataType.INTEGER)
   declare tenantPartnerId?: number | null;
 
-  declare tenantPartner?: any | null;
+  declare tenantPartner?: TenantPartnerDto | null;
 
   @Column({
     type: DataType.INTEGER,

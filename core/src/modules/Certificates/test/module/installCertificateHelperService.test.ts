@@ -9,12 +9,12 @@ import {
   mockLogger,
 } from '../../vitest.setup';
 import {
-  Certificate,
   type ICertificateRepository,
   type IDeleteCertificateAttemptRepository,
   type IInstallCertificateAttemptRepository,
   type IInstalledCertificateRepository,
 } from '@citrineos/core';
+import { Certificate } from '../../../../dal/layers/sequelize/index.js';
 import { type CertificateAuthorityService, WebsocketNetworkConnection } from '@citrineos/core';
 import { InstallCertificateHelperService } from '../../src/module/installCertificateHelperService';
 import { MOCK_CERTIFICATE } from '../providers/InstallCertificateRequestProvider';
@@ -40,8 +40,8 @@ vi.mock('../../../../util/index.js', async (importOriginal) => {
   };
 });
 
-vi.mock('@citrineos/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@citrineos/core')>();
+vi.mock('../../../../dal/layers/sequelize/index.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../dal/layers/sequelize/index.js')>();
 
   class MockCertificate {
     id?: number;
@@ -60,6 +60,12 @@ vi.mock('@citrineos/core', async (importOriginal) => {
     constructor() {
       createdCertificateInstances.push(this);
     }
+
+    static build = vi.fn().mockImplementation((data) => {
+      const instance = new MockCertificate();
+      Object.assign(instance, data);
+      return instance;
+    });
   }
 
   class MockInstallCertificateAttempt {
@@ -73,6 +79,12 @@ vi.mock('@citrineos/core', async (importOriginal) => {
     constructor() {
       createdInstallCertificateAttemptInstances.push(this);
     }
+
+    static build = vi.fn().mockImplementation((data) => {
+      const instance = new MockInstallCertificateAttempt();
+      Object.assign(instance, data);
+      return instance;
+    });
   }
 
   class MockInstalledCertificate {
@@ -85,11 +97,16 @@ vi.mock('@citrineos/core', async (importOriginal) => {
     constructor() {
       createdInstalledCertificateInstances.push(this);
     }
+
+    static build = vi.fn().mockImplementation((data) => {
+      const instance = new MockInstalledCertificate();
+      Object.assign(instance, data);
+      return instance;
+    });
   }
 
   return {
     ...actual,
-    extractCertificateDetails: mockExtractCertificateDetails,
     Certificate: MockCertificate,
     InstallCertificateAttempt: MockInstallCertificateAttempt,
     InstalledCertificate: MockInstalledCertificate,

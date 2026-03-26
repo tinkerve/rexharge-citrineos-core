@@ -2,12 +2,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import { CrudRepository, DEFAULT_TENANT_ID } from '@citrineos/base';
-import {
-  Component,
-  IDeviceModelRepository,
-  ILocationRepository,
-  StatusNotification,
-} from '@citrineos/core';
+import { Component, IDeviceModelRepository, ILocationRepository } from '@citrineos/core';
+import { StatusNotification } from '../../../../dal/layers/sequelize/index.js';
 import { beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
 import { StatusNotificationService } from '../../src/module/StatusNotificationService.js';
 import {
@@ -25,6 +21,39 @@ import {
   aStatusNotification,
   aStatusNotificationRequest,
 } from '../providers/StatusNotification.js';
+
+// Mock StatusNotification model
+vi.mock('../../../../dal/layers/sequelize/model/Location/index.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('../../../../dal/layers/sequelize/model/Location/index.js')
+    >();
+
+  class MockStatusNotification {
+    id?: number;
+    tenantId?: number;
+    stationId?: string;
+    timestamp?: string;
+    status?: string;
+    connectorId?: number;
+    errorCode?: string;
+    info?: string;
+    vendorId?: string;
+    vendorErrorCode?: string;
+    save = vi.fn().mockResolvedValue(this);
+
+    static build = vi.fn().mockImplementation((data) => {
+      const instance = new MockStatusNotification();
+      Object.assign(instance, data);
+      return instance;
+    });
+  }
+
+  return {
+    ...actual,
+    StatusNotification: MockStatusNotification,
+  };
+});
 
 describe('StatusNotificationService', () => {
   let statusNotificationService: StatusNotificationService;

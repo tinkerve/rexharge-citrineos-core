@@ -25,6 +25,7 @@ const authorizationFields = {
   language1: z.string().nullable().optional(),
   language2: z.string().nullable().optional(),
   personalMessage: z.any().nullable().optional(),
+  customData: z.any().nullable().optional(),
   concurrentTransaction: z.boolean().optional(),
   realTimeAuth: AuthorizationWhitelistEnumSchema.nullable().optional(),
   realTimeAuthLastAttempt: RealTimeAuthLastAttemptSchema.nullable().optional(),

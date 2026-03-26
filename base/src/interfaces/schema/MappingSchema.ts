@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+
 import { OCPP1_6, OCPP2_0_1 } from '@ocpp/model/index.js';
 import { type CallAction, OCPP1_6_CallAction, OCPP2_0_1_CallAction } from '@ocpp/rpc/message.js';
 

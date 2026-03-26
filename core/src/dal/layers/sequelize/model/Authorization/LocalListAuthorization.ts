@@ -3,9 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
-import type { TenantDto } from '@citrineos/base';
+import type {
+  TenantDto,
+  AuthorizationDto,
+  LocalListVersionDto,
+  SendLocalListDto,
+} from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 import { type AuthorizationRestrictions } from '@dal/interfaces/projections/AuthorizationRestrictions.js';
+
 /**
  *
  * This class represents static information about an authorization used in a local auth list.
@@ -56,16 +62,16 @@ export class LocalListAuthorization extends Model implements AuthorizationRestri
   @Column(DataType.INTEGER)
   declare groupAuthorizationId?: number | null;
 
-  declare groupAuthorization?: any;
+  declare groupAuthorization?: AuthorizationDto;
 
   @Column(DataType.INTEGER)
   declare authorizationId?: string;
 
-  declare authorization?: any;
+  declare authorization?: AuthorizationDto;
 
-  declare sendLocalLists?: any[];
+  declare sendLocalLists?: SendLocalListDto[];
 
-  declare localListVersions?: any[];
+  declare localListVersions?: LocalListVersionDto[];
 
   declare customData?: any | null;
 

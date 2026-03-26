@@ -10,6 +10,7 @@ import type {
   ConnectorStatusEnumType,
   ConnectorTypeEnumType,
   TenantDto,
+  TariffDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
@@ -98,7 +99,7 @@ export class Connector extends Model implements ConnectorDto {
 
   declare evse?: Evse;
 
-  declare tariffs?: any[];
+  declare tariffs?: TariffDto[];
 
   @Column({
     type: DataType.INTEGER,

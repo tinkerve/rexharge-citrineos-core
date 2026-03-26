@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { DeleteCertificateAttempt } from '@citrineos/core';
+import { DeleteCertificateAttempt } from '../../../../../dal/index.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CertificatesModule, CertificatesOcpp201Api } from '../../../src';
 import {
@@ -20,8 +20,8 @@ const mockSave = vi.fn().mockResolvedValue({ id: 100 });
 let createdDeleteCertificateAttemptInstances: any[] = [];
 
 // todo figure out better way to test sequelize models
-vi.mock('@citrineos/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@citrineos/core')>();
+vi.mock('../../../../../dal/index.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../../dal/index.js')>();
 
   class MockDeleteCertificateAttempt {
     stationId?: string;
