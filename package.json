@@ -58,12 +58,14 @@
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
     "asn1js": "^3.0.7",
+    "bufferutil": "^4.1.0",
     "jsrsasign": "^11.1.1",
     "jwks-rsa": "^4.0.1",
     "pkijs": "^3.3.3",
     "pvutils": "^1.1.5",
     "redis": "^4.7.1",
     "sequelize-typescript": "^2.1.6",
-    "tsconfig-paths": "^4.2.0"
+    "tsconfig-paths": "^4.2.0",
+    "utf-8-validate": "^6.0.6"
   }
 }
