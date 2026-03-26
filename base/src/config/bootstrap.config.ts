@@ -31,6 +31,13 @@ export const bootstrapConfigSchema = z.object({
     force: z.boolean().default(false),
     maxRetries: z.number().int().positive().default(3),
     retryDelay: z.number().int().positive().default(1000),
+    ssl: z
+      .object({
+        require: z.boolean().optional(),
+        rejectUnauthorized: z.boolean().optional(),
+        ca: z.string().optional(),
+      })
+      .optional(),
   }),
 
   // File access configuration
@@ -142,6 +149,17 @@ export function loadBootstrapConfig(): BootstrapConfig {
   };
   if (Object.keys(pool).length > 0) {
     config.database.pool = pool;
+  }
+  const sslRequire = getEnvVarValue('database_ssl_require');
+  if (sslRequire !== undefined) {
+    config.database.ssl = {
+      require: parseEnvValue(sslRequire),
+      rejectUnauthorized:
+        getEnvVarValue('database_ssl_reject_unauthorized') !== undefined
+          ? parseEnvValue(getEnvVarValue('database_ssl_reject_unauthorized')!)
+          : undefined,
+      ca: getEnvVarValue('database_ssl_ca'),
+    };
   }
 
   // File access configuration

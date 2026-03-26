@@ -199,6 +199,11 @@ export class DefaultSequelizeInstance {
         TenantPartner,
       ],
       pool: this.config.database.pool,
+      ...(this.config.database.ssl && {
+        dialectOptions: {
+          ssl: this.config.database.ssl,
+        },
+      }),
       logging: (_sql: string, _timing?: number) => {},
     });
 

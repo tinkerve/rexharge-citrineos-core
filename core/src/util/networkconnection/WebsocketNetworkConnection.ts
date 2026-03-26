@@ -16,6 +16,7 @@ import type {
 import {
   CacheNamespace,
   createIdentifier,
+  getCacheTenantPathMappingKey,
   getStationIdFromIdentifier,
   getTenantIdFromIdentifier,
 } from '@citrineos/base';
@@ -28,6 +29,7 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { ErrorEvent, MessageEvent } from 'ws';
 import { WebSocket, WebSocketServer } from 'ws';
+import { UpgradeAuthenticationError } from './authenticator/errors/AuthenticationError.js';
 import type { IUpgradeError } from './authenticator/errors/IUpgradeError.js';
 
 export class WebsocketNetworkConnection implements INetworkConnection {
@@ -35,6 +37,8 @@ export class WebsocketNetworkConnection implements INetworkConnection {
   protected _config: SystemConfig;
   protected _logger: Logger<ILogObj>;
   private _identifierConnections: Map<string, WebSocket> = new Map();
+  // tenantId as key and number of active connections as value
+  private _tenantConnectionCounts: Map<number, number> = new Map();
   // websocketServers id as key and http server as value
   private _httpServersMap: Map<string, http.Server | https.Server>;
   private _authenticator: IAuthenticator;
@@ -44,6 +48,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     tenantId: number,
     stationId: string,
   ) => Promise<boolean>;
+  private _getMaxChargingStationsForTenant?: (tenantId: number) => Promise<number | null>;
 
   constructor(
     config: SystemConfig,
@@ -52,8 +57,10 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     router: IMessageRouter,
     logger?: Logger<ILogObj>,
     doesChargingStationExistByStationId?: (tenantId: number, stationId: string) => Promise<boolean>,
+    getMaxChargingStationsForTenant?: (tenantId: number) => Promise<number | null>,
     connectionManager?: IConnectionManager,
   ) {
+    this._getMaxChargingStationsForTenant = getMaxChargingStationsForTenant;
     this._cache = cache;
     this._config = config;
     this._doesChargingStationExistByStationId = doesChargingStationExistByStationId;
@@ -234,9 +241,14 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       // Resolve tenant at upgrade time (query param, path segment, header),
       // falling back to the server-configured tenant if none provided.
       const resolvedTenantId = websocketServerConfig.dynamicTenantResolution
-        ? this._extractTenantIdFromRequest(req, websocketServerConfig) ??
-          websocketServerConfig.tenantId
+        ? await this._extractTenantIdFromRequest(req, websocketServerConfig)
         : websocketServerConfig.tenantId;
+
+      if (resolvedTenantId === undefined) {
+        throw new UpgradeAuthenticationError(
+          'Tenant resolution failed: no valid tenant path provided in request and server is not configured with a default tenantId',
+        );
+      }
 
       // Attach resolved tenant to request so downstream handlers (connection) can use it
       (req as any).__resolvedTenantId = resolvedTenantId;
@@ -354,22 +366,26 @@ export class WebsocketNetworkConnection implements INetworkConnection {
 
       const identifier = createIdentifier(tenantId, stationId);
 
-      // Enforce optional per-tenant connection limit if configured
-      const maxConnections = websocketServerConfig.maxConnectionsPerTenant;
-      if (typeof maxConnections === 'number' && maxConnections > 0) {
-        const currentCount = [...this._identifierConnections.keys()].filter(
-          (k) => getTenantIdFromIdentifier(k) === tenantId,
-        ).length;
-        if (currentCount >= maxConnections) {
-          this._logger.warn(
-            `Tenant ${tenantId} exceeded max connections (${maxConnections}), rejecting ${identifier}`,
-          );
-          ws.close(1013, 'Tenant connection limit exceeded');
-          return;
+      // Enforce per-tenant connection limit from the tenant's maxChargingStations field
+      if (this._getMaxChargingStationsForTenant) {
+        const maxConnections = await this._getMaxChargingStationsForTenant(tenantId);
+        if (typeof maxConnections === 'number' && maxConnections > 0) {
+          const currentCount = this._tenantConnectionCounts.get(tenantId) ?? 0;
+          if (currentCount >= maxConnections) {
+            this._logger.warn(
+              `Tenant ${tenantId} exceeded max connections (${maxConnections}), rejecting ${identifier}`,
+            );
+            ws.close(1013, 'Tenant connection limit exceeded');
+            return;
+          }
         }
       }
 
       this._identifierConnections.set(identifier, ws);
+      this._tenantConnectionCounts.set(
+        tenantId,
+        (this._tenantConnectionCounts.get(tenantId) ?? 0) + 1,
+      );
       try {
         // Get IP address of client
         const ip =
@@ -441,10 +457,14 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       this._logger.info('Connection closed for', identifier);
       this._cache.remove(identifier, CacheNamespace.Connections);
       this._identifierConnections.delete(identifier);
-      this._router.deregisterConnection(
-        getTenantIdFromIdentifier(identifier),
-        getStationIdFromIdentifier(identifier),
-      );
+      const closedTenantId = getTenantIdFromIdentifier(identifier);
+      const prevCount = this._tenantConnectionCounts.get(closedTenantId) ?? 0;
+      if (prevCount <= 1) {
+        this._tenantConnectionCounts.delete(closedTenantId);
+      } else {
+        this._tenantConnectionCounts.set(closedTenantId, prevCount - 1);
+      }
+      this._router.deregisterConnection(closedTenantId, getStationIdFromIdentifier(identifier));
     });
 
     ws.on('ping', async (message) => {
@@ -552,10 +572,10 @@ export class WebsocketNetworkConnection implements INetworkConnection {
    * Supported sources (in order): query `tenant`/`tenantId`, header `x-tenant-id`,
    * path segment (second-last segment if URL is `/tenant/station`).
    */
-  private _extractTenantIdFromRequest(
+  private async _extractTenantIdFromRequest(
     req: http.IncomingMessage,
     config: WebsocketServerConfig,
-  ): number | undefined {
+  ): Promise<number | undefined> {
     try {
       const rawUrl = req.url ?? '';
       const url = new URL(rawUrl, 'http://localhost');
@@ -565,11 +585,15 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       // We look for a mapping of pathSegment to tenantId.
       if (segments.length >= 2 && config.tenantPathMapping) {
         const pathSegment = segments[segments.length - 2];
-        if (config.tenantPathMapping[pathSegment]) {
-          return config.tenantPathMapping[pathSegment];
-        } else {
+
+        const cachedTenantIdString = await this._cache.get<string>(
+          getCacheTenantPathMappingKey(config.id, pathSegment),
+          CacheNamespace.TenantPathMapping,
+        );
+        if (!cachedTenantIdString) {
           this._logger.debug(`No mapping found for path segment: ${pathSegment}`);
         }
+        return cachedTenantIdString ? Number(cachedTenantIdString) : undefined;
       }
     } catch (err) {
       // If parsing fails, ignore and fall back to server-configured tenant
@@ -601,6 +625,14 @@ export class WebsocketNetworkConnection implements INetworkConnection {
   private _createAndStartWebsocketServer(
     wsConfig: WebsocketServerConfig,
   ): Promise<http.Server | https.Server> {
+    for (const [key, value] of Object.entries(wsConfig.tenantPathMapping ?? {})) {
+      this._cache.set(
+        getCacheTenantPathMappingKey(wsConfig.id, key),
+        value.toString(),
+        CacheNamespace.TenantPathMapping,
+      );
+    }
+
     return new Promise((resolve) => {
       let httpServer: http.Server | https.Server;
       switch (wsConfig.securityProfile) {

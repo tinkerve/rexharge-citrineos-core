@@ -24,6 +24,7 @@ export {
   createIdentifier,
   getStationIdFromIdentifier,
   getTenantIdFromIdentifier,
+  getCacheTenantPathMappingKey,
 } from './src/interfaces/cache/types.js';
 export type { IWebsocketConnection } from './src/interfaces/cache/types.js';
 export type { IFileAccess } from './src/interfaces/files/fileAccess.js';

@@ -57,9 +57,6 @@ export class ServerNetworkProfile
   @Column(DataType.JSONB)
   declare tenantPathMapping?: Record<string, number>;
 
-  @Column(DataType.INTEGER)
-  declare maxConnectionsPerTenant?: number;
-
   @Column(DataType.STRING)
   declare tlsKeyFilePath?: string;
 
@@ -76,11 +73,11 @@ export class ServerNetworkProfile
 
   @Column({
     type: DataType.INTEGER,
-    allowNull: false,
+    allowNull: true,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
   })
-  declare tenantId: number;
+  declare tenantId?: number;
 
   declare tenant?: TenantDto;
 
