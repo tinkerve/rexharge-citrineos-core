@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Contributors to the CitrineOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+
 import type { AnySchemaObject } from 'ajv';
 import { OCPP2_0_1, OCPP2_1 } from '../../model/index.js';
 import { OCPPVersion } from '../message.js';
