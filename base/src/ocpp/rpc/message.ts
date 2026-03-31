@@ -83,6 +83,7 @@ export enum OCPP_CallAction {
   DataTransfer = 'DataTransfer',
   DiagnosticsStatusNotification = 'DiagnosticsStatusNotification',
   FirmwareStatusNotification = 'FirmwareStatusNotification',
+  SignedFirmwareStatusNotification = 'SignedFirmwareStatusNotification',
   GetCompositeSchedule = 'GetCompositeSchedule',
   GetConfiguration = 'GetConfiguration',
   GetDiagnostics = 'GetDiagnostics',
