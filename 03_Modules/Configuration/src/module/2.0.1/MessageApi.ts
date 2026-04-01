@@ -62,16 +62,20 @@ export class ConfigurationOcpp201Api
     if (extraQueries) {
       const websocketServerConfigId =
         extraQueries[SetNetworkProfileExtraQuerystrings.websocketServerConfigId];
-      await SetNetworkProfile.build({
-        stationId: identifier[0],
-        tenantId,
-        correlationId,
-        configurationSlot: request.configurationSlot,
-        websocketServerConfigId,
-        apn: JSON.stringify(request.connectionData.apn),
-        vpn: JSON.stringify(request.connectionData.vpn),
-        ...request.connectionData,
-      }).save();
+      await Promise.all(
+        identifier.map((id) =>
+          SetNetworkProfile.build({
+            stationId: id,
+            tenantId,
+            correlationId,
+            configurationSlot: request.configurationSlot,
+            websocketServerConfigId,
+            apn: JSON.stringify(request.connectionData.apn),
+            vpn: JSON.stringify(request.connectionData.vpn),
+            ...request.connectionData,
+          }).save(),
+        ),
+      );
     }
 
     const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
