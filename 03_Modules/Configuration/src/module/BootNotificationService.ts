@@ -3,15 +3,20 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { IBootRepository } from '@citrineos/data';
 import { Boot, OCPP1_6_Mapper, OCPP2_0_1_Mapper } from '@citrineos/data';
-import type { BootConfig, ICache, IMessageConfirmation, SystemConfig } from '@citrineos/base';
+import type {
+  BootConfig,
+  ICache,
+  IMessageConfirmation,
+  RegistrationStatusEnumType,
+  SystemConfig,
+} from '@citrineos/base';
 import {
   BOOT_STATUS,
   OCPP1_6,
-  OCPP1_6_CALL_SCHEMA_MAP,
-  OCPP1_6_CallAction,
+  OCPP1_6_CALL_SCHEMA_RECORD,
   OCPP2_0_1,
-  OCPP2_0_1_CALL_SCHEMA_MAP,
-  OCPP2_0_1_CallAction,
+  OCPP2_0_1_CALL_SCHEMA_RECORD,
+  OCPP_CallAction,
 } from '@citrineos/base';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -126,18 +131,20 @@ export class BootNotificationService {
    */
   async cacheChargerActionsPermissions(
     stationId: string,
-    cachedBootStatus: OCPP2_0_1.RegistrationStatusEnumType | null,
+    cachedBootStatus: RegistrationStatusEnumType | null,
     bootNotificationResponseStatus: OCPP2_0_1.RegistrationStatusEnumType,
   ): Promise<void> {
     // New boot status is Accepted and cachedBootStatus exists (meaning there was a previous Rejected or Pending boot)
     if (bootNotificationResponseStatus === OCPP2_0_1.RegistrationStatusEnumType.Accepted) {
       if (cachedBootStatus) {
         // Undo blacklisting of charger-originated actions
-        const promises = Array.from(OCPP2_0_1_CALL_SCHEMA_MAP).map(async ([action]) => {
-          if (action !== OCPP2_0_1_CallAction.BootNotification) {
-            return this._cache.remove(action, stationId);
-          }
-        });
+        const promises = Array.from(Object.keys(OCPP2_0_1_CALL_SCHEMA_RECORD)).map(
+          async (action) => {
+            if (action !== OCPP_CallAction.BootNotification) {
+              return this._cache.remove(action, stationId);
+            }
+          },
+        );
         await Promise.all(promises);
         // Remove cached boot status
         await this._cache.remove(BOOT_STATUS, stationId);
@@ -149,8 +156,8 @@ export class BootNotificationService {
       // Blacklist all charger-originated actions except BootNotification
       // GetReport messages will need to un-blacklist NotifyReport
       // TriggerMessage will need to un-blacklist the message it triggers
-      const promises = Array.from(OCPP2_0_1_CALL_SCHEMA_MAP).map(async ([action]) => {
-        if (action !== OCPP2_0_1_CallAction.BootNotification) {
+      const promises = Array.from(Object.keys(OCPP2_0_1_CALL_SCHEMA_RECORD)).map(async (action) => {
+        if (action !== OCPP_CallAction.BootNotification) {
           return this._cache.set(action, 'blacklisted', stationId);
         }
       });
@@ -291,11 +298,13 @@ export class BootNotificationService {
     if (bootNotificationResponseStatus === OCPP1_6.BootNotificationResponseStatus.Accepted) {
       if (cachedBootStatus) {
         // Undo blacklisting of charger-originated actions
-        const promises = Array.from(OCPP1_6_CALL_SCHEMA_MAP).map(async ([action]) => {
-          if (action !== OCPP1_6_CallAction.BootNotification) {
-            return this._cache.remove(action, stationId);
-          }
-        });
+        const promises = Array.from(Object.keys(OCPP1_6_CALL_SCHEMA_RECORD)).map(
+          async ([action]) => {
+            if (action !== OCPP_CallAction.BootNotification) {
+              return this._cache.remove(action, stationId);
+            }
+          },
+        );
         await Promise.all(promises);
         // Remove cached boot status
         await this._cache.remove(BOOT_STATUS, stationId);
@@ -308,8 +317,8 @@ export class BootNotificationService {
       // Cached boot status for charger did not exist; i.e. this is the first BootNotificationResponse to be Rejected or Pending.
       // Blacklist all charger-originated actions except BootNotification
       // ChangeConfiguration, GetConfiguration and TriggerMessage will need to un-blacklist the message it triggers
-      const promises = Array.from(OCPP1_6_CALL_SCHEMA_MAP).map(async ([action]) => {
-        if (action !== OCPP1_6_CallAction.BootNotification) {
+      const promises = Array.from(Object.keys(OCPP1_6_CALL_SCHEMA_RECORD)).map(async (action) => {
+        if (action !== OCPP_CallAction.BootNotification) {
           return this._cache.set(action, 'blacklisted', stationId);
         }
       });

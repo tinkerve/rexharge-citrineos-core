@@ -5,12 +5,9 @@
 import { z } from 'zod';
 import { EventGroup } from '../interfaces/messages/index.js';
 import { OCPP1_6, OCPP2_0_1 } from '../ocpp/model/index.js';
-import { OCPP1_6_CallAction, OCPP2_0_1_CallAction } from '../ocpp/rpc/message.js';
+import { OCPP_CallAction } from '../ocpp/rpc/message.js';
 
-const OCPP1_6_CallActionSchema = z.nativeEnum(OCPP1_6_CallAction);
-const OCPP2_0_1_CallActionSchema = z.nativeEnum(OCPP2_0_1_CallAction);
-
-const CallActionSchema = z.union([OCPP1_6_CallActionSchema, OCPP2_0_1_CallActionSchema]);
+const CallActionSchema = z.nativeEnum(OCPP_CallAction);
 
 export const oidcClientConfigSchema = z
   .object({
@@ -21,16 +18,15 @@ export const oidcClientConfigSchema = z
   })
   .optional();
 
+const OCPP_VERSION_LIST: string[] = ['ocpp1.6', 'ocpp2.0.1', 'ocpp2.1'] as const;
+
 // TODO: Refactor other objects out of system config, such as certificatesModuleInputSchema etc.
 export const websocketServerInputSchema = z.object({
   id: z.string().optional(),
   host: z.string().default('localhost').optional(),
   port: z.number().int().min(1).default(8080).optional(),
   pingInterval: z.number().int().min(1).default(60).optional(),
-  protocols: z
-    .array(z.enum(['ocpp1.6', 'ocpp2.0.1']))
-    .default(['ocpp2.0.1'])
-    .optional(),
+  protocols: z.array(z.enum(OCPP_VERSION_LIST)).default(['ocpp2.0.1']).optional(),
   securityProfile: z.number().int().min(0).max(3).default(0).optional(),
   allowUnknownChargingStations: z.boolean().default(false).optional(),
   ignoreAuthenticationHeaders: z.boolean().default(false).optional(), // When true, authorization headers will be ignored and authentication will be bypassed.
@@ -91,6 +87,18 @@ export const systemConfigInputSchema = z.object({
           getBaseReportOnPending: z.boolean().default(true).optional(),
           bootWithRejectedVariables: z.boolean().default(true).optional(),
           autoAccept: z.boolean().default(true).optional(), // If false, only data endpoint can update boot status to accepted
+        })
+        .optional(),
+      ocpp2_1: z
+        .object({
+          unknownChargerStatus: z
+            .enum([
+              OCPP2_0_1.RegistrationStatusEnumType.Accepted, //Placeholder for 2.1, TODO
+              OCPP2_0_1.RegistrationStatusEnumType.Pending,
+              OCPP2_0_1.RegistrationStatusEnumType.Rejected,
+            ])
+            .default(OCPP2_0_1.RegistrationStatusEnumType.Accepted)
+            .optional(), // Unknown chargers have no entry in BootConfig table
         })
         .optional(),
       ocpp1_6: z
@@ -300,7 +308,7 @@ export const websocketServerSchema = z
     host: z.string(),
     port: z.number().int().min(1),
     pingInterval: z.number().int().min(1),
-    protocols: z.array(z.enum(['ocpp1.6', 'ocpp2.0.1'])),
+    protocols: z.array(z.enum(OCPP_VERSION_LIST)),
     securityProfile: z.number().int().min(0).max(3),
     allowUnknownChargingStations: z.boolean(),
     ignoreAuthenticationHeaders: z.boolean().default(false).optional(),
@@ -382,6 +390,18 @@ export const systemConfigSchema = z
               autoAccept: z.boolean(),
             })
             .optional(),
+          ocpp2_1: z
+            .object({
+              unknownChargerStatus: z
+                .enum([
+                  OCPP2_0_1.RegistrationStatusEnumType.Accepted,
+                  OCPP2_0_1.RegistrationStatusEnumType.Pending,
+                  OCPP2_0_1.RegistrationStatusEnumType.Rejected,
+                ])
+                .default(OCPP2_0_1.RegistrationStatusEnumType.Accepted)
+                .optional(), // Unknown chargers have no entry in BootConfig table
+            })
+            .optional(),
           ocpp1_6: z
             .object({
               unknownChargerStatus: z.enum([
@@ -397,7 +417,7 @@ export const systemConfigSchema = z
           requests: z.array(CallActionSchema),
           responses: z.array(CallActionSchema),
         })
-        .refine((obj) => obj.ocpp1_6 || obj.ocpp2_0_1, {
+        .refine((obj) => obj.ocpp1_6 || obj.ocpp2_0_1 || obj.ocpp2_1, {
           message: 'A protocol configuration must be set',
         }), // Configuration module is required
       monitoring: z.object({

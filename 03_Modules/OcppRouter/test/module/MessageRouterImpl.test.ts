@@ -23,7 +23,7 @@ import {
   MessageTypeId,
   NO_ACTION,
   OCPP2_0_1,
-  OCPP2_0_1_CallAction,
+  OCPP_CallAction,
   OcppError,
   OCPPVersion,
   RequestBuilder,
@@ -287,7 +287,7 @@ describe('MessageRouterImpl', () => {
         const callMessage: Call = [
           MessageTypeId.Call,
           CORRELATION_ID,
-          OCPP2_0_1_CallAction.BootNotification,
+          OCPP_CallAction.BootNotification,
           { chargingStation: { model: 'Model', vendorName: 'Vendor' }, reason: 'PowerUp' },
         ];
         const rawMessage = JSON.stringify(callMessage);
@@ -330,7 +330,7 @@ describe('MessageRouterImpl', () => {
 
         expect(networkHook).toHaveBeenCalled();
         const sentMessage = JSON.parse(networkHook.mock.calls[0][1]);
-        expect(sentMessage[2]).toBe(ErrorCode.FormationViolation);
+        expect(sentMessage[2]).toBe(ErrorCode.FormatViolation);
       });
 
       it('should send CallError with FormatViolation for ocpp2.0.1 unknown message type', async () => {
@@ -433,7 +433,7 @@ describe('MessageRouterImpl', () => {
       const callMessage = JSON.stringify([
         MessageTypeId.Call,
         CORRELATION_ID,
-        OCPP2_0_1_CallAction.Heartbeat,
+        OCPP_CallAction.Heartbeat,
         {},
       ]);
 
@@ -454,7 +454,7 @@ describe('MessageRouterImpl', () => {
       const callMessage = JSON.stringify([
         MessageTypeId.Call,
         CORRELATION_ID,
-        OCPP2_0_1_CallAction.Heartbeat,
+        OCPP_CallAction.Heartbeat,
         {},
       ]);
 
@@ -475,7 +475,7 @@ describe('MessageRouterImpl', () => {
       const callMessage = JSON.stringify([
         MessageTypeId.Call,
         CORRELATION_ID,
-        OCPP2_0_1_CallAction.Heartbeat,
+        OCPP_CallAction.Heartbeat,
         {},
       ]);
 
@@ -498,7 +498,7 @@ describe('MessageRouterImpl', () => {
       const callMessage = JSON.stringify([
         MessageTypeId.Call,
         CORRELATION_ID,
-        OCPP2_0_1_CallAction.BootNotification,
+        OCPP_CallAction.BootNotification,
         {},
       ]);
 
@@ -518,7 +518,7 @@ describe('MessageRouterImpl', () => {
       const callMessage = JSON.stringify([
         MessageTypeId.Call,
         CORRELATION_ID,
-        OCPP2_0_1_CallAction.Heartbeat,
+        OCPP_CallAction.Heartbeat,
         {},
       ]);
 
@@ -533,7 +533,7 @@ describe('MessageRouterImpl', () => {
   // ─── sendCall ──────────────────────────────────────────────────────────────
 
   describe('sendCall', () => {
-    const action = OCPP2_0_1_CallAction.GetBaseReport;
+    const action = OCPP_CallAction.GetBaseReport;
     const payload = { requestId: 1, reportBase: 'FullInventory' } as unknown as OcppRequest;
 
     it('should send a Call message successfully', async () => {
@@ -593,7 +593,7 @@ describe('MessageRouterImpl', () => {
         STATION_ID,
         TENANT_ID,
         PROTOCOL,
-        OCPP2_0_1_CallAction.TriggerMessage,
+        OCPP_CallAction.TriggerMessage,
         triggerPayload,
         CORRELATION_ID,
       );
@@ -647,7 +647,7 @@ describe('MessageRouterImpl', () => {
   // ─── sendCallResult ────────────────────────────────────────────────────────
 
   describe('sendCallResult', () => {
-    const action = OCPP2_0_1_CallAction.BootNotification;
+    const action = OCPP_CallAction.BootNotification;
     const payload = {
       currentTime: '2025-01-01T00:00:00Z',
       interval: 300,
@@ -737,7 +737,7 @@ describe('MessageRouterImpl', () => {
   // ─── sendCallError ─────────────────────────────────────────────────────────
 
   describe('sendCallError', () => {
-    const action = OCPP2_0_1_CallAction.BootNotification;
+    const action = OCPP_CallAction.BootNotification;
     const ocppError = new OcppError(
       CORRELATION_ID,
       ErrorCode.InternalError,
@@ -840,7 +840,7 @@ describe('MessageRouterImpl', () => {
         STATION_ID,
         TENANT_ID,
         PROTOCOL,
-        OCPP2_0_1_CallAction.GetBaseReport,
+        OCPP_CallAction.GetBaseReport,
         { requestId: 1, reportBase: 'FullInventory' } as unknown as OcppRequest,
         CORRELATION_ID,
       );
@@ -857,7 +857,7 @@ describe('MessageRouterImpl', () => {
         STATION_ID,
         TENANT_ID,
         PROTOCOL,
-        OCPP2_0_1_CallAction.GetBaseReport,
+        OCPP_CallAction.GetBaseReport,
         { requestId: 1, reportBase: 'FullInventory' } as unknown as OcppRequest,
         CORRELATION_ID,
       );
@@ -875,7 +875,7 @@ describe('MessageRouterImpl', () => {
         STATION_ID,
         TENANT_ID,
         PROTOCOL,
-        OCPP2_0_1_CallAction.GetBaseReport,
+        OCPP_CallAction.GetBaseReport,
         {} as OcppRequest,
         CORRELATION_ID,
       );
@@ -889,7 +889,7 @@ describe('MessageRouterImpl', () => {
         STATION_ID,
         TENANT_ID,
         PROTOCOL,
-        OCPP2_0_1_CallAction.GetBaseReport,
+        OCPP_CallAction.GetBaseReport,
         {} as OcppRequest,
         CORRELATION_ID,
       );
@@ -903,7 +903,7 @@ describe('MessageRouterImpl', () => {
         STATION_ID,
         TENANT_ID,
         PROTOCOL,
-        OCPP2_0_1_CallAction.GetBaseReport,
+        OCPP_CallAction.GetBaseReport,
         {} as OcppRequest,
         CORRELATION_ID,
       );
@@ -918,7 +918,7 @@ describe('MessageRouterImpl', () => {
         STATION_ID,
         TENANT_ID,
         PROTOCOL,
-        OCPP2_0_1_CallAction.GetBaseReport,
+        OCPP_CallAction.GetBaseReport,
         {} as OcppRequest,
         CORRELATION_ID,
       );
@@ -933,7 +933,7 @@ describe('MessageRouterImpl', () => {
         STATION_ID,
         TENANT_ID,
         PROTOCOL,
-        OCPP2_0_1_CallAction.TriggerMessage,
+        OCPP_CallAction.TriggerMessage,
         {
           requestedMessage: OCPP2_0_1.MessageTriggerEnumType.Heartbeat,
         } as unknown as OcppRequest,
@@ -995,7 +995,7 @@ describe('MessageRouterImpl', () => {
       const message: Call = [
         MessageTypeId.Call,
         CORRELATION_ID,
-        OCPP2_0_1_CallAction.BootNotification,
+        OCPP_CallAction.BootNotification,
         { chargingStation: { model: 'M', vendorName: 'V' }, reason: 'PowerUp' },
       ];
       const timestamp = new Date();
@@ -1008,7 +1008,7 @@ describe('MessageRouterImpl', () => {
         STATION_ID,
         CORRELATION_ID,
         TENANT_ID,
-        OCPP2_0_1_CallAction.BootNotification,
+        OCPP_CallAction.BootNotification,
         message[3],
         EventGroup.Router,
         MessageOrigin.ChargingStation,
@@ -1029,7 +1029,7 @@ describe('MessageRouterImpl', () => {
         { status: 'Accepted' },
       ];
       const timestamp = new Date();
-      const action = OCPP2_0_1_CallAction.BootNotification;
+      const action = OCPP_CallAction.BootNotification;
 
       const buildCallResultSpy = vi.spyOn(RequestBuilder, 'buildCallResult');
 
@@ -1064,7 +1064,7 @@ describe('MessageRouterImpl', () => {
         {},
       ];
       const timestamp = new Date();
-      const action = OCPP2_0_1_CallAction.BootNotification;
+      const action = OCPP_CallAction.BootNotification;
 
       const result = await (router as any)._routeCallError(
         IDENTIFIER,
@@ -1091,7 +1091,7 @@ describe('MessageRouterImpl', () => {
         { detail: 'some detail' },
       ];
       const timestamp = new Date();
-      const action = OCPP2_0_1_CallAction.BootNotification;
+      const action = OCPP_CallAction.BootNotification;
 
       await (router as any)._routeCallError(IDENTIFIER, message, action, timestamp, PROTOCOL);
 
@@ -1112,7 +1112,7 @@ describe('MessageRouterImpl', () => {
       const callMessage = JSON.stringify([
         MessageTypeId.Call,
         CORRELATION_ID,
-        OCPP2_0_1_CallAction.Heartbeat,
+        OCPP_CallAction.Heartbeat,
         {},
       ]);
 
@@ -1123,7 +1123,7 @@ describe('MessageRouterImpl', () => {
       // New: key is messageId, namespace is CacheNamespace.Transactions + identifier, value is action@timestamp
       expect(cache.setIfNotExist).toHaveBeenCalledWith(
         CORRELATION_ID,
-        expect.stringMatching(new RegExp(`^${OCPP2_0_1_CallAction.Heartbeat}@`)),
+        expect.stringMatching(new RegExp(`^${OCPP_CallAction.Heartbeat}@`)),
         CacheNamespace.Transactions + IDENTIFIER,
         config.maxCallLengthSeconds,
       );

@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import { DeleteCertificateAttempt } from '@citrineos/data';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CertificatesModule, CertificatesOcpp201Api } from '../../../src';
+import { CertificatesModule, CertificatesOcpp2Api } from '../../../src';
 import {
   DEFAULT_TENANT_ID,
   IMessageConfirmation,
-  OCPP2_0_1_CallAction,
+  OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
 import { aInstallCertificateRequest } from '../../providers/InstallCertificateRequestProvider';
@@ -57,7 +57,7 @@ const mockDeleteCertificateRepository = {
 const mockSendCall = vi.fn();
 
 describe('CertificatesOcpp201Api', () => {
-  let messageApi: CertificatesOcpp201Api;
+  let messageApi: CertificatesOcpp2Api;
   let mockCertificatesModule: CertificatesModule;
   const mockInstallCertificateRequest = aInstallCertificateRequest();
   const mockDeleteCertificateRequest = aDeleteCertificateRequest();
@@ -72,7 +72,7 @@ describe('CertificatesOcpp201Api', () => {
       sendCall: mockSendCall,
     } as unknown as CertificatesModule;
 
-    messageApi = new CertificatesOcpp201Api(mockCertificatesModule, mockFastifyInstance);
+    messageApi = new CertificatesOcpp2Api(mockCertificatesModule, mockFastifyInstance);
   });
 
   describe('installCertificate', () => {
@@ -106,7 +106,7 @@ describe('CertificatesOcpp201Api', () => {
         MOCK_CHARGING_STATION_ID,
         tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.InstallCertificate,
+        OCPP_CallAction.InstallCertificate,
         mockInstallCertificateRequest,
         undefined,
       );
@@ -165,7 +165,7 @@ describe('CertificatesOcpp201Api', () => {
         MOCK_CHARGING_STATION_ID,
         tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.InstallCertificate,
+        OCPP_CallAction.InstallCertificate,
         mockInstallCertificateRequest,
         callbackUrl,
       );
@@ -174,7 +174,7 @@ describe('CertificatesOcpp201Api', () => {
         'cp002',
         tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.InstallCertificate,
+        OCPP_CallAction.InstallCertificate,
         mockInstallCertificateRequest,
         callbackUrl,
       );
@@ -183,7 +183,7 @@ describe('CertificatesOcpp201Api', () => {
         'cp003',
         tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.InstallCertificate,
+        OCPP_CallAction.InstallCertificate,
         mockInstallCertificateRequest,
         callbackUrl,
       );
@@ -212,7 +212,7 @@ describe('CertificatesOcpp201Api', () => {
         MOCK_CHARGING_STATION_ID,
         DEFAULT_TENANT_ID,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.InstallCertificate,
+        OCPP_CallAction.InstallCertificate,
         mockInstallCertificateRequest,
         undefined,
       );
@@ -274,7 +274,7 @@ describe('CertificatesOcpp201Api', () => {
         MOCK_CHARGING_STATION_ID,
         tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.DeleteCertificate,
+        OCPP_CallAction.DeleteCertificate,
         mockDeleteCertificateRequest,
         undefined,
       );
@@ -342,7 +342,7 @@ describe('CertificatesOcpp201Api', () => {
         MOCK_CHARGING_STATION_ID,
         tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.DeleteCertificate,
+        OCPP_CallAction.DeleteCertificate,
         mockDeleteCertificateRequest,
         callbackUrl,
       );
@@ -351,7 +351,7 @@ describe('CertificatesOcpp201Api', () => {
         'cp002',
         tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.DeleteCertificate,
+        OCPP_CallAction.DeleteCertificate,
         mockDeleteCertificateRequest,
         callbackUrl,
       );
@@ -374,7 +374,7 @@ describe('CertificatesOcpp201Api', () => {
         MOCK_CHARGING_STATION_ID,
         DEFAULT_TENANT_ID,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.DeleteCertificate,
+        OCPP_CallAction.DeleteCertificate,
         mockDeleteCertificateRequest,
         undefined,
       );

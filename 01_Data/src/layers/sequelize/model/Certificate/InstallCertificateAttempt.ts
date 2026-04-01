@@ -12,13 +12,19 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { Certificate } from './Certificate.js';
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace, type TenantDto } from '@citrineos/base';
+import {
+  DEFAULT_TENANT_ID,
+  OCPP2_Namespace,
+  type CertificateUseEnumType,
+  type InstallCertificateStatusEnumType,
+  type TenantDto,
+} from '@citrineos/base';
 import { ChargingStation } from '../Location/index.js';
 import { Tenant } from '../Tenant.js';
 
 @Table
 export class InstallCertificateAttempt extends Model {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.InstallCertificateAttempt;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.InstallCertificateAttempt;
 
   @ForeignKey(() => ChargingStation)
   @Column({
@@ -34,7 +40,7 @@ export class InstallCertificateAttempt extends Model {
     type: DataType.STRING,
     allowNull: false,
   })
-  declare certificateType: OCPP2_0_1.InstallCertificateUseEnumType;
+  declare certificateType: CertificateUseEnumType;
 
   @ForeignKey(() => Certificate)
   @Column({
@@ -50,7 +56,7 @@ export class InstallCertificateAttempt extends Model {
   @Column({
     type: DataType.STRING,
   })
-  declare status?: OCPP2_0_1.InstallCertificateStatusEnumType | null;
+  declare status?: InstallCertificateStatusEnumType | null;
 
   @ForeignKey(() => Tenant)
   @Column({

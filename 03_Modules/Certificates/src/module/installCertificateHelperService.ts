@@ -19,7 +19,13 @@ import {
   generateCSR,
   WebsocketNetworkConnection,
 } from '@citrineos/util';
-import { type IFileStorage, OCPP2_0_1, type WebsocketServerConfig } from '@citrineos/base';
+import {
+  type CertificateUseEnumType,
+  type IFileStorage,
+  type InstallCertificateStatusEnumType,
+  OCPP2_0_1,
+  type WebsocketServerConfig,
+} from '@citrineos/base';
 import { type ILogObj, Logger } from 'tslog';
 import fs from 'fs';
 import jsrsasign from 'jsrsasign';
@@ -69,7 +75,7 @@ export class InstallCertificateHelperService {
     tenantId: number,
     stationId: string,
     certificate: string,
-    certificateType: OCPP2_0_1.InstallCertificateUseEnumType,
+    certificateType: CertificateUseEnumType,
   ) {
     const hash = this.getCertificateHash(certificate);
     const existingPendingInstallCertificateAttempt =
@@ -126,7 +132,7 @@ export class InstallCertificateHelperService {
   async finalizeInstalledCertificate(
     tenantId: number,
     stationId: string,
-    status: OCPP2_0_1.InstallCertificateStatusEnumType,
+    status: InstallCertificateStatusEnumType,
   ) {
     const existingPendingInstallCertificateAttempt =
       await this.installCertificateAttemptRepository.readOnlyOneByQuery(tenantId, {

@@ -2,12 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  AbstractModuleApi,
-  Namespace,
-  OCPP1_6_Namespace,
-  OCPP2_0_1_Namespace,
-} from '@citrineos/base';
+import { AbstractModuleApi, Namespace, OCPP1_6_Namespace, OCPP2_Namespace } from '@citrineos/base';
 import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -36,7 +31,7 @@ export class TenantDataApi extends AbstractModuleApi<TenantModule> implements IT
    * @param {Namespace} input - The input {@link Namespace}.
    * @return {string} - The generated URL path.
    */
-  protected _toDataPath(input: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace): string {
+  protected _toDataPath(input: OCPP2_Namespace | OCPP1_6_Namespace | Namespace): string {
     const endpointPrefix = this._module.config.modules.tenant.endpointPrefix;
     return super._toDataPath(input, endpointPrefix);
   }
