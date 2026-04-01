@@ -55,7 +55,7 @@ export class CostNotifier extends Scheduler {
   async calculateCostAndNotify(transaction: Transaction, tenantId: number): Promise<void> {
     const cost = await this._costCalculator.calculateTotalCost(
       tenantId,
-      transaction.stationId,
+      transaction.connectorId,
       transaction.totalKwh!,
     );
 
@@ -89,6 +89,14 @@ export class CostNotifier extends Scheduler {
           transactionId,
         );
 
+      if (!transaction) {
+        this._logger.error(
+          `Transaction NOT FOUND in DB. Searched for stationId: "${stationId}", transactionId: "${transactionId}"`,
+        );
+        this.unschedule(this._key(stationId, transactionId));
+        return;
+      }
+
       if (!transaction?.isActive) {
         this._logger.debug(
           `Unscheduling periodic cost notifications for ${stationId} station, ${transactionId} transaction, ${tenantId} tenant`,
@@ -100,6 +108,7 @@ export class CostNotifier extends Scheduler {
       await this.calculateCostAndNotify(transaction, tenantId);
     } catch (error) {
       this._logger.error(`Failed to send CostUpdated call for ${transactionId} transaction`, error);
+      this.unschedule(this._key(stationId, transactionId));
     }
   }
 
