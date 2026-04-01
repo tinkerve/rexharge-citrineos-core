@@ -583,6 +583,7 @@ export class CitrineOSServer {
       this._ocppValidator,
       this._repositoryStore.deviceModelRepository,
       this._repositoryStore.variableMonitoringRepository,
+      this._repositoryStore.ocppMessageRepository,
       this._idGenerator,
     );
     await this.initHandlersAndAddModule(module);
