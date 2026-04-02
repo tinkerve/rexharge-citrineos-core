@@ -333,7 +333,7 @@ export class CitrineOSServer {
                 port: this._config.util.cache.redis.port,
               },
             };
-      return new RedisCache(redisClientOptions);
+      return new RedisCache(redisClientOptions, this._logger);
     }
     return new MemoryCache();
   }

@@ -82,7 +82,7 @@ export function extractEncodedContentFromCSR(csrPem: string): string {
   return csrPem
     .replace(/-----BEGIN CERTIFICATE REQUEST-----/, '')
     .replace(/-----END CERTIFICATE REQUEST-----/, '')
-    .replace(/\n/g, '');
+    .replace(/[\r\n]/g, '');
 }
 
 /**
@@ -273,6 +273,9 @@ export async function sendOCSPRequest(
 export function parseCSRForVerification(csrPem: string): CertificationRequest {
   const certificateBuffer = stringToArrayBuffer(fromBase64(extractEncodedContentFromCSR(csrPem)));
   const asn1 = fromBER(certificateBuffer);
+  if (asn1.offset === -1) {
+    throw new Error('Failed to parse CSR: invalid ASN.1 BER encoding');
+  }
   return new CertificationRequest({ schema: asn1.result });
 }
 

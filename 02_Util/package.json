@@ -1,6 +1,6 @@
 {
   "name": "@citrineos/util",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "description": "The OCPP util module which supplies helpful utilities like cache and queue connectors, etc.",
   "type": "module",
   "main": "dist/index.js",
@@ -24,8 +24,8 @@
     "@types/jsrsasign": "10.5.14"
   },
   "dependencies": {
-    "@citrineos/base": "1.8.3",
-    "@citrineos/data": "1.8.3",
+    "@citrineos/base": "1.8.4",
+    "@citrineos/data": "1.8.4",
     "@fastify/swagger": "9.4.0",
     "@fastify/swagger-ui": "5.2.0",
     "@google-cloud/storage": "7.18.0",
@@ -36,7 +36,7 @@
     "class-transformer": "0.5.1",
     "json-schema-faker": "^0.5.8",
     "jsonwebtoken": "^9.0.2",
-    "jsrsasign": "11.0.0",
+    "jsrsasign": "11.1.1",
     "jwks-rsa": "^3.2.0",
     "mqtt": "5.1.2",
     "pkijs": "3.0.16",

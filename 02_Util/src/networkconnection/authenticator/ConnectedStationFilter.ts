@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { AuthenticationOptions, ICache } from '@citrineos/base';
 import { CacheNamespace, createIdentifier, notNull } from '@citrineos/base';
+import { IncomingMessage } from 'http';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import { IncomingMessage } from 'http';
 import { AuthenticatorFilter } from './AuthenticatorFilter.js';
 import { UpgradeAuthenticationError } from './errors/AuthenticationError.js';
 
@@ -26,18 +26,16 @@ export class ConnectedStationFilter extends AuthenticatorFilter {
 
   protected async filter(
     tenantId: number,
-    identifier: string,
+    stationId: string,
     _request: IncomingMessage,
   ): Promise<void> {
-    // Create compound identifier to match cache key format
-    const connectionIdentifier = createIdentifier(tenantId, identifier);
-
+    const identifier = createIdentifier(tenantId, stationId);
     const isAlreadyConnected = notNull(
-      await this._cache.get(connectionIdentifier, CacheNamespace.Connections),
+      await this._cache.get(identifier, CacheNamespace.Connections),
     );
     if (isAlreadyConnected) {
       throw new UpgradeAuthenticationError(
-        `New connection attempted for already connected identifier ${connectionIdentifier}`,
+        `New connection attempted for already connected identifier ${identifier}`,
       );
     }
   }

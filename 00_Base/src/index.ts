@@ -94,7 +94,6 @@ export type { ConfigStore } from './config/ConfigStore.js';
 export { DEFAULT_TENANT_ID, defineConfig } from './config/defineConfig.js';
 export { SignedMeterValuesConfig } from './config/signedMeterValuesConfig.js';
 export {
-  HUBJECT_DEFAULT_AUTH_TOKEN,
   HUBJECT_DEFAULT_BASEURL,
   HUBJECT_DEFAULT_CLIENTID,
   HUBJECT_DEFAULT_CLIENTSECRET,

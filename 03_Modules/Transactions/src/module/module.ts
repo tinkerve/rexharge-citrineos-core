@@ -656,8 +656,14 @@ export class TransactionsModule extends AbstractModule {
       request,
     );
 
-    // Deactivate reservation
-    if (request.reservationId) {
+    // Deactivate reservation only if the transaction was accepted.
+    // A rejected StartTransaction (auth failure or DB error) should not
+    // consume the reservation — the charger may retry or another idTag
+    // may use it.
+    if (
+      request.reservationId &&
+      response.idTagInfo.status === OCPP1_6.StartTransactionResponseStatus.Accepted
+    ) {
       await this._transactionService.deactivateReservation(
         tenantId,
         response.transactionId.toString(),
