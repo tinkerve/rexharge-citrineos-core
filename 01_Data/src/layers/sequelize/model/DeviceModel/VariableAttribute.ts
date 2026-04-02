@@ -34,7 +34,7 @@ import { VariableStatus } from './VariableStatus.js';
   indexes: [
     {
       unique: true,
-      fields: ['stationId'],
+      fields: ['stationPkId'],
       where: {
         type: null,
         variableId: null,
@@ -43,7 +43,7 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
-      fields: ['stationId', 'type'],
+      fields: ['stationPkId', 'type'],
       where: {
         variableId: null,
         componentId: null,
@@ -51,7 +51,7 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
-      fields: ['stationId', 'variableId'],
+      fields: ['stationPkId', 'variableId'],
       where: {
         type: null,
         componentId: null,
@@ -59,7 +59,7 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
-      fields: ['stationId', 'componentId'],
+      fields: ['stationPkId', 'componentId'],
       where: {
         type: null,
         variableId: null,
@@ -67,21 +67,21 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
-      fields: ['stationId', 'type', 'variableId'],
+      fields: ['stationPkId', 'type', 'variableId'],
       where: {
         componentId: null,
       },
     },
     {
       unique: true,
-      fields: ['stationId', 'type', 'componentId'],
+      fields: ['stationPkId', 'type', 'componentId'],
       where: {
         variableId: null,
       },
     },
     {
       unique: true,
-      fields: ['stationId', 'variableId', 'componentId'],
+      fields: ['stationPkId', 'variableId', 'componentId'],
       where: {
         type: null,
       },
@@ -98,13 +98,19 @@ export class VariableAttribute
    * Fields
    */
 
+  @ForeignKey(() => ChargingStation)
+  @Column({
+    type: DataType.INTEGER,
+    unique: 'stationPkId_type_variableId_componentId',
+    allowNull: true,
+  })
+  declare stationPkId?: number;
+
   @Index
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_type_variableId_componentId',
     allowNull: false,
   })
-  @ForeignKey(() => ChargingStation)
   declare stationId: string;
 
   @BelongsTo(() => ChargingStation)
@@ -113,7 +119,7 @@ export class VariableAttribute
   @Column({
     type: DataType.STRING,
     defaultValue: OCPP2_0_1.AttributeEnumType.Actual,
-    unique: 'stationId_type_variableId_componentId',
+    unique: 'stationPkId_type_variableId_componentId',
   })
   declare type?: OCPP2_0_1.AttributeEnumType | null;
 
@@ -180,7 +186,7 @@ export class VariableAttribute
   @ForeignKey(() => Variable)
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_type_variableId_componentId',
+    unique: 'stationPkId_type_variableId_componentId',
   })
   declare variableId?: number | null;
 
@@ -190,7 +196,7 @@ export class VariableAttribute
   @ForeignKey(() => Component)
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_type_variableId_componentId',
+    unique: 'stationPkId_type_variableId_componentId',
   })
   declare componentId?: number | null;
 
@@ -227,6 +233,19 @@ export class VariableAttribute
 
   @BelongsTo(() => Tenant)
   declare tenant?: TenantDto;
+
+  @BeforeCreate
+  static async resolveStationPkId(instance: VariableAttribute): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+      const station = await ChargingStation.findOne({
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
+      });
+      if (station) {
+        instance.stationPkId = station.pkId;
+      }
+    }
+  }
 
   @BeforeUpdate
   @BeforeCreate

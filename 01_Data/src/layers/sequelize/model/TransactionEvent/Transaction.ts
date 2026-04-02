@@ -47,12 +47,18 @@ export class Transaction extends Model implements TransactionDto {
   @BelongsTo(() => Location)
   location?: LocationType;
 
+  @ForeignKey(() => ChargingStation)
+  @Column({
+    type: DataType.INTEGER,
+    unique: 'stationPkId_transactionId',
+    allowNull: true,
+  })
+  declare stationPkId?: number;
+
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_transactionId',
   })
-  @ForeignKey(() => ChargingStation)
-  declare stationId: string;
+  stationId!: string;
 
   @BelongsTo(() => ChargingStation)
   station!: ChargingStationType;
@@ -87,7 +93,7 @@ export class Transaction extends Model implements TransactionDto {
 
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_transactionId',
+    unique: 'stationPkId_transactionId',
   })
   declare transactionId: string;
 
@@ -170,6 +176,19 @@ export class Transaction extends Model implements TransactionDto {
 
   @BelongsTo(() => Tenant)
   declare tenant?: TenantDto;
+
+  @BeforeCreate
+  static async resolveStationPkId(instance: Transaction): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+      const station = await ChargingStation.findOne({
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
+      });
+      if (station) {
+        instance.stationPkId = station.pkId;
+      }
+    }
+  }
 
   @BeforeUpdate
   @BeforeCreate

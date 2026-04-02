@@ -22,6 +22,7 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { Component, Variable } from '../DeviceModel/index.js';
+import { ChargingStation } from '../Location/index.js';
 import { Tenant } from '../Tenant.js';
 
 @Table
@@ -31,10 +32,15 @@ export class EventData extends Model implements EventDataDto {
   /**
    * Fields
    */
+
+  @ForeignKey(() => ChargingStation)
+  @Column(DataType.INTEGER)
+  declare stationPkId?: number;
+
   @Index
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_eventId',
+    unique: 'stationId_tenantId_eventId',
   })
   declare stationId: string;
 
@@ -109,11 +115,27 @@ export class EventData extends Model implements EventDataDto {
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
+    unique: 'stationId_tenantId_eventId',
   })
   declare tenantId: number;
 
   @BelongsTo(() => Tenant)
   declare tenant?: TenantDto;
+
+  @BeforeCreate
+  static async resolveStationPkId(instance: EventData): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+      // Lazy load ChargingStation to avoid circular dependency
+      const { ChargingStation } = await import('../Location/index.js');
+      const station = await ChargingStation.findOne({
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
+      });
+      if (station) {
+        instance.stationPkId = station.pkId;
+      }
+    }
+  }
 
   @BeforeUpdate
   @BeforeCreate

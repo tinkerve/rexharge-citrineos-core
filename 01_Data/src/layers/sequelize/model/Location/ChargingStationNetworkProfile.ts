@@ -29,8 +29,13 @@ export class ChargingStationNetworkProfile
 
   @ForeignKey(() => ChargingStation)
   @Column({
+    type: DataType.INTEGER,
+    unique: 'stationPkId_configurationSlot',
+  })
+  declare stationPkId?: number;
+
+  @Column({
     type: DataType.STRING,
-    unique: 'stationId_configurationSlot',
   })
   declare stationId: string;
 
@@ -40,7 +45,7 @@ export class ChargingStationNetworkProfile
    */
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_configurationSlot',
+    unique: 'stationPkId_configurationSlot',
   })
   declare configurationSlot: number;
 
@@ -75,6 +80,19 @@ export class ChargingStationNetworkProfile
 
   @BelongsTo(() => Tenant)
   declare tenant?: TenantDto;
+
+  @BeforeCreate
+  static async resolveStationPkId(instance: ChargingStationNetworkProfile): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+      const station = await ChargingStation.findOne({
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
+      });
+      if (station) {
+        instance.stationPkId = station.pkId;
+      }
+    }
+  }
 
   @BeforeUpdate
   @BeforeCreate

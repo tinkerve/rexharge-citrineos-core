@@ -13,6 +13,7 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
+import { ChargingStation } from './Location/index.js';
 import { Tenant } from './Tenant.js';
 
 /**
@@ -22,16 +23,16 @@ import { Tenant } from './Tenant.js';
 export class ChargingStationSecurityInfo extends Model implements ChargingStationSecurityInfoDto {
   static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.ChargingStationSecurityInfo;
 
+  @ForeignKey(() => ChargingStation)
+  @Column(DataType.INTEGER)
+  declare stationPkId?: number;
+
   @Column({
     type: DataType.STRING,
-    unique: true,
+    unique: 'stationId_tenantId',
   })
   stationId!: string;
 
-  // TODO: store public key information into the database
-  // then reference here with foreign key. Transition to
-  // using a foreign key by migrating current system config
-  // into a database entry to store this information.
   @Column(DataType.STRING)
   publicKeyFileId!: string;
 
@@ -41,11 +42,26 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
+    unique: 'stationId_tenantId',
   })
   declare tenantId: number;
 
   @BelongsTo(() => Tenant)
   declare tenant?: TenantDto;
+
+  @BeforeCreate
+  static async resolveStationPkId(instance: ChargingStationSecurityInfo): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+      const { ChargingStation } = await import('./Location/ChargingStation.js');
+      const station = await ChargingStation.findOne({
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
+      });
+      if (station) {
+        instance.stationPkId = station.pkId;
+      }
+    }
+  }
 
   @BeforeUpdate
   @BeforeCreate
