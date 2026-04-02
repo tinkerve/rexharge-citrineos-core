@@ -15,56 +15,56 @@ array_relationships:
   - name: ChargingStationNetworkProfiles
     using:
       foreign_key_constraint_on:
-        column: stationId
+        column: stationPkId
         table:
           name: ChargingStationNetworkProfiles
           schema: public
   - name: ChargingStationSequences
     using:
       foreign_key_constraint_on:
-        column: stationId
+        column: stationPkId
         table:
           name: ChargingStationSequences
           schema: public
   - name: Connectors
     using:
       foreign_key_constraint_on:
-        column: stationId
+        column: stationPkId
         table:
           name: Connectors
           schema: public
   - name: Evses
     using:
       foreign_key_constraint_on:
-        column: stationId
+        column: stationPkId
         table:
           name: Evses
           schema: public
   - name: LatestStatusNotifications
     using:
       foreign_key_constraint_on:
-        column: stationId
+        column: stationPkId
         table:
           name: LatestStatusNotifications
           schema: public
   - name: StatusNotifications
     using:
       foreign_key_constraint_on:
-        column: stationId
+        column: stationPkId
         table:
           name: StatusNotifications
           schema: public
   - name: Transactions
     using:
       foreign_key_constraint_on:
-        column: stationId
+        column: stationPkId
         table:
           name: Transactions
           schema: public
   - name: VariableAttributes
     using:
       foreign_key_constraint_on:
-        column: stationId
+        column: stationPkId
         table:
           name: VariableAttributes
           schema: public
@@ -72,6 +72,7 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - pkId
         - isOnline
         - chargeBoxSerialNumber
         - chargePointModel

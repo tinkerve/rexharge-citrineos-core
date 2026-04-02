@@ -268,7 +268,9 @@ export class SequelizeTransactionEventRepository
           }
         }
 
-        const chargingStation = await this.station.readByKey(tenantId, stationId);
+        const [chargingStation] = await this.station.readAllByQuery(tenantId, {
+          where: { id: stationId, tenantId },
+        });
         if (!chargingStation) {
           this.logger.error(`Charging station with stationId ${stationId} does not exist.`);
         } else {
@@ -710,7 +712,9 @@ export class SequelizeTransactionEventRepository
         startTime: request.timestamp,
       });
 
-      const chargingStation = await this.station.readByKey(tenantId, stationId);
+      const [chargingStation] = await this.station.readAllByQuery(tenantId, {
+        where: { id: stationId, tenantId },
+      });
       if (chargingStation) {
         if (chargingStation.locationId) {
           newTransaction.set('locationId', chargingStation.locationId);

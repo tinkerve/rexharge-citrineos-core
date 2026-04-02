@@ -28,6 +28,12 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
 
   @ForeignKey(() => ChargingStation)
   @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+  })
+  declare stationPkId?: number;
+
+  @Column({
     type: DataType.STRING(36),
     allowNull: false,
   })
@@ -81,6 +87,19 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
 
   @BelongsTo(() => Tenant)
   declare tenant?: TenantDto;
+
+  @BeforeCreate
+  static async resolveStationPkId(instance: InstalledCertificate): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+      const station = await ChargingStation.findOne({
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
+      });
+      if (station) {
+        instance.stationPkId = station.pkId;
+      }
+    }
+  }
 
   @BeforeUpdate
   @BeforeCreate

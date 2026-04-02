@@ -24,14 +24,19 @@ export class Evse extends Model implements EvseDto {
 
   @ForeignKey(() => ChargingStation)
   @Column({
+    type: DataType.INTEGER,
+    unique: 'stationPkId_evseTypeId',
+  })
+  declare stationPkId?: number;
+
+  @Column({
     type: DataType.STRING,
-    unique: 'stationId_evseTypeId',
   })
   declare stationId: string;
 
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_evseTypeId',
+    unique: 'stationPkId_evseTypeId',
   })
   declare evseTypeId?: number; // This is the serial int used in OCPP 2.0.1 to refer to the EVSE.
 
@@ -61,6 +66,19 @@ export class Evse extends Model implements EvseDto {
 
   @BelongsTo(() => Tenant)
   declare tenant?: TenantDto;
+
+  @BeforeCreate
+  static async resolveStationPkId(instance: Evse): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+      const station = await ChargingStation.findOne({
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
+      });
+      if (station) {
+        instance.stationPkId = station.pkId;
+      }
+    }
+  }
 
   @BeforeUpdate
   @BeforeCreate
