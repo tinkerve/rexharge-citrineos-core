@@ -12,6 +12,7 @@ import {
   OCPP1_6,
   OCPP2_0_1,
   OCPP_CallAction,
+  OCPP_VERSION_LIST,
 } from '@citrineos/base';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -204,7 +205,7 @@ export function createDockerConfig() {
             pingInterval: 60,
             host: '0.0.0.0',
             port: 8081,
-            protocols: ['ocpp1.6', 'ocpp2.0.1'],
+            protocols: OCPP_VERSION_LIST,
             tenantId: DEFAULT_TENANT_ID,
             dynamicTenantResolution: false,
           },
@@ -215,7 +216,7 @@ export function createDockerConfig() {
             pingInterval: 60,
             host: '0.0.0.0',
             port: 8082,
-            protocols: ['ocpp1.6', 'ocpp2.0.1'],
+            protocols: OCPP_VERSION_LIST,
             tenantId: DEFAULT_TENANT_ID,
             dynamicTenantResolution: false,
           },

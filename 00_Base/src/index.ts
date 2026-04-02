@@ -79,6 +79,7 @@ export type {
 export * as OCPP2_common_types from './ocpp/rpc/2/types.js';
 export * as OCPP2_request_types from './ocpp/rpc/2/requests.js';
 export * as OCPP2_response_types from './ocpp/rpc/2/responses.js';
+export { OCPP_VERSION_LIST } from './config/types.js';
 export { getOcpp2Schema } from './ocpp/rpc/2/schemas.js';
 
 // Persistence Interfaces

@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import { EventGroup } from '../interfaces/messages/index.js';
 import { OCPP1_6, OCPP2_0_1 } from '../ocpp/model/index.js';
-import { OCPP_CallAction } from '../ocpp/rpc/message.js';
+import { OCPP_CallAction, OCPPVersion, type OCPPVersionType } from '../ocpp/rpc/message.js';
 
 const CallActionSchema = z.nativeEnum(OCPP_CallAction);
 
@@ -18,7 +18,11 @@ export const oidcClientConfigSchema = z
   })
   .optional();
 
-const OCPP_VERSION_LIST: string[] = ['ocpp1.6', 'ocpp2.0.1', 'ocpp2.1'] as const;
+export const OCPP_VERSION_LIST: OCPPVersionType[] = [
+  OCPPVersion.OCPP1_6,
+  OCPPVersion.OCPP2_0_1,
+  OCPPVersion.OCPP2_1,
+] as const;
 
 // TODO: Refactor other objects out of system config, such as certificatesModuleInputSchema etc.
 export const websocketServerInputSchema = z.object({

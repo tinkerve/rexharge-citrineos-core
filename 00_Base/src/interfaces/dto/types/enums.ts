@@ -208,6 +208,13 @@ export const DataTransferEnumSchema = z.enum([
   'UnknownVendorId',
 ]);
 
+export const DataTransferStatusSchema = z.enum([
+  'Accepted',
+  'Rejected',
+  'UnknownMessageId',
+  'UnknownVendorId',
+]);
+
 export const DeleteCertificateStatusEnumSchema = z.enum(['Accepted', 'Failed', 'NotFound']);
 
 export const EventNotificationEnumSchema = z.enum([
@@ -475,6 +482,7 @@ export const ChargingLimitSourceEnum = ChargingLimitSourceEnumSchema.enum;
 export const CostKindEnum = CostKindEnumSchema.enum;
 export const DataEnum = DataEnumSchema.enum;
 export const DataTransferEnum = DataTransferEnumSchema.enum;
+export const DataTransferStatusEnum = DataTransferStatusSchema.enum;
 export const DeleteCertificateStatusEnum = DeleteCertificateStatusEnumSchema.enum;
 export const EnergyTransferModeEnum = EnergyTransferModeEnumSchema.enum;
 export const EventNotificationEnum = EventNotificationEnumSchema.enum;
@@ -537,6 +545,7 @@ export type ChargingLimitSourceEnumType = z.infer<typeof ChargingLimitSourceEnum
 export type CostKindEnumType = z.infer<typeof CostKindEnumSchema>;
 export type DataEnumType = z.infer<typeof DataEnumSchema>;
 export type DataTransferEnumType = z.infer<typeof DataTransferEnumSchema>;
+export type DataTransferStatusType = z.infer<typeof DataTransferStatusSchema>;
 export type DeleteCertificateStatusEnumType = z.infer<typeof DeleteCertificateStatusEnumSchema>;
 export type EnergyTransferModeEnumType = z.infer<typeof EnergyTransferModeEnumSchema>;
 export type EventTriggerEnumType = z.infer<typeof EventTriggerEnumSchema>;

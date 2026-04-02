@@ -62,7 +62,7 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
     this._handler = handler;
     this._sender = sender;
     this._networkHook = networkHook;
-    this._ocppValidator = ocppValidator || new OCPPValidator(logger);
+    this._ocppValidator = ocppValidator ? ocppValidator : new OCPPValidator(logger);
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
