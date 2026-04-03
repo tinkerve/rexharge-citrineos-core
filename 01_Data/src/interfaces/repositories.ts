@@ -125,6 +125,7 @@ export interface IDeviceModelRepository extends CrudRepository<OCPP2_0_1.Variabl
     result: OCPP2_0_1.SetVariableResultType,
     stationId: string,
     isoTimestamp: string,
+    existingVariableAttribute?: VariableAttribute,
   ): Promise<VariableAttribute | undefined>;
   readAllSetVariableByStationId(
     tenantId: number,
