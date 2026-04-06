@@ -63,8 +63,7 @@ export {
   mapToCallAction,
   MessageTypeId,
   NO_ACTION,
-  OCPP1_6_CallAction,
-  OCPP2_0_1_CallAction,
+  OCPP_CallAction,
   OcppError,
   OCPPVersion,
 } from './src/ocpp/rpc/message.js';
@@ -122,10 +121,12 @@ export interface OcppRequest {}
 export interface OcppResponse {}
 
 export {
-  OCPP1_6_CALL_SCHEMA_MAP,
-  OCPP1_6_CALL_RESULT_SCHEMA_MAP,
-  OCPP2_0_1_CALL_RESULT_SCHEMA_MAP,
-  OCPP2_0_1_CALL_SCHEMA_MAP,
+  OCPP1_6_CALL_SCHEMA_RECORD,
+  OCPP1_6_CALL_RESULT_SCHEMA_RECORD,
+  OCPP2_0_1_CALL_RESULT_SCHEMA_RECORD,
+  OCPP2_0_1_CALL_SCHEMA_RECORD,
+  OCPP2_1_CALL_SCHEMA_RECORD,
+  OCPP2_1_CALL_RESULT_SCHEMA_RECORD,
 } from './src/interfaces/schema/MappingSchema.js';
 
 export { assert, deepDirectionalEqual, notNull } from './src/assertion/assertion.js';
@@ -200,3 +201,8 @@ export { addFormats, Ajv };
 export declare type Constructable<T> = new (...args: any[]) => T;
 export { IMessageQuerystringSchema } from './src/interfaces/api/MessageQuerystring.js';
 export type { IMessageQuerystring } from './src/interfaces/api/MessageQuerystring.js';
+
+export * as OCPP2_request_types from './src/ocpp/rpc/2/requests.js';
+export * as OCPP2_response_types from './src/ocpp/rpc/2/responses.js';
+export * as OCPP2_common_types from './src/ocpp/rpc/2/types.js';
+export { getOcpp2Schema } from './src/ocpp/rpc/2/schemas.js';

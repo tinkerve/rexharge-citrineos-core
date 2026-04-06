@@ -2,13 +2,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import type { TenantDto, LocalListAuthorizationDto } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 
 @Table
 export class SendLocalList extends Model implements OCPP2_0_1.SendLocalListRequest {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.SendLocalListRequest;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.SendLocalListRequest;
 
   @Column(DataType.STRING)
   declare stationId: string;

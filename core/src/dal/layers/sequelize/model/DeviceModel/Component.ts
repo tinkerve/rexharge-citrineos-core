@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { ComponentDto, TenantDto, VariableDto } from '@citrineos/base';
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 
 import { EvseType } from './EvseType.js';
@@ -20,7 +20,7 @@ import { EvseType } from './EvseType.js';
   ],
 })
 export class Component extends Model implements OCPP2_0_1.ComponentType, ComponentDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.ComponentType;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.ComponentType;
 
   /**
    * Fields

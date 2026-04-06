@@ -4,7 +4,7 @@
 import {
   DEFAULT_TENANT_ID,
   type LatestStatusNotificationDto,
-  OCPP2_0_1_Namespace,
+  OCPP2_Namespace,
 } from '@citrineos/base';
 import type { TenantDto } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
@@ -14,7 +14,7 @@ import { StatusNotification } from './StatusNotification.js';
 
 @Table
 export class LatestStatusNotification extends Model implements LatestStatusNotificationDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.LatestStatusNotification;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.LatestStatusNotification;
 
   declare stationId: string;
 

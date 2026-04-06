@@ -52,7 +52,7 @@ export abstract class AbstractModule implements IModule {
     ocppValidator?: OCPPValidator,
   ) {
     this._logger = this._initLogger(logger);
-    this._ocppValidator = ocppValidator || new OCPPValidator(logger);
+    this._ocppValidator = ocppValidator ? ocppValidator : new OCPPValidator(logger);
     this._logger.info('Initializing...');
     this._config = config;
     this._handler = handler;

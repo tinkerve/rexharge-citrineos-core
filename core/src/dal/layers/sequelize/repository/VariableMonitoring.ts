@@ -10,7 +10,7 @@ import { VariableMonitoring } from '../model/VariableMonitoring/VariableMonitori
 import { VariableMonitoringStatus } from '../model/VariableMonitoring/VariableMonitoringStatus.js';
 import type { IVariableMonitoringRepository } from '../../../interfaces/repositories.js';
 import type { BootstrapConfig, CallAction } from '@citrineos/base';
-import { CrudRepository, OCPP2_0_1, OCPP2_0_1_CallAction } from '@citrineos/base';
+import { CrudRepository, OCPP2_0_1, OCPP_CallAction } from '@citrineos/base';
 import { Sequelize } from 'sequelize-typescript';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -86,7 +86,7 @@ export class SequelizeVariableMonitoringRepository
         await this.createVariableMonitoringStatus(
           tenantId,
           OCPP2_0_1.SetMonitoringStatusEnumType.Accepted,
-          OCPP2_0_1_CallAction.NotifyMonitoringReport,
+          OCPP_CallAction.NotifyMonitoringReport,
           savedVariableMonitoring.get('databaseId'),
         );
 

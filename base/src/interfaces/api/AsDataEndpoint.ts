@@ -4,12 +4,12 @@
 import type { IDataEndpointDefinition } from '@interfaces/api/DataEndpointDefinition.js';
 import { HttpMethod } from '@interfaces/api/HttpMethods.js';
 import { METADATA_DATA_ENDPOINTS } from '@interfaces/api/metadata.js';
-import { Namespace, OCPP1_6_Namespace, OCPP2_0_1_Namespace } from '@ocpp/persistence/index.js';
+import { Namespace, OCPP1_6_Namespace, OCPP2_Namespace } from '@ocpp/persistence/index.js';
 
 /**
  * Decorator for use in module API class to expose methods as REST data endpoints.
  *
- * @param {OCPP2_0_1_Namespace} namespace - The namespace value.
+ * @param {OCPP2_Namespace} namespace - The namespace value.
  * @param {HttpMethod} method - The HTTP method value.
  * @param {object} querySchema - The query schema value (optional).
  * @param {object} bodySchema - The body schema value (optional).
@@ -22,7 +22,7 @@ import { Namespace, OCPP1_6_Namespace, OCPP2_0_1_Namespace } from '@ocpp/persist
  * @return {void} - No return value.
  */
 export const AsDataEndpoint = function (
-  namespace: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace,
+  namespace: OCPP2_Namespace | OCPP1_6_Namespace | Namespace,
   method: HttpMethod,
   querySchema?: object,
   bodySchema?: object,

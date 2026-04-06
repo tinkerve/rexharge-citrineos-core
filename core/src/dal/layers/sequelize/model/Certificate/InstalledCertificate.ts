@@ -7,14 +7,14 @@ import type {
   InstalledCertificateDto,
   TenantDto,
 } from '@citrineos/base';
-import { DEFAULT_TENANT_ID, OCPP2_0_1_Namespace, type ChargingStationDto } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, OCPP2_Namespace, type ChargingStationDto } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 
 import { Certificate } from './Certificate.js';
 
 @Table
 export class InstalledCertificate extends Model implements InstalledCertificateDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.InstalledCertificate;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.InstalledCertificate;
 
   @Column({
     type: DataType.STRING(36),

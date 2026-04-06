@@ -13,8 +13,8 @@ import {
   Namespace,
   OCPP1_6_Namespace,
   OCPP2_0_1,
-  OCPP2_0_1_CallAction,
-  OCPP2_0_1_Namespace,
+  OCPP_CallAction,
+  OCPP2_Namespace,
   OCPPVersion,
   type WebsocketServerConfig,
 } from '@citrineos/base';
@@ -85,7 +85,7 @@ export class CertificatesDataApi
    * Data Endpoint Methods
    */
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.TlsCertificates,
+    OCPP2_Namespace.TlsCertificates,
     HttpMethod.Put,
     UpdateTlsCertificateQuerySchema,
     TlsCertificateSchema,
@@ -141,7 +141,7 @@ export class CertificatesDataApi
    * @return Promise<Certificate[]> - An array of generated certificates
    */
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.CertificateChain,
+    OCPP2_Namespace.CertificateChain,
     HttpMethod.Post,
     TenantQuerySchema,
     GenerateCertificateChainSchema,
@@ -304,7 +304,7 @@ export class CertificatesDataApi
   }
 
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.RootCertificate,
+    OCPP2_Namespace.RootCertificate,
     HttpMethod.Put,
     undefined,
     InstallRootCertificateSchema,
@@ -333,7 +333,7 @@ export class CertificatesDataApi
         installReq.stationId,
         installReq.tenantId,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.InstallCertificate,
+        OCPP_CallAction.InstallCertificate,
         {
           certificateType: installReq.certificateType,
           certificate: rootCAPem,
@@ -358,7 +358,7 @@ export class CertificatesDataApi
    * @return Promise<InstalledCertificate> - the installed certificate record
    */
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.UploadExistingCertificate,
+    OCPP2_Namespace.UploadExistingCertificate,
     HttpMethod.Post,
     IMessageQuerystringSchema,
     UploadExistingCertificateSchema,
@@ -407,7 +407,7 @@ export class CertificatesDataApi
    * @return Promise<InstalledCertificate> - the updated installed certificate record
    */
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.RegenerateExistingCertificate,
+    OCPP2_Namespace.RegenerateExistingCertificate,
     HttpMethod.Post,
     IMessageQuerystringSchema,
     RegenerateInstalledCertificateSchema,
@@ -499,7 +499,7 @@ export class CertificatesDataApi
    * @param {Namespace} input - The input {@link Namespace}.
    * @return {string} - The generated URL path.
    */
-  protected _toDataPath(input: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace): string {
+  protected _toDataPath(input: OCPP2_Namespace | OCPP1_6_Namespace | Namespace): string {
     const endpointPrefix = this._module.config.modules.certificates?.endpointPrefix;
     return super._toDataPath(input, endpointPrefix);
   }

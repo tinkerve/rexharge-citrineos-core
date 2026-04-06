@@ -796,4 +796,31 @@ export class SequelizeTransactionEventRepository
     });
     return transactions.length > 0 ? transactions[0] : undefined;
   }
+
+  async deactivateActiveTransactionsByStationIdAndEvseId(
+    tenantId: number,
+    stationId: string,
+    evseId: number,
+    excludeTransactionId: string,
+  ): Promise<Transaction[]> {
+    const activeTransactions = await this.transaction.readAllByQuery(tenantId, {
+      where: {
+        stationId,
+        isActive: true,
+        transactionId: { [Op.ne]: excludeTransactionId },
+      },
+      include: [{ model: Evse, where: { evseTypeId: evseId }, required: true }],
+    });
+
+    if (activeTransactions.length === 0) {
+      return [];
+    }
+
+    const ids = activeTransactions.map((t) => t.id);
+    return await this.transaction.updateAllByQuery(
+      tenantId,
+      { isActive: false },
+      { where: { id: { [Op.in]: ids } } },
+    );
+  }
 }

@@ -5,15 +5,18 @@ import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequ
 import { Certificate } from './Certificate.js';
 import {
   DEFAULT_TENANT_ID,
-  OCPP2_0_1,
-  OCPP2_0_1_Namespace,
+  OCPP2_Namespace,
+  type CertificateUseEnumType,
+  type InstallCertificateStatusEnumType,
   type TenantDto,
   type ChargingStationDto,
 } from '@citrineos/base';
+import { ChargingStation } from '../Location/index.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class InstallCertificateAttempt extends Model {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.InstallCertificateAttempt;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.InstallCertificateAttempt;
 
   @Column({
     type: DataType.STRING(36),
@@ -27,7 +30,7 @@ export class InstallCertificateAttempt extends Model {
     type: DataType.STRING,
     allowNull: false,
   })
-  declare certificateType: OCPP2_0_1.InstallCertificateUseEnumType;
+  declare certificateType: CertificateUseEnumType;
 
   @Column({
     type: DataType.INTEGER,
@@ -41,7 +44,7 @@ export class InstallCertificateAttempt extends Model {
   @Column({
     type: DataType.STRING,
   })
-  declare status?: OCPP2_0_1.InstallCertificateStatusEnumType | null;
+  declare status?: InstallCertificateStatusEnumType | null;
 
   @Column({
     type: DataType.INTEGER,

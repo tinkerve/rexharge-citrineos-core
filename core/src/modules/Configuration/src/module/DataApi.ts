@@ -20,8 +20,8 @@ import {
   Namespace,
   OCPP1_6_Namespace,
   OCPP2_0_1,
-  OCPP2_0_1_CallAction,
-  OCPP2_0_1_Namespace,
+  OCPP2_Namespace,
+  OCPP_CallAction,
   OCPPVersion,
   UpdateChargingStationPasswordSchema,
 } from '@citrineos/base';
@@ -103,7 +103,7 @@ export class ConfigurationDataApi
   }
 
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.PasswordType,
+    OCPP2_Namespace.PasswordType,
     HttpMethod.Post,
     UpdateChargingStationPasswordQuerySchema,
     UpdateChargingStationPasswordSchema,
@@ -154,11 +154,7 @@ export class ConfigurationDataApi
     };
   }
 
-  @AsDataEndpoint(
-    OCPP2_0_1_Namespace.ServerNetworkProfile,
-    HttpMethod.Get,
-    NetworkProfileQuerySchema,
-  )
+  @AsDataEndpoint(OCPP2_Namespace.ServerNetworkProfile, HttpMethod.Get, NetworkProfileQuerySchema)
   async getNetworkProfiles(
     request: FastifyRequest<{ Querystring: NetworkProfileQuerystring }>,
   ): Promise<ChargingStationNetworkProfile[]> {
@@ -169,7 +165,7 @@ export class ConfigurationDataApi
   }
 
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.ServerNetworkProfile,
+    OCPP2_Namespace.ServerNetworkProfile,
     HttpMethod.Delete,
     NetworkProfileDeleteQuerySchema,
   )
@@ -198,7 +194,7 @@ export class ConfigurationDataApi
    * @param {Namespace} input - The input {@link Namespace}.
    * @return {string} - The generated URL path.
    */
-  protected _toDataPath(input: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace): string {
+  protected _toDataPath(input: OCPP2_Namespace | OCPP1_6_Namespace | Namespace): string {
     const endpointPrefix = this._module.config.modules.configuration.endpointPrefix;
     return super._toDataPath(input, endpointPrefix);
   }
@@ -220,7 +216,7 @@ export class ConfigurationDataApi
       stationId,
       tenantId,
       OCPPVersion.OCPP2_0_1,
-      OCPP2_0_1_CallAction.SetVariables,
+      OCPP_CallAction.SetVariables,
       {
         setVariableData: [
           {

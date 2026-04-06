@@ -51,7 +51,7 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
     this._handler = handler;
     this._sender = sender;
     this._networkHook = networkHook;
-    this._ocppValidator = ocppValidator || new OCPPValidator(logger);
+    this._ocppValidator = ocppValidator ? ocppValidator : new OCPPValidator(logger);
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
@@ -222,6 +222,9 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
       case OCPPVersion.OCPP2_0_1:
         protocolEnum = OCPPVersion.OCPP2_0_1;
         break;
+      case OCPPVersion.OCPP2_1:
+        protocolEnum = OCPPVersion.OCPP2_1;
+        break;
       default:
         this._logger.error('Unknown subprotocol', protocol);
         return { isValid: false };
@@ -254,6 +257,9 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
         break;
       case OCPPVersion.OCPP2_0_1:
         protocolEnum = OCPPVersion.OCPP2_0_1;
+        break;
+      case OCPPVersion.OCPP2_1:
+        protocolEnum = OCPPVersion.OCPP2_1;
         break;
       default:
         this._logger.error('Unknown subprotocol', protocol);

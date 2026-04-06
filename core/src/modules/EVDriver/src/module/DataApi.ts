@@ -13,7 +13,7 @@ import {
   HttpMethod,
   Namespace,
   OCPP1_6_Namespace,
-  OCPP2_0_1_Namespace,
+  OCPP2_Namespace,
 } from '@citrineos/base';
 import type { ChargingStationKeyQuerystring } from '@dal/interfaces/queries/ChargingStation.js';
 import { ChargingStationKeyQuerySchema } from '@dal/interfaces/queries/ChargingStation.js';
@@ -34,11 +34,7 @@ export class EVDriverDataApi
     super(evDriverModule, server, null, logger);
   }
 
-  @AsDataEndpoint(
-    OCPP2_0_1_Namespace.LocalListVersion,
-    HttpMethod.Get,
-    ChargingStationKeyQuerySchema,
-  )
+  @AsDataEndpoint(OCPP2_Namespace.LocalListVersion, HttpMethod.Get, ChargingStationKeyQuerySchema)
   async getLocalAuthorizationListVersion(
     request: FastifyRequest<{ Querystring: ChargingStationKeyQuerystring }>,
   ): Promise<LocalListVersion | undefined> {
@@ -56,7 +52,7 @@ export class EVDriverDataApi
    * @param {Namespace} input - The input {@link Namespace}.
    * @return {string} - The generated URL path.
    */
-  protected _toDataPath(input: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace): string {
+  protected _toDataPath(input: OCPP2_Namespace | OCPP1_6_Namespace | Namespace): string {
     const endpointPrefix = this._module.config.modules.evdriver.endpointPrefix;
     return super._toDataPath(input, endpointPrefix);
   }

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { DEFAULT_TENANT_ID, OCPP2_0_1_Namespace } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, OCPP2_Namespace } from '@citrineos/base';
 import type { ChargingStationSecurityInfoDto, TenantDto } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 
@@ -10,7 +10,7 @@ import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequ
  */
 @Table
 export class ChargingStationSecurityInfo extends Model implements ChargingStationSecurityInfoDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.ChargingStationSecurityInfo;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.ChargingStationSecurityInfo;
 
   @Column({
     type: DataType.STRING,
