@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 process.env.APP_ENV = 'local'; // needs to be before systemConfig import - careful with prettier formatter!
 
-import { DefaultSequelizeInstance } from '@citrineos/data';
+import { DefaultSequelizeInstance } from '@citrineos/core';
 import { loadBootstrapConfig } from '@citrineos/base';
 
 async function initializeDatabase() {
