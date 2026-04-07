@@ -1,47 +1,54 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type {
-  BootstrapConfig,
-  CallAction,
-  HandlerProperties,
-  ICache,
-  IMessage,
-  IMessageHandler,
-  IMessageSender,
-  SystemConfig,
-  OCPP2_response_types,
-  OCPP2_request_types,
-  GenericDeviceModelStatusEnumType,
-  GenericStatusEnumType,
-  OCPP2_common_types,
-} from '@citrineos/base';
 import {
   AbstractModule,
   AsHandler,
+  AttributeEnum,
+  type AttributeEnumType,
+  type BootstrapConfig,
+  type CallAction,
   ChargingStationSequenceTypeEnum,
   EventGroup,
   GenericDeviceModelStatusEnum,
+  type GenericDeviceModelStatusEnumType,
   GenericStatusEnum,
+  type GenericStatusEnumType,
+  type HandlerProperties,
+  type ICache,
+  type IMessage,
+  type IMessageHandler,
+  type IMessageSender,
+  MessageOrigin,
+  OCPP2_common_types,
+  OCPP2_request_types,
+  OCPP2_response_types,
   OCPP_2_VER_LIST,
   OCPP_CallAction,
-  OCPPVersion,
   OCPPValidator,
+  OCPPVersion,
+  SetVariableStatusEnum,
+  type SystemConfig,
 } from '@citrineos/base';
-import type {
-  IDeviceModelRepository,
-  IVariableMonitoringRepository,
-} from '@dal/interfaces/repositories.js';
 import {
+  Component,
+  type IDeviceModelRepository,
+  type IOCPPMessageRepository,
+  type IVariableMonitoringRepository,
   SequelizeChargingStationSequenceRepository,
   SequelizeDeviceModelRepository,
+  SequelizeOCPPMessageRepository,
   SequelizeVariableMonitoringRepository,
-} from '@dal/layers/sequelize/index.js';
+  Variable,
+  type VariableAttribute,
+} from '@dal/index.js';
 import { IdGenerator } from '@util/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { MonitoringService } from './MonitoringService.js';
 import { DeviceModelService } from './services.js';
+
+type SetVariableDataMap = { [key: string]: OCPP2_common_types.SetVariableDataType };
 
 /**
  * Component that handles monitoring related messages.
@@ -56,6 +63,7 @@ export class MonitoringModule extends AbstractModule {
 
   protected _deviceModelRepository: IDeviceModelRepository;
   protected _variableMonitoringRepository: IVariableMonitoringRepository;
+  protected _ocppMessageRepository: IOCPPMessageRepository;
   private _idGenerator: IdGenerator;
 
   /**
@@ -94,6 +102,7 @@ export class MonitoringModule extends AbstractModule {
     ocppValidator?: OCPPValidator,
     deviceModelRepository?: IDeviceModelRepository,
     variableMonitoringRepository?: IVariableMonitoringRepository,
+    ocppMessageRepository?: IOCPPMessageRepository,
     idGenerator?: IdGenerator,
   ) {
     super(config, cache, handler, sender, EventGroup.Monitoring, logger, ocppValidator);
@@ -106,6 +115,8 @@ export class MonitoringModule extends AbstractModule {
     this._variableMonitoringRepository =
       variableMonitoringRepository ||
       new SequelizeVariableMonitoringRepository(config, this._logger);
+    this._ocppMessageRepository =
+      ocppMessageRepository || new SequelizeOCPPMessageRepository(config, this._logger);
 
     this._deviceModelService = new DeviceModelService(this._deviceModelRepository);
     this._monitoringService = new MonitoringService(
@@ -195,9 +206,6 @@ export class MonitoringModule extends AbstractModule {
       );
     }
   }
-
-  //TODO: Need to create a separate handler for OCPP 2.1 for handleSetVariableMonitoring
-  //      2.1's NotifyMonitoringReportRequest has an additional required enum compared to 2.0.1
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ClearVariableMonitoring)
   protected async _handleClearVariableMonitoring(
@@ -293,7 +301,7 @@ export class MonitoringModule extends AbstractModule {
       await this.sendCall(
         stationId,
         message.context.tenantId,
-        message.protocol,
+        OCPPVersion.OCPP2_0_1,
         OCPP_CallAction.GetMonitoringReport,
         {
           requestId: await this._idGenerator.generateRequestId(
@@ -326,14 +334,172 @@ export class MonitoringModule extends AbstractModule {
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('SetVariables response received:', message, props);
-
+    const tenantId = message.context.tenantId;
+    const stationId = message.context.stationId;
+    const correlationId = message.context.correlationId;
+    const setVariablesDataMap: SetVariableDataMap =
+      await this.getSetVariablesDataMapFromOriginalSetVariablesRequest(
+        tenantId,
+        stationId,
+        correlationId,
+      );
     for (const setVariableResultType of message.payload.setVariableResult) {
-      await this._deviceModelRepository.updateResultByStationId(
-        message.context.tenantId,
+      await this.handleSetVariableResultType(
+        tenantId,
+        stationId,
         setVariableResultType,
-        message.context.stationId,
+        setVariablesDataMap,
         message.context.timestamp,
       );
     }
+  }
+
+  protected async getSetVariablesDataMapFromOriginalSetVariablesRequest(
+    tenantId: number,
+    stationId: string,
+    correlationId: string,
+  ) {
+    // map where key is `${component}-${componentInstance}-${variable}-${variableInstance}` and value is the SetVariableData
+    const setVariablesDataMap: SetVariableDataMap = {};
+    const requestOcppMessage = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
+      where: {
+        tenantId,
+        stationId,
+        correlationId,
+        origin: MessageOrigin.ChargingStationManagementSystem,
+      },
+    });
+
+    if (requestOcppMessage) {
+      const setVariablesRequest = requestOcppMessage
+        .message[3] as OCPP2_request_types.SetVariablesRequest;
+      const setVariableData = setVariablesRequest.setVariableData;
+      setVariableData.forEach((setVariableData) => {
+        const component = setVariableData.component.name;
+        const variable = setVariableData.variable.name;
+        const componentInstance = setVariableData.component.instance || 'null';
+        const variableInstance = setVariableData.variable.instance || 'null';
+        setVariablesDataMap[
+          this.getSetVariableDataMapKey(component, componentInstance, variable, variableInstance)
+        ] = setVariableData;
+      });
+    }
+
+    return setVariablesDataMap;
+  }
+
+  protected async handleSetVariableResultType(
+    tenantId: number,
+    stationId: string,
+    setVariableResultType: OCPP2_common_types.SetVariableResultType,
+    setVariablesDataMap: SetVariableDataMap,
+    timestamp: string,
+  ) {
+    const componentName = setVariableResultType.component.name;
+    const variableName = setVariableResultType.variable.name;
+    const componentInstance = setVariableResultType.component.instance || null;
+    const variableInstance = setVariableResultType.variable.instance || null;
+    const applicableSetVariableData =
+      setVariablesDataMap[
+        this.getSetVariableDataMapKey(
+          componentName,
+          componentInstance,
+          variableName,
+          variableInstance,
+        )
+      ];
+    if (applicableSetVariableData) {
+      const variableValue = applicableSetVariableData.attributeValue;
+      const attributeType = applicableSetVariableData.attributeType ?? AttributeEnum.Actual;
+      const existingVariableAttribute = await this.getExistingOrCreateVariableAttribute(
+        tenantId,
+        stationId,
+        componentName,
+        componentInstance,
+        variableName,
+        variableInstance,
+        variableValue,
+        attributeType,
+      );
+      if (setVariableResultType.attributeStatus === SetVariableStatusEnum.Accepted) {
+        existingVariableAttribute?.setDataValue('value', variableValue);
+      }
+      await this._deviceModelRepository.updateResultByStationId(
+        tenantId,
+        setVariableResultType,
+        stationId,
+        timestamp,
+        existingVariableAttribute || undefined,
+      );
+    }
+  }
+
+  protected async getExistingOrCreateVariableAttribute(
+    tenantId: number,
+    stationId: string,
+    componentName: string,
+    componentInstance: string | null,
+    variableName: string,
+    variableInstance: string | null,
+    variableValue: string,
+    attributeType: AttributeEnumType,
+  ): Promise<VariableAttribute> {
+    let existingVariableAttribute = (await this.deviceModelRepository.readOnlyOneByQuery(tenantId, {
+      where: {
+        stationId,
+        type: attributeType,
+      },
+      include: [
+        {
+          model: Component,
+          where: {
+            name: componentName,
+            instance: componentInstance ? componentInstance : null,
+          },
+        },
+        {
+          model: Variable,
+          where: {
+            name: variableName,
+            instance: variableInstance ? variableInstance : null,
+          },
+        },
+      ],
+    })) as VariableAttribute;
+    if (!existingVariableAttribute) {
+      const createdVariableAttributes =
+        await this.deviceModelRepository.createOrUpdateBySetVariablesDataAndStationId(
+          tenantId,
+          [
+            {
+              attributeType: attributeType,
+              attributeValue: variableValue,
+              component: {
+                name: componentName,
+                instance: componentInstance ? componentInstance : null,
+              },
+              variable: {
+                name: variableName,
+                instance: variableInstance ? variableInstance : null,
+              },
+            } as OCPP2_common_types.SetVariableDataType,
+          ],
+          stationId,
+          new Date().toISOString(),
+        );
+      if (createdVariableAttributes && createdVariableAttributes.length === 1) {
+        existingVariableAttribute = createdVariableAttributes[0];
+      }
+    }
+    return existingVariableAttribute;
+  }
+
+  protected getSetVariableDataMapKey(
+    componentName: string,
+    componentInstance: string | null,
+    variableName: string,
+    variableInstance: string | null,
+  ) {
+    return `${componentName}-${componentInstance}-${variableName}-${variableInstance}`;
   }
 }

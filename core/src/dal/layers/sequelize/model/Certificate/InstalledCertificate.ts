@@ -11,6 +11,7 @@ import { DEFAULT_TENANT_ID, OCPP2_Namespace, type ChargingStationDto } from '@ci
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 
 import { Certificate } from './Certificate.js';
+import { ChargingStation } from '../Location/index.js';
 
 @Table
 export class InstalledCertificate extends Model implements InstalledCertificateDto {

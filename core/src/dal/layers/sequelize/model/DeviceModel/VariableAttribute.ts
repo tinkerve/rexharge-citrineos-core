@@ -14,6 +14,7 @@ import {
   BeforeUpdate,
   Column,
   DataType,
+  ForeignKey,
   Index,
   Model,
   Table,

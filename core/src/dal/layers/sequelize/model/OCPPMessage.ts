@@ -9,10 +9,12 @@ import {
   BeforeUpdate,
   Column,
   DataType,
+  ForeignKey,
   Index,
   Model,
   Table,
 } from 'sequelize-typescript';
+import { ChargingStation } from './Location/index.js';
 
 @Table
 export class OCPPMessage extends Model implements OCPPMessageDto {

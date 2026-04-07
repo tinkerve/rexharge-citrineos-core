@@ -44,6 +44,7 @@ export class EVDriverOcpp2Api
     super(evDriverModule, server, version, logger);
   }
 
+  //TODO: 2.1 needs extended code for this request
   @AsMessageEndpoint(OCPP_CallAction.RequestStartTransaction, (instance: EVDriverOcpp2Api) =>
     getOcpp2Schema(
       (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
@@ -52,7 +53,7 @@ export class EVDriverOcpp2Api
   )
   async requestStartTransaction(
     identifier: string[],
-    request: OCPP2_0_1.RequestStartTransactionRequest,
+    request: OCPP2_request_types.RequestStartTransactionRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
@@ -131,7 +132,7 @@ export class EVDriverOcpp2Api
         const confirmation = await this._module.sendCall(
           i,
           tenantId,
-          OCPPVersion.OCPP2_0_1,
+          this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.RequestStartTransaction,
           request,
           callbackUrl,
@@ -156,8 +157,6 @@ export class EVDriverOcpp2Api
 
     return results;
   }
-
-  //TODO: 2.1 version of start transaction
 
   @AsMessageEndpoint(OCPP_CallAction.RequestStopTransaction, (instance: EVDriverOcpp2Api) =>
     getOcpp2Schema(

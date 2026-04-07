@@ -4,7 +4,8 @@
 import type { ChargingStationSequenceTypeEnumType, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
-import { type ChargingStation as ChargingStationType } from '../Location/index.js';
+import { ChargingStation } from '../Location/index.js';
+import type { ChargingStation as ChargingStationType } from '../Location/index.js';
 
 @Table
 export class ChargingStationSequence extends Model {

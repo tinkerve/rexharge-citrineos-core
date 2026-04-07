@@ -13,11 +13,12 @@ import {
   BeforeUpdate,
   Column,
   DataType,
+  ForeignKey,
   Index,
   Model,
   Table,
 } from 'sequelize-typescript';
-
+import { ChargingStation } from './ChargingStation.js';
 import { ServerNetworkProfile } from './ServerNetworkProfile.js';
 
 /**

@@ -190,6 +190,8 @@ export function createDockerConfig() {
             protocols: OCPP_VERSION_LIST,
             tenantId: DEFAULT_TENANT_ID,
             dynamicTenantResolution: false,
+            //Uncomment to debug or use a specific port
+            //forceProtocol: OCPPVersion.OCPP2_0_1
           },
           {
             id: '1',

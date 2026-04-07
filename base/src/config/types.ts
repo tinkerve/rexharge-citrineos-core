@@ -20,9 +20,9 @@ export const oidcClientConfigSchema = z
   .optional();
 
 export const OCPP_VERSION_LIST: OCPPVersionType[] = [
-  OCPPVersion.OCPP1_6,
-  OCPPVersion.OCPP2_0_1,
   OCPPVersion.OCPP2_1,
+  OCPPVersion.OCPP2_0_1,
+  OCPPVersion.OCPP1_6,
 ] as const;
 
 // TODO: Refactor other objects out of system config, such as certificatesModuleInputSchema etc.
@@ -48,6 +48,8 @@ export const websocketServerInputSchema = z.object({
   // When true, tenant can be resolved at connection upgrade time from the request
   // (query param, path segment, or header). Defaults to false for strict per-server tenant.
   dynamicTenantResolution: z.boolean().optional().default(false),
+  // Forces a set protocol to communicate on, mostly used for dev purposes
+  forceProtocol: z.enum(OCPP_VERSION_LIST).optional(),
 });
 
 export const HUBJECT_DEFAULT_BASEURL = 'https://open.plugncharge-test.hubject.com';
@@ -327,6 +329,7 @@ export const websocketServerSchema = z
     // When true, tenant can be resolved at connection upgrade time from the request
     // (query param, path segment, or header). Defaults to false for strict per-server tenant.
     dynamicTenantResolution: z.boolean().optional().default(false),
+    forceProtocol: z.enum(OCPP_VERSION_LIST).optional(),
   })
   .refine((obj) => {
     switch (obj.securityProfile) {

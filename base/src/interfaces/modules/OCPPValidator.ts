@@ -11,6 +11,7 @@ import {
   OCPP2_0_1_CALL_RESULT_SCHEMA_RECORD,
   OCPP2_0_1_CALL_SCHEMA_RECORD,
   OCPP2_1_CALL_RESULT_SCHEMA_RECORD,
+  OCPP2_1_CALL_SCHEMA_RECORD,
 } from '@interfaces/schema/MappingSchema.js';
 import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
 import { type CallAction, OCPP_CallAction, OcppError, OCPPVersion } from '@ocpp/rpc/message.js';
@@ -135,7 +136,7 @@ export class OCPPValidator {
         schema = OCPP2_0_1_CALL_SCHEMA_RECORD[action];
         break;
       case OCPPVersion.OCPP2_1:
-        schema = OCPP2_1_CALL_RESULT_SCHEMA_RECORD[action];
+        schema = OCPP2_1_CALL_SCHEMA_RECORD[action];
         break;
       default:
         this._logger.error('Unknown subprotocol', protocol);
@@ -146,7 +147,7 @@ export class OCPPValidator {
       let validate = this._ajv.getSchema(schema['$id']);
       if (!validate) {
         schema['$id'] = `${protocol}-${schema['$id']}`;
-        this._logger.debug(`Updated call result schema id: ${schema['$id']}`);
+        this._logger.debug(`Updated call schema id: ${schema['$id']}`);
 
         this.fixRefs(schema);
 

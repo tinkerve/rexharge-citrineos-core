@@ -4,6 +4,7 @@
 import type { ChargingStationDto, ConnectorDto, EvseDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import { ChargingStation } from './ChargingStation.js';
 
 @Table
 export class Evse extends Model implements EvseDto {
