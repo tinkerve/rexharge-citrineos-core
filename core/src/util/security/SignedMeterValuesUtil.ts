@@ -3,7 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { IChargingStationSecurityInfoRepository } from '@dal/interfaces/repositories.js';
 import { sequelize } from '@dal/index.js';
-import type { BootstrapConfig, IFileStorage, SystemConfig } from '@citrineos/base';
+import type {
+  BootstrapConfig,
+  IFileStorage,
+  OCPP2_common_types,
+  SystemConfig,
+} from '@citrineos/base';
 import { OCPP2_0_1, SignedMeterValuesConfig } from '@citrineos/base';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -62,7 +67,7 @@ export class SignedMeterValuesUtil {
   public async validateMeterValues(
     tenantId: number,
     stationId: string,
-    meterValues: [OCPP2_0_1.MeterValueType, ...OCPP2_0_1.MeterValueType[]],
+    meterValues: [OCPP2_common_types.MeterValueType, ...OCPP2_common_types.MeterValueType[]],
   ): Promise<boolean> {
     for (const meterValue of meterValues) {
       for (const sampledValue of meterValue.sampledValue) {
@@ -85,7 +90,7 @@ export class SignedMeterValuesUtil {
   private async validateSignedSampledValue(
     tenantId: number,
     stationId: string,
-    signedMeterValue: OCPP2_0_1.SignedMeterValueType,
+    signedMeterValue: OCPP2_common_types.SignedMeterValueType,
   ): Promise<boolean> {
     if (signedMeterValue.publicKey && signedMeterValue.publicKey.length > 0) {
       const incomingPublicKeyIsValid =
@@ -115,8 +120,9 @@ export class SignedMeterValuesUtil {
     }
   }
 
+  // This needs to be evaluated for OCPP 2.1 since signedMeterValue.publicKey can be undefined
   private async validateSignedMeterValueSignature(
-    signedMeterValue: OCPP2_0_1.SignedMeterValueType,
+    signedMeterValue: OCPP2_common_types.SignedMeterValueType,
     publicKeyFileId?: string,
   ): Promise<boolean> {
     const incomingPublicKeyString = signedMeterValue.publicKey;
@@ -137,7 +143,10 @@ export class SignedMeterValuesUtil {
       return false;
     }
 
-    if (!publicKeyFileId && incomingPublicKeyString.length === 0) {
+    if (
+      !publicKeyFileId &&
+      (incomingPublicKeyString === undefined || incomingPublicKeyString?.length === 0)
+    ) {
       this._logger.warn(
         'Invalid signature because no configured public key and incoming signed meter values has no public key.',
       );
@@ -155,7 +164,11 @@ export class SignedMeterValuesUtil {
       await this._fileStorage.getFile(this._signedMeterValuesConfiguration.publicKeyFileId),
     );
 
-    if (incomingPublicKeyString.length > 0) {
+    if (
+      incomingPublicKeyString?.length !== undefined &&
+      incomingPublicKeyString?.length > 0 &&
+      signedMeterValue.publicKey
+    ) {
       const signedMeterValuePublicKey = Buffer.from(
         signedMeterValue.publicKey,
         'base64',

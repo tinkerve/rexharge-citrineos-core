@@ -7,8 +7,12 @@ import type {
   ConnectorDto,
   EvseDto,
   IAuthorizer,
+  IdTokenEnumType,
   IMessageContext,
   MeterValueDto,
+  OCPP2_common_types,
+  OCPP2_request_types,
+  OCPP2_response_types,
 } from '@citrineos/base';
 import {
   AuthorizationStatusEnum,
@@ -85,13 +89,13 @@ export class TransactionService {
 
   async authorizeOcpp201IdToken(
     tenantId: number,
-    transactionEvent: OCPP2_0_1.TransactionEventRequest,
+    transactionEvent: OCPP2_request_types.TransactionEventRequest,
     messageContext: IMessageContext,
-  ): Promise<OCPP2_0_1.TransactionEventResponse> {
+  ): Promise<OCPP2_response_types.TransactionEventResponse> {
     const idToken = transactionEvent.idToken!;
     const authorizations = await this._authorizeRepository.readAllByQuerystring(tenantId, {
       idToken: idToken.idToken,
-      type: OCPP2_0_1_Mapper.AuthorizationMapper.fromIdTokenEnumType(idToken.type),
+      type: idToken as unknown as IdTokenEnumType,
     });
 
     const response: OCPP2_0_1.TransactionEventResponse = {
@@ -165,7 +169,7 @@ export class TransactionService {
 
   async createMeterValues(
     tenantId: number,
-    meterValues: [OCPP2_0_1.MeterValueType, ...OCPP2_0_1.MeterValueType[]],
+    meterValues: [OCPP2_common_types.MeterValueType, ...OCPP2_common_types.MeterValueType[]],
     transactionDbId?: number | null,
     transactionId?: string | null,
     tariffId?: number | null,

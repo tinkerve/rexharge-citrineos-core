@@ -41,3 +41,19 @@ export type ComponentVariableType = OCPP2_1.ComponentVariableType | OCPP2_0_1.Co
 export type CertificateHashDataChainType =
   | OCPP2_1.CertificateHashDataChainType
   | OCPP2_0_1.CertificateHashDataChainType;
+
+export type ChargingNeedsType = OCPP2_1.ChargingNeedsType | OCPP2_0_1.ChargingNeedsType;
+
+export type ChargingProfileCriterionType =
+  | OCPP2_1.ChargingProfileCriterionType
+  | OCPP2_0_1.ChargingProfileCriterionType;
+
+export type ChargingProfileType = OCPP2_1.ChargingProfileType | OCPP2_0_1.ChargingProfileType;
+
+export type ChargingSchedulePeriodType =
+  | OCPP2_1.ChargingSchedulePeriodType
+  | OCPP2_0_1.ChargingSchedulePeriodType;
+
+export type CompositeScheduleType = OCPP2_1.CompositeScheduleType | OCPP2_0_1.CompositeScheduleType;
+
+export type SignedMeterValueType = OCPP2_1.SignedMeterValueType | OCPP2_0_1.SignedMeterValueType;

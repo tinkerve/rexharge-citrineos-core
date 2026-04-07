@@ -12,7 +12,7 @@
  * Id of dynamic charging profile to update.
  *
  */
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface UpdateDynamicScheduleRequest extends OcppRequest {
   /**

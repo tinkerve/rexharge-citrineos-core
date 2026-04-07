@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
-  AuthorizationDto,
   AuthorizationStatusEnumType,
+  AuthorizationDto,
   BootstrapConfig,
   CallAction,
   HandlerProperties,
@@ -16,25 +16,34 @@ import type {
   SystemConfig,
   OCPP2_response_types,
   OCPP2_request_types,
+  OCPP2_common_types,
   ReservationUpdateStatusEnumType,
+  ReserveNowStatusEnumType,
 } from '@citrineos/base';
 import {
   AbstractModule,
   AsHandler,
+  AttributeEnum,
   AuthorizationStatusEnum,
+  AuthorizeCertificateStatusEnum,
+  CancelReservationStatusEnum,
   ChargingLimitSourceEnum,
+  ChargingProfilePurposeEnum,
   ChargingStationSequenceTypeEnum,
   ErrorCode,
   EventGroup,
+  IdTokenEnum,
   MessageOrigin,
   OCPP1_6,
-  OCPP2_1,
   OCPP_2_VER_LIST,
   OCPP_CallAction,
   OcppError,
   OCPPValidator,
   OCPPVersion,
-  OCPP2_0_1,
+  RequestStartStopStatusEnum,
+  ReservationUpdateStatusEnum,
+  ReserveNowStatusEnum,
+  SendLocalListStatusEnum,
 } from '@citrineos/base';
 import type {
   IAuthorizationRepository,
@@ -268,14 +277,14 @@ export class EVDriverModule extends AbstractModule {
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('Authorize received:', message, props);
-    const request: OCPP2_0_1.AuthorizeRequest = message.payload;
+    const request: OCPP2_request_types.AuthorizeRequest = message.payload;
     const context = message.context;
-    const response: OCPP2_0_1.AuthorizeResponse = {
+    let response = {
       idTokenInfo: {
-        status: OCPP2_0_1.AuthorizationStatusEnumType.Unknown,
+        status: AuthorizationStatusEnum.Unknown,
         // TODO determine how/if to set personalMessage
       },
-    };
+    } as OCPP2_response_types.AuthorizeResponse;
 
     // Validate ID token format after AJV schema validation, checking if the token conforms to expected type e.g if type is ISO14443, the token should be a hex string of even length
     const tokenValidation = validateIdToken(request.idToken.type, request.idToken.idToken);
@@ -291,14 +300,25 @@ export class EVDriverModule extends AbstractModule {
         ErrorCode.PropertyConstraintViolation,
         tokenValidation.errorMessage || 'Invalid token value for specified type',
       );
-      response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Invalid;
+      response = {
+        ...response,
+        idTokenInfo: {
+          status: AuthorizationStatusEnum.Invalid,
+        },
+      } as OCPP2_response_types.AuthorizeResponse;
+
       this._logger.error('Token validation failed:', tokenValidation.errorMessage);
       await this.sendCallErrorWithMessage(message, error);
       return;
     }
 
-    if (message.payload.idToken.type === OCPP2_0_1.IdTokenEnumType.NoAuthorization) {
-      response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Accepted;
+    if (message.payload.idToken.type === IdTokenEnum.NoAuthorization) {
+      response = {
+        ...response,
+        idTokenInfo: {
+          status: AuthorizationStatusEnum.Accepted,
+        },
+      } as OCPP2_response_types.AuthorizeResponse;
       await this.sendCallResultWithMessage(message, response);
       return;
     }
@@ -319,8 +339,13 @@ export class EVDriverModule extends AbstractModule {
         response.certificateStatus =
           await this._certificateAuthorityService.validateCertificateChainPem(request.certificate);
       }
-      if (response.certificateStatus !== OCPP2_0_1.AuthorizeCertificateStatusEnumType.Accepted) {
-        response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Invalid;
+      if (response.certificateStatus !== AuthorizeCertificateStatusEnum.Accepted) {
+        response = {
+          ...response,
+          idTokenInfo: {
+            status: AuthorizationStatusEnum.Invalid,
+          },
+        } as OCPP2_response_types.AuthorizeResponse;
         const messageConfirmation = await this.sendCallResultWithMessage(message, response);
         this._logger.debug('Authorize response sent:', messageConfirmation);
         return;
@@ -338,16 +363,18 @@ export class EVDriverModule extends AbstractModule {
     if (authorization) {
       // Use flat fields directly instead of authorization.idTokenInfo
       const idTokenInfo = OCPP2_0_1_Mapper.AuthorizationMapper.toIdTokenInfo(authorization);
-      if (idTokenInfo.status === OCPP2_0_1.AuthorizationStatusEnumType.Accepted) {
+      if (idTokenInfo.status === AuthorizationStatusEnum.Accepted) {
         if (
           idTokenInfo.cacheExpiryDateTime &&
           new Date() > new Date(idTokenInfo.cacheExpiryDateTime)
         ) {
-          response.idTokenInfo = {
-            status: OCPP2_0_1.AuthorizationStatusEnumType.Invalid,
-            groupIdToken: idTokenInfo.groupIdToken,
-            // TODO determine how/if to set personalMessage
-          };
+          response = {
+            idTokenInfo: {
+              status: AuthorizationStatusEnum.Invalid,
+              groupIdToken: idTokenInfo.groupIdToken,
+              // TODO determine how/if to set personalMessage
+            },
+          } as OCPP2_response_types.AuthorizeResponse;
         } else {
           // If charging station does not have values and evses associated with the component/variable pairs below,
           // this logic will break. CSMS's aiming to use the allowedConnectorTypes or disallowedEvseIdPrefixes
@@ -365,7 +392,7 @@ export class EVDriverModule extends AbstractModule {
                 stationId: message.context.stationId,
                 component_name: 'Connector',
                 variable_name: 'ConnectorType',
-                type: OCPP2_0_1.AttributeEnumType.Actual,
+                type: AttributeEnum.Actual,
               });
             for (const connectorType of connectorTypes) {
               if (authorization.allowedConnectorTypes.indexOf(connectorType.value as string) > 0) {
@@ -374,11 +401,13 @@ export class EVDriverModule extends AbstractModule {
             }
           }
           if (evseIds && evseIds.size === 0) {
-            response.idTokenInfo = {
-              status: OCPP2_0_1.AuthorizationStatusEnumType.NotAllowedTypeEVSE,
-              groupIdToken: idTokenInfo.groupIdToken,
-              // TODO determine how/if to set personalMessage
-            };
+            response = {
+              idTokenInfo: {
+                status: AuthorizationStatusEnum.NotAllowedTypeEVSE,
+                groupIdToken: idTokenInfo.groupIdToken,
+                // TODO determine how/if to set personalMessage
+              },
+            } as OCPP2_response_types.AuthorizeResponse;
           } else {
             if (
               authorization.disallowedEvseIdPrefixes &&
@@ -391,7 +420,7 @@ export class EVDriverModule extends AbstractModule {
                   stationId: message.context.stationId,
                   component_name: 'EVSE',
                   variable_name: 'EvseId',
-                  type: OCPP2_0_1.AttributeEnumType.Actual,
+                  type: AttributeEnum.Actual,
                 });
               for (const evseIdAttribute of evseIdAttributes) {
                 const evseIdAllowed: boolean = authorization.disallowedEvseIdPrefixes.some(
@@ -406,11 +435,13 @@ export class EVDriverModule extends AbstractModule {
               }
             }
             if (evseIds && evseIds.size === 0) {
-              response.idTokenInfo = {
-                status: OCPP2_0_1.AuthorizationStatusEnumType.NotAtThisLocation,
-                groupIdToken: idTokenInfo.groupIdToken,
-                // TODO determine how/if to set personalMessage
-              };
+              response = {
+                idTokenInfo: {
+                  status: AuthorizationStatusEnum.NotAtThisLocation,
+                  groupIdToken: idTokenInfo.groupIdToken,
+                  // TODO determine how/if to set personalMessage
+                },
+              } as OCPP2_response_types.AuthorizeResponse;
             } else {
               // TODO: Determine how to check for NotAtThisTime
               response.idTokenInfo = idTokenInfo;
@@ -423,7 +454,7 @@ export class EVDriverModule extends AbstractModule {
         }
 
         for (const authorizer of this._authorizers) {
-          if (response.idTokenInfo.status !== OCPP2_0_1.AuthorizationStatusEnumType.Accepted) {
+          if (response.idTokenInfo.status !== AuthorizationStatusEnum.Accepted) {
             break;
           }
           const result: AuthorizationStatusEnumType = await authorizer.authorize(
@@ -444,7 +475,7 @@ export class EVDriverModule extends AbstractModule {
       return;
     }
 
-    if (response.idTokenInfo.status === OCPP2_0_1.AuthorizationStatusEnumType.Accepted) {
+    if (response.idTokenInfo.status === AuthorizationStatusEnum.Accepted) {
       const tariffAvailable: VariableAttribute[] =
         await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
           tenantId: context.tenantId,
@@ -452,7 +483,7 @@ export class EVDriverModule extends AbstractModule {
           component_name: 'TariffCostCtrlr',
           variable_name: 'Available',
           variable_instance: 'Tariff',
-          type: OCPP2_0_1.AttributeEnumType.Actual,
+          type: AttributeEnum.Actual,
         });
 
       const displayMessageAvailable: VariableAttribute[] =
@@ -461,7 +492,7 @@ export class EVDriverModule extends AbstractModule {
           stationId: message.context.stationId,
           component_name: 'DisplayMessageCtrlr',
           variable_name: 'Available',
-          type: OCPP2_0_1.AttributeEnumType.Actual,
+          type: AttributeEnum.Actual,
         });
 
       // only send the tariff information if the Charging Station supports the tariff or DisplayMessage functionality
@@ -500,8 +531,8 @@ export class EVDriverModule extends AbstractModule {
       );
       if (reservation) {
         if (
-          status === OCPP2_1.ReservationUpdateStatusEnumType.Expired ||
-          status === OCPP2_1.ReservationUpdateStatusEnumType.Removed
+          status === ReservationUpdateStatusEnum.Expired ||
+          status === ReservationUpdateStatusEnum.Removed
         ) {
           await this._reservationRepository.updateByKey(
             message.context.tenantId,
@@ -535,7 +566,7 @@ export class EVDriverModule extends AbstractModule {
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('RequestStartTransactionResponse received:', message, props);
-    if (message.payload.status === OCPP2_1.RequestStartStopStatusEnumType.Accepted) {
+    if (message.payload.status === RequestStartStopStatusEnum.Accepted) {
       // Start transaction with charging profile succeeds,
       // we need to update db entity with the latest data from charger
       const stationId: string = message.context.stationId;
@@ -549,8 +580,8 @@ export class EVDriverModule extends AbstractModule {
           where: {
             stationId: stationId,
             isActive: true,
-            chargingLimitSource: OCPP2_1.ChargingLimitSourceEnumType.CSO,
-            chargingProfilePurpose: OCPP2_1.ChargingProfilePurposeEnumType.TxProfile,
+            chargingLimitSource: ChargingLimitSourceEnum.CSO,
+            chargingProfilePurpose: ChargingProfilePurposeEnum.TxProfile,
           },
           returning: false,
         },
@@ -568,10 +599,10 @@ export class EVDriverModule extends AbstractModule {
             ChargingStationSequenceTypeEnum.getChargingProfiles,
           ),
           chargingProfile: {
-            chargingProfilePurpose: OCPP2_1.ChargingProfilePurposeEnumType.TxProfile,
-            chargingLimitSource: [OCPP2_1.ChargingLimitSourceEnumType.CSO],
-          } as OCPP2_1.ChargingProfileCriterionType,
-        } as OCPP2_1.GetChargingProfilesRequest,
+            chargingProfilePurpose: ChargingProfilePurposeEnum.TxProfile,
+            chargingLimitSource: [ChargingLimitSourceEnum.CSO],
+          } as OCPP2_common_types.ChargingProfileCriterionType,
+        } as OCPP2_request_types.GetChargingProfilesRequest,
       );
     } else {
       this._logger.error(`RequestStartTransaction failed: ${JSON.stringify(message.payload)}`);
@@ -605,7 +636,7 @@ export class EVDriverModule extends AbstractModule {
       await this._reservationRepository.updateByKey(
         message.context.tenantId,
         {
-          isActive: message.payload.status === OCPP2_1.CancelReservationStatusEnumType.Rejected,
+          isActive: message.payload.status === CancelReservationStatusEnum.Rejected,
         },
         request.message[3].reservationId,
       );
@@ -632,12 +663,12 @@ export class EVDriverModule extends AbstractModule {
       },
     });
     if (request) {
-      const status = message.payload.status as OCPP2_1.ReserveNowStatusEnumType;
+      const status = message.payload.status as ReserveNowStatusEnumType;
       await this._reservationRepository.updateByKey(
         message.context.tenantId,
         {
           reserveStatus: status,
-          isActive: status === OCPP2_1.ReserveNowStatusEnumType.Accepted,
+          isActive: status === ReserveNowStatusEnum.Accepted,
         },
         request.message[3].id,
       );
@@ -690,20 +721,20 @@ export class EVDriverModule extends AbstractModule {
     const sendLocalListResponse = message.payload;
 
     switch (sendLocalListResponse.status) {
-      case OCPP2_1.SendLocalListStatusEnumType.Accepted:
+      case SendLocalListStatusEnum.Accepted:
         await this._localAuthListRepository.createOrUpdateLocalListVersionFromStationIdAndSendLocalList(
           message.context.tenantId,
           stationId,
           sendLocalListRequest,
         );
         break;
-      case OCPP2_1.SendLocalListStatusEnumType.Failed:
+      case SendLocalListStatusEnum.Failed:
         // TODO: Surface alert for upstream handling
         this._logger.error(
           `SendLocalListRequest failed for StationId ${stationId}: ${message.context.correlationId}, ${JSON.stringify(sendLocalListRequest)}.`,
         );
         break;
-      case OCPP2_1.SendLocalListStatusEnumType.VersionMismatch: {
+      case SendLocalListStatusEnum.VersionMismatch: {
         this._logger.error(
           `SendLocalListRequest version mismatch for StationId ${stationId}: ${message.context.correlationId}, ${JSON.stringify(sendLocalListRequest)}.`,
         );
@@ -715,7 +746,7 @@ export class EVDriverModule extends AbstractModule {
           message.context.tenantId,
           OCPPVersion.OCPP2_1,
           OCPP_CallAction.GetLocalListVersion,
-          {} as OCPP2_1.GetLocalListVersionRequest,
+          {} as OCPP2_request_types.GetLocalListVersionRequest,
         );
         if (!messageConfirmation.success) {
           this._logger.error(
@@ -726,7 +757,7 @@ export class EVDriverModule extends AbstractModule {
         break;
       }
       default:
-        this._logger.error(`Unknown SendLocalListStatusEnumType: ${sendLocalListResponse.status}.`);
+        this._logger.error(`Unknown SendLocalListStatusEnumType: ${message.payload.status}.`);
         break;
     }
   }

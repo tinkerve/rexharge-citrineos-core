@@ -17,7 +17,7 @@ import {
   OperationModeEnumType,
   RecurrencyKindEnumType,
 } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface ReportChargingProfilesRequest extends OcppRequest {
   /**

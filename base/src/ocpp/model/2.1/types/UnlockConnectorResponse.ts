@@ -9,7 +9,7 @@
  */
 
 import { UnlockStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface UnlockConnectorResponse extends OcppResponse {
   status: UnlockStatusEnumType;

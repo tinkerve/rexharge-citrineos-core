@@ -9,7 +9,7 @@
  */
 
 import { HashAlgorithmEnumType } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface CustomerInformationRequest extends OcppRequest {
   customerCertificate?: CertificateHashDataType | null;

@@ -13,7 +13,7 @@
  *
  *
  */
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface ReportDERControlResponse extends OcppResponse {
   customData?: CustomDataType | null;

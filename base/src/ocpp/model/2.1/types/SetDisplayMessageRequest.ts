@@ -13,7 +13,7 @@ import {
   MessagePriorityEnumType,
   MessageStateEnumType,
 } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface SetDisplayMessageRequest extends OcppRequest {
   message: MessageInfoType;

@@ -13,7 +13,7 @@ import {
   CertificateStatusSourceEnumType,
   HashAlgorithmEnumType,
 } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface GetCertificateChainStatusResponse extends OcppResponse {
   /**

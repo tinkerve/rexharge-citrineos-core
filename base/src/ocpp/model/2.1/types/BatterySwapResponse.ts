@@ -12,7 +12,7 @@
  * This is an empty response that just acknowledges receipt of the request. (The request cannot be rejected).
  *
  */
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface BatterySwapResponse extends OcppResponse {
   customData?: CustomDataType | null;

@@ -61,6 +61,10 @@ export type ReservationStatusUpdateRequest =
 
 export type NotifyEventRequest = OCPP2_1.NotifyEventRequest | OCPP2_0_1.NotifyEventRequest;
 
+export type NotifyMonitoringReportRequest =
+  | OCPP2_1.NotifyMonitoringReportRequest
+  | OCPP2_0_1.NotifyMonitoringReportRequest;
+
 export type StatusNotificationRequest =
   | OCPP2_1.StatusNotificationRequest
   | OCPP2_0_1.StatusNotificationRequest;
@@ -86,6 +90,8 @@ export type ClearedChargingLimitRequest =
   | OCPP2_0_1.ClearedChargingLimitRequest;
 
 export type ReserveNowRequest = OCPP2_1.ReserveNowRequest | OCPP2_0_1.ReserveNowRequest;
+export type MeterValuesRequest = OCPP2_1.MeterValuesRequest | OCPP2_0_1.MeterValuesRequest;
+
 export type TransactionEventRequest =
   | OCPP2_1.TransactionEventRequest
   | OCPP2_0_1.TransactionEventRequest;

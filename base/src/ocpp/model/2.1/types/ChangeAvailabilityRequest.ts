@@ -9,7 +9,7 @@
  */
 
 import { OperationalStatusEnumType } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface ChangeAvailabilityRequest extends OcppRequest {
   evse?: EVSEType | null;

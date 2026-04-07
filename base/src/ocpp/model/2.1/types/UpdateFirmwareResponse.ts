@@ -9,7 +9,7 @@
  */
 
 import { UpdateFirmwareStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface UpdateFirmwareResponse extends OcppResponse {
   status: UpdateFirmwareStatusEnumType;

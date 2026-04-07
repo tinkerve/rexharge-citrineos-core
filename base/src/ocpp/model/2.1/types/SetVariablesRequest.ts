@@ -9,7 +9,7 @@
  */
 
 import { AttributeEnumType } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface SetVariablesRequest extends OcppRequest {
   /**

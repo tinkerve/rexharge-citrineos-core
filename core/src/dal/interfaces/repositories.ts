@@ -72,10 +72,6 @@ import type { VariableCharacteristics } from '../layers/sequelize/model/DeviceMo
 import type { VariableAttributeQuerystring } from './queries/VariableAttribute.js';
 import type { AuthorizationQuerystring } from './queries/Authorization.js';
 import type { TariffQueryString } from './queries/Tariff.js';
-import type {
-  ChargingProfileInput,
-  CompositeScheduleInput,
-} from '../layers/sequelize/mapper/2.0.1/ChargingProfileMapper.js';
 
 export interface IAuthorizationRepository extends CrudRepository<Authorization> {
   readAllByQuerystring: (

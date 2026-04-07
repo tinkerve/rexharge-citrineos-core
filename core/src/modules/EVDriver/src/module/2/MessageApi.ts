@@ -18,7 +18,7 @@ import {
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
-import { packageGroupCall, validateChargingProfileType } from '@citrineos/util';
+import { packageGroupCall, validateChargingProfileType } from '@util/index.js';
 import { OCPP2_0_1_Mapper } from '@dal/index.js';
 import { v4 as uuidv4 } from 'uuid';
 

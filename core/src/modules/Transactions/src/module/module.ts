@@ -15,22 +15,23 @@ import type {
   SystemConfig,
   OCPP2_request_types,
   OCPP2_response_types,
+  OCPP2_common_types,
 } from '@citrineos/base';
 import {
   AbstractModule,
   AsHandler,
+  AttributeEnum,
   AuthorizationStatusEnum,
   CrudRepository,
   ErrorCode,
   EventGroup,
   OCPP1_6,
-  OCPP2_0_1,
-  OCPP2_1,
   OCPP_2_VER_LIST,
   OCPP_CallAction,
   OcppError,
   OCPPValidator,
   OCPPVersion,
+  TransactionEventEnum,
 } from '@citrineos/base';
 import type {
   IAuthorizationRepository,
@@ -263,12 +264,13 @@ export class TransactionsModule extends AbstractModule {
   }
 
   /**
-   * Handle OCPP 2.0.1 requests
+   * Handle OCPP 2.x requests
    */
 
-  @AsHandler([OCPPVersion.OCPP2_0_1], OCPP_CallAction.TransactionEvent)
+  //TODO: Need additional handling for OCPP 2.1 as we need to extend the transaction service for ocpp 2.1
+  @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.TransactionEvent)
   protected async _handleTransactionEvent(
-    message: IMessage<OCPP2_0_1.TransactionEventRequest>,
+    message: IMessage<OCPP2_request_types.TransactionEventRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('Transaction event received:', message, props);
@@ -277,7 +279,7 @@ export class TransactionsModule extends AbstractModule {
 
     const transactionEvent = message.payload;
     const transactionId = transactionEvent.transactionInfo.transactionId;
-    let response: OCPP2_0_1.TransactionEventResponse | undefined = undefined;
+    let response: OCPP2_response_types.TransactionEventResponse | undefined = undefined;
     let transaction: Transaction | undefined = undefined;
     if (transactionEvent.idToken) {
       response = await this._transactionService.authorizeOcpp201IdToken(
@@ -327,8 +329,8 @@ export class TransactionsModule extends AbstractModule {
       this._logger.debug('Transaction response sent: ', messageConfirmation);
       // If the transaction is accepted and interval is set, start the cost update
       if (
-        transactionEvent.eventType === OCPP2_1.TransactionEventEnumType.Started &&
-        response.idTokenInfo?.status === OCPP2_1.AuthorizationStatusEnumType.Accepted &&
+        transactionEvent.eventType === TransactionEventEnum.Started &&
+        response.idTokenInfo?.status === AuthorizationStatusEnum.Accepted &&
         this._costUpdatedInterval
       ) {
         this._costNotifier.notifyWhileActive(
@@ -339,11 +341,11 @@ export class TransactionsModule extends AbstractModule {
         );
       }
     } else {
-      const response: OCPP2_1.TransactionEventResponse = {
+      const response: OCPP2_response_types.TransactionEventResponse = {
         // TODO determine how to set chargingPriority and updatedPersonalMessage for anonymous users
       };
 
-      if (message.payload.eventType === OCPP2_1.TransactionEventEnumType.Updated) {
+      if (message.payload.eventType === TransactionEventEnum.Updated) {
         // I02 - Show EV Driver Running Total Cost During Charging
         if (
           transaction &&
@@ -366,7 +368,7 @@ export class TransactionsModule extends AbstractModule {
             component_name: 'TariffCostCtrlr',
             variable_instance: 'Tariff',
             variable_name: 'Available',
-            type: OCPP2_1.AttributeEnumType.Actual,
+            type: AttributeEnum.Actual,
           });
         const supportTariff: boolean =
           tariffAvailableAttributes.length !== 0 && Boolean(tariffAvailableAttributes[0].value);
@@ -379,10 +381,7 @@ export class TransactionsModule extends AbstractModule {
         }
       }
 
-      if (
-        message.payload.eventType === OCPP2_1.TransactionEventEnumType.Ended &&
-        transaction.totalKwh
-      ) {
+      if (message.payload.eventType === TransactionEventEnum.Ended && transaction.totalKwh) {
         response.totalCost = await this._costCalculator.calculateTotalCost(
           tenantId,
           transaction.connectorId,
@@ -418,11 +417,9 @@ export class TransactionsModule extends AbstractModule {
     }
   }
 
-  //TODO: Need a transaction event handler for OCPP 2.1 as we need to tweak or extend the transaction service for ocpp 2.1
-
-  @AsHandler([OCPPVersion.OCPP2_0_1], OCPP_CallAction.MeterValues)
+  @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.MeterValues)
   protected async _handleMeterValues(
-    message: IMessage<OCPP2_0_1.MeterValuesRequest>,
+    message: IMessage<OCPP2_request_types.MeterValuesRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('MeterValues received:', message, props);
@@ -483,7 +480,7 @@ export class TransactionsModule extends AbstractModule {
       );
     }
 
-    const response: OCPP2_0_1.MeterValuesResponse = {
+    const response: OCPP2_response_types.MeterValuesResponse = {
       // TODO determine how to set chargingPriority and updatedPersonalMessage for anonymous users
     };
 
@@ -782,15 +779,15 @@ export class TransactionsModule extends AbstractModule {
     tenantId: number,
     transactionId: string,
     stationId: string,
-    request: OCPP2_0_1.TransactionEventRequest,
+    request: OCPP2_request_types.TransactionEventRequest,
   ) {
     const eventType = request.eventType;
     const evse = request.evse;
     const evseIsDefined = evse !== null && evse !== undefined;
     if (evseIsDefined) {
       if (
-        eventType === OCPP2_0_1.TransactionEventEnumType.Started ||
-        eventType === OCPP2_0_1.TransactionEventEnumType.Updated
+        eventType === TransactionEventEnum.Started ||
+        eventType === TransactionEventEnum.Updated
       ) {
         await this._transactionService.deactivateOtherActiveTransactionsAtEvse(
           tenantId,

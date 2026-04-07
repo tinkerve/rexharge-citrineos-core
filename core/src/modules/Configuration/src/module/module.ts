@@ -14,6 +14,8 @@ import type {
   OCPP2_request_types,
   OCPP2_response_types,
   RegistrationStatusEnumType,
+  OCPP2_common_types,
+  ClearMessageStatusEnumType,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -27,12 +29,18 @@ import {
   Namespace,
   OCPP1_6,
   OCPP_CallAction,
-  OCPP2_1,
   OcppError,
   OCPPValidator,
   OCPPVersion,
   OCPP_2_VER_LIST,
   DataTransferStatusEnum,
+  RegistrationStatusEnum,
+  ResetEnum,
+  SetVariableStatusEnum,
+  SetNetworkProfileStatusEnum,
+  type DisplayMessageStatusEnumType,
+  DisplayMessageStatusEnum,
+  ClearMessageStatusEnum,
 } from '@citrineos/base';
 import type {
   IBootRepository,
@@ -281,7 +289,7 @@ export class ConfigurationModule extends AbstractModule {
     }
 
     if (
-      bootNotificationResponse.status !== OCPP2_1.RegistrationStatusEnumType.Accepted &&
+      bootNotificationResponse.status !== RegistrationStatusEnum.Accepted &&
       (!cachedBootStatus || bootNotificationResponse.status !== cachedBootStatus)
     ) {
       // Cache boot status for charger if (not accepted) and ((not already cached) or (different status from cached status)).
@@ -298,8 +306,8 @@ export class ConfigurationModule extends AbstractModule {
     // If boot notification is not pending, do not start configuration.
     // If cached boot status is not null and pending, configuration is already in progress - do not start configuration again.
     if (
-      bootNotificationResponse.status !== OCPP2_1.RegistrationStatusEnumType.Pending ||
-      (cachedBootStatus && cachedBootStatus === OCPP2_1.RegistrationStatusEnumType.Pending)
+      bootNotificationResponse.status !== RegistrationStatusEnum.Pending ||
+      (cachedBootStatus && cachedBootStatus === RegistrationStatusEnum.Pending)
     ) {
       return;
     }
@@ -347,7 +355,7 @@ export class ConfigurationModule extends AbstractModule {
     ) {
       bootConfigDbEntity.variablesRejectedOnLastBoot = [];
 
-      let setVariableData: OCPP2_1.SetVariableDataType[] =
+      let setVariableData: OCPP2_common_types.SetVariableDataType[] =
         await this._deviceModelRepository.readAllSetVariableByStationId(tenantId, stationId);
 
       // If ItemsPerMessageSetVariables not set, send all variables at once
@@ -373,7 +381,7 @@ export class ConfigurationModule extends AbstractModule {
           OCPP_CallAction.SetVariables,
           {
             setVariableData: setVariableData.slice(0, itemsPerMessageSetVariables),
-          } as OCPP2_1.SetVariablesRequest,
+          } as OCPP2_request_types.SetVariablesRequest,
           undefined,
           correlationId,
         );
@@ -387,15 +395,13 @@ export class ConfigurationModule extends AbstractModule {
             continue;
           }
 
-          const setVariablesResponse: OCPP2_1.SetVariablesResponse = JSON.parse(
+          const setVariablesResponse: OCPP2_response_types.SetVariablesResponse = JSON.parse(
             setVariablesResponseJsonString,
           );
           setVariablesResponse.setVariableResult.forEach((result) => {
-            if (result.attributeStatus === OCPP2_1.SetVariableStatusEnumType.Rejected) {
+            if (result.attributeStatus === SetVariableStatusEnum.Rejected) {
               rejectedSetVariable = true;
-            } else if (
-              result.attributeStatus === OCPP2_1.SetVariableStatusEnumType.RebootRequired
-            ) {
+            } else if (result.attributeStatus === SetVariableStatusEnum.RebootRequired) {
               rebootSetVariable = true;
             }
           });
@@ -412,7 +418,7 @@ export class ConfigurationModule extends AbstractModule {
       );
 
       if (rejectedSetVariable && doNotBootWithRejectedVariables) {
-        bootConfigDbEntity.status = OCPP2_1.RegistrationStatusEnumType.Rejected;
+        bootConfigDbEntity.status = RegistrationStatusEnum.Rejected;
         await bootConfigDbEntity.save();
         // No more to do.
         return;
@@ -423,15 +429,15 @@ export class ConfigurationModule extends AbstractModule {
       //TODO: When we add 2.1 config, we will need to adjust this logic to vary by message protocol
       // Update boot config with status accepted
       // TODO: Determine how/if StatusInfo should be generated
-      bootConfigDbEntity.status = OCPP2_1.RegistrationStatusEnumType.Accepted;
+      bootConfigDbEntity.status = RegistrationStatusEnum.Accepted;
       await bootConfigDbEntity.save();
     }
 
     if (rebootSetVariable) {
       // Charger SHALL not be in a transaction as it has not yet successfully booted, therefore it is appropriate to send an Immediate Reset
       await this.sendCall(stationId, tenantId, message.protocol, OCPP_CallAction.Reset, {
-        type: OCPP2_1.ResetEnumType.Immediate,
-      } as OCPP2_1.ResetRequest);
+        type: ResetEnum.Immediate,
+      } as OCPP2_request_types.ResetRequest);
     } else {
       // We could trigger the new boot immediately rather than wait for the retry, as nothing more now needs to be done.
       // However, B02.FR.02 - Spec allows for TriggerMessageRequest - OCTT fails over trigger
@@ -492,7 +498,7 @@ export class ConfigurationModule extends AbstractModule {
       return;
     }
 
-    const messageInfoTypes = message.payload.messageInfo as OCPP2_1.MessageInfoType[];
+    const messageInfoTypes = message.payload.messageInfo as OCPP2_common_types.MessageInfoType[];
     // Validate message content for each messageInfo item
     if (messageInfoTypes && messageInfoTypes.length > 0) {
       const validationErrors: string[] = [];
@@ -615,7 +621,7 @@ export class ConfigurationModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('SetNetworkProfile response received:', message, props);
 
-    if (message.payload.status == OCPP2_1.SetNetworkProfileStatusEnumType.Accepted) {
+    if (message.payload.status == SetNetworkProfileStatusEnum.Accepted) {
       const setNetworkProfile = await SetNetworkProfile.findOne({
         where: { correlationId: message.context.correlationId },
       });
@@ -659,10 +665,10 @@ export class ConfigurationModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('SetDisplayMessage response received:', message, props);
 
-    const status = message.payload.status as OCPP2_1.DisplayMessageStatusEnumType;
+    const status = message.payload.status as DisplayMessageStatusEnumType;
     // when charger station accepts the set message info request
     // we trigger a get all display messages request to update stored message info in db
-    if (status === OCPP2_1.DisplayMessageStatusEnumType.Accepted) {
+    if (status === DisplayMessageStatusEnum.Accepted) {
       await this._messageInfoRepository.deactivateAllByStationId(
         message.context.tenantId,
         message.context.stationId,
@@ -678,7 +684,7 @@ export class ConfigurationModule extends AbstractModule {
             message.context.stationId,
             ChargingStationSequenceTypeEnum.getDisplayMessages,
           ), //TODO: When we add 2.1 config, we will need to adjust this logic to vary by message protoco
-        } as OCPP2_1.GetDisplayMessagesRequest,
+        } as OCPP2_request_types.GetDisplayMessagesRequest,
       );
     }
   }
@@ -730,10 +736,10 @@ export class ConfigurationModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('ClearDisplayMessage response received:', message, props);
 
-    const status = message.payload.status as OCPP2_1.ClearMessageStatusEnumType;
+    const status = message.payload.status as ClearMessageStatusEnumType;
     // when charger station accepts the clear message info request
     // we trigger a get all display messages request to update stored message info in db
-    if (status === OCPP2_1.ClearMessageStatusEnumType.Accepted) {
+    if (status === ClearMessageStatusEnum.Accepted) {
       await this._messageInfoRepository.deactivateAllByStationId(
         message.context.tenantId,
         message.context.stationId,
@@ -749,7 +755,7 @@ export class ConfigurationModule extends AbstractModule {
             message.context.stationId,
             ChargingStationSequenceTypeEnum.getDisplayMessages,
           ),
-        } as OCPP2_1.GetDisplayMessagesRequest,
+        } as OCPP2_request_types.GetDisplayMessagesRequest,
       );
     }
   }

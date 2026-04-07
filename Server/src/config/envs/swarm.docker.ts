@@ -11,6 +11,7 @@ import {
   HUBJECT_DEFAULT_TOKENURL,
   OCPP1_6,
   OCPP2_0_1,
+  OCPP2_1,
   OCPP_CallAction,
   OCPP_VERSION_LIST,
 } from '@citrineos/base';
@@ -71,6 +72,12 @@ export function createDockerConfig() {
         bootRetryInterval: 15,
         ocpp2_0_1: {
           unknownChargerStatus: OCPP2_0_1.RegistrationStatusEnumType.Accepted,
+          getBaseReportOnPending: true,
+          bootWithRejectedVariables: true,
+          autoAccept: true,
+        },
+        ocpp2_1: {
+          unknownChargerStatus: OCPP2_1.RegistrationStatusEnumType.Accepted,
           getBaseReportOnPending: true,
           bootWithRejectedVariables: true,
           autoAccept: true,

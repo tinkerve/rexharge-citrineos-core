@@ -12,7 +12,7 @@
  * This response message has an empty body.
  *
  */
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface NotifyPriorityChargingResponse extends OcppResponse {
   customData?: CustomDataType | null;

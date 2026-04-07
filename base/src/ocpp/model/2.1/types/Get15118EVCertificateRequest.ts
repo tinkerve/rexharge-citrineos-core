@@ -9,7 +9,7 @@
  */
 
 import { CertificateActionEnumType } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface Get15118EVCertificateRequest extends OcppRequest {
   /**

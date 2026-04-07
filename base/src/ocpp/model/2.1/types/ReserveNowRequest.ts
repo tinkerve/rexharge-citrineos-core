@@ -8,7 +8,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface ReserveNowRequest extends OcppRequest {
   /**

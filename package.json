@@ -67,9 +67,5 @@
     "sequelize-typescript": "^2.1.6",
     "tsconfig-paths": "^4.2.0",
     "utf-8-validate": "^6.0.6"
-  },
-  "dependencies": {
-    "audit": "^0.0.6",
-    "fix": "^0.0.6"
   }
 }

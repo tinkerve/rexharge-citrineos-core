@@ -9,7 +9,7 @@
  */
 
 import { NotifyEVChargingNeedsStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface NotifyEVChargingNeedsResponse extends OcppResponse {
   status: NotifyEVChargingNeedsStatusEnumType;

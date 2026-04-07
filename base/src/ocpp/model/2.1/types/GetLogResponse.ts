@@ -9,7 +9,7 @@
  */
 
 import { LogStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface GetLogResponse extends OcppResponse {
   status: LogStatusEnumType;

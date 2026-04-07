@@ -7,6 +7,7 @@ import type {
   BootConfig,
   ICache,
   IMessageConfirmation,
+  OCPP2_response_types,
   RegistrationStatusEnumType,
   SystemConfig,
 } from '@citrineos/base';
@@ -17,6 +18,7 @@ import {
   OCPP2_0_1,
   OCPP2_0_1_CALL_SCHEMA_RECORD,
   OCPP_CallAction,
+  RegistrationStatusEnum,
 } from '@citrineos/base';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -43,12 +45,12 @@ export class BootNotificationService {
       : new Logger<ILogObj>({ name: this.constructor.name });
   }
 
-  determineBootStatus(bootConfig: Boot | undefined): OCPP2_0_1.RegistrationStatusEnumType {
+  determineBootStatus(bootConfig: Boot | undefined): RegistrationStatusEnumType {
     let bootStatus = bootConfig
       ? OCPP2_0_1_Mapper.BootMapper.toRegistrationStatusEnumType(bootConfig.status)
       : this._config.ocpp2_0_1!.unknownChargerStatus;
 
-    if (bootStatus === OCPP2_0_1.RegistrationStatusEnumType.Pending) {
+    if (bootStatus === RegistrationStatusEnum.Pending) {
       let needToGetBaseReport = this._config.ocpp2_0_1!.getBaseReportOnPending;
       let needToSetVariables = false;
       if (bootConfig) {
@@ -63,7 +65,7 @@ export class BootNotificationService {
         }
       }
       if (!needToGetBaseReport && !needToSetVariables && this._config.ocpp2_0_1!.autoAccept) {
-        bootStatus = OCPP2_0_1.RegistrationStatusEnumType.Accepted;
+        bootStatus = RegistrationStatusEnum.Accepted;
       }
     }
 
@@ -73,7 +75,7 @@ export class BootNotificationService {
   async createBootNotificationResponse(
     tenantId: number,
     stationId: string,
-  ): Promise<OCPP2_0_1.BootNotificationResponse> {
+  ): Promise<OCPP2_response_types.BootNotificationResponse> {
     // Unknown chargers, chargers without a BootConfig, will use SystemConfig.unknownChargerStatus for status.
     const bootConfig = await this._bootRepository.readByKey(tenantId, stationId);
     const bootStatus = this.determineBootStatus(bootConfig);
@@ -84,10 +86,10 @@ export class BootNotificationService {
       status: bootStatus,
       statusInfo: OCPP2_0_1_Mapper.BootMapper.toStatusInfo(bootConfig?.statusInfo),
       interval:
-        bootStatus === OCPP2_0_1.RegistrationStatusEnumType.Accepted
+        bootStatus === RegistrationStatusEnum.Accepted
           ? bootConfig?.heartbeatInterval || this._config.heartbeatInterval
           : bootConfig?.bootRetryInterval || this._config.bootRetryInterval,
-    };
+    } as OCPP2_response_types.BootNotificationResponse;
   }
 
   async updateBootConfig(

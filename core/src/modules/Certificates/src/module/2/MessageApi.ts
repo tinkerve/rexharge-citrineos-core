@@ -10,7 +10,7 @@ import {
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
-import { packageGroupCall } from '@citrineos/util';
+import { packageGroupCall } from '@util/index.js';
 import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';

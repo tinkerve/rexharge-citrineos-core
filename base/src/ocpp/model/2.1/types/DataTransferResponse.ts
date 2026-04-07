@@ -9,7 +9,7 @@
  */
 
 import { DataTransferStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface DataTransferResponse extends OcppResponse {
   status: DataTransferStatusEnumType;

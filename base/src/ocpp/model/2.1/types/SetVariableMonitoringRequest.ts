@@ -9,7 +9,7 @@
  */
 
 import { MonitorEnumType } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface SetVariableMonitoringRequest extends OcppRequest {
   /**

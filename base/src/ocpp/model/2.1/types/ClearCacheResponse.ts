@@ -9,7 +9,7 @@
  */
 
 import { ClearCacheStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface ClearCacheResponse extends OcppResponse {
   status: ClearCacheStatusEnumType;

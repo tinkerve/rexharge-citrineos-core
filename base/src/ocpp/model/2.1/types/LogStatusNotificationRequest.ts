@@ -9,7 +9,7 @@
  */
 
 import { UploadLogStatusEnumType } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface LogStatusNotificationRequest extends OcppRequest {
   status: UploadLogStatusEnumType;

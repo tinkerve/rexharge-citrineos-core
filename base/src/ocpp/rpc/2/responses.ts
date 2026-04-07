@@ -19,6 +19,10 @@ export type NotifyCustomerInformationResponse =
   | OCPP2_1.NotifyCustomerInformationResponse
   | OCPP2_0_1.NotifyCustomerInformationResponse;
 
+export type NotifyMonitoringReportResponse =
+  | OCPP2_1.NotifyMonitoringReportResponse
+  | OCPP2_0_1.NotifyMonitoringReportResponse;
+
 export type NotifyReportResponse = OCPP2_1.NotifyReportResponse | OCPP2_0_1.NotifyReportResponse;
 
 export type SecurityEventNotificationResponse =
@@ -26,6 +30,10 @@ export type SecurityEventNotificationResponse =
   | OCPP2_0_1.SecurityEventNotificationResponse;
 
 export type GetBaseReportResponse = OCPP2_1.GetBaseReportResponse | OCPP2_0_1.GetBaseReportResponse;
+
+export type GetCompositeScheduleResponse =
+  | OCPP2_1.GetCompositeScheduleResponse
+  | OCPP2_0_1.GetCompositeScheduleResponse;
 
 export type GetReportResponse = OCPP2_1.GetReportResponse | OCPP2_0_1.GetReportResponse;
 
@@ -159,6 +167,10 @@ export type SetMonitoringBaseResponse =
   | OCPP2_1.SetMonitoringBaseResponse
   | OCPP2_0_1.SetMonitoringBaseResponse;
 
+export type SetVariableMonitoringResponse =
+  | OCPP2_1.SetVariableMonitoringResponse
+  | OCPP2_0_1.SetVariableMonitoringResponse;
+
 export type GetVariablesResponse = OCPP2_1.GetVariablesResponse | OCPP2_0_1.GetVariablesResponse;
 
 export type SetVariablesResponse = OCPP2_1.SetVariablesResponse | OCPP2_0_1.SetVariablesResponse;
@@ -205,9 +217,15 @@ export type ClearedChargingLimitResponse =
   | OCPP2_1.ClearedChargingLimitResponse
   | OCPP2_0_1.ClearedChargingLimitResponse;
 
+export type MeterValuesResponse = OCPP2_1.MeterValuesResponse | OCPP2_0_1.MeterValuesResponse;
+
 export type RequestStartTransactionResponse =
   | OCPP2_1.RequestStartTransactionResponse
   | OCPP2_0_1.RequestStartTransactionResponse;
 export type RequestStopTransactionResponse =
   | OCPP2_1.RequestStopTransactionResponse
   | OCPP2_0_1.RequestStopTransactionResponse;
+
+export type TransactionEventResponse =
+  | OCPP2_1.TransactionEventResponse
+  | OCPP2_0_1.TransactionEventResponse;

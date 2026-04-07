@@ -4,8 +4,9 @@
 
 import { z } from 'zod';
 import { EventGroup } from '@interfaces/messages/internal-types.js';
-import { OCPP1_6, OCPP2_0_1 } from '@ocpp/model/index.js';
-import { OCPP1_6_CallAction, OCPP2_0_1_CallAction } from '@ocpp/rpc/message.js';
+import { OCPP1_6 } from '@ocpp/model/index.js';
+import { OCPP_CallAction, OCPPVersion, type OCPPVersionType } from '@ocpp/rpc/message.js';
+import { RegistrationStatusEnum } from '@interfaces/dto/types/enums.js';
 
 const CallActionSchema = z.nativeEnum(OCPP_CallAction);
 
@@ -82,11 +83,11 @@ export const systemConfigInputSchema = z.object({
         .object({
           unknownChargerStatus: z
             .enum([
-              OCPP2_0_1.RegistrationStatusEnumType.Accepted,
-              OCPP2_0_1.RegistrationStatusEnumType.Pending,
-              OCPP2_0_1.RegistrationStatusEnumType.Rejected,
+              RegistrationStatusEnum.Accepted,
+              RegistrationStatusEnum.Pending,
+              RegistrationStatusEnum.Rejected,
             ])
-            .default(OCPP2_0_1.RegistrationStatusEnumType.Accepted)
+            .default(RegistrationStatusEnum.Accepted)
             .optional(), // Unknown chargers have no entry in BootConfig table
           getBaseReportOnPending: z.boolean().default(true).optional(),
           bootWithRejectedVariables: z.boolean().default(true).optional(),
@@ -97,12 +98,15 @@ export const systemConfigInputSchema = z.object({
         .object({
           unknownChargerStatus: z
             .enum([
-              OCPP2_0_1.RegistrationStatusEnumType.Accepted, //Placeholder for 2.1, TODO
-              OCPP2_0_1.RegistrationStatusEnumType.Pending,
-              OCPP2_0_1.RegistrationStatusEnumType.Rejected,
+              RegistrationStatusEnum.Accepted,
+              RegistrationStatusEnum.Pending,
+              RegistrationStatusEnum.Rejected,
             ])
-            .default(OCPP2_0_1.RegistrationStatusEnumType.Accepted)
+            .default(RegistrationStatusEnum.Accepted)
             .optional(), // Unknown chargers have no entry in BootConfig table
+          getBaseReportOnPending: z.boolean().default(true).optional(),
+          bootWithRejectedVariables: z.boolean().default(true).optional(),
+          autoAccept: z.boolean().default(true).optional(), // If false, only data endpoint can update boot status to accepted
         })
         .optional(),
       ocpp1_6: z
@@ -382,9 +386,9 @@ export const systemConfigSchema = z
           ocpp2_0_1: z
             .object({
               unknownChargerStatus: z.enum([
-                OCPP2_0_1.RegistrationStatusEnumType.Accepted,
-                OCPP2_0_1.RegistrationStatusEnumType.Pending,
-                OCPP2_0_1.RegistrationStatusEnumType.Rejected,
+                RegistrationStatusEnum.Accepted,
+                RegistrationStatusEnum.Pending,
+                RegistrationStatusEnum.Rejected,
               ]), // Unknown chargers have no entry in BootConfig table
               getBaseReportOnPending: z.boolean(),
               bootWithRejectedVariables: z.boolean(),
@@ -396,14 +400,17 @@ export const systemConfigSchema = z
             .optional(),
           ocpp2_1: z
             .object({
-              unknownChargerStatus: z
-                .enum([
-                  OCPP2_0_1.RegistrationStatusEnumType.Accepted,
-                  OCPP2_0_1.RegistrationStatusEnumType.Pending,
-                  OCPP2_0_1.RegistrationStatusEnumType.Rejected,
-                ])
-                .default(OCPP2_0_1.RegistrationStatusEnumType.Accepted)
-                .optional(), // Unknown chargers have no entry in BootConfig table
+              unknownChargerStatus: z.enum([
+                RegistrationStatusEnum.Accepted,
+                RegistrationStatusEnum.Pending,
+                RegistrationStatusEnum.Rejected,
+              ]), // Unknown chargers have no entry in BootConfig table
+              getBaseReportOnPending: z.boolean(),
+              bootWithRejectedVariables: z.boolean(),
+              /**
+               * If false, only data endpoint can update boot status to accepted
+               */
+              autoAccept: z.boolean(),
             })
             .optional(),
           ocpp1_6: z

@@ -9,7 +9,7 @@
  */
 
 import { ReserveNowStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface ReserveNowResponse extends OcppResponse {
   status: ReserveNowStatusEnumType;

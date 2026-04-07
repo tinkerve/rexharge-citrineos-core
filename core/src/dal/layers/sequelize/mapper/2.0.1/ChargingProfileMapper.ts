@@ -9,6 +9,7 @@ import {
   ChargingRateUnitEnum,
   OCPP2_0_1,
   OCPP2_1,
+  OCPP2_common_types,
   RecurrencyKindEnum,
   type ChargingProfileDto,
   type ChargingScheduleDto,
@@ -208,7 +209,7 @@ export class ChargingProfileMapper {
    * Converts OCPP2_0_1.CompositeScheduleType to a native CompositeScheduleInput.
    */
   static fromCompositeScheduleType(
-    compositeSchedule: OCPP2_0_1.CompositeScheduleType,
+    compositeSchedule: OCPP2_common_types.CompositeScheduleType,
   ): CompositeScheduleInput {
     return {
       chargingSchedulePeriod: compositeSchedule.chargingSchedulePeriod.map((period) => ({

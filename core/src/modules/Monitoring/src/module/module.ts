@@ -12,14 +12,17 @@ import type {
   SystemConfig,
   OCPP2_response_types,
   OCPP2_request_types,
+  GenericDeviceModelStatusEnumType,
+  GenericStatusEnumType,
+  OCPP2_common_types,
 } from '@citrineos/base';
 import {
   AbstractModule,
   AsHandler,
   ChargingStationSequenceTypeEnum,
   EventGroup,
-  OCPP2_0_1,
-  OCPP2_1,
+  GenericDeviceModelStatusEnum,
+  GenericStatusEnum,
   OCPP_2_VER_LIST,
   OCPP_CallAction,
   OCPPVersion,
@@ -134,7 +137,7 @@ export class MonitoringModule extends AbstractModule {
     this._logger.debug('NotifyEvent received:', message, props);
     const stationId = message.context.stationId;
 
-    const events = message.payload.eventData as OCPP2_1.EventDataType[];
+    const events = message.payload.eventData as OCPP2_common_types.EventDataType[];
     for (const event of events) {
       const [component, variable] =
         await this._deviceModelRepository.findOrCreateEvseAndComponentAndVariable(
@@ -149,7 +152,7 @@ export class MonitoringModule extends AbstractModule {
         variable?.id,
         stationId,
       );
-      const reportDataType: OCPP2_1.ReportDataType = {
+      const reportDataType: OCPP2_common_types.ReportDataType = {
         component,
         variable,
         variableAttribute: [
@@ -177,9 +180,9 @@ export class MonitoringModule extends AbstractModule {
    * Handle responses
    */
 
-  @AsHandler([OCPPVersion.OCPP2_0_1], OCPP_CallAction.SetVariableMonitoring)
+  @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.SetVariableMonitoring)
   protected async _handleSetVariableMonitoring(
-    message: IMessage<OCPP2_0_1.SetVariableMonitoringResponse>,
+    message: IMessage<OCPP2_response_types.SetVariableMonitoringResponse>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('SetVariableMonitoring response received:', message, props);
@@ -212,17 +215,18 @@ export class MonitoringModule extends AbstractModule {
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.GetMonitoringReport)
   protected _handleGetMonitoringReport(
-    message: IMessage<OCPP2_1.GetMonitoringReportResponse>,
+    message: IMessage<OCPP2_response_types.GetMonitoringReportResponse>,
     props?: HandlerProperties,
   ): void {
     this._logger.debug('GetMonitoringReport response received:', message, props);
 
-    const status: OCPP2_1.GenericDeviceModelStatusEnumType = message.payload.status;
-    const statusInfo: OCPP2_1.StatusInfoType | undefined | null = message.payload.statusInfo;
+    const status: GenericDeviceModelStatusEnumType = message.payload.status;
+    const statusInfo: OCPP2_common_types.StatusInfoType | undefined | null =
+      message.payload.statusInfo;
 
     if (
-      status === OCPP2_1.GenericDeviceModelStatusEnumType.Rejected ||
-      status === OCPP2_1.GenericDeviceModelStatusEnumType.NotSupported
+      status === GenericDeviceModelStatusEnum.Rejected ||
+      status === GenericDeviceModelStatusEnum.NotSupported
     ) {
       this._logger.error(
         'Failed to get monitoring report.',
@@ -240,9 +244,10 @@ export class MonitoringModule extends AbstractModule {
   ): void {
     this._logger.debug('SetMonitoringLevel response received:', message, props);
 
-    const status: OCPP2_1.GenericStatusEnumType = message.payload.status;
-    const statusInfo: OCPP2_1.StatusInfoType | undefined | null = message.payload.statusInfo;
-    if (status === OCPP2_1.GenericStatusEnumType.Rejected) {
+    const status: GenericStatusEnumType = message.payload.status;
+    const statusInfo: OCPP2_common_types.StatusInfoType | undefined | null =
+      message.payload.statusInfo;
+    if (status === GenericStatusEnum.Rejected) {
       this._logger.error(
         'Failed to set monitoring level.',
         status,
@@ -259,12 +264,13 @@ export class MonitoringModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('SetMonitoringBase response received:', message, props);
 
-    const status: OCPP2_1.GenericDeviceModelStatusEnumType = message.payload.status;
-    const statusInfo: OCPP2_1.StatusInfoType | undefined | null = message.payload.statusInfo;
+    const status: GenericDeviceModelStatusEnumType = message.payload.status;
+    const statusInfo: OCPP2_common_types.StatusInfoType | undefined | null =
+      message.payload.statusInfo;
 
     if (
-      status === OCPP2_1.GenericDeviceModelStatusEnumType.Rejected ||
-      status === OCPP2_1.GenericDeviceModelStatusEnumType.NotSupported
+      status === GenericDeviceModelStatusEnum.Rejected ||
+      status === GenericDeviceModelStatusEnum.NotSupported
     ) {
       this._logger.error(
         'Failed to set monitoring base.',
@@ -295,7 +301,7 @@ export class MonitoringModule extends AbstractModule {
             message.context.stationId,
             ChargingStationSequenceTypeEnum.getMonitoringReport,
           ),
-        } as OCPP2_1.GetMonitoringReportRequest,
+        } as OCPP2_request_types.GetMonitoringReportRequest,
       );
     }
   }

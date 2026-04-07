@@ -64,6 +64,7 @@ export {
   MessageTypeId,
   NO_ACTION,
   OCPP_CallAction,
+  OCPP_2_VER_LIST,
   OcppError,
   OCPPVersion,
 } from './src/ocpp/rpc/message.js';
@@ -98,6 +99,7 @@ export {
   HUBJECT_DEFAULT_CLIENTID,
   HUBJECT_DEFAULT_CLIENTSECRET,
   HUBJECT_DEFAULT_TOKENURL,
+  OCPP_VERSION_LIST,
   RbacRulesSchema,
   systemConfigSchema,
 } from './src/config/types.js';

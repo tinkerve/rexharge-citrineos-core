@@ -9,7 +9,7 @@
  */
 
 import { TariffChangeStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface ChangeTransactionTariffResponse extends OcppResponse {
   status: TariffChangeStatusEnumType;

@@ -9,7 +9,7 @@
  */
 
 import { DERControlEnumType, GridEventFaultEnumType } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface NotifyDERAlarmRequest extends OcppRequest {
   controlType: DERControlEnumType;

@@ -8,7 +8,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-import type {} from '../../../../index.js';
+import type {} from '../../../internal-types.js';
 
 export interface NotifyPeriodicEventStream {
   /**

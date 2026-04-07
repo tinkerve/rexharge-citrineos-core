@@ -12,7 +12,7 @@
  * This message is empty. It has no fields.
  *
  */
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface GetPeriodicEventStreamRequest extends OcppRequest {
   customData?: CustomDataType | null;

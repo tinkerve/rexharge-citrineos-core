@@ -22,7 +22,7 @@ import {
   TransactionEventEnumType,
   TriggerReasonEnumType,
 } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface TransactionEventRequest extends OcppRequest {
   costDetails?: CostDetailsType | null;

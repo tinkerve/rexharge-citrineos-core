@@ -9,7 +9,7 @@
  */
 
 import { MonitorEnumType, SetMonitoringStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface SetVariableMonitoringResponse extends OcppResponse {
   /**

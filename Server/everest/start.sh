@@ -10,14 +10,12 @@ EVEREST_TARGET_URL="ws://host.docker.internal:8081/cp001"
 case "$_OCPP_VERSION" in
   "1.6")
     OCPP_VERSION_ENUM="OCPP16"
-    EVEREST_TARGET_URL="ws://host.docker.internal:8092/cp001"
     ;;
 "2.0.1")
     OCPP_VERSION_ENUM="OCPP201"
     ;;
 "2.1")
     OCPP_VERSION_ENUM="OCPP21"
-    EVEREST_TARGET_URL="ws://host.docker.internal:8083/cp001"
     ;;
   *)
     # NOT in the list
@@ -25,6 +23,8 @@ case "$_OCPP_VERSION" in
     OCPP_VERSION_ENUM="OCPP201"
     ;;
 esac
+
+echo $OCPP_VERSION_ENUM
 
 if [ "$_OCPP_VERSION" != "1.6" ]; then
     #There are two different configs in Everest that default their settings that we need to override for Citrine.

@@ -9,24 +9,27 @@ import type {
   IMessage,
   IMessageHandler,
   IMessageSender,
-  OCPP2_0_1,
   SystemConfig,
   OCPP2_request_types,
   OCPP2_response_types,
+  OCPP2_common_types,
+  GenericDeviceModelStatusEnumType,
 } from '@citrineos/base';
 import {
   AbstractModule,
   AsHandler,
   ErrorCode,
   EventGroup,
+  GenericDeviceModelStatusEnum,
+  MutabilityEnum,
   Namespace,
   OCPP1_6,
   OCPP_2_VER_LIST,
-  OCPP2_1,
   OCPP_CallAction,
   OcppError,
   OCPPValidator,
   OCPPVersion,
+  SetVariableStatusEnum,
 } from '@citrineos/base';
 import type {
   IDeviceModelRepository,
@@ -34,7 +37,7 @@ import type {
   ISecurityEventRepository,
   IVariableMonitoringRepository,
 } from '@dal/interfaces/repositories.js';
-import { Component } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import { Component, VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import { sequelize } from '@dal/index.js';
 import { Variable } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import type { ILogObj } from 'tslog';
@@ -209,7 +212,7 @@ export class ReportingModule extends AbstractModule {
 
   @AsHandler([OCPPVersion.OCPP2_0_1], OCPP_CallAction.NotifyMonitoringReport)
   protected async _handleNotifyMonitoringReport(
-    message: IMessage<OCPP2_0_1.NotifyMonitoringReportRequest>,
+    message: IMessage<OCPP2_request_types.NotifyMonitoringReportRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('NotifyMonitoringReport request received:', message, props);
@@ -232,7 +235,7 @@ export class ReportingModule extends AbstractModule {
     }
 
     // Create response
-    const response: OCPP2_1.NotifyMonitoringReportResponse = {};
+    const response: OCPP2_response_types.NotifyMonitoringReportResponse = {};
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('NotifyMonitoringReport response sent: ', messageConfirmation);
@@ -254,9 +257,12 @@ export class ReportingModule extends AbstractModule {
         // To keep consistency with VariableAttributeType defined in OCPP 2.0.1:
         // mutability: Default is ReadWrite when omitted.
         // if it is not present, we set it to ReadWrite
-        for (const variableAttr of reportDataType.variableAttribute) {
+        for (let variableAttr of reportDataType.variableAttribute) {
           if (!variableAttr.mutability) {
-            variableAttr.mutability = OCPP2_1.MutabilityEnumType.ReadWrite;
+            variableAttr = {
+              ...variableAttr,
+              mutability: MutabilityEnum.ReadWrite,
+            } as OCPP2_common_types.VariableAttributeType;
           }
         }
         const variableAttributes =
@@ -275,11 +281,11 @@ export class ReportingModule extends AbstractModule {
             message.context.tenantId,
             {
               attributeType: variableAttribute.type,
-              attributeStatus: OCPP2_1.SetVariableStatusEnumType.Accepted,
+              attributeStatus: SetVariableStatusEnum.Accepted,
               attributeStatusInfo: { reasonCode: message.action },
               component: variableAttribute.component,
               variable: variableAttribute.variable,
-            },
+            } as OCPP2_common_types.SetVariableResultType,
             message.context.stationId,
             timestamp,
           );
@@ -363,11 +369,12 @@ export class ReportingModule extends AbstractModule {
   ): void {
     this._logger.debug('GetReport response received:', message, props);
 
-    const status: OCPP2_1.GenericDeviceModelStatusEnumType = message.payload.status;
-    const statusInfo: OCPP2_1.StatusInfoType | undefined | null = message.payload.statusInfo;
+    const status: GenericDeviceModelStatusEnumType = message.payload.status;
+    const statusInfo: OCPP2_common_types.StatusInfoType | undefined | null =
+      message.payload.statusInfo;
     if (
-      status === OCPP2_1.GenericDeviceModelStatusEnumType.Rejected ||
-      status === OCPP2_1.GenericDeviceModelStatusEnumType.NotSupported
+      status === GenericDeviceModelStatusEnum.Rejected ||
+      status === GenericDeviceModelStatusEnum.NotSupported
     ) {
       this._logger.error(
         'Failed to get report.',
@@ -385,11 +392,12 @@ export class ReportingModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('GetMonitoringReport response received:', message, props);
 
-    const status: OCPP2_1.GenericDeviceModelStatusEnumType = message.payload.status;
-    const statusInfo: OCPP2_1.StatusInfoType | undefined | null = message.payload.statusInfo;
+    const status: GenericDeviceModelStatusEnumType = message.payload.status;
+    const statusInfo: OCPP2_common_types.StatusInfoType | undefined | null =
+      message.payload.statusInfo;
     if (
-      status === OCPP2_1.GenericDeviceModelStatusEnumType.Rejected ||
-      status === OCPP2_1.GenericDeviceModelStatusEnumType.NotSupported
+      status === GenericDeviceModelStatusEnum.Rejected ||
+      status === GenericDeviceModelStatusEnum.NotSupported
     ) {
       this._logger.error(
         'Failed to get monitoring report.',

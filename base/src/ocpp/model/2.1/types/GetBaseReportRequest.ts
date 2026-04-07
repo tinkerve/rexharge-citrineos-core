@@ -9,7 +9,7 @@
  */
 
 import { ReportBaseEnumType } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface GetBaseReportRequest extends OcppRequest {
   /**

@@ -9,7 +9,7 @@
  */
 
 import { ClearMessageStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface ClearDisplayMessageResponse extends OcppResponse {
   status: ClearMessageStatusEnumType;

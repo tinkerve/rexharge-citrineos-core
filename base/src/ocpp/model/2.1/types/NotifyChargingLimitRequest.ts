@@ -13,7 +13,7 @@ import {
   CostKindEnumType,
   OperationModeEnumType,
 } from '../enums/index.js';
-import type { OcppRequest } from '../../../../index.js';
+import type { OcppRequest } from '../../../internal-types.js';
 
 export interface NotifyChargingLimitRequest extends OcppRequest {
   /**

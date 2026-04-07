@@ -9,7 +9,7 @@
  */
 
 import { GetCertificateStatusEnumType } from '../enums/index.js';
-import type { OcppResponse } from '../../../../index.js';
+import type { OcppResponse } from '../../../internal-types.js';
 
 export interface GetCertificateStatusResponse extends OcppResponse {
   status: GetCertificateStatusEnumType;
