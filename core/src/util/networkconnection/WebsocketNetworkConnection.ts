@@ -315,7 +315,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       }
 
       this._logger.error(
-        `Forced protocol version '${forceProtocol}' is not supported by charger. Charger supports: [${[...protocols].join(', ')}].`,
+        `Forced protocol version '${forceProtocol}' is not supported by the current charger and server communication. Charger supports: [${[...protocols].join(', ')}] and server expects '${wsServerProtocols.join(', ')}'.`,
       );
       return false;
     }
