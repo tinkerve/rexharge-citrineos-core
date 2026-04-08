@@ -301,7 +301,7 @@ export class MonitoringModule extends AbstractModule {
       await this.sendCall(
         stationId,
         message.context.tenantId,
-        OCPPVersion.OCPP2_0_1,
+        message.protocol,
         OCPP_CallAction.GetMonitoringReport,
         {
           requestId: await this._idGenerator.generateRequestId(
