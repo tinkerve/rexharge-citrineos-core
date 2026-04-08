@@ -8,6 +8,21 @@ object_relationships:
   - name: Tenant
     using:
       foreign_key_constraint_on: tenantId
+array_relationships:
+  - name: InstallCertificateAttempts
+    using:
+      foreign_key_constraint_on:
+        column: certificateId
+        table:
+          name: InstallCertificateAttempts
+          schema: public
+  - name: InstalledCertificates
+    using:
+      foreign_key_constraint_on:
+        column: certificateId
+        table:
+          name: InstalledCertificates
+          schema: public
 insert_permissions:
   - role: user
     permission:
