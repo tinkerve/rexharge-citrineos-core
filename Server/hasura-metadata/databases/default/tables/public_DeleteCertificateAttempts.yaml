@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 table:
-  name: ChargingStationSecurityInfos
+  name: DeleteCertificateAttempts
   schema: public
 object_relationships:
   - name: ChargingStation
@@ -11,12 +11,3 @@ object_relationships:
   - name: Tenant
     using:
       foreign_key_constraint_on: tenantId
-select_permissions:
-  - role: user
-    permission:
-      columns: '*'
-      filter:
-        tenantId:
-          _eq: x-hasura-tenant-id
-      allow_aggregations: true
-    comment: ""
