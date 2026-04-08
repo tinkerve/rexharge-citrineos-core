@@ -26,7 +26,6 @@ import {
   VariableAttribute,
   VariableStatus,
 } from '@dal/index.js';
-import { defineAssociations } from '@dal/layers/sequelize/model/associations.js';
 import { MonitoringModule } from '../../src/module/module.js';
 import {
   aSetVariableData,
@@ -80,7 +79,6 @@ beforeAll(async () => {
   sequelizeInstance = DefaultSequelizeInstance.getInstance(dbConfig);
   await sequelizeInstance.query('CREATE EXTENSION IF NOT EXISTS citext;');
   await sequelizeInstance.sync({ force: true });
-  defineAssociations();
 }, 90_000);
 
 afterAll(async () => {
