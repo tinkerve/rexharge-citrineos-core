@@ -44,7 +44,7 @@ base/src/ocpp/model/1.6/schemas/
 base/src/ocpp/model/2.0.1/schemas/
 
 # OCPP 2.1 Schema files
-00_Base/src/ocpp/model/2.1/schemas/
+base/src/ocpp/model/2.1/schemas/
 
 # Persistence schemas
 base/src/ocpp/persistence/schemas/AuthorizationDataSchema.json
