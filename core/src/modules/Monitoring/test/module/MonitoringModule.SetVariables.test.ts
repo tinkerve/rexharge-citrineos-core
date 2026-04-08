@@ -79,8 +79,8 @@ beforeAll(async () => {
 
   sequelizeInstance = DefaultSequelizeInstance.getInstance(dbConfig);
   await sequelizeInstance.query('CREATE EXTENSION IF NOT EXISTS citext;');
-  defineAssociations();
   await sequelizeInstance.sync({ force: true });
+  defineAssociations();
 }, 90_000);
 
 afterAll(async () => {
