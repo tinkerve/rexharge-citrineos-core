@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SetNetworkProfile } from '@citrineos/data';
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_CallAction, OCPPVersion } from '@citrineos/base';
-import { ConfigurationOcpp201Api } from '../../src/module/2.0.1/MessageApi.js';
+import { SetNetworkProfile } from '@dal/index.js';
+import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPPVersion, OCPP_CallAction } from '@citrineos/base';
+import { ConfigurationOcpp2Api } from '../../src/module/2/MessageApi.js';
 
 vi.mock('uuid', () => ({
   v4: () => 'test-correlation-id',
 }));
 
-describe('ConfigurationOcpp201Api', () => {
+describe('ConfigurationOcpp2Api', () => {
   const MOCK_STATION_ID_1 = 'Station01';
   const MOCK_STATION_ID_2 = 'Station02';
   const MOCK_TENANT_ID = DEFAULT_TENANT_ID;
@@ -30,7 +30,7 @@ describe('ConfigurationOcpp201Api', () => {
     },
   };
 
-  let api: ConfigurationOcpp201Api;
+  let api: ConfigurationOcpp2Api;
   let mockSendCall: ReturnType<typeof vi.fn>;
   let mockSave: ReturnType<typeof vi.fn>;
 
@@ -57,13 +57,13 @@ describe('ConfigurationOcpp201Api', () => {
     it('should pass individual stationId string to SetNetworkProfile.build for a single identifier', async () => {
       const extraQueries = { websocketServerConfigId: MOCK_WEBSOCKET_SERVER_CONFIG_ID };
 
-      await ConfigurationOcpp201Api.prototype.setNetworkProfile.call(
+      await ConfigurationOcpp2Api.prototype.setNetworkProfile.call(
         api,
         [MOCK_STATION_ID_1],
         mockRequest,
         undefined,
-        MOCK_TENANT_ID,
         extraQueries,
+        MOCK_TENANT_ID,
       );
 
       expect(SetNetworkProfile.build).toHaveBeenCalledTimes(1);
@@ -82,13 +82,13 @@ describe('ConfigurationOcpp201Api', () => {
     it('should create one SetNetworkProfile record per station when multiple identifiers are provided', async () => {
       const extraQueries = { websocketServerConfigId: MOCK_WEBSOCKET_SERVER_CONFIG_ID };
 
-      await ConfigurationOcpp201Api.prototype.setNetworkProfile.call(
+      await ConfigurationOcpp2Api.prototype.setNetworkProfile.call(
         api,
         [MOCK_STATION_ID_1, MOCK_STATION_ID_2],
         mockRequest,
         undefined,
-        MOCK_TENANT_ID,
         extraQueries,
+        MOCK_TENANT_ID,
       );
 
       expect(SetNetworkProfile.build).toHaveBeenCalledTimes(2);
@@ -102,13 +102,13 @@ describe('ConfigurationOcpp201Api', () => {
     });
 
     it('should not create SetNetworkProfile records when extraQueries is undefined', async () => {
-      await ConfigurationOcpp201Api.prototype.setNetworkProfile.call(
+      await ConfigurationOcpp2Api.prototype.setNetworkProfile.call(
         api,
         [MOCK_STATION_ID_1],
         mockRequest,
         undefined,
-        MOCK_TENANT_ID,
         undefined,
+        MOCK_TENANT_ID,
       );
 
       expect(SetNetworkProfile.build).not.toHaveBeenCalled();
@@ -116,13 +116,13 @@ describe('ConfigurationOcpp201Api', () => {
     });
 
     it('should send calls to all identifiers regardless of extraQueries', async () => {
-      await ConfigurationOcpp201Api.prototype.setNetworkProfile.call(
+      await ConfigurationOcpp2Api.prototype.setNetworkProfile.call(
         api,
         [MOCK_STATION_ID_1, MOCK_STATION_ID_2],
         mockRequest,
         undefined,
-        MOCK_TENANT_ID,
         undefined,
+        MOCK_TENANT_ID,
       );
 
       expect(mockSendCall).toHaveBeenCalledTimes(2);
@@ -130,7 +130,7 @@ describe('ConfigurationOcpp201Api', () => {
         MOCK_STATION_ID_1,
         MOCK_TENANT_ID,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.SetNetworkProfile,
+        OCPP_CallAction.SetNetworkProfile,
         mockRequest,
         undefined,
         MOCK_CORRELATION_ID,
@@ -139,7 +139,7 @@ describe('ConfigurationOcpp201Api', () => {
         MOCK_STATION_ID_2,
         MOCK_TENANT_ID,
         OCPPVersion.OCPP2_0_1,
-        OCPP2_0_1_CallAction.SetNetworkProfile,
+        OCPP_CallAction.SetNetworkProfile,
         mockRequest,
         undefined,
         MOCK_CORRELATION_ID,

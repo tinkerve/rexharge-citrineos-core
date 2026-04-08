@@ -4,7 +4,7 @@
 import { faker } from '@faker-js/faker';
 import { aRequest } from '../../providers/IncomingMessageProvider.js';
 import { anAuthenticationOptions } from '../../providers/AuthenticationOptionsProvider.js';
-import { CacheNamespace, DEFAULT_TENANT_ID, ICache } from '@citrineos/base';
+import { CacheNamespace, createIdentifier, DEFAULT_TENANT_ID, ICache } from '@citrineos/base';
 import { ConnectedStationFilter } from '../../../index.js';
 import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
 
@@ -26,22 +26,24 @@ describe('ConnectedStationFilter', () => {
 
   it('should not reject when station is not connected', async () => {
     const stationId = faker.string.uuid().toString();
+    const identifier = createIdentifier(DEFAULT_TENANT_ID, stationId);
     givenStationIsNotConnected();
 
     await filter.authenticate(DEFAULT_TENANT_ID, stationId, aRequest(), anAuthenticationOptions());
 
-    expect(cache.get).toHaveBeenCalledWith(stationId, CacheNamespace.Connections);
+    expect(cache.get).toHaveBeenCalledWith(identifier, CacheNamespace.Connections);
   });
 
   it('should reject when station is already connected', async () => {
     const stationId = faker.string.uuid().toString();
+    const identifier = createIdentifier(DEFAULT_TENANT_ID, stationId);
     givenStationIsConnected();
 
     await expect(
       filter.authenticate(DEFAULT_TENANT_ID, stationId, aRequest(), anAuthenticationOptions()),
-    ).rejects.toThrow(`New connection attempted for already connected identifier ${stationId}`);
+    ).rejects.toThrow(`New connection attempted for already connected identifier ${identifier}`);
 
-    expect(cache.get).toHaveBeenCalledWith(stationId, CacheNamespace.Connections);
+    expect(cache.get).toHaveBeenCalledWith(identifier, CacheNamespace.Connections);
   });
 
   function givenStationIsConnected() {

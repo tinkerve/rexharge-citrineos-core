@@ -24,9 +24,8 @@ import {
   MessageOrigin,
   MessageState,
   OCPP1_6,
-  OCPP1_6_CallAction,
   OCPP2_0_1,
-  OCPP2_0_1_CallAction,
+  OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
 import type {
@@ -37,21 +36,20 @@ import type {
   IReservationRepository,
   ITariffRepository,
   ITransactionEventRepository,
-} from '@citrineos/data';
+} from '@dal/interfaces/repositories.js';
 import { TransactionsModule } from '../../src/module/module.js';
 
-vi.mock('@citrineos/util', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@citrineos/util')>();
-  return {
-    ...actual,
-    SignedMeterValuesUtil: vi.fn().mockImplementation(() => ({
-      validateMeterValues: vi.fn().mockResolvedValue(true),
-    })),
-    RealTimeAuthorizer: vi.fn().mockImplementation(() => ({
-      authorize: vi.fn().mockResolvedValue('Accepted'),
-    })),
-  };
-});
+vi.mock('@util/security/SignedMeterValuesUtil.js', () => ({
+  SignedMeterValuesUtil: vi.fn().mockImplementation(() => ({
+    validateMeterValues: vi.fn().mockResolvedValue(true),
+  })),
+}));
+
+vi.mock('@util/authorizer/RealTimeAuthorizer.js', () => ({
+  RealTimeAuthorizer: vi.fn().mockImplementation(() => ({
+    authorize: vi.fn().mockResolvedValue('Accepted'),
+  })),
+}));
 
 function makeConfig(): BootstrapConfig & SystemConfig {
   return {
@@ -210,7 +208,7 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
       };
 
       await (module as any)._handleTransactionEvent(
-        makeMessage(payload, OCPP2_0_1_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
+        makeMessage(payload, OCPP_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
       );
 
       expect(deactivateSpy).toHaveBeenCalledOnce();
@@ -232,7 +230,7 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
       };
 
       await (module as any)._handleTransactionEvent(
-        makeMessage(payload, OCPP2_0_1_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
+        makeMessage(payload, OCPP_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
       );
 
       expect(deactivateSpy).not.toHaveBeenCalled();
@@ -248,7 +246,7 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
       };
 
       await (module as any)._handleTransactionEvent(
-        makeMessage(payload, OCPP2_0_1_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
+        makeMessage(payload, OCPP_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
       );
 
       expect(deactivateSpy).not.toHaveBeenCalled();
@@ -265,7 +263,7 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
       };
 
       await (module as any)._handleTransactionEvent(
-        makeMessage(payload, OCPP2_0_1_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
+        makeMessage(payload, OCPP_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
       );
 
       expect(deactivateSpy).not.toHaveBeenCalled();
@@ -282,7 +280,7 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
       };
 
       await (module as any)._handleOcpp16StartTransaction(
-        makeMessage(payload, OCPP1_6_CallAction.StartTransaction, OCPPVersion.OCPP1_6),
+        makeMessage(payload, OCPP_CallAction.StartTransaction, OCPPVersion.OCPP1_6),
       );
 
       expect(deactivateSpy).toHaveBeenCalledOnce();
@@ -308,7 +306,7 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
 
       await expect(
         (module as any)._handleOcpp16StartTransaction(
-          makeMessage(payload, OCPP1_6_CallAction.StartTransaction, OCPPVersion.OCPP1_6),
+          makeMessage(payload, OCPP_CallAction.StartTransaction, OCPPVersion.OCPP1_6),
         ),
       ).rejects.toThrow('Unable to find connector 99');
 

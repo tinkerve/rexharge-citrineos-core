@@ -25,7 +25,7 @@ import {
   Variable,
   VariableAttribute,
   VariableStatus,
-} from '@citrineos/data';
+} from '@dal/index.js';
 import { MonitoringModule } from '../../src/module/module.js';
 import {
   aSetVariableData,
