@@ -3,7 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ChargingStationSequenceTypeEnumType, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { ChargingStation } from '../Location/index.js';
 import type { ChargingStation as ChargingStationType } from '../Location/index.js';
 
@@ -11,6 +19,7 @@ import type { ChargingStation as ChargingStationType } from '../Location/index.j
 export class ChargingStationSequence extends Model {
   static readonly MODEL_NAME: string = 'ChargingStationSequence';
 
+  @ForeignKey(() => ChargingStation)
   @Column({
     type: DataType.INTEGER,
     allowNull: true,

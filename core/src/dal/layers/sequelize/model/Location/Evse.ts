@@ -3,13 +3,22 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ChargingStationDto, ConnectorDto, EvseDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { ChargingStation } from './ChargingStation.js';
 
 @Table
 export class Evse extends Model implements EvseDto {
   static readonly MODEL_NAME: string = Namespace.Evse;
 
+  @ForeignKey(() => ChargingStation)
   @Column({
     type: DataType.INTEGER,
     unique: 'stationPkId_evseTypeId',

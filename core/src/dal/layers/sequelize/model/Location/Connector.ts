@@ -13,7 +13,15 @@ import type {
   TariffDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { ChargingStation } from './ChargingStation.js';
 import { Evse } from './Evse.js';
 
@@ -21,6 +29,7 @@ import { Evse } from './Evse.js';
 export class Connector extends Model implements ConnectorDto {
   static readonly MODEL_NAME: string = OCPP1_6_Namespace.Connector;
 
+  @ForeignKey(() => ChargingStation)
   @Column({
     unique: 'stationPkId_connectorId',
     allowNull: true,
