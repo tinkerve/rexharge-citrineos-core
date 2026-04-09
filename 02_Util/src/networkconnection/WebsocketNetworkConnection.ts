@@ -433,6 +433,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
         const websocketConnection: IWebsocketConnection = {
           id: websocketServerConfig.id,
           protocol: ws.protocol,
+          allowUnknownChargingStations: websocketServerConfig.allowUnknownChargingStations,
         };
         let registered = await this._cache.set(
           identifier,
