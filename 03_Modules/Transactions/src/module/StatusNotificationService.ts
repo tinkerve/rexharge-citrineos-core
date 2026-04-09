@@ -224,7 +224,7 @@ export class StatusNotificationService {
             },
           },
         );
-      } else {
+      } else if (statusNotificationRequest.connectorId !== 0) {
         const connectionJson = await this._cache.get<string>(
           createIdentifier(tenantId, stationId),
           CacheNamespace.Connections,
