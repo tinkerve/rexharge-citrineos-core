@@ -348,6 +348,8 @@ export const MonitorEnumSchema = z.enum([
   'Delta',
   'Periodic',
   'PeriodicClockAligned',
+  'TargetDelta',
+  'TargetDeltaRelative',
 ]);
 
 export const MessagePriorityEnumSchema = z.enum(['AlwaysFront', 'InFront', 'NormalCycle']);
@@ -482,6 +484,15 @@ export const ResetEnumSchema = z.enum(['Immediate', 'OnIdle', 'ImmediateAndResum
 
 export const SendLocalListStatusEnumSchema = z.enum(['Accepted', 'Failed', 'VersionMismatch']);
 
+export const SetMonitoringStatusEnumSchema = z.enum([
+  'Accepted',
+  'UnknownComponent',
+  'UnknownVariable',
+  'UnsupportedMonitorType',
+  'Rejected',
+  'Duplicate',
+]);
+
 export const SetNetworkProfileStatusEnumSchema = z.enum(['Accepted', 'Rejected', 'Failed']);
 
 export const SetVariableStatusEnumSchema = z.enum([
@@ -593,6 +604,7 @@ export const ReservationUpdateStatusEnum = ReservationUpdateStatusEnumSchema.enu
 export const ReserveNowStatusEnum = ReserveNowStatusEnumSchema.enum;
 export const ResetEnum = ResetEnumSchema.enum;
 export const SendLocalListStatusEnum = SendLocalListStatusEnumSchema.enum;
+export const SetMonitoringStatusEnum = SetMonitoringStatusEnumSchema.enum;
 export const SetNetworkProfileStatusEnum = SetNetworkProfileStatusEnumSchema.enum;
 export const SetVariableStatusEnum = SetVariableStatusEnumSchema.enum;
 export const TransactionEventEnum = TransactionEventEnumSchema.enum;
@@ -683,6 +695,7 @@ export type ReservationUpdateStatusEnumType = z.infer<typeof ReservationUpdateSt
 export type ReserveNowStatusEnumType = z.infer<typeof ReserveNowStatusEnumSchema>;
 export type ResetEnumType = z.infer<typeof ResetEnumSchema>;
 export type SendLocalListStatusEnumType = z.infer<typeof SendLocalListStatusEnumSchema>;
+export type SetMonitoringStatusEnumType = z.infer<typeof SetMonitoringStatusEnumSchema>;
 export type SetNetworkProfileStatusEnumType = z.infer<typeof SetNetworkProfileStatusEnumSchema>;
 export type SetVariableStatusEnumType = z.infer<typeof SetVariableStatusEnumSchema>;
 export type TransactionEventEnumType = z.infer<typeof TransactionEventEnumSchema>;

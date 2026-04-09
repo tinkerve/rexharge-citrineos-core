@@ -382,8 +382,8 @@ export function defineAssociations() {
   Connector.hasMany(StatusNotification, { foreignKey: 'connectorId' });
 
   // DeviceModel associations
-  Component.belongsToMany(Variable, { through: ComponentVariable });
-  Variable.belongsToMany(Component, { through: ComponentVariable });
+  Component.belongsToMany(Variable, { through: ComponentVariable, foreignKey: 'componentId' });
+  Variable.belongsToMany(Component, { through: ComponentVariable, foreignKey: 'variableId' });
 
   // Component to EvseType associations
   Component.belongsTo(EvseType, { foreignKey: 'evseDatabaseId' });

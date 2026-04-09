@@ -9,8 +9,18 @@ import { Variable } from '../model/DeviceModel/Variable.js';
 import { VariableMonitoring } from '../model/VariableMonitoring/VariableMonitoring.js';
 import { VariableMonitoringStatus } from '../model/VariableMonitoring/VariableMonitoringStatus.js';
 import type { IVariableMonitoringRepository } from '../../../interfaces/repositories.js';
-import type { BootstrapConfig, CallAction } from '@citrineos/base';
-import { CrudRepository, OCPP2_0_1, OCPP_CallAction } from '@citrineos/base';
+import type {
+  BootstrapConfig,
+  CallAction,
+  OCPP2_common_types,
+  SetMonitoringStatusEnumType,
+} from '@citrineos/base';
+import {
+  CrudRepository,
+  OCPP2_0_1,
+  OCPP_CallAction,
+  SetMonitoringStatusEnum,
+} from '@citrineos/base';
 import { Sequelize } from 'sequelize-typescript';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -45,59 +55,61 @@ export class SequelizeVariableMonitoringRepository
 
   async createOrUpdateByMonitoringDataTypeAndStationId(
     tenantId: number,
-    value: OCPP2_0_1.MonitoringDataType,
+    value: OCPP2_common_types.MonitoringDataType,
     componentId: string,
     variableId: string,
     stationId: string,
   ): Promise<VariableMonitoring[]> {
     return await Promise.all(
-      value.variableMonitoring.map(async (variableMonitoring) => {
-        const savedVariableMonitoring: VariableMonitoring = await this.s.transaction(
-          async (transaction) => {
-            const existingVariableMonitoring = await this.s.models[
-              VariableMonitoring.MODEL_NAME
-            ].findOne({
-              where: { stationId, variableId, componentId },
-              transaction,
-            });
-
-            if (!existingVariableMonitoring) {
-              // If the record does not exist, build and save a new instance
-              const vm = VariableMonitoring.build({
-                tenantId,
-                stationId,
-                variableId,
-                componentId,
-                ...variableMonitoring,
+      value.variableMonitoring.map(
+        async (variableMonitoring: OCPP2_common_types.VariableMonitoringType) => {
+          const savedVariableMonitoring: VariableMonitoring = await this.s.transaction(
+            async (transaction) => {
+              const existingVariableMonitoring = await this.s.models[
+                VariableMonitoring.MODEL_NAME
+              ].findOne({
+                where: { stationId, variableId, componentId },
+                transaction,
               });
-              const createdVariableMonitoring = await vm.save({ transaction });
-              this.emit('created', [createdVariableMonitoring]);
-              return createdVariableMonitoring;
-            } else {
-              // If the record exists, update it
-              return (await this.updateByKey(
-                tenantId,
-                { ...variableMonitoring },
-                existingVariableMonitoring.dataValues.databaseId,
-              )) as VariableMonitoring;
-            }
-          },
-        );
-        await this.createVariableMonitoringStatus(
-          tenantId,
-          OCPP2_0_1.SetMonitoringStatusEnumType.Accepted,
-          OCPP_CallAction.NotifyMonitoringReport,
-          savedVariableMonitoring.get('databaseId'),
-        );
 
-        return savedVariableMonitoring;
-      }),
+              if (!existingVariableMonitoring) {
+                // If the record does not exist, build and save a new instance
+                const vm = VariableMonitoring.build({
+                  tenantId,
+                  stationId,
+                  variableId,
+                  componentId,
+                  ...variableMonitoring,
+                });
+                const createdVariableMonitoring = await vm.save({ transaction });
+                this.emit('created', [createdVariableMonitoring]);
+                return createdVariableMonitoring;
+              } else {
+                // If the record exists, update it
+                return (await this.updateByKey(
+                  tenantId,
+                  { ...variableMonitoring } as Partial<VariableMonitoring>,
+                  existingVariableMonitoring.dataValues.databaseId,
+                )) as VariableMonitoring;
+              }
+            },
+          );
+          await this.createVariableMonitoringStatus(
+            tenantId,
+            SetMonitoringStatusEnum.Accepted,
+            OCPP_CallAction.NotifyMonitoringReport,
+            savedVariableMonitoring.get('databaseId'),
+          );
+
+          return savedVariableMonitoring;
+        },
+      ),
     );
   }
 
   async createVariableMonitoringStatus(
     tenantId: number,
-    status: OCPP2_0_1.SetMonitoringStatusEnumType,
+    status: SetMonitoringStatusEnumType,
     action: CallAction,
     variableMonitoringId: number,
   ): Promise<void> {

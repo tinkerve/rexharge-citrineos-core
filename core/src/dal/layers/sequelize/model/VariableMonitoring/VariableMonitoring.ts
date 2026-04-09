@@ -7,6 +7,7 @@ import type {
   VariableMonitoringDto,
   TenantDto,
   MonitorEnumType,
+  EventNotificationEnumType,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
@@ -21,9 +22,7 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
-import { Component, Variable } from '../DeviceModel/index.js';
 import { ChargingStation } from '../Location/index.js';
-import { Tenant } from '../Tenant.js';
 
 @Table
 export class VariableMonitoring extends Model implements VariableMonitoringDto {
@@ -66,6 +65,10 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
 
   @Column(DataType.INTEGER)
   declare severity: number;
+
+  // OCPP 2.1 field
+  @Column(DataType.STRING)
+  declare eventNotificationType?: EventNotificationEnumType | null;
 
   /**
    * Relations

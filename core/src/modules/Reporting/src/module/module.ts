@@ -210,12 +210,16 @@ export class ReportingModule extends AbstractModule {
     this._logger.debug('NotifyCustomerInformation response sent: ', messageConfirmation);
   }
 
-  @AsHandler([OCPPVersion.OCPP2_0_1], OCPP_CallAction.NotifyMonitoringReport)
+  @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.NotifyMonitoringReport)
   protected async _handleNotifyMonitoringReport(
     message: IMessage<OCPP2_request_types.NotifyMonitoringReportRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
-    this._logger.debug('NotifyMonitoringReport request received:', message, props);
+    this._logger.debug(
+      '${message.protocol} NotifyMonitoringReport request received:',
+      message,
+      props,
+    );
 
     for (const monitorType of message.payload.monitor ? message.payload.monitor : []) {
       const stationId: string = message.context.stationId;
@@ -240,9 +244,6 @@ export class ReportingModule extends AbstractModule {
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('NotifyMonitoringReport response sent: ', messageConfirmation);
   }
-
-  //TODO: Need to create a separate handler for OCPP 2.1 for handleSetVariableMonitoring
-  //      2.1's NotifyMonitoringReportRequest has an additional required enum compared to 2.0.1
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.NotifyReport)
   protected async _handleNotifyReport(
