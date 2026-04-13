@@ -31,6 +31,7 @@ import { VariableStatus } from './VariableStatus.js';
   indexes: [
     {
       unique: true,
+      name: 'variable_attributes_stationPkId',
       fields: ['stationPkId'],
       where: {
         type: null,
@@ -40,6 +41,7 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
+      name: 'variable_attributes_stationPkId_type',
       fields: ['stationPkId', 'type'],
       where: {
         variableId: null,
@@ -48,6 +50,7 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
+      name: 'variable_attributes_stationPkId_variableId',
       fields: ['stationPkId', 'variableId'],
       where: {
         type: null,
@@ -56,6 +59,7 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
+      name: 'variable_attributes_stationPkId_componentId',
       fields: ['stationPkId', 'componentId'],
       where: {
         type: null,
@@ -64,6 +68,7 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
+      name: 'variable_attributes_stationPkId_type_variableId',
       fields: ['stationPkId', 'type', 'variableId'],
       where: {
         componentId: null,
@@ -71,6 +76,7 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
+      name: 'variable_attributes_stationPkId_type_componentId',
       fields: ['stationPkId', 'type', 'componentId'],
       where: {
         variableId: null,
@@ -78,6 +84,7 @@ import { VariableStatus } from './VariableStatus.js';
     },
     {
       unique: true,
+      name: 'variable_attributes_stationPkId_variableId_componentId',
       fields: ['stationPkId', 'variableId', 'componentId'],
       where: {
         type: null,
