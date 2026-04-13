@@ -1,7 +1,15 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { CrudRepository, OCPP1_6, OCPP2_0_1 } from '@citrineos/base';
+import {
+  CacheNamespace,
+  createIdentifier,
+  CrudRepository,
+  OCPP1_6,
+  OCPP2_0_1,
+  type ICache,
+  type IWebsocketConnection,
+} from '@citrineos/base';
 import type { IDeviceModelRepository, ILocationRepository } from '@dal/interfaces/repositories.js';
 import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
 import * as OCPP2_0_1_Mapper from '@dal/layers/sequelize/mapper/2.0.1/index.js';
