@@ -19,6 +19,13 @@ array_relationships:
         table:
           name: ChargingStationNetworkProfiles
           schema: public
+  - name: ChargingStationSecurityInfos
+    using:
+      foreign_key_constraint_on:
+        column: stationPkId
+        table:
+          name: ChargingStationSecurityInfos
+          schema: public
   - name: ChargingStationSequences
     using:
       foreign_key_constraint_on:
@@ -33,6 +40,20 @@ array_relationships:
         table:
           name: Connectors
           schema: public
+  - name: DeleteCertificateAttempts
+    using:
+      foreign_key_constraint_on:
+        column: stationPkId
+        table:
+          name: DeleteCertificateAttempts
+          schema: public
+  - name: EventData
+    using:
+      foreign_key_constraint_on:
+        column: stationPkId
+        table:
+          name: EventData
+          schema: public
   - name: Evses
     using:
       foreign_key_constraint_on:
@@ -40,12 +61,40 @@ array_relationships:
         table:
           name: Evses
           schema: public
+  - name: InstallCertificateAttempts
+    using:
+      foreign_key_constraint_on:
+        column: stationPkId
+        table:
+          name: InstallCertificateAttempts
+          schema: public
+  - name: InstalledCertificates
+    using:
+      foreign_key_constraint_on:
+        column: stationPkId
+        table:
+          name: InstalledCertificates
+          schema: public
   - name: LatestStatusNotifications
     using:
       foreign_key_constraint_on:
         column: stationPkId
         table:
           name: LatestStatusNotifications
+          schema: public
+  - name: OCPPMessages
+    using:
+      foreign_key_constraint_on:
+        column: stationPkId
+        table:
+          name: OCPPMessages
+          schema: public
+  - name: SetNetworkProfiles
+    using:
+      foreign_key_constraint_on:
+        column: stationPkId
+        table:
+          name: SetNetworkProfiles
           schema: public
   - name: StatusNotifications
     using:
@@ -67,6 +116,13 @@ array_relationships:
         column: stationPkId
         table:
           name: VariableAttributes
+          schema: public
+  - name: VariableMonitorings
+    using:
+      foreign_key_constraint_on:
+        column: stationPkId
+        table:
+          name: VariableMonitorings
           schema: public
 insert_permissions:
   - role: user
