@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { CrudRepository, DEFAULT_TENANT_ID } from '@citrineos/base';
+import { CrudRepository, DEFAULT_TENANT_ID, ICache, IWebsocketConnection } from '@citrineos/base';
 import {
   Component,
   IDeviceModelRepository,
@@ -31,6 +31,7 @@ describe('StatusNotificationService', () => {
   let componentRepository: Mocked<CrudRepository<Component>>;
   let deviceModelRepository: Mocked<IDeviceModelRepository>;
   let locationRepository: Mocked<ILocationRepository>;
+  let cache: Mocked<ICache>;
 
   beforeEach(() => {
     componentRepository = {
@@ -47,10 +48,20 @@ describe('StatusNotificationService', () => {
       createOrUpdateConnector: vi.fn(),
     } as unknown as Mocked<ILocationRepository>;
 
+    const mockConnection: IWebsocketConnection = {
+      id: 'test-server',
+      protocol: 'ocpp2.0.1',
+      allowUnknownChargingStations: true,
+    };
+    cache = {
+      get: vi.fn().mockResolvedValue(JSON.stringify(mockConnection)),
+    } as unknown as Mocked<ICache>;
+
     statusNotificationService = new StatusNotificationService(
       componentRepository,
       deviceModelRepository,
       locationRepository,
+      cache,
     );
   });
 

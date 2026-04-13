@@ -1,7 +1,14 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { CrudRepository, OCPP1_6, OCPP2_0_1 } from '@citrineos/base';
+import type { ICache, IWebsocketConnection } from '@citrineos/base';
+import {
+  CacheNamespace,
+  createIdentifier,
+  CrudRepository,
+  OCPP1_6,
+  OCPP2_0_1,
+} from '@citrineos/base';
 import {
   Component,
   Connector,
@@ -20,17 +27,20 @@ export class StatusNotificationService {
   protected _componentRepository: CrudRepository<Component>;
   protected _deviceModelRepository: IDeviceModelRepository;
   protected _locationRepository: ILocationRepository;
+  protected _cache: ICache;
   protected _logger: Logger<ILogObj>;
 
   constructor(
     componentRepository: CrudRepository<Component>,
     deviceModelRepository: IDeviceModelRepository,
     locationRepository: ILocationRepository,
+    cache: ICache,
     logger?: Logger<ILogObj>,
   ) {
     this._componentRepository = componentRepository;
     this._deviceModelRepository = deviceModelRepository;
     this._locationRepository = locationRepository;
+    this._cache = cache;
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
@@ -74,6 +84,25 @@ export class StatusNotificationService {
           ? statusNotificationRequest.timestamp
           : new Date().toISOString(),
       } as Connector;
+
+      const connectionJson = await this._cache.get<string>(
+        createIdentifier(tenantId, stationId),
+        CacheNamespace.Connections,
+      );
+      const connection: IWebsocketConnection | null = connectionJson
+        ? JSON.parse(connectionJson)
+        : null;
+      if (!connection?.allowUnknownChargingStations) {
+        const connectorExists = chargingStation.evses?.some((evse) =>
+          evse.connectors?.some((c) => c.connectorId === statusNotificationRequest.connectorId),
+        );
+        if (!connectorExists) {
+          throw new Error(
+            `Connector ${statusNotificationRequest.connectorId} on station ${stationId} does not exist and allowUnknownChargingStations is false`,
+          );
+        }
+      }
+
       await this._locationRepository.createOrUpdateConnector(tenantId, connector);
 
       let components = await this._componentRepository.readAllByQuery(tenantId, {
@@ -195,7 +224,24 @@ export class StatusNotificationService {
             },
           },
         );
-      } else {
+      } else if (statusNotificationRequest.connectorId !== 0) {
+        const connectionJson = await this._cache.get<string>(
+          createIdentifier(tenantId, stationId),
+          CacheNamespace.Connections,
+        );
+        const connection: IWebsocketConnection | null = connectionJson
+          ? JSON.parse(connectionJson)
+          : null;
+        if (!connection?.allowUnknownChargingStations) {
+          const connectorExists = chargingStation.evses?.some((evse) =>
+            evse.connectors?.some((c) => c.connectorId === statusNotificationRequest.connectorId),
+          );
+          if (!connectorExists) {
+            throw new Error(
+              `Connector ${statusNotificationRequest.connectorId} on station ${stationId} does not exist and allowUnknownChargingStations is false`,
+            );
+          }
+        }
         await this._locationRepository.createOrUpdateConnector(tenantId, connector);
       }
     } else {

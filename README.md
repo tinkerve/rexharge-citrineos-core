@@ -31,6 +31,7 @@ here: <https://github.com/citrineos/citrineos>.
 - [Information on Docker setup](#information-on-docker-setup)
 - [Generating OCPP Interfaces](#generating-ocpp-interfaces)
 - [Validating custom OCPP DataTransfer messages](#data-transfer-messages)
+- [Allow Unknown Charging Stations & Auto-Commissioning](#auto-commissioning)
 - [Hasura Metadata](#hasura-metadata)
 - [Database Sync vs. Migration](#database-sync-vs-migration)
 - [Contributing](#contributing)
@@ -388,6 +389,13 @@ ${protocol}-${dataTransferRequest.vendorId}${dataTransferRequest.messageId ? `-$
 'Protocol' is the OCPP websocket subprotocol, i.e. "ocpp1.6", "ocpp2.0.1", or so on.
 
 CitrineOS's validation logic assumes that the data field is a string field with JSON structure, and uses JSON.parse before validation. Other approaches to custom DataTransfer message types are not supported.
+
+## Auto Commissioning
+
+The System Configuration defines websocket servers with certain properties, one of which is 'Allow Unknown Charging Stations', a boolean that permits charging stations which are not commissioned to connect to CitrineOS.
+This triggers an auto-commissioning flow which creates the station on its first connection, and creates evses and connectors for that station in response to StatusNotifications.
+This is not recommended for production, it is exclusively for testing and is enabled by the default configuration only on the websocket server at port 8081--which also has no security.
+Since not all information on the charger is necessarily avilable in the OCPP messages, commissioning may be wrong and will be incomplete. In 1.6 in particular, multi-evse stations will not commission properly because 1.6 does not have a concept of 'evses'. This will lead to improper behavior if a 1.6 station with multiple evses is auto-commissioned: CitrineOS will assume each new transaction is on the same evse and will automatically mark older transactions on that evse as inactive, leading to an inconsistent state with the charging station.
 
 ## Hasura Metadata
 
