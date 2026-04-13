@@ -80,6 +80,7 @@ export function createLocalConfig() {
       },
       evdriver: {
         endpointPrefix: '/evdriver',
+        enableGetChargingProfilesOnStartTransaction: true,
         responses: [
           OCPP_CallAction.CancelReservation,
           OCPP_CallAction.ClearCache,

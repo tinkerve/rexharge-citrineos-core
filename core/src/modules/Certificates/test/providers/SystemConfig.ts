@@ -86,6 +86,7 @@ export function aSystemConfig(override?: Partial<SystemConfig>): SystemConfig {
       },
       evdriver: {
         endpointPrefix: '/evdriver',
+        enableGetChargingProfilesOnStartTransaction: true,
         responses: [
           OCPP_CallAction.CancelReservation,
           OCPP_CallAction.ClearCache,
