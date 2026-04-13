@@ -10,6 +10,7 @@ import type {
   IMessageConfirmation,
   IMessageHandler,
   IMessageSender,
+  IWebsocketConnection,
   SystemConfig,
   OCPP2_request_types,
   OCPP2_response_types,
@@ -21,7 +22,9 @@ import {
   AbstractModule,
   AsHandler,
   BOOT_STATUS,
+  CacheNamespace,
   ChargingStationSequenceTypeEnum,
+  createIdentifier,
   ErrorCode,
   EventGroup,
   MessageOrigin,
@@ -258,8 +261,26 @@ export class ConfigurationModule extends AbstractModule {
     // Update charging station first, then device model.
     // Order matters: updateDeviceModel creates VariableAttributes with a FK
     // reference to the ChargingStation record, so the station must exist first.
-    this._locationRepository
-      .createOrUpdateChargingStation(
+    (async () => {
+      const connectionJson = await this._cache.get<string>(
+        createIdentifier(tenantId, stationId),
+        CacheNamespace.Connections,
+      );
+      const connection: IWebsocketConnection | null = connectionJson
+        ? JSON.parse(connectionJson)
+        : null;
+      if (!connection?.allowUnknownChargingStations) {
+        const exists = await this._locationRepository.doesChargingStationExistByStationId(
+          tenantId,
+          stationId,
+        );
+        if (!exists) {
+          throw new Error(
+            `Charging station ${stationId} does not exist and allowUnknownChargingStations is false`,
+          );
+        }
+      }
+      await this._locationRepository.createOrUpdateChargingStation(
         tenantId,
         ChargingStation.build({
           tenantId,
@@ -271,16 +292,19 @@ export class ConfigurationModule extends AbstractModule {
           iccid: chargingStation.modem?.iccid,
           imsi: chargingStation.modem?.imsi,
         }),
-      )
-      .then(() =>
-        this._deviceModelService.updateDeviceModel(chargingStation, tenantId, stationId, timestamp),
-      )
-      .catch((error) => {
-        this._logger.error(
-          `Error updating station ${stationId} or device model with boot info:`,
-          error,
-        );
-      });
+      );
+      await this._deviceModelService.updateDeviceModel(
+        chargingStation,
+        tenantId,
+        stationId,
+        timestamp,
+      );
+    })().catch((error) => {
+      this._logger.error(
+        `Error updating station ${stationId} or device model with boot info:`,
+        error,
+      );
+    });
 
     if (!bootNotificationResponseMessageConfirmation.success) {
       throw new Error('BootNotification failed: ' + bootNotificationResponseMessageConfirmation);
@@ -808,8 +832,26 @@ export class ConfigurationModule extends AbstractModule {
       await this.sendCallResultWithMessage(message, bootNotificationResponse);
     // Create or update charging station
     this._logger.debug(`Creating or updating charging station: ${stationId}`);
-    this._locationRepository
-      .createOrUpdateChargingStation(
+    (async () => {
+      const connectionJson = await this._cache.get<string>(
+        createIdentifier(tenantId, stationId),
+        CacheNamespace.Connections,
+      );
+      const connection: IWebsocketConnection | null = connectionJson
+        ? JSON.parse(connectionJson)
+        : null;
+      if (!connection?.allowUnknownChargingStations) {
+        const exists = await this._locationRepository.doesChargingStationExistByStationId(
+          tenantId,
+          stationId,
+        );
+        if (!exists) {
+          throw new Error(
+            `Charging station ${stationId} does not exist and allowUnknownChargingStations is false`,
+          );
+        }
+      }
+      await this._locationRepository.createOrUpdateChargingStation(
         tenantId,
         ChargingStation.build({
           tenantId,
@@ -824,11 +866,10 @@ export class ConfigurationModule extends AbstractModule {
           meterType: request.meterType,
           meterSerialNumber: request.meterSerialNumber,
         }),
-      )
-      .then()
-      .catch((error) => {
-        this._logger.error(`Error updating station ${stationId} with boot info:`, error);
-      });
+      );
+    })().catch((error) => {
+      this._logger.error(`Error updating station ${stationId} with boot info:`, error);
+    });
     // Check if response was successful
     if (!bootNotificationResponseMessageConfirmation.success) {
       throw new Error(

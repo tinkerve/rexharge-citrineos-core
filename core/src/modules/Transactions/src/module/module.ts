@@ -226,6 +226,7 @@ export class TransactionsModule extends AbstractModule {
       this._componentRepository,
       this._deviceModelRepository,
       this._locationRepository,
+      this._cache,
       this._logger,
     );
 

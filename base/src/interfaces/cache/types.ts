@@ -45,4 +45,5 @@ export const getStationIdFromIdentifier = (identifier: string): string => {
 export interface IWebsocketConnection {
   id: string;
   protocol: string;
+  allowUnknownChargingStations: boolean;
 }

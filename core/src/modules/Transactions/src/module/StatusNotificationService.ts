@@ -2,14 +2,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import { CrudRepository, OCPP1_6, OCPP2_0_1 } from '@citrineos/base';
-import { Component } from '@dal/layers/sequelize/model/DeviceModel/index.js';
-import { Connector } from '@dal/layers/sequelize/model/Location/index.js';
-import { EvseType } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import type { IDeviceModelRepository, ILocationRepository } from '@dal/interfaces/repositories.js';
 import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
 import * as OCPP2_0_1_Mapper from '@dal/layers/sequelize/mapper/2.0.1/index.js';
-import { StatusNotification } from '@dal/layers/sequelize/model/Location/index.js';
-import { Variable } from '@dal/layers/sequelize/model/DeviceModel/index.js';
-import type { IDeviceModelRepository, ILocationRepository } from '@dal/interfaces/repositories.js';
+import { Component, EvseType, Variable } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import { Connector, StatusNotification } from '@dal/layers/sequelize/model/Location/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 
@@ -17,17 +14,20 @@ export class StatusNotificationService {
   protected _componentRepository: CrudRepository<Component>;
   protected _deviceModelRepository: IDeviceModelRepository;
   protected _locationRepository: ILocationRepository;
+  protected _cache: ICache;
   protected _logger: Logger<ILogObj>;
 
   constructor(
     componentRepository: CrudRepository<Component>,
     deviceModelRepository: IDeviceModelRepository,
     locationRepository: ILocationRepository,
+    cache: ICache,
     logger?: Logger<ILogObj>,
   ) {
     this._componentRepository = componentRepository;
     this._deviceModelRepository = deviceModelRepository;
     this._locationRepository = locationRepository;
+    this._cache = cache;
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
@@ -71,6 +71,25 @@ export class StatusNotificationService {
           ? statusNotificationRequest.timestamp
           : new Date().toISOString(),
       } as Connector;
+
+      const connectionJson = await this._cache.get<string>(
+        createIdentifier(tenantId, stationId),
+        CacheNamespace.Connections,
+      );
+      const connection: IWebsocketConnection | null = connectionJson
+        ? JSON.parse(connectionJson)
+        : null;
+      if (!connection?.allowUnknownChargingStations) {
+        const connectorExists = chargingStation.evses?.some((evse) =>
+          evse.connectors?.some((c) => c.connectorId === statusNotificationRequest.connectorId),
+        );
+        if (!connectorExists) {
+          throw new Error(
+            `Connector ${statusNotificationRequest.connectorId} on station ${stationId} does not exist and allowUnknownChargingStations is false`,
+          );
+        }
+      }
+
       await this._locationRepository.createOrUpdateConnector(tenantId, connector);
 
       let components = await this._componentRepository.readAllByQuery(tenantId, {
@@ -192,7 +211,24 @@ export class StatusNotificationService {
             },
           },
         );
-      } else {
+      } else if (statusNotificationRequest.connectorId !== 0) {
+        const connectionJson = await this._cache.get<string>(
+          createIdentifier(tenantId, stationId),
+          CacheNamespace.Connections,
+        );
+        const connection: IWebsocketConnection | null = connectionJson
+          ? JSON.parse(connectionJson)
+          : null;
+        if (!connection?.allowUnknownChargingStations) {
+          const connectorExists = chargingStation.evses?.some((evse) =>
+            evse.connectors?.some((c) => c.connectorId === statusNotificationRequest.connectorId),
+          );
+          if (!connectorExists) {
+            throw new Error(
+              `Connector ${statusNotificationRequest.connectorId} on station ${stationId} does not exist and allowUnknownChargingStations is false`,
+            );
+          }
+        }
         await this._locationRepository.createOrUpdateConnector(tenantId, connector);
       }
     } else {
