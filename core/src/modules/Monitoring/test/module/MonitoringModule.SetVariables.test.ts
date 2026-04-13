@@ -78,6 +78,14 @@ beforeAll(async () => {
 
   sequelizeInstance = DefaultSequelizeInstance.getInstance(dbConfig);
   await sequelizeInstance.query('CREATE EXTENSION IF NOT EXISTS citext;');
+
+  // Define schema relationships for testing
+  VariableAttribute.belongsTo(Component, { foreignKey: 'componentId' });
+  Component.hasMany(VariableAttribute, { foreignKey: 'componentId' });
+  VariableAttribute.belongsTo(Variable, { foreignKey: 'variableId' });
+  Variable.hasMany(VariableAttribute, { foreignKey: 'variableId' });
+  VariableAttribute.hasMany(VariableStatus, { foreignKey: 'variableAttributeId' });
+  VariableStatus.belongsTo(VariableAttribute, { foreignKey: 'variableAttributeId' });
   await sequelizeInstance.sync({ force: true });
 }, 90_000);
 
