@@ -27,7 +27,9 @@
     "test": "jest --config jest.config.ts",
     "coverage": "jest --config jest.config.ts --coverage",
     "prepare": "husky",
-    "migrate": "npx sequelize-cli db:migrate && echo migration completed successfully"
+    "migrate": "npx sequelize-cli db:migrate && echo migration completed successfully",
+    "hasura:export": "cd Server/hasura-metadata && hasura metadata export",
+    "hasura:apply": "cd Server/hasura-metadata && hasura metadata apply"
   },
   "lint-staged": {
     "**/*.{js,ts,jsx,tsx,json,md}": "prettier --write"
