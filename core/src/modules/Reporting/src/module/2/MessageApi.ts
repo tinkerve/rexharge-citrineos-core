@@ -2,28 +2,25 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
-import {
-  OCPP2_common_types,
-  OCPP2_request_types,
-  type CallAction,
-  type IMessageConfirmation,
-  type MonitoringCriterionEnumType,
-} from '@citrineos/base';
 import {
   AbstractModuleApi,
   AsMessageEndpoint,
   DEFAULT_TENANT_ID,
   getOcpp2Schema,
+  OCPP2_common_types,
+  OCPP2_request_types,
   OCPP_CallAction,
   OCPPVersion,
+  type CallAction,
+  type IMessageConfirmation,
+  type MonitoringCriterionEnumType,
 } from '@citrineos/base';
-import { packageGroupCall } from '@util/index.js';
+import { getBatches, getSizeOfRequest, packageGroupCall } from '@util/index.js';
 import type { FastifyInstance } from 'fastify';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
 import type { IReportingModuleApi } from '../interface.js';
 import { ReportingModule } from '../module.js';
-import { getBatches, getSizeOfRequest } from '@util/index.js';
 
 const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
 
@@ -65,7 +62,7 @@ export class ReportingOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -247,7 +244,7 @@ export class ReportingOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -270,7 +267,7 @@ export class ReportingOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
