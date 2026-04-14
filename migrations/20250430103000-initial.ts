@@ -3,29 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 'use strict';
 
-import { QueryInterface, QueryTypes } from 'sequelize';
+import { QueryInterface } from 'sequelize';
 
 export default {
   up: async (queryInterface: QueryInterface) => {
-    const migrationName = '20250430103000-initial';
-
-    const [results] = await queryInterface.sequelize.query(
-      `SELECT EXISTS (
-      SELECT 1 
-      FROM "SequelizeMeta" 
-      WHERE name LIKE :pattern
-    ) AS migration_exists`,
-      {
-        replacements: { pattern: `${migrationName}%` },
-        type: QueryTypes.SELECT,
-      },
-    );
-
-    if ((results as any).migration_exists) {
-      console.log('Migration already run, skipping...');
-      return;
-    }
-
     await queryInterface.sequelize.query(`
     
         DO $$

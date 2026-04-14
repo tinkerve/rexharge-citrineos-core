@@ -7,20 +7,6 @@ import { DataTypes, type ModelAttributeColumnOptions, QueryInterface, QueryTypes
 
 export default {
   up: async (queryInterface: QueryInterface) => {
-    const migrationName = '20260330100000-add-charging-station-pk-id';
-
-    // ── Idempotency guard (read-only, outside the transaction) ─────────────────
-    const [metaResult] = await queryInterface.sequelize.query(
-      `SELECT EXISTS (
-         SELECT 1 FROM "SequelizeMeta" WHERE name = :exactName
-       ) AS migration_exists`,
-      { replacements: { exactName: migrationName }, type: QueryTypes.SELECT },
-    );
-    if ((metaResult as any).migration_exists) {
-      console.log('Migration already run, skipping...');
-      return;
-    }
-
     // ── Everything below runs inside a single PostgreSQL transaction. ───────────
     // PostgreSQL treats DDL as transactional, so any failure causes a full
     // rollback — no partial state, no data loss.
