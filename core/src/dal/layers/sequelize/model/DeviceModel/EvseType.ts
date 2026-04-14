@@ -18,7 +18,8 @@ import {
   indexes: [
     {
       unique: true,
-      fields: ['id'],
+      name: 'evse_types_tenantId_id',
+      fields: ['tenantId', 'id'],
       where: {
         connectorId: null,
       },
@@ -39,13 +40,13 @@ export class EvseType extends Model implements OCPP2_0_1.EVSEType, EvseTypeDto {
 
   @Column({
     type: DataType.INTEGER,
-    unique: 'id_connectorId',
+    unique: 'tenantId_id_connectorId',
   })
   declare id: number;
 
   @Column({
     type: DataType.INTEGER,
-    unique: 'id_connectorId',
+    unique: 'tenantId_id_connectorId',
   })
   declare connectorId?: number | null;
 
@@ -54,6 +55,7 @@ export class EvseType extends Model implements OCPP2_0_1.EVSEType, EvseTypeDto {
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
+    unique: 'tenantId_id_connectorId',
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
   })
