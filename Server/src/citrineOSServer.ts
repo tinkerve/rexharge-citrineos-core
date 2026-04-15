@@ -24,43 +24,35 @@ import {
   OCPPValidator,
   OCPPVersion,
 } from '@citrineos/base';
-import { CertificatesDataApi, CertificatesModule, CertificatesOcpp2Api } from '@citrineos/core';
-import {
-  ConfigurationDataApi,
-  ConfigurationModule,
-  ConfigurationOcpp16Api,
-  ConfigurationOcpp2Api,
-} from '@citrineos/core';
-import { RepositoryStore, sequelize, Sequelize } from '@citrineos/core';
-import {
-  EVDriverDataApi,
-  EVDriverModule,
-  EVDriverOcpp16Api,
-  EVDriverOcpp2Api,
-} from '@citrineos/core';
-import { MonitoringDataApi, MonitoringModule, MonitoringOcpp2Api } from '@citrineos/core';
-import { AdminApi, MessageRouterImpl, WebhookDispatcher } from '@citrineos/core';
-import { ReportingModule, ReportingOcpp16Api, ReportingOcpp2Api } from '@citrineos/core';
 import type { ISmartCharging } from '@citrineos/core';
 import {
-  InternalSmartCharging,
-  SmartChargingModule,
-  SmartChargingOcpp16Api,
-  SmartChargingOcpp2Api,
-} from '@citrineos/core';
-import { TenantDataApi, TenantModule } from '@citrineos/core';
-import { TransactionsDataApi, TransactionsModule, TransactionsOcpp2Api } from '@citrineos/core';
-import {
+  AdminApi,
   apiAuthPluginFp,
   Authenticator,
   BasicAuthenticationFilter,
   BrokerAwareMessageSender,
   CertificateAuthorityService,
+  CertificatesDataApi,
+  CertificatesModule,
+  CertificatesOcpp2Api,
+  ConfigurationDataApi,
+  ConfigurationModule,
+  ConfigurationOcpp16Api,
+  ConfigurationOcpp2Api,
   ConnectedStationFilter,
+  EVDriverDataApi,
+  EVDriverModule,
+  EVDriverOcpp16Api,
+  EVDriverOcpp2Api,
   IdGenerator,
   initSwagger,
+  InternalSmartCharging,
   LocalBypassAuthProvider,
   MemoryCache,
+  MessageRouterImpl,
+  MonitoringDataApi,
+  MonitoringModule,
+  MonitoringOcpp2Api,
   NetworkProfileFilter,
   OIDCAuthProvider,
   RabbitMQChannelManager,
@@ -69,7 +61,22 @@ import {
   RabbitMqSender,
   RealTimeAuthorizer,
   RedisCache,
+  ReportingModule,
+  ReportingOcpp16Api,
+  ReportingOcpp2Api,
+  RepositoryStore,
+  sequelize,
+  Sequelize,
+  SmartChargingModule,
+  SmartChargingOcpp16Api,
+  SmartChargingOcpp2Api,
+  TenantDataApi,
+  TenantModule,
+  TransactionsDataApi,
+  TransactionsModule,
+  TransactionsOcpp2Api,
   UnknownStationFilter,
+  WebhookDispatcher,
   WebsocketNetworkConnection,
 } from '@citrineos/core';
 import cors from '@fastify/cors';
@@ -283,14 +290,7 @@ export class CitrineOSServer {
   }
 
   protected _createHandler(): IMessageHandler {
-    const exchange = this._config.util.messageBroker.amqp?.exchange;
-    if (!exchange) {
-      throw new Error('RabbitMQ exchange is not configured');
-    }
-    if (!this._channelManager) {
-      throw new Error('RabbitMQ channel manager is not initialized');
-    }
-    return new RabbitMqReceiver(exchange, this._channelManager, this._logger);
+    return new RabbitMqReceiver(this._config, this._channelManager!, this._logger);
   }
 
   protected initHealthCheck() {

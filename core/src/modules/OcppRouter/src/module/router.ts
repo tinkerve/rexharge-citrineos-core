@@ -32,6 +32,7 @@ import {
   MessageOrigin,
   MessageState,
   MessageTypeId,
+  NO_ACTION,
   OCPP2_1,
   OCPP_CallAction,
   OcppError,
@@ -47,7 +48,6 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
 import { WebhookDispatcher } from './webhook.dispatcher.js';
-import { NO_ACTION } from '@citrineos/base';
 
 /**
  * Implementation of the ocpp router
@@ -57,13 +57,13 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
    * Fields
    */
 
-  private _webhookDispatcher: WebhookDispatcher;
+  protected _webhookDispatcher: WebhookDispatcher;
   protected _cache: ICache;
   protected _sender: IMessageSender;
   protected _handler: IMessageHandler;
   protected _networkHook: (identifier: string, message: string) => Promise<void>;
   protected _locationRepository: ILocationRepository;
-  private readonly _oidcTokenProvider?: OidcTokenProvider;
+  protected readonly _oidcTokenProvider?: OidcTokenProvider;
 
   /**
    * Constructor for the class.
