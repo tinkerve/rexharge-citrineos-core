@@ -21,9 +21,11 @@ export default {
     console.log('Adding tenantId-inclusive unique constraints to EvseTypes...');
 
     await queryInterface.sequelize.query(`
-      ALTER TABLE "EvseTypes"
-        ADD CONSTRAINT "tenantId_id_connectorId"
-        UNIQUE ("tenantId", "id", "connectorId")
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'evse_types_tenantId_id_connectorId' AND conrelid = '"EvseTypes"'::regclass) THEN
+          ALTER TABLE "EvseTypes" ADD CONSTRAINT "evse_types_tenantId_id_connectorId" UNIQUE ("tenantId", "id", "connectorId");
+        END IF;
+      END $$
     `);
 
     await queryInterface.sequelize.query(`
@@ -40,11 +42,17 @@ export default {
       `ALTER TABLE "Components" DROP CONSTRAINT IF EXISTS "Components_name_instance_key"`,
     );
     await queryInterface.sequelize.query(`DROP INDEX IF EXISTS "components_name"`);
+    // Drop the misnamed constraint left behind by a failed prior run.
+    await queryInterface.sequelize.query(
+      `ALTER TABLE "Components" DROP CONSTRAINT IF EXISTS "tenantId_name_instance"`,
+    );
 
     await queryInterface.sequelize.query(`
-      ALTER TABLE "Components"
-        ADD CONSTRAINT "tenantId_name_instance"
-        UNIQUE ("tenantId", "name", "instance")
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'components_tenantId_name_instance' AND conrelid = '"Components"'::regclass) THEN
+          ALTER TABLE "Components" ADD CONSTRAINT "components_tenantId_name_instance" UNIQUE ("tenantId", "name", "instance");
+        END IF;
+      END $$
     `);
     await queryInterface.sequelize.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS "components_tenantId_name"
@@ -61,9 +69,11 @@ export default {
     await queryInterface.sequelize.query(`DROP INDEX IF EXISTS "variables_name"`);
 
     await queryInterface.sequelize.query(`
-      ALTER TABLE "Variables"
-        ADD CONSTRAINT "tenantId_name_instance"
-        UNIQUE ("tenantId", "name", "instance")
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'variables_tenantId_name_instance' AND conrelid = '"Variables"'::regclass) THEN
+          ALTER TABLE "Variables" ADD CONSTRAINT "variables_tenantId_name_instance" UNIQUE ("tenantId", "name", "instance");
+        END IF;
+      END $$
     `);
     await queryInterface.sequelize.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS "variables_tenantId_name"
@@ -77,13 +87,13 @@ export default {
   down: async (queryInterface: QueryInterface) => {
     // ── EvseTypes ──────────────────────────────────────────────────────────────
     await queryInterface.sequelize.query(
-      `ALTER TABLE "EvseTypes" DROP CONSTRAINT IF EXISTS "tenantId_id_connectorId"`,
+      `ALTER TABLE "EvseTypes" DROP CONSTRAINT IF EXISTS "evse_types_tenantId_id_connectorId"`,
     );
     await queryInterface.sequelize.query(`DROP INDEX IF EXISTS "evse_types_tenantId_id"`);
 
     // ── Components ─────────────────────────────────────────────────────────────
     await queryInterface.sequelize.query(
-      `ALTER TABLE "Components" DROP CONSTRAINT IF EXISTS "tenantId_name_instance"`,
+      `ALTER TABLE "Components" DROP CONSTRAINT IF EXISTS "components_tenantId_name_instance"`,
     );
     await queryInterface.sequelize.query(`DROP INDEX IF EXISTS "components_tenantId_name"`);
 
@@ -98,7 +108,7 @@ export default {
 
     // ── Variables ──────────────────────────────────────────────────────────────
     await queryInterface.sequelize.query(
-      `ALTER TABLE "Variables" DROP CONSTRAINT IF EXISTS "tenantId_name_instance"`,
+      `ALTER TABLE "Variables" DROP CONSTRAINT IF EXISTS "variables_tenantId_name_instance"`,
     );
     await queryInterface.sequelize.query(`DROP INDEX IF EXISTS "variables_tenantId_name"`);
 

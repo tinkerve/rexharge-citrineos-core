@@ -21,14 +21,14 @@ import type {
 import { AuthorizationMapper } from '../mapper/2.0.1/AuthorizationMapper.js';
 import { MeterValueMapper } from '../mapper/2.0.1/MeterValueMapper.js';
 import { Authorization } from '../model/Authorization/Authorization.js';
+import { EvseType } from '../model/DeviceModel/EvseType.js';
 import { ChargingStation } from '../model/Location/ChargingStation.js';
 import { Connector } from '../model/Location/Connector.js';
 import { Evse } from '../model/Location/Evse.js';
-import { EvseType } from '../model/DeviceModel/EvseType.js';
+import { Tariff } from '../model/Tariff/Tariffs.js';
 import { MeterValue } from '../model/TransactionEvent/MeterValue.js';
 import { StartTransaction } from '../model/TransactionEvent/StartTransaction.js';
 import { StopTransaction } from '../model/TransactionEvent/StopTransaction.js';
-import { Tariff } from '../model/Tariff/Tariffs.js';
 import { Transaction } from '../model/TransactionEvent/Transaction.js';
 import { TransactionEvent } from '../model/TransactionEvent/TransactionEvent.js';
 import { SequelizeRepository } from './Base.js';
@@ -169,7 +169,7 @@ export class SequelizeTransactionEventRepository
             include: [Tariff],
           });
           connectorId = connector.id;
-          tariffId = connector.tariffs?.[0]?.id;
+          tariffId = connector.tariff?.id;
         }
         let authorizationId = existingTransaction.authorizationId;
         if (!authorizationId && value.idToken) {
@@ -239,7 +239,7 @@ export class SequelizeTransactionEventRepository
               include: [Tariff],
             });
             newTransaction.set('connectorId', connector.id);
-            newTransaction.set('tariffId', connector.tariffs?.[0]?.id);
+            newTransaction.set('tariffId', connector.tariff?.id);
           }
         }
 
@@ -698,7 +698,7 @@ export class SequelizeTransactionEventRepository
         stationId,
         evseId: connector.evseId,
         connectorId: connector.id,
-        tariffId: connector.tariffs?.[0]?.id,
+        tariffId: connector.tariff?.id,
         isActive: true,
         transactionId: transactionId.toString(),
         authorizationId: authorization ? authorization.id : null,

@@ -315,8 +315,8 @@ export function defineAssociations() {
   EvseType.belongsTo(Connector, { foreignKey: 'connectorId' });
   Connector.hasMany(EvseType, { foreignKey: 'connectorId' });
 
-  Connector.hasMany(Tariff, { foreignKey: 'connectorId' });
-  Tariff.belongsTo(Connector, { foreignKey: 'connectorId' });
+  Connector.belongsTo(Tariff, { foreignKey: 'tariffId' });
+  Tariff.hasMany(Connector, { foreignKey: 'tariffId' });
 
   // ChargingStationNetworkProfile associations
   ChargingStationNetworkProfile.belongsTo(ChargingStation, { foreignKey: 'stationPkId' });
