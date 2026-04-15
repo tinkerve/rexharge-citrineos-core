@@ -49,7 +49,7 @@ export class SequelizeRepository<T extends Model<any, any>> extends CrudReposito
     namespace: string = this.namespace,
   ): Promise<T[]> {
     return await this.s.models[namespace]
-      .findAll(query as FindOptions<any>)
+      .findAll({ ...query, tenantId } as FindOptions<any>)
       .then((row) => row as T[]);
   }
 
