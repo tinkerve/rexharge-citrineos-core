@@ -6,22 +6,22 @@ import type { CallAction, IMessageConfirmation, OCPP2_request_types } from '@cit
 import {
   AbstractModuleApi,
   AsMessageEndpoint,
+  AttributeEnum,
   ChargingLimitSourceEnum,
+  ChargingProfileKindEnum,
+  ChargingProfilePurposeEnum,
+  DataEnum,
   DEFAULT_TENANT_ID,
   getOcpp2Schema,
   Namespace,
   OCPP1_6_Namespace,
-  OCPP_CallAction,
   OCPP2_Namespace,
+  OCPP_CallAction,
   OCPPVersion,
-  ChargingProfilePurposeEnum,
-  ChargingProfileKindEnum,
-  AttributeEnum,
-  DataEnum,
 } from '@citrineos/base';
 import * as OCPP2_0_1_Mapper from '@dal/layers/sequelize/mapper/2.0.1/index.js';
 import { VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
-import { stringToSet, validateChargingProfileType, packageGroupCall } from '@util/index.js';
+import { packageGroupCall, stringToSet, validateChargingProfileType } from '@util/index.js';
 import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -193,7 +193,7 @@ export class SmartChargingOcpp2Api
 
     // Send calls for each station
     const results = await packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -529,7 +529,7 @@ export class SmartChargingOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,

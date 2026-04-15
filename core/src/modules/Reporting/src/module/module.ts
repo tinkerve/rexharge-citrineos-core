@@ -4,16 +4,16 @@
 import type {
   BootstrapConfig,
   CallAction,
+  GenericDeviceModelStatusEnumType,
   HandlerProperties,
   ICache,
   IMessage,
   IMessageHandler,
   IMessageSender,
-  SystemConfig,
+  OCPP2_common_types,
   OCPP2_request_types,
   OCPP2_response_types,
-  OCPP2_common_types,
-  GenericDeviceModelStatusEnumType,
+  SystemConfig,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -31,15 +31,14 @@ import {
   OCPPVersion,
   SetVariableStatusEnum,
 } from '@citrineos/base';
+import { sequelize } from '@dal/index.js';
 import type {
   IDeviceModelRepository,
   IOCPPMessageRepository,
   ISecurityEventRepository,
   IVariableMonitoringRepository,
 } from '@dal/interfaces/repositories.js';
-import { Component, VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
-import { sequelize } from '@dal/index.js';
-import { Variable } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import { Component, Variable } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { DeviceModelService } from './services.js';
