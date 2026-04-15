@@ -17,7 +17,6 @@ import {
 } from 'sequelize-typescript';
 import { Tenant } from '../Tenant.js';
 import { CountryNameEnumType, SignatureAlgorithmEnumType } from './CertificateTypes.js';
-import { InstalledCertificate } from './InstalledCertificate.js';
 
 @Table({
   indexes: [
@@ -98,9 +97,6 @@ export class Certificate extends Model implements CertificateDto {
 
   @HasMany(() => Certificate, { foreignKey: 'signedBy', as: 'signedCertificates' })
   declare signedCertificates?: Certificate[];
-
-  @HasMany(() => InstalledCertificate, 'certificateId')
-  declare installedCertificates?: InstalledCertificate[];
 
   @ForeignKey(() => Tenant)
   @Column({
