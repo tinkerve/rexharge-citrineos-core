@@ -93,6 +93,7 @@ export function createDockerConfig() {
         endpointPrefix: 'evdriver',
         host: '0.0.0.0',
         port: 8085,
+        enableGetChargingProfilesOnStartTransaction: true,
         responses: [
           OCPP_CallAction.CancelReservation,
           OCPP_CallAction.ClearCache,

@@ -131,6 +131,7 @@ export const systemConfigInputSchema = z.object({
       port: z.number().int().min(1).default(8081).optional(),
       requests: z.array(CallActionSchema),
       responses: z.array(CallActionSchema),
+      enableGetChargingProfilesOnStartTransaction: z.boolean().default(true).optional(),
     }),
     monitoring: z.object({
       endpointPrefix: z.string().default(EventGroup.Monitoring).optional(),
@@ -379,6 +380,7 @@ export const systemConfigSchema = z
         port: z.number().int().min(1).optional(),
         requests: z.array(CallActionSchema),
         responses: z.array(CallActionSchema),
+        enableGetChargingProfilesOnStartTransaction: z.boolean().optional(),
       }),
       configuration: z
         .object({

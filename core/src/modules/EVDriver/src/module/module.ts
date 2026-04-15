@@ -586,24 +586,30 @@ export class EVDriverModule extends AbstractModule {
           returning: false,
         },
       );
-      // 2. Request charging profiles to get the latest data
-      await this.sendCall(
-        stationId,
-        message.context.tenantId,
-        message.protocol,
-        OCPP_CallAction.GetChargingProfiles,
-        {
-          requestId: await this._idGenerator.generateRequestId(
-            message.context.tenantId,
-            message.context.stationId,
-            ChargingStationSequenceTypeEnum.getChargingProfiles,
-          ),
-          chargingProfile: {
-            chargingProfilePurpose: ChargingProfilePurposeEnum.TxProfile,
-            chargingLimitSource: [ChargingLimitSourceEnum.CSO],
-          } as OCPP2_common_types.ChargingProfileCriterionType,
-        } as OCPP2_request_types.GetChargingProfilesRequest,
-      );
+      // 2. Request charging profiles to get the latest data (if configured)
+      if (this._config.modules.evdriver.enableGetChargingProfilesOnStartTransaction !== false) {
+        await this.sendCall(
+          stationId,
+          message.context.tenantId,
+          message.protocol,
+          OCPP_CallAction.GetChargingProfiles,
+          {
+            requestId: await this._idGenerator.generateRequestId(
+              message.context.tenantId,
+              message.context.stationId,
+              ChargingStationSequenceTypeEnum.getChargingProfiles,
+            ),
+            chargingProfile: {
+              chargingProfilePurpose: ChargingProfilePurposeEnum.TxProfile,
+              chargingLimitSource: [ChargingLimitSourceEnum.CSO],
+            } as OCPP2_common_types.ChargingProfileCriterionType,
+          } as OCPP2_request_types.GetChargingProfilesRequest,
+        );
+      } else {
+        this._logger.info(
+          `Skipping GetChargingProfiles after RequestStartTransaction for station ${stationId} (disabled by enableGetChargingProfilesOnStartTransaction configuration)`,
+        );
+      }
     } else {
       this._logger.error(`RequestStartTransaction failed: ${JSON.stringify(message.payload)}`);
     }
