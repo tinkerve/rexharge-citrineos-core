@@ -1,16 +1,12 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type {
-  ChargingStationDto,
-  ConnectorStatusEnumType,
-  StatusNotificationDto,
-  TenantDto,
-} from '@citrineos/base';
+import type { ConnectorStatusEnumType, StatusNotificationDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -18,6 +14,8 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { ChargingStation } from './ChargingStation.js';
+import { Connector } from './Connector.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class StatusNotification extends Model implements StatusNotificationDto {
@@ -30,7 +28,8 @@ export class StatusNotification extends Model implements StatusNotificationDto {
   @Column(DataType.STRING)
   declare stationId: string;
 
-  declare chargingStation: ChargingStationDto;
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation: ChargingStation;
 
   @Column({
     type: DataType.DATE,
@@ -64,6 +63,10 @@ export class StatusNotification extends Model implements StatusNotificationDto {
 
   declare customData?: object | null;
 
+  @BelongsTo(() => Connector, 'connectorId')
+  declare connector?: Connector;
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -72,6 +75,7 @@ export class StatusNotification extends Model implements StatusNotificationDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

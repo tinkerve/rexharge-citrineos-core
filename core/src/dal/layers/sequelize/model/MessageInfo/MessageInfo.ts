@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
-  ComponentDto,
   MessageInfoDto,
   MessagePriorityEnumType,
   MessageStateEnumType,
@@ -14,13 +13,17 @@ import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
   Index,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { Component } from '../DeviceModel/Component.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class MessageInfo extends Model implements MessageInfoDto {
@@ -85,8 +88,10 @@ export class MessageInfo extends Model implements MessageInfoDto {
    * Relations
    */
 
-  declare display: ComponentDto;
+  @BelongsTo(() => Component, 'displayComponentId')
+  declare display: Component;
 
+  @ForeignKey(() => Component)
   @Column({
     type: DataType.INTEGER,
   })
@@ -94,6 +99,7 @@ export class MessageInfo extends Model implements MessageInfoDto {
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -103,6 +109,7 @@ export class MessageInfo extends Model implements MessageInfoDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

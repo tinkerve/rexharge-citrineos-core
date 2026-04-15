@@ -11,13 +11,18 @@ import { DEFAULT_TENANT_ID, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
+  BelongsToMany,
   Column,
   DataType,
+  ForeignKey,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 import { ChargingStation } from './ChargingStation.js';
+import { ChargingStationNetworkProfile } from './ChargingStationNetworkProfile.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class ServerNetworkProfile
@@ -69,8 +74,10 @@ export class ServerNetworkProfile
   @Column(DataType.STRING)
   declare rootCACertificateFilePath?: string;
 
+  @BelongsToMany(() => ChargingStation, () => ChargingStationNetworkProfile)
   declare chargingStations?: ChargingStation[] | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: true,
@@ -79,6 +86,7 @@ export class ServerNetworkProfile
   })
   declare tenantId?: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

@@ -7,12 +7,20 @@ import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { Connector } from '../Location/Connector.js';
+import { Component } from './Component.js';
+import { VariableAttribute } from './VariableAttribute.js';
+import { Reservation } from '../Reservation.js';
+import { Tenant } from '../Tenant.js';
 
 @Table({
   indexes: [
@@ -44,14 +52,31 @@ export class EvseType extends Model implements OCPP2_0_1.EVSEType, EvseTypeDto {
   })
   declare id: number;
 
+  @ForeignKey(() => Connector)
   @Column({
     type: DataType.INTEGER,
     unique: 'tenantId_id_connectorId',
   })
   declare connectorId?: number | null;
 
+  @BelongsTo(() => Connector, 'connectorId')
+  declare connector?: Connector;
+
+  @HasMany(() => Connector, 'evseTypeConnectorId')
+  declare connectors?: Connector[];
+
+  @HasMany(() => Component, 'evseDatabaseId')
+  declare components?: Component[];
+
+  @HasMany(() => VariableAttribute, 'evseDatabaseId')
+  declare variableAttributes?: VariableAttribute[];
+
+  @HasMany(() => Reservation, 'evseId')
+  declare reservations?: Reservation[];
+
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -61,6 +86,7 @@ export class EvseType extends Model implements OCPP2_0_1.EVSEType, EvseTypeDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

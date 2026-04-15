@@ -1,14 +1,20 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type {
-  VariableAttributeDto,
-  VariableStatusDto,
-  TenantDto,
-  StatusInfo,
-} from '@citrineos/base';
+import type { VariableStatusDto, TenantDto, StatusInfo } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { VariableAttribute } from './VariableAttribute.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class VariableStatus extends Model implements VariableStatusDto {
@@ -27,13 +33,16 @@ export class VariableStatus extends Model implements VariableStatusDto {
    * Relations
    */
 
-  declare variable: VariableAttributeDto;
+  @BelongsTo(() => VariableAttribute, 'variableAttributeId')
+  declare variable: VariableAttribute;
 
+  @ForeignKey(() => VariableAttribute)
   @Column(DataType.INTEGER)
   declare variableAttributeId?: number | null;
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -42,6 +51,7 @@ export class VariableStatus extends Model implements VariableStatusDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

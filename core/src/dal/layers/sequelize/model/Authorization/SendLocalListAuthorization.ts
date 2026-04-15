@@ -2,21 +2,35 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import type { TenantDto } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import { DEFAULT_TENANT_ID } from '@citrineos/base';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
+import { LocalListAuthorization, SendLocalList } from './index.js';
 
 @Table
 export class SendLocalListAuthorization extends Model {
   // Namespace enum not used as this is not a model required by CitrineOS
   static readonly MODEL_NAME: string = 'SendLocalListAuthorization';
 
+  @ForeignKey(() => SendLocalList)
   @Column(DataType.INTEGER)
   declare sendLocalListId: number;
 
+  @ForeignKey(() => LocalListAuthorization)
   @Column(DataType.INTEGER)
   declare authorizationId: number;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -25,6 +39,7 @@ export class SendLocalListAuthorization extends Model {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

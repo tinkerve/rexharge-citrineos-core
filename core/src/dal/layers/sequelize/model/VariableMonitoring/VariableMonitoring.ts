@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
-  ComponentDto,
-  VariableDto,
   VariableMonitoringDto,
   TenantDto,
   MonitorEnumType,
@@ -14,15 +12,21 @@ import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Index,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 import { ChargingStation } from '../Location/index.js';
+import { Variable } from '../DeviceModel/Variable.js';
+import { Component } from '../DeviceModel/Component.js';
+import { VariableMonitoringStatus } from './VariableMonitoringStatus.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class VariableMonitoring extends Model implements VariableMonitoringDto {
@@ -74,22 +78,33 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
    * Relations
    */
 
-  declare variable: VariableDto;
+  @BelongsTo(() => Variable, 'variableId')
+  declare variable: Variable;
 
+  @ForeignKey(() => Variable)
   @Column({
     type: DataType.INTEGER,
   })
   declare variableId?: number | null;
 
-  declare component: ComponentDto;
+  @BelongsTo(() => Component, 'componentId')
+  declare component: Component;
 
+  @ForeignKey(() => Component)
   @Column({
     type: DataType.INTEGER,
   })
   declare componentId?: number | null;
 
+  @HasMany(() => VariableMonitoringStatus, 'variableMonitoringId')
+  declare statuses?: VariableMonitoringStatus[];
+
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStation;
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -99,6 +114,7 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

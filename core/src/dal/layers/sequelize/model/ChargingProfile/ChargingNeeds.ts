@@ -10,8 +10,19 @@ import type {
   DCChargingParametersType,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { Evse } from '../Location/index.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class ChargingNeeds extends Model implements ChargingNeedsDto {
@@ -44,18 +55,23 @@ export class ChargingNeeds extends Model implements ChargingNeedsDto {
   /**
    * Relations
    */
+  @ForeignKey(() => Evse)
   @Column(DataType.INTEGER)
   declare evseId: number;
 
+  @BelongsTo(() => Evse, 'evseId')
   declare evse: Evse;
 
+  @ForeignKey(() => Transaction)
   @Column(DataType.INTEGER)
   declare transactionDatabaseId: number;
 
-  declare transaction: TransactionDto;
+  @BelongsTo(() => Transaction, 'transactionDatabaseId')
+  declare transaction: Transaction;
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -64,6 +80,7 @@ export class ChargingNeeds extends Model implements ChargingNeedsDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

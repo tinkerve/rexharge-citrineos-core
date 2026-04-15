@@ -7,13 +7,17 @@ import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 import { VariableAttribute } from './DeviceModel/VariableAttribute.js';
+import { Tenant } from './Tenant.js';
 
 @Table
 export class Boot extends Model implements BootDto {
@@ -53,6 +57,7 @@ export class Boot extends Model implements BootDto {
   /**
    * Variable attributes to be sent in SetVariablesRequest on pending boot
    */
+  @HasMany(() => VariableAttribute, 'bootConfigId')
   declare pendingBootSetVariables?: VariableAttribute[];
 
   @Column(DataType.JSON)
@@ -69,6 +74,7 @@ export class Boot extends Model implements BootDto {
 
   declare customData?: object | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -77,6 +83,7 @@ export class Boot extends Model implements BootDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

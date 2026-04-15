@@ -5,8 +5,6 @@ import type {
   ChargingStationCapabilityEnumType,
   ChargingStationDto,
   ChargingStationParkingRestrictionEnumType,
-  ConnectorDto,
-  EvseDto,
   LocationDto,
   Point,
   TenantDto,
@@ -17,6 +15,8 @@ import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
+  BelongsToMany,
   Column,
   DataType,
   ForeignKey,
@@ -29,6 +29,20 @@ import {
 
 import { StatusNotification } from './StatusNotification.js';
 import { InstalledCertificate } from '../Certificate/InstalledCertificate.js';
+import { Location } from './Location.js';
+import { Evse } from './Evse.js';
+import { Connector } from './Connector.js';
+import { ServerNetworkProfile } from './ServerNetworkProfile.js';
+import { ChargingStationNetworkProfile } from './ChargingStationNetworkProfile.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
+import { VariableAttribute } from '../DeviceModel/VariableAttribute.js';
+import { OCPPMessage } from '../OCPPMessage.js';
+import { VariableMonitoring } from '../VariableMonitoring/VariableMonitoring.js';
+import { EventData } from '../VariableMonitoring/EventData.js';
+import { ChargingStationSecurityInfo } from '../ChargingStationSecurityInfo.js';
+import { ChargingStationSequence } from '../ChargingStationSequence/ChargingStationSequence.js';
+import { DeleteCertificateAttempt } from '../Certificate/DeleteCertificateAttempt.js';
+import { Tenant } from '../Tenant.js';
 
 /**
  * Represents a charging station.
@@ -119,26 +133,56 @@ export class ChargingStation extends Model implements ChargingStationDto {
   })
   declare use16StatusNotification0: boolean;
 
+  @ForeignKey(() => Location)
   @Column(DataType.INTEGER)
   declare locationId?: number | null;
 
+  @HasMany(() => StatusNotification, 'stationPkId')
   declare statusNotifications?: StatusNotification[] | null;
 
+  @HasMany(() => InstalledCertificate, 'stationPkId')
   declare installedCertificates?: InstalledCertificate[];
 
-  declare transactions?: TransactionDto[] | null;
+  @HasMany(() => Transaction, 'stationPkId')
+  declare transactions?: Transaction[] | null;
 
   /**
    * The business Location of the charging station. Optional in case a charging station is not yet in the field, or retired.
    */
-  declare location?: LocationDto;
+  @BelongsTo(() => Location, 'locationId')
+  declare location?: Location;
 
-  declare networkProfiles?: any[] | null;
+  @BelongsToMany(() => ServerNetworkProfile, () => ChargingStationNetworkProfile)
+  declare networkProfiles?: ServerNetworkProfile[] | null;
 
-  declare evses?: EvseDto[] | null;
+  @HasMany(() => Evse, 'stationPkId')
+  declare evses?: Evse[] | null;
 
-  declare connectors?: ConnectorDto[] | null;
+  @HasMany(() => Connector, 'stationPkId')
+  declare connectors?: Connector[] | null;
 
+  @HasMany(() => VariableAttribute, 'stationPkId')
+  declare variableAttributes?: VariableAttribute[];
+
+  @HasMany(() => OCPPMessage, 'stationPkId')
+  declare ocppMessages?: OCPPMessage[];
+
+  @HasMany(() => VariableMonitoring, 'stationPkId')
+  declare variableMonitorings?: VariableMonitoring[];
+
+  @HasMany(() => EventData, 'stationPkId')
+  declare stationEventData?: EventData[];
+
+  @HasMany(() => ChargingStationSecurityInfo, 'stationPkId')
+  declare securityInfo?: ChargingStationSecurityInfo[];
+
+  @HasMany(() => ChargingStationSequence, 'stationPkId')
+  declare sequences?: ChargingStationSequence[];
+
+  @HasMany(() => DeleteCertificateAttempt, 'stationPkId')
+  declare deleteCertificateAttempts?: DeleteCertificateAttempt[];
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -148,6 +192,7 @@ export class ChargingStation extends Model implements ChargingStationDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

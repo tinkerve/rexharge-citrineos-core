@@ -11,6 +11,7 @@ import { DEFAULT_TENANT_ID, OCPP2_Namespace, type ChargingStationDto } from '@ci
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -20,6 +21,7 @@ import {
 
 import { Certificate } from './Certificate.js';
 import { ChargingStation } from '../Location/index.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class InstalledCertificate extends Model implements InstalledCertificateDto {
@@ -68,13 +70,17 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
   })
   declare certificateType: CertificateUseEnumType;
 
+  @ForeignKey(() => Certificate)
   @Column(DataType.INTEGER)
   declare certificateId?: number | null;
 
-  certificate!: Certificate;
+  @BelongsTo(() => Certificate, 'certificateId')
+  declare certificate?: Certificate;
 
-  station?: ChargingStationDto;
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare station?: ChargingStation;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -83,6 +89,7 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

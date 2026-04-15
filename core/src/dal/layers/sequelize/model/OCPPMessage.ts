@@ -7,14 +7,17 @@ import { DEFAULT_TENANT_ID, MessageOrigin, Namespace, OCPPVersion } from '@citri
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Index,
   Model,
   Table,
 } from 'sequelize-typescript';
 import { ChargingStation } from './Location/index.js';
+import { Tenant } from './Tenant.js';
 
 @Table
 export class OCPPMessage extends Model implements OCPPMessageDto {
@@ -47,6 +50,10 @@ export class OCPPMessage extends Model implements OCPPMessageDto {
   @Column(DataType.JSONB)
   declare message: any;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStation;
+
+  @ForeignKey(() => OCPPMessage)
   @Index
   @Column(DataType.INTEGER)
   declare requestMessageId?: number;
@@ -59,6 +66,7 @@ export class OCPPMessage extends Model implements OCPPMessageDto {
   })
   declare timestamp: string;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -67,10 +75,13 @@ export class OCPPMessage extends Model implements OCPPMessageDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
+  @BelongsTo(() => OCPPMessage, { foreignKey: 'requestMessageId', as: 'requestMessage' })
   declare requestMessage?: OCPPMessage;
 
+  @HasMany(() => OCPPMessage, { foreignKey: 'requestMessageId', as: 'responseMessages' })
   declare responseMessages?: OCPPMessage[];
 
   @BeforeCreate

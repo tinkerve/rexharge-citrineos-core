@@ -4,9 +4,26 @@
 
 import type { ComponentDto, TenantDto, VariableDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 
 import { EvseType } from './EvseType.js';
+import { Variable } from './Variable.js';
+import { ComponentVariable } from './ComponentVariable.js';
+import { VariableAttribute } from './VariableAttribute.js';
+import { VariableMonitoring } from '../VariableMonitoring/VariableMonitoring.js';
+import { MessageInfo } from '../MessageInfo/MessageInfo.js';
+import { Tenant } from '../Tenant.js';
 
 @Table({
   indexes: [
@@ -43,12 +60,15 @@ export class Component extends Model implements OCPP2_0_1.ComponentType, Compone
    * Relations
    */
 
+  @BelongsTo(() => EvseType, 'evseDatabaseId')
   declare evse?: EvseType;
 
+  @ForeignKey(() => EvseType)
   @Column(DataType.INTEGER)
   declare evseDatabaseId?: number | null;
 
-  declare variables?: VariableDto[];
+  @BelongsToMany(() => Variable, { through: () => ComponentVariable, foreignKey: 'componentId' })
+  declare variables?: Variable[];
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
@@ -56,6 +76,16 @@ export class Component extends Model implements OCPP2_0_1.ComponentType, Compone
   public addVariable!: (variable: VariableDto) => Promise<void>;
   public getVariables!: () => Promise<VariableDto[]>;
 
+  @HasMany(() => VariableAttribute, 'componentId')
+  declare variableAttributes?: VariableAttribute[];
+
+  @HasMany(() => VariableMonitoring, 'componentId')
+  declare variableMonitorings?: VariableMonitoring[];
+
+  @HasMany(() => MessageInfo, 'displayComponentId')
+  declare messageInfos?: MessageInfo[];
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -65,6 +95,7 @@ export class Component extends Model implements OCPP2_0_1.ComponentType, Compone
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

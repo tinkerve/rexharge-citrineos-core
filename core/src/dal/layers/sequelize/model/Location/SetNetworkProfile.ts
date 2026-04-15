@@ -11,6 +11,7 @@ import type { OCPPVersionEnumType, TenantDto } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -20,6 +21,7 @@ import {
 } from 'sequelize-typescript';
 import { ChargingStation } from './ChargingStation.js';
 import { ServerNetworkProfile } from './ServerNetworkProfile.js';
+import { Tenant } from '../Tenant.js';
 
 /**
  * The CallMessage model can be extended with new optional fields,
@@ -36,6 +38,9 @@ export class SetNetworkProfile extends Model implements SetNetworkProfileDto {
   })
   declare stationPkId?: number;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStation;
+
   @Column(DataType.STRING)
   declare stationId: string;
 
@@ -46,9 +51,11 @@ export class SetNetworkProfile extends Model implements SetNetworkProfileDto {
   })
   declare correlationId: string;
 
+  @ForeignKey(() => ServerNetworkProfile)
   @Column(DataType.STRING)
   declare websocketServerConfigId?: string;
 
+  @BelongsTo(() => ServerNetworkProfile, 'websocketServerConfigId')
   declare websocketServerConfig?: ServerNetworkProfile;
 
   @Column(DataType.INTEGER)
@@ -102,6 +109,7 @@ export class SetNetworkProfile extends Model implements SetNetworkProfileDto {
   @Column(DataType.STRING)
   declare vpn?: string;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -110,6 +118,7 @@ export class SetNetworkProfile extends Model implements SetNetworkProfileDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

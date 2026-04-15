@@ -27,6 +27,9 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
   @Column(DataType.INTEGER)
   declare stationPkId?: number;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStation;
+
   @Column({
     type: DataType.STRING,
     unique: 'stationId_tenantId',
@@ -36,6 +39,7 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
   @Column(DataType.STRING)
   publicKeyFileId!: string;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -45,6 +49,7 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

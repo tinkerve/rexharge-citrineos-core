@@ -4,8 +4,20 @@
 
 import type { CertificateDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
-import { SignatureAlgorithmEnumType, CountryNameEnumType } from './CertificateTypes.js';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
+import { CountryNameEnumType, SignatureAlgorithmEnumType } from './CertificateTypes.js';
+import { InstalledCertificate } from './InstalledCertificate.js';
 
 @Table({
   indexes: [
@@ -77,9 +89,20 @@ export class Certificate extends Model implements CertificateDto {
   @Column(DataType.STRING)
   declare privateKeyFileId?: string | null;
 
+  @ForeignKey(() => Certificate)
   @Column(DataType.STRING)
   declare signedBy?: string | null; // certificate id
 
+  @BelongsTo(() => Certificate, { foreignKey: 'signedBy', as: 'signingCertificate' })
+  declare signingCertificate?: Certificate;
+
+  @HasMany(() => Certificate, { foreignKey: 'signedBy', as: 'signedCertificates' })
+  declare signedCertificates?: Certificate[];
+
+  @HasMany(() => InstalledCertificate, 'certificateId')
+  declare installedCertificates?: InstalledCertificate[];
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -88,6 +111,7 @@ export class Certificate extends Model implements CertificateDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

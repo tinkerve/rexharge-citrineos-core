@@ -4,6 +4,7 @@
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -36,7 +37,8 @@ export class InstallCertificateAttempt extends Model {
   })
   declare stationId: string;
 
-  station?: ChargingStationDto;
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare station?: ChargingStation;
 
   @Column({
     type: DataType.STRING,
@@ -44,6 +46,7 @@ export class InstallCertificateAttempt extends Model {
   })
   declare certificateType: CertificateUseEnumType;
 
+  @ForeignKey(() => Certificate)
   @Column({
     type: DataType.INTEGER,
     onUpdate: 'CASCADE',
@@ -51,13 +54,15 @@ export class InstallCertificateAttempt extends Model {
   })
   declare certificateId: number;
 
-  certificate?: Certificate;
+  @BelongsTo(() => Certificate, 'certificateId')
+  declare certificate?: Certificate;
 
   @Column({
     type: DataType.STRING,
   })
   declare status?: InstallCertificateStatusEnumType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -66,6 +71,7 @@ export class InstallCertificateAttempt extends Model {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

@@ -3,9 +3,25 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { VariableDto, TenantDto, ComponentDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  HasOne,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { VariableAttribute } from './VariableAttribute.js';
 import { VariableCharacteristics } from './VariableCharacteristics.js';
+import { Component } from './Component.js';
+import { ComponentVariable } from './ComponentVariable.js';
+import { VariableMonitoring } from '../VariableMonitoring/VariableMonitoring.js';
+import { Tenant } from '../Tenant.js';
 
 @Table({
   indexes: [
@@ -42,11 +58,17 @@ export class Variable extends Model implements OCPP2_0_1.VariableType, VariableD
    * Relations
    */
 
-  declare components?: ComponentDto[];
+  @BelongsToMany(() => Component, { through: () => ComponentVariable, foreignKey: 'variableId' })
+  declare components?: Component[];
 
+  @HasMany(() => VariableAttribute, 'variableId')
   declare variableAttributes?: VariableAttribute[];
 
+  @HasOne(() => VariableCharacteristics, 'variableId')
   declare variableCharacteristics?: VariableCharacteristics;
+
+  @HasMany(() => VariableMonitoring, 'variableId')
+  declare variableMonitorings?: VariableMonitoring[];
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
@@ -54,6 +76,7 @@ export class Variable extends Model implements OCPP2_0_1.VariableType, VariableD
   public addComponent!: (variable: ComponentDto) => Promise<void>;
   public getComponents!: () => Promise<ComponentDto[]>;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -63,6 +86,7 @@ export class Variable extends Model implements OCPP2_0_1.VariableType, VariableD
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

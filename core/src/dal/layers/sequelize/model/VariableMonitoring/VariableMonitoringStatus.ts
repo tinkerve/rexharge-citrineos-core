@@ -1,14 +1,20 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type {
-  VariableMonitoringDto,
-  VariableMonitoringStatusDto,
-  TenantDto,
-  StatusInfo,
-} from '@citrineos/base';
+import type { VariableMonitoringStatusDto, TenantDto, StatusInfo } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { VariableMonitoring } from './VariableMonitoring.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class VariableMonitoringStatus extends Model implements VariableMonitoringStatusDto {
@@ -24,13 +30,16 @@ export class VariableMonitoringStatus extends Model implements VariableMonitorin
    * Relations
    */
 
-  declare variable: VariableMonitoringDto;
+  @BelongsTo(() => VariableMonitoring, 'variableMonitoringId')
+  declare variable: VariableMonitoring;
 
+  @ForeignKey(() => VariableMonitoring)
   @Column(DataType.INTEGER)
   declare variableMonitoringId?: number | null;
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -39,6 +48,7 @@ export class VariableMonitoringStatus extends Model implements VariableMonitorin
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

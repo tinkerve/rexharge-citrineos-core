@@ -3,10 +3,21 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { StopTransactionDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 
 import { Transaction } from './Transaction.js';
 import { MeterValue } from './MeterValue.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class StopTransaction extends Model implements StopTransactionDto {
@@ -15,12 +26,14 @@ export class StopTransaction extends Model implements StopTransactionDto {
   @Column(DataType.STRING)
   declare stationId: string;
 
+  @ForeignKey(() => Transaction)
   @Column({
     type: DataType.INTEGER,
     unique: true,
   })
   declare transactionDatabaseId: number;
 
+  @BelongsTo(() => Transaction, 'transactionDatabaseId')
   declare transaction: Transaction;
 
   @Column(DataType.INTEGER)
@@ -37,6 +50,7 @@ export class StopTransaction extends Model implements StopTransactionDto {
   @Column(DataType.STRING)
   declare reason?: string;
 
+  @HasMany(() => MeterValue, 'stopTransactionDatabaseId')
   declare meterValues?: MeterValue[];
 
   // Add flat idToken fields
@@ -46,6 +60,7 @@ export class StopTransaction extends Model implements StopTransactionDto {
   @Column(DataType.STRING)
   declare idTokenType?: string;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -54,6 +69,7 @@ export class StopTransaction extends Model implements StopTransactionDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

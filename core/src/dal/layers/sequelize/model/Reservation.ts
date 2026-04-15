@@ -7,13 +7,16 @@ import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 import { EvseType } from './DeviceModel/index.js';
+import { Tenant } from './Tenant.js';
 
 @Table
 export class Reservation extends Model implements ReservationDto {
@@ -69,12 +72,15 @@ export class Reservation extends Model implements ReservationDto {
   /**
    * Relations
    */
+  @ForeignKey(() => EvseType)
   declare evseId?: number | null;
 
+  @BelongsTo(() => EvseType, 'evseId')
   declare evse?: EvseType | null;
 
   declare customData?: any | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -84,6 +90,7 @@ export class Reservation extends Model implements ReservationDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

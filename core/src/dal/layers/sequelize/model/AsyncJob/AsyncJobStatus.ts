@@ -7,9 +7,11 @@ import type { TenantDto } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   Default,
+  ForeignKey,
   Model,
   PrimaryKey,
   Table,
@@ -17,6 +19,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { TenantPartner } from '../TenantPartner.js';
+import { Tenant } from '../Tenant.js';
 
 export interface PaginatedParams {
   offset?: number;
@@ -37,9 +40,11 @@ export class AsyncJobStatus extends Model {
   @Column(DataType.STRING)
   declare jobName: AsyncJobNameEnumType;
 
+  @ForeignKey(() => TenantPartner)
   @Column(DataType.INTEGER)
   declare tenantPartnerId: number;
 
+  @BelongsTo(() => TenantPartner, { foreignKey: 'tenantPartnerId', as: 'asyncJobTenantPartner' })
   declare tenantPartner: TenantPartner;
 
   @Column(DataType.DATE)
@@ -62,6 +67,7 @@ export class AsyncJobStatus extends Model {
   @Column(DataType.INTEGER) // Total number of objects in the client's system
   declare totalObjects?: number;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -70,6 +76,7 @@ export class AsyncJobStatus extends Model {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

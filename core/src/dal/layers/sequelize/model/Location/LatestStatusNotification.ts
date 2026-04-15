@@ -10,6 +10,7 @@ import type { TenantDto } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -19,6 +20,7 @@ import {
 
 import { ChargingStation } from './ChargingStation.js';
 import { StatusNotification } from './StatusNotification.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class LatestStatusNotification extends Model implements LatestStatusNotificationDto {
@@ -31,12 +33,16 @@ export class LatestStatusNotification extends Model implements LatestStatusNotif
   @Column(DataType.STRING)
   declare stationId: string;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare chargingStation: ChargingStation;
 
+  @ForeignKey(() => StatusNotification)
   declare statusNotificationId: string;
 
+  @BelongsTo(() => StatusNotification, 'statusNotificationId')
   declare statusNotification: StatusNotification;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -45,6 +51,7 @@ export class LatestStatusNotification extends Model implements LatestStatusNotif
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

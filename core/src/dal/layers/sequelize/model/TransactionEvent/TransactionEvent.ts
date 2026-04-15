@@ -7,12 +7,24 @@ import type {
   TransactionEventEnumType,
   TriggerReasonEnumType,
   TransactionType,
-  TransactionDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 
 import { MeterValue } from './MeterValue.js';
+import { Transaction } from './Transaction.js';
+import { EvseType } from '../DeviceModel/EvseType.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class TransactionEvent extends Model implements TransactionEventDto {
@@ -24,6 +36,7 @@ export class TransactionEvent extends Model implements TransactionEventDto {
   @Column(DataType.STRING)
   declare eventType: TransactionEventEnumType;
 
+  @HasMany(() => MeterValue, 'transactionEventId')
   declare meterValue?: [MeterValue, ...MeterValue[]];
 
   @Column({
@@ -52,16 +65,20 @@ export class TransactionEvent extends Model implements TransactionEventDto {
   @Column(DataType.INTEGER)
   declare reservationId?: number | null;
 
+  @ForeignKey(() => Transaction)
   declare transactionDatabaseId?: number;
 
-  declare transaction?: TransactionDto;
+  @BelongsTo(() => Transaction, 'transactionDatabaseId')
+  declare transaction?: Transaction;
 
   @Column(DataType.JSON)
   declare transactionInfo: TransactionType;
 
+  @ForeignKey(() => EvseType)
   declare evseId?: number | null;
 
-  declare evse?: OCPP2_0_1.EVSEType;
+  @BelongsTo(() => EvseType, 'evseId')
+  declare evse?: EvseType;
 
   @Column(DataType.STRING)
   declare idTokenValue?: string | null;
@@ -71,6 +88,7 @@ export class TransactionEvent extends Model implements TransactionEventDto {
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -79,6 +97,7 @@ export class TransactionEvent extends Model implements TransactionEventDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

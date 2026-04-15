@@ -2,28 +2,35 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
-  ChargingStationDto,
   ConnectorDto,
   ConnectorErrorCodeEnumType,
   ConnectorFormatEnumType,
   ConnectorPowerTypeEnumType,
   ConnectorStatusEnumType,
   ConnectorTypeEnumType,
-  TariffDto,
   TenantDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Model,
   Table,
 } from 'sequelize-typescript';
 import { ChargingStation } from './ChargingStation.js';
 import { Evse } from './Evse.js';
+import { Tariff } from '../Tariff/Tariffs.js';
+import { EvseType } from '../DeviceModel/EvseType.js';
+import { StatusNotification } from './StatusNotification.js';
+import { MeterValue } from '../TransactionEvent/MeterValue.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
+import { StartTransaction } from '../TransactionEvent/StartTransaction.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class Connector extends Model implements ConnectorDto {
@@ -43,6 +50,7 @@ export class Connector extends Model implements ConnectorDto {
   })
   declare stationId: string;
 
+  @ForeignKey(() => Evse)
   @Column({
     unique: 'evseId_evseTypeConnectorId',
     allowNull: false,
@@ -57,6 +65,7 @@ export class Connector extends Model implements ConnectorDto {
   })
   declare connectorId: number; // This is the serial int starting at 1 used in OCPP 1.6 to refer to the connector, unique per Charging Station.
 
+  @ForeignKey(() => EvseType)
   @Column({
     unique: 'evseId_evseTypeConnectorId',
     allowNull: false,
@@ -114,10 +123,19 @@ export class Connector extends Model implements ConnectorDto {
   @Column(DataType.STRING)
   declare termsAndConditionsUrl?: string | null;
 
-  declare chargingStation?: ChargingStationDto;
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStation;
 
+  @BelongsTo(() => Evse, 'evseId')
   declare evse?: Evse;
 
+  @BelongsTo(() => EvseType, 'evseTypeConnectorId')
+  declare evseTypeByConnector?: EvseType;
+
+  @HasMany(() => EvseType, 'connectorId')
+  declare evseTypes?: EvseType[];
+
+  @ForeignKey(() => Tariff)
   @Column({
     type: DataType.INTEGER,
     allowNull: true,
@@ -126,8 +144,22 @@ export class Connector extends Model implements ConnectorDto {
   })
   declare tariffId?: number | null;
 
-  declare tariff?: TariffDto | null;
+  @BelongsTo(() => Tariff, 'tariffId')
+  declare tariff?: Tariff | null;
 
+  @HasMany(() => StatusNotification, 'connectorId')
+  declare statusNotifications?: StatusNotification[];
+
+  @HasMany(() => MeterValue, 'connectorId')
+  declare meterValues?: MeterValue[];
+
+  @HasMany(() => Transaction, 'connectorId')
+  declare transactions?: Transaction[];
+
+  @HasMany(() => StartTransaction, 'connectorDatabaseId')
+  declare startTransactions?: StartTransaction[];
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -136,6 +168,7 @@ export class Connector extends Model implements ConnectorDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

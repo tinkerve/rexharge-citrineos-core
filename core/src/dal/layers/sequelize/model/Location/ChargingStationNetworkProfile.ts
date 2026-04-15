@@ -7,6 +7,7 @@ import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -16,6 +17,7 @@ import {
 import { ChargingStation } from './ChargingStation.js';
 import { ServerNetworkProfile } from './ServerNetworkProfile.js';
 import { SetNetworkProfile } from './SetNetworkProfile.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class ChargingStationNetworkProfile
@@ -32,6 +34,9 @@ export class ChargingStationNetworkProfile
   })
   declare stationPkId?: number;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStation;
+
   @Column({
     type: DataType.STRING,
   })
@@ -47,9 +52,11 @@ export class ChargingStationNetworkProfile
   })
   declare configurationSlot: number;
 
+  @ForeignKey(() => SetNetworkProfile)
   @Column(DataType.INTEGER)
   declare setNetworkProfileId: number;
 
+  @BelongsTo(() => SetNetworkProfile, 'setNetworkProfileId')
   declare setNetworkProfile: SetNetworkProfile;
 
   /**
@@ -58,11 +65,14 @@ export class ChargingStationNetworkProfile
    * configured host will likely be behind a load balancer and a custom DNS name.
    *
    */
+  @ForeignKey(() => ServerNetworkProfile)
   @Column(DataType.STRING)
   declare websocketServerConfigId?: string;
 
+  @BelongsTo(() => ServerNetworkProfile, 'websocketServerConfigId')
   declare websocketServerConfig?: ServerNetworkProfile;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -71,6 +81,7 @@ export class ChargingStationNetworkProfile
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate
