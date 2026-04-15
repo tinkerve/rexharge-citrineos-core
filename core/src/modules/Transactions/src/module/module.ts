@@ -15,7 +15,6 @@ import type {
   SystemConfig,
   OCPP2_request_types,
   OCPP2_response_types,
-  OCPP2_common_types,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -26,6 +25,7 @@ import {
   ErrorCode,
   EventGroup,
   OCPP1_6,
+  OCPP2_1,
   OCPP_2_VER_LIST,
   OCPP_CallAction,
   OcppError,
@@ -780,6 +780,17 @@ export class TransactionsModule extends AbstractModule {
     transaction.stoppedReason = request.reason;
     transaction.endTime = request.timestamp;
     await transaction.save();
+  }
+
+  /**
+   * Handle OCPP 2.1 responses
+   */
+  @AsHandler([OCPPVersion.OCPP2_1], OCPP_CallAction.SetDefaultTariff)
+  protected async _handleSetDefaultTariff(
+    message: IMessage<OCPP2_1.SetDefaultTariffResponse>,
+    props?: HandlerProperties,
+  ): Promise<void> {
+    this._logger.debug('OCPP 2.1 SetDefaultTariff response received:', message, props);
   }
 
   protected async deactivateOtherActiveTransactionsAtEvse201(

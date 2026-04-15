@@ -4,6 +4,13 @@
 
 import type { TariffDto, TenantDto, ConnectorDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_Namespace } from '@citrineos/base';
+import type {
+  TariffEnergyType,
+  TariffFixedType,
+  TariffTimeType,
+  PriceType,
+  MessageContentType,
+} from '@citrineos/base/src/ocpp/model/2.1/types/SetDefaultTariffRequest.js';
 import type { CreationOptional } from 'sequelize';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
 
@@ -98,6 +105,46 @@ export class Tariff extends Model implements TariffDto {
   @Column(DataType.JSONB)
   declare tariffAltText?: object[] | null;
 
+  // OCPP 2.1 TariffType fields
+
+  @Column(DataType.STRING)
+  declare tariffId?: string | null;
+
+  @Column({
+    type: DataType.DATE,
+    get() {
+      return this.getDataValue('validFrom')?.toISOString();
+    },
+  })
+  declare validFrom?: string | null;
+
+  @Column(DataType.JSONB)
+  declare description?: MessageContentType[] | null;
+
+  @Column(DataType.JSONB)
+  declare energy?: TariffEnergyType | null;
+
+  @Column(DataType.JSONB)
+  declare chargingTime?: TariffTimeType | null;
+
+  @Column(DataType.JSONB)
+  declare idleTime?: TariffTimeType | null;
+
+  @Column(DataType.JSONB)
+  declare fixedFee?: TariffFixedType | null;
+
+  @Column(DataType.JSONB)
+  declare reservationTime?: TariffTimeType | null;
+
+  @Column(DataType.JSONB)
+  declare reservationFixed?: TariffFixedType | null;
+
+  @Column(DataType.JSONB)
+  declare minCost?: PriceType | null;
+
+  @Column(DataType.JSONB)
+  declare maxCost?: PriceType | null;
+
   declare id: number;
   declare updatedAt: CreationOptional<Date>;
 
@@ -111,6 +158,17 @@ export class Tariff extends Model implements TariffDto {
       taxRate: this.taxRate,
       authorizationAmount: this.authorizationAmount,
       paymentFee: this.paymentFee,
+      tariffId: this.tariffId,
+      validFrom: this.validFrom,
+      description: this.description,
+      energy: this.energy,
+      chargingTime: this.chargingTime,
+      idleTime: this.idleTime,
+      fixedFee: this.fixedFee,
+      reservationTime: this.reservationTime,
+      reservationFixed: this.reservationFixed,
+      minCost: this.minCost,
+      maxCost: this.maxCost,
     };
   }
 
@@ -155,4 +213,17 @@ export interface TariffData {
 
   authorizationAmount?: number | null;
   paymentFee?: number | null;
+
+  // OCPP 2.1 TariffType fields
+  tariffId?: string | null;
+  validFrom?: string | null;
+  description?: MessageContentType[] | null;
+  energy?: TariffEnergyType | null;
+  chargingTime?: TariffTimeType | null;
+  idleTime?: TariffTimeType | null;
+  fixedFee?: TariffFixedType | null;
+  reservationTime?: TariffTimeType | null;
+  reservationFixed?: TariffFixedType | null;
+  minCost?: PriceType | null;
+  maxCost?: PriceType | null;
 }

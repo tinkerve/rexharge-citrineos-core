@@ -19,9 +19,11 @@ import {
   Column,
   DataType,
   Default,
+  ForeignKey,
   Model,
   Table,
 } from 'sequelize-typescript';
+import { Tariff } from '@/dal/index.js';
 
 @Table
 export class Authorization extends Model implements AuthorizationDto {
@@ -86,6 +88,10 @@ export class Authorization extends Model implements AuthorizationDto {
   // Reference to another Authorization for groupAuthorization
   @Column(DataType.INTEGER)
   declare groupAuthorizationId?: number | null;
+
+  @ForeignKey(() => Tariff)
+  @Column(DataType.INTEGER)
+  declare tariffId?: number | null;
 
   declare groupAuthorization?: Authorization;
 

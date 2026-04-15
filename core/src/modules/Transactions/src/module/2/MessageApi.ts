@@ -89,6 +89,28 @@ export class TransactionsOcpp2Api
     );
   }
 
+  @AsMessageEndpoint(
+    OCPP_CallAction.SetDefaultTariff,
+    (instance: TransactionsOcpp2Api) =>
+      (instance._ocppVersion ?? OCPPVersion.OCPP2_1) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+  )
+  async setDefaultTariff(
+    identifier: string[],
+    request: OCPP2_request_types.SetDefaultTariffRequest,
+    callbackUrl?: string,
+    tenantId: number = DEFAULT_TENANT_ID,
+  ): Promise<IMessageConfirmation[]> {
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? OCPPVersion.OCPP2_1,
+      OCPP_CallAction.SetDefaultTariff,
+      request,
+      callbackUrl,
+    );
+  }
+
   /**
    * Overrides superclass method to generate the URL path based on the input {@link CallAction}
    * and the module's endpoint prefix configuration.
