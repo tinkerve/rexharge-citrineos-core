@@ -27,6 +27,8 @@ const authorizationFields = {
   personalMessage: z.any().nullable().optional(),
   customData: z.any().nullable().optional(),
   concurrentTransaction: z.boolean().optional(),
+  isPrepaid: z.boolean().optional(),
+  prepaidBalance: z.number().nullable().optional(),
   realTimeAuth: AuthorizationWhitelistEnumSchema.nullable().optional(),
   realTimeAuthLastAttempt: RealTimeAuthLastAttemptSchema.nullable().optional(),
   realTimeAuthTimeout: z.number().int().nullable().optional(),

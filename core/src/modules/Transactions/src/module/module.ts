@@ -287,6 +287,7 @@ export class TransactionsModule extends AbstractModule {
         tenantId,
         transactionEvent,
         message.context,
+        message.protocol,
       );
     }
     try {

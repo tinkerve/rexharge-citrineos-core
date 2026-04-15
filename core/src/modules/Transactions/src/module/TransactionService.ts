@@ -20,6 +20,8 @@ import {
   MeterValueUtils,
   OCPP1_6,
   OCPP2_0_1,
+  OCPP2_1,
+  OCPPVersion,
 } from '@citrineos/base';
 import type {
   IAuthorizationRepository,
@@ -91,6 +93,7 @@ export class TransactionService {
     tenantId: number,
     transactionEvent: OCPP2_request_types.TransactionEventRequest,
     messageContext: IMessageContext,
+    ocppVersion?: string,
   ): Promise<OCPP2_response_types.TransactionEventResponse> {
     const idToken = transactionEvent.idToken!;
     const authorizations = await this._authorizeRepository.readAllByQuerystring(tenantId, {
@@ -163,6 +166,32 @@ export class TransactionService {
       const result = await this._applyAuthorizers(authorization, messageContext, evse, connector);
       response.idTokenInfo = this._mapAuthorizationDtoToIdTokenInfo(authorization, result);
     }
+
+    //Prepaid card authorization during transaction events
+    if (authorization.isPrepaid && response.idTokenInfo) {
+      if (authorization.prepaidBalance != null && authorization.prepaidBalance > 0) {
+        //Prepaid token with positive balance: set cacheExpiryDateTime to now
+        response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+
+        //Include transactionLimit.maxCost in TransactionEventResponse (OCPP 2.1 only)
+        if (ocppVersion === OCPPVersion.OCPP2_1) {
+          (response as OCPP2_1.TransactionEventResponse).transactionLimit = {
+            maxCost: authorization.prepaidBalance,
+          };
+          this._logger.debug(
+            `C17: Set transactionLimit.maxCost=${authorization.prepaidBalance} for prepaid idToken ${authorization.idToken}`,
+          );
+        }
+      } else if (response.idTokenInfo.status === OCPP2_0_1.AuthorizationStatusEnumType.Accepted) {
+        //Prepaid token with zero or negative balance
+        response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.NoCredit;
+        response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+        this._logger.debug(
+          `C17: Prepaid authorization rejected (NoCredit) for idToken ${authorization.idToken} with balance ${authorization.prepaidBalance}`,
+        );
+      }
+    }
+
     this._logger.debug('idToken Authorization final status:', response.idTokenInfo.status);
     return response;
   }

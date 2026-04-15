@@ -93,6 +93,13 @@ export class Authorization extends Model implements AuthorizationDto {
   @Column(DataType.BOOLEAN)
   declare concurrentTransaction?: boolean;
 
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  declare isPrepaid?: boolean;
+
+  @Column(DataType.DECIMAL)
+  declare prepaidBalance?: number | null;
+
   declare customData?: any | null;
 
   // For cases where Authorization is owned by an upstream partner, i.e. an eMSP

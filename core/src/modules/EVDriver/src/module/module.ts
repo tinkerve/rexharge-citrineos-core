@@ -464,6 +464,30 @@ export class EVDriverModule extends AbstractModule {
           response.idTokenInfo.status =
             OCPP2_0_1_Mapper.AuthorizationMapper.fromAuthorizationStatusEnumType(result);
         }
+
+        //Prepaid card authorization
+        if (
+          authorization.isPrepaid &&
+          response.idTokenInfo.status === AuthorizationStatusEnum.Accepted
+        ) {
+          if (authorization.prepaidBalance != null && authorization.prepaidBalance > 0) {
+            //Valid prepaid token with positive balance
+            response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+            this._logger.debug(
+              `Prepaid authorization accepted for idToken ${authorization.idToken} with balance ${authorization.prepaidBalance}`,
+            );
+          } else {
+            //Valid prepaid token with zero or negative balance
+            response.idTokenInfo.status =
+              OCPP2_0_1_Mapper.AuthorizationMapper.fromAuthorizationStatusEnumType(
+                AuthorizationStatusEnum.NoCredit,
+              );
+            response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+            this._logger.debug(
+              `Prepaid authorization rejected (NoCredit) for idToken ${authorization.idToken} with balance ${authorization.prepaidBalance}`,
+            );
+          }
+        }
       } else {
         // Blocked, Expired, Invalid, NoCredit, Unknown
         response.idTokenInfo = idTokenInfo;
