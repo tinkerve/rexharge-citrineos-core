@@ -2,28 +2,28 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+import type {
+  CallAction,
+  IMessageConfirmation,
+  OCPP2_common_types,
+  OCPP2_request_types,
+} from '@citrineos/base';
+import {
+  AbstractModuleApi,
+  AsMessageEndpoint,
+  DataEnum,
+  DEFAULT_TENANT_ID,
+  getOcpp2Schema,
+  MonitorEnum,
+  OCPP_CallAction,
+  OCPPVersion,
+} from '@citrineos/base';
+import { getBatches, getSizeOfRequest, packageGroupCall } from '@util/index.js';
+import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { IMonitoringModuleApi } from '../interface.js';
 import { MonitoringModule } from '../module.js';
-import type {
-  OCPP2_common_types,
-  CallAction,
-  IMessageConfirmation,
-  OCPP2_request_types,
-} from '@citrineos/base';
-import { MonitorEnum, DataEnum } from '@citrineos/base';
-import {
-  AbstractModuleApi,
-  AsMessageEndpoint,
-  DEFAULT_TENANT_ID,
-  getOcpp2Schema,
-  OCPP_CallAction,
-  OCPPVersion,
-} from '@citrineos/base';
-import { packageGroupCall } from '@util/index.js';
-import type { FastifyInstance } from 'fastify';
-import { getBatches, getSizeOfRequest } from '@util/index.js';
 
 const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
 
@@ -231,7 +231,7 @@ export class MonitoringOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -254,7 +254,7 @@ export class MonitoringOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,

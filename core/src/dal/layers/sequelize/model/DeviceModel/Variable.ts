@@ -11,7 +11,8 @@ import { VariableCharacteristics } from './VariableCharacteristics.js';
   indexes: [
     {
       unique: true,
-      fields: ['name'],
+      name: 'variables_tenantId_name',
+      fields: ['tenantId', 'name'],
       where: {
         instance: null,
       },
@@ -27,13 +28,13 @@ export class Variable extends Model implements OCPP2_0_1.VariableType, VariableD
 
   @Column({
     type: DataType.STRING,
-    unique: 'name_instance',
+    unique: 'tenantId_name_instance',
   })
   declare name: string;
 
   @Column({
     type: DataType.STRING,
-    unique: 'name_instance',
+    unique: 'tenantId_name_instance',
   })
   declare instance?: string | null;
 
@@ -56,6 +57,7 @@ export class Variable extends Model implements OCPP2_0_1.VariableType, VariableD
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
+    unique: 'tenantId_name_instance',
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
   })

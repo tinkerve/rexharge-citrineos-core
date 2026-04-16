@@ -2,10 +2,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { OCPPMessage } from './OCPPMessage.js';
+import { AsyncJobStatus } from './AsyncJob/AsyncJobStatus.js';
+import { Authorization } from './Authorization/Authorization.js';
+import { LocalListAuthorization } from './Authorization/LocalListAuthorization.js';
+import { LocalListVersion } from './Authorization/LocalListVersion.js';
+import { LocalListVersionAuthorization } from './Authorization/LocalListVersionAuthorization.js';
+import { SendLocalList } from './Authorization/SendLocalList.js';
+import { SendLocalListAuthorization } from './Authorization/SendLocalListAuthorization.js';
 import { Boot } from './Boot.js';
-import { Tenant } from './Tenant.js';
 import { Certificate } from './Certificate/Certificate.js';
+import { DeleteCertificateAttempt } from './Certificate/DeleteCertificateAttempt.js';
+import { InstallCertificateAttempt } from './Certificate/InstallCertificateAttempt.js';
 import { InstalledCertificate } from './Certificate/InstalledCertificate.js';
 import { ChangeConfiguration } from './ChangeConfiguration.js';
 import { ChargingNeeds } from './ChargingProfile/ChargingNeeds.js';
@@ -13,16 +20,8 @@ import { ChargingProfile } from './ChargingProfile/ChargingProfile.js';
 import { ChargingSchedule } from './ChargingProfile/ChargingSchedule.js';
 import { CompositeSchedule } from './ChargingProfile/CompositeSchedule.js';
 import { SalesTariff } from './ChargingProfile/SalesTariff.js';
-import { Tariff } from './Tariff/Tariffs.js';
-import { ChargingStation } from './Location/ChargingStation.js';
-import { ChargingStationNetworkProfile } from './Location/ChargingStationNetworkProfile.js';
-import { Connector } from './Location/Connector.js';
-import { Evse } from './Location/Evse.js';
-import { Location } from './Location/Location.js';
-import { LatestStatusNotification } from './Location/LatestStatusNotification.js';
-import { ServerNetworkProfile } from './Location/ServerNetworkProfile.js';
-import { SetNetworkProfile } from './Location/SetNetworkProfile.js';
-import { StatusNotification } from './Location/StatusNotification.js';
+import { ChargingStationSecurityInfo } from './ChargingStationSecurityInfo.js';
+import { ChargingStationSequence } from './ChargingStationSequence/ChargingStationSequence.js';
 import {
   Component,
   ComponentVariable,
@@ -32,30 +31,31 @@ import {
   VariableCharacteristics,
   VariableStatus,
 } from './DeviceModel/index.js';
-import { VariableMonitoring } from './VariableMonitoring/VariableMonitoring.js';
-import { VariableMonitoringStatus } from './VariableMonitoring/VariableMonitoringStatus.js';
-import { Authorization } from './Authorization/Authorization.js';
-import { LocalListAuthorization } from './Authorization/LocalListAuthorization.js';
-import { LocalListVersion } from './Authorization/LocalListVersion.js';
-import { LocalListVersionAuthorization } from './Authorization/LocalListVersionAuthorization.js';
-import { SendLocalList } from './Authorization/SendLocalList.js';
-import { SendLocalListAuthorization } from './Authorization/SendLocalListAuthorization.js';
-import { TenantPartner } from './TenantPartner.js';
-import { AsyncJobStatus } from './AsyncJob/AsyncJobStatus.js';
+import { ChargingStation } from './Location/ChargingStation.js';
+import { ChargingStationNetworkProfile } from './Location/ChargingStationNetworkProfile.js';
+import { Connector } from './Location/Connector.js';
+import { Evse } from './Location/Evse.js';
+import { LatestStatusNotification } from './Location/LatestStatusNotification.js';
+import { Location } from './Location/Location.js';
+import { ServerNetworkProfile } from './Location/ServerNetworkProfile.js';
+import { SetNetworkProfile } from './Location/SetNetworkProfile.js';
+import { StatusNotification } from './Location/StatusNotification.js';
+import { MessageInfo } from './MessageInfo/MessageInfo.js';
+import { OCPPMessage } from './OCPPMessage.js';
 import { Reservation } from './Reservation.js';
 import { SecurityEvent } from './SecurityEvent.js';
 import { Subscription } from './Subscription/Subscription.js';
-import { MessageInfo } from './MessageInfo/MessageInfo.js';
-import { Transaction } from './TransactionEvent/Transaction.js';
-import { TransactionEvent } from './TransactionEvent/TransactionEvent.js';
+import { Tariff } from './Tariff/Tariffs.js';
+import { Tenant } from './Tenant.js';
+import { TenantPartner } from './TenantPartner.js';
+import { MeterValue } from './TransactionEvent/MeterValue.js';
 import { StartTransaction } from './TransactionEvent/StartTransaction.js';
 import { StopTransaction } from './TransactionEvent/StopTransaction.js';
-import { MeterValue } from './TransactionEvent/MeterValue.js';
+import { Transaction } from './TransactionEvent/Transaction.js';
+import { TransactionEvent } from './TransactionEvent/TransactionEvent.js';
 import { EventData } from './VariableMonitoring/EventData.js';
-import { ChargingStationSecurityInfo } from './ChargingStationSecurityInfo.js';
-import { ChargingStationSequence } from './ChargingStationSequence/ChargingStationSequence.js';
-import { DeleteCertificateAttempt } from './Certificate/DeleteCertificateAttempt.js';
-import { InstallCertificateAttempt } from './Certificate/InstallCertificateAttempt.js';
+import { VariableMonitoring } from './VariableMonitoring/VariableMonitoring.js';
+import { VariableMonitoringStatus } from './VariableMonitoring/VariableMonitoringStatus.js';
 
 export function defineAssociations() {
   // Tenant associations
@@ -315,8 +315,8 @@ export function defineAssociations() {
   EvseType.belongsTo(Connector, { foreignKey: 'connectorId' });
   Connector.hasMany(EvseType, { foreignKey: 'connectorId' });
 
-  Connector.hasMany(Tariff, { foreignKey: 'connectorId' });
-  Tariff.belongsTo(Connector, { foreignKey: 'connectorId' });
+  Connector.belongsTo(Tariff, { foreignKey: 'tariffId' });
+  Tariff.hasMany(Connector, { foreignKey: 'tariffId' });
 
   // ChargingStationNetworkProfile associations
   ChargingStationNetworkProfile.belongsTo(ChargingStation, { foreignKey: 'stationPkId' });
@@ -401,13 +401,13 @@ export function defineAssociations() {
 
   // MeterValue associations
   MeterValue.belongsTo(Transaction, { foreignKey: 'transactionDatabaseId' });
-  MeterValue.belongsTo(TransactionEvent, { foreignKey: 'transactionEventDatabaseId' });
+  MeterValue.belongsTo(TransactionEvent, { foreignKey: 'transactionEventId' });
   MeterValue.belongsTo(StopTransaction, { foreignKey: 'stopTransactionDatabaseId' });
   MeterValue.belongsTo(Connector, { foreignKey: 'connectorId' });
   MeterValue.belongsTo(Tariff, { foreignKey: 'tariffId' });
 
   Transaction.hasMany(MeterValue, { foreignKey: 'transactionDatabaseId' });
-  TransactionEvent.hasMany(MeterValue, { foreignKey: 'transactionEventDatabaseId' });
+  TransactionEvent.hasMany(MeterValue, { foreignKey: 'transactionEventId' });
   StopTransaction.hasMany(MeterValue, { foreignKey: 'stopTransactionDatabaseId' });
   Connector.hasMany(MeterValue, { foreignKey: 'connectorId' });
   Tariff.hasMany(MeterValue, { foreignKey: 'tariffId' });

@@ -2,10 +2,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
-import type { ITransactionsModuleApi } from '../interface.js';
-import { TransactionsModule } from '../module.js';
 import type { CallAction, IMessageConfirmation, OCPP2_request_types } from '@citrineos/base';
 import {
   AbstractModuleApi,
@@ -17,6 +13,10 @@ import {
 } from '@citrineos/base';
 import { packageGroupCall } from '@util/index.js';
 import type { FastifyInstance } from 'fastify';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
+import type { ITransactionsModuleApi } from '../interface.js';
+import { TransactionsModule } from '../module.js';
 
 const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
 
@@ -56,7 +56,7 @@ export class TransactionsOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -79,7 +79,7 @@ export class TransactionsOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,

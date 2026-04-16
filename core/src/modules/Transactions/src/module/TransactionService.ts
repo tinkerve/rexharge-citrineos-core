@@ -7,7 +7,6 @@ import type {
   ConnectorDto,
   EvseDto,
   IAuthorizer,
-  IdTokenEnumType,
   IMessageContext,
   MeterValueDto,
   OCPP2_common_types,
@@ -28,10 +27,9 @@ import type {
   IReservationRepository,
   ITransactionEventRepository,
 } from '@dal/interfaces/repositories.js';
-import { MeterValue } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
 import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
 import * as OCPP2_0_1_Mapper from '@dal/layers/sequelize/mapper/2.0.1/index.js';
-import { Transaction } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
+import { MeterValue, Transaction } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 
@@ -95,7 +93,7 @@ export class TransactionService {
     const idToken = transactionEvent.idToken!;
     const authorizations = await this._authorizeRepository.readAllByQuerystring(tenantId, {
       idToken: idToken.idToken,
-      type: idToken as unknown as IdTokenEnumType,
+      type: idToken.type,
     });
 
     const response: OCPP2_0_1.TransactionEventResponse = {
