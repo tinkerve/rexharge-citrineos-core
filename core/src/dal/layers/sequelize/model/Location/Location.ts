@@ -2,11 +2,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  ChargingStationDto,
   LocationDto,
   LocationFacilityEnumType,
   LocationParkingEnumType,
   Point,
   TenantDto,
+  TransactionDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, LocationHours, OCPP2_Namespace } from '@citrineos/base';
 import {
@@ -21,9 +23,9 @@ import {
   Table,
 } from 'sequelize-typescript';
 
-import { ChargingStation } from './ChargingStation.js';
-import { Transaction } from '../TransactionEvent/Transaction.js';
 import { Tenant } from '../Tenant.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
+import { ChargingStation } from './ChargingStation.js';
 
 /**
  * Represents a location.
@@ -89,10 +91,10 @@ export class Location extends Model implements LocationDto {
   declare coordinates: Point;
 
   @HasMany(() => ChargingStation, 'locationId')
-  declare chargingPool: [ChargingStation, ...ChargingStation[]];
+  declare chargingPool: [ChargingStationDto, ...ChargingStationDto[]];
 
   @HasMany(() => Transaction, 'locationId')
-  declare transactions?: Transaction[];
+  declare transactions?: TransactionDto[];
 
   @ForeignKey(() => Tenant)
   @Column({

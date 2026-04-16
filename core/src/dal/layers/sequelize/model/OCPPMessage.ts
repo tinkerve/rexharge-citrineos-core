@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { MessageState, OCPPMessageDto, TenantDto } from '@citrineos/base';
+import type { ChargingStationDto, MessageState, OCPPMessageDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, MessageOrigin, Namespace, OCPPVersion } from '@citrineos/base';
 import {
   BeforeCreate,
@@ -51,7 +51,7 @@ export class OCPPMessage extends Model implements OCPPMessageDto {
   declare message: any;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare chargingStation?: ChargingStation;
+  declare chargingStation?: ChargingStationDto;
 
   @ForeignKey(() => OCPPMessage)
   @Index

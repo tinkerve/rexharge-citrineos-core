@@ -112,7 +112,7 @@ export class ChargingProfile extends Model implements ChargingProfileDto {
   declare transactionDatabaseId?: number | null;
 
   @BelongsTo(() => Transaction, 'transactionDatabaseId')
-  declare transaction?: Transaction;
+  declare transaction?: TransactionDto;
 
   declare customData?: object | null;
 

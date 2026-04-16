@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  CertificateDto,
   CertificateUseEnumType,
   HashAlgorithmEnumType,
   InstalledCertificateDto,
@@ -19,9 +20,9 @@ import {
   Table,
 } from 'sequelize-typescript';
 
-import { Certificate } from './Certificate.js';
 import { ChargingStation } from '../Location/index.js';
 import { Tenant } from '../Tenant.js';
+import { Certificate } from './Certificate.js';
 
 @Table
 export class InstalledCertificate extends Model implements InstalledCertificateDto {
@@ -75,10 +76,10 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
   declare certificateId?: number | null;
 
   @BelongsTo(() => Certificate, 'certificateId')
-  declare certificate?: Certificate;
+  declare certificate?: CertificateDto;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare station?: ChargingStation;
+  declare station?: ChargingStationDto;
 
   @ForeignKey(() => Tenant)
   @Column({

@@ -7,7 +7,12 @@ import {
   type OCPPTransportEnumType,
   type SetNetworkProfileDto,
 } from '@citrineos/base';
-import type { OCPPVersionEnumType, TenantDto } from '@citrineos/base';
+import type {
+  ChargingStationDto,
+  OCPPVersionEnumType,
+  ServerNetworkProfileDto,
+  TenantDto,
+} from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
@@ -39,7 +44,7 @@ export class SetNetworkProfile extends Model implements SetNetworkProfileDto {
   declare stationPkId?: number;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare chargingStation?: ChargingStation;
+  declare chargingStation?: ChargingStationDto;
 
   @Column(DataType.STRING)
   declare stationId: string;
@@ -56,7 +61,7 @@ export class SetNetworkProfile extends Model implements SetNetworkProfileDto {
   declare websocketServerConfigId?: string;
 
   @BelongsTo(() => ServerNetworkProfile, 'websocketServerConfigId')
-  declare websocketServerConfig?: ServerNetworkProfile;
+  declare websocketServerConfig?: ServerNetworkProfileDto;
 
   @Column(DataType.INTEGER)
   declare configurationSlot: number;

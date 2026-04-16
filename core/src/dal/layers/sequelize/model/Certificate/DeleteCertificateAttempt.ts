@@ -37,7 +37,7 @@ export class DeleteCertificateAttempt extends Model {
   declare stationId: string;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare station?: ChargingStation;
+  declare station?: ChargingStationDto;
 
   @Column({
     type: DataType.STRING,

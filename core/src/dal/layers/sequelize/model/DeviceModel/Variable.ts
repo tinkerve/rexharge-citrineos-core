@@ -1,7 +1,14 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { VariableDto, TenantDto, ComponentDto } from '@citrineos/base';
+import type {
+  ComponentDto,
+  TenantDto,
+  VariableAttributeDto,
+  VariableCharacteristicsDto,
+  VariableDto,
+  VariableMonitoringDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
@@ -16,12 +23,12 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
-import { VariableAttribute } from './VariableAttribute.js';
-import { VariableCharacteristics } from './VariableCharacteristics.js';
+import { Tenant } from '../Tenant.js';
+import { VariableMonitoring } from '../VariableMonitoring/VariableMonitoring.js';
 import { Component } from './Component.js';
 import { ComponentVariable } from './ComponentVariable.js';
-import { VariableMonitoring } from '../VariableMonitoring/VariableMonitoring.js';
-import { Tenant } from '../Tenant.js';
+import { VariableAttribute } from './VariableAttribute.js';
+import { VariableCharacteristics } from './VariableCharacteristics.js';
 
 @Table({
   indexes: [
@@ -59,16 +66,16 @@ export class Variable extends Model implements OCPP2_0_1.VariableType, VariableD
    */
 
   @BelongsToMany(() => Component, { through: () => ComponentVariable, foreignKey: 'variableId' })
-  declare components?: Component[];
+  declare components?: ComponentDto[];
 
   @HasMany(() => VariableAttribute, 'variableId')
-  declare variableAttributes?: VariableAttribute[];
+  declare variableAttributes?: VariableAttributeDto[];
 
   @HasOne(() => VariableCharacteristics, 'variableId')
-  declare variableCharacteristics?: VariableCharacteristics;
+  declare variableCharacteristics?: VariableCharacteristicsDto;
 
   @HasMany(() => VariableMonitoring, 'variableId')
-  declare variableMonitorings?: VariableMonitoring[];
+  declare variableMonitorings?: VariableMonitoringDto[];
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 

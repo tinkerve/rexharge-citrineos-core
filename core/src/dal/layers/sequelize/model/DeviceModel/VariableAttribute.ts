@@ -1,7 +1,16 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { VariableAttributeDto, TenantDto } from '@citrineos/base';
+import type {
+  BootDto,
+  ChargingStationDto,
+  ComponentDto,
+  EvseTypeDto,
+  TenantDto,
+  VariableAttributeDto,
+  VariableDto,
+  VariableStatusDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
@@ -19,12 +28,12 @@ import { CryptoUtils } from '../../../../util/CryptoUtils.js';
 
 import { ChargingStation } from '../Location/index.js';
 
-import { EvseType } from './EvseType.js';
-import { Variable } from './Variable.js';
-import { Component } from './Component.js';
-import { VariableStatus } from './VariableStatus.js';
 import { Boot } from '../Boot.js';
 import { Tenant } from '../Tenant.js';
+import { Component } from './Component.js';
+import { EvseType } from './EvseType.js';
+import { Variable } from './Variable.js';
+import { VariableStatus } from './VariableStatus.js';
 
 @Table({
   indexes: [
@@ -117,7 +126,7 @@ export class VariableAttribute
   declare stationId: string;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare chargingStation: ChargingStation;
+  declare chargingStation: ChargingStationDto;
 
   @Column({
     type: DataType.STRING,
@@ -184,7 +193,7 @@ export class VariableAttribute
    */
 
   @BelongsTo(() => Variable, 'variableId')
-  declare variable: Variable;
+  declare variable: VariableDto;
 
   @ForeignKey(() => Variable)
   @Column({
@@ -194,7 +203,7 @@ export class VariableAttribute
   declare variableId?: number | null;
 
   @BelongsTo(() => Component, 'componentId')
-  declare component: Component;
+  declare component: ComponentDto;
 
   @ForeignKey(() => Component)
   @Column({
@@ -204,7 +213,7 @@ export class VariableAttribute
   declare componentId?: number | null;
 
   @BelongsTo(() => EvseType, 'evseDatabaseId')
-  declare evse?: EvseType;
+  declare evse?: EvseTypeDto;
 
   @ForeignKey(() => EvseType)
   @Column(DataType.INTEGER)
@@ -213,12 +222,12 @@ export class VariableAttribute
   // History of variable status. Can be directly from GetVariablesResponse or SetVariablesResponse, or from NotifyReport handling, or from 'setOnCharger' option for data api
 
   @HasMany(() => VariableStatus, 'variableAttributeId')
-  declare statuses?: VariableStatus[];
+  declare statuses?: VariableStatusDto[];
 
   // Below used to associate attributes with boot process
 
   @BelongsTo(() => Boot, 'bootConfigId')
-  declare bootConfig?: Boot;
+  declare bootConfig?: BootDto;
 
   @ForeignKey(() => Boot)
   @Column(DataType.STRING)

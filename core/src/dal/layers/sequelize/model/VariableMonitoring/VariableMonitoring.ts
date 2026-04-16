@@ -2,10 +2,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
-  VariableMonitoringDto,
-  TenantDto,
-  MonitorEnumType,
+  ChargingStationDto,
+  ComponentDto,
   EventNotificationEnumType,
+  MonitorEnumType,
+  TenantDto,
+  VariableDto,
+  VariableMonitoringDto,
+  VariableMonitoringStatusDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
@@ -22,11 +26,11 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
-import { ChargingStation } from '../Location/index.js';
-import { Variable } from '../DeviceModel/Variable.js';
 import { Component } from '../DeviceModel/Component.js';
-import { VariableMonitoringStatus } from './VariableMonitoringStatus.js';
+import { Variable } from '../DeviceModel/Variable.js';
+import { ChargingStation } from '../Location/index.js';
 import { Tenant } from '../Tenant.js';
+import { VariableMonitoringStatus } from './VariableMonitoringStatus.js';
 
 @Table
 export class VariableMonitoring extends Model implements VariableMonitoringDto {
@@ -79,7 +83,7 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
    */
 
   @BelongsTo(() => Variable, 'variableId')
-  declare variable: Variable;
+  declare variable: VariableDto;
 
   @ForeignKey(() => Variable)
   @Column({
@@ -88,7 +92,7 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
   declare variableId?: number | null;
 
   @BelongsTo(() => Component, 'componentId')
-  declare component: Component;
+  declare component: ComponentDto;
 
   @ForeignKey(() => Component)
   @Column({
@@ -97,12 +101,12 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
   declare componentId?: number | null;
 
   @HasMany(() => VariableMonitoringStatus, 'variableMonitoringId')
-  declare statuses?: VariableMonitoringStatus[];
+  declare statuses?: VariableMonitoringStatusDto[];
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare chargingStation?: ChargingStation;
+  declare chargingStation?: ChargingStationDto;
 
   @ForeignKey(() => Tenant)
   @Column({

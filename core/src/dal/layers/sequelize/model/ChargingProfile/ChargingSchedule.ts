@@ -22,9 +22,9 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
 import { ChargingProfile } from './ChargingProfile.js';
 import { SalesTariff } from './SalesTariff.js';
-import { Tenant } from '../Tenant.js';
 
 @Table
 export class ChargingSchedule extends Model implements ChargingScheduleDto {
@@ -80,7 +80,7 @@ export class ChargingSchedule extends Model implements ChargingScheduleDto {
    * Relations
    */
   @BelongsTo(() => ChargingProfile, 'chargingProfileDatabaseId')
-  declare chargingProfile: ChargingProfile;
+  declare chargingProfile: ChargingProfileDto;
 
   @ForeignKey(() => ChargingProfile)
   @Column(DataType.INTEGER)
@@ -90,10 +90,10 @@ export class ChargingSchedule extends Model implements ChargingScheduleDto {
   declare salesTariffId?: number | null;
 
   @BelongsTo(() => SalesTariff, 'salesTariffId')
-  declare salesTariff?: SalesTariff;
+  declare salesTariff?: SalesTariffDto;
 
   @HasMany(() => SalesTariff, 'chargingScheduleDatabaseId')
-  declare salesTariffs?: SalesTariff[];
+  declare salesTariffs?: SalesTariffDto[];
 
   declare customData?: object | null;
 

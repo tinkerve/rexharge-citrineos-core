@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { StopTransactionDto, TenantDto } from '@citrineos/base';
+import type { MeterValueDto, StopTransactionDto, TenantDto, TransactionDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
@@ -15,9 +15,9 @@ import {
   Table,
 } from 'sequelize-typescript';
 
-import { Transaction } from './Transaction.js';
-import { MeterValue } from './MeterValue.js';
 import { Tenant } from '../Tenant.js';
+import { MeterValue } from './MeterValue.js';
+import { Transaction } from './Transaction.js';
 
 @Table
 export class StopTransaction extends Model implements StopTransactionDto {
@@ -34,7 +34,7 @@ export class StopTransaction extends Model implements StopTransactionDto {
   declare transactionDatabaseId: number;
 
   @BelongsTo(() => Transaction, 'transactionDatabaseId')
-  declare transaction: Transaction;
+  declare transaction: TransactionDto;
 
   @Column(DataType.INTEGER)
   declare meterStop: number;
@@ -51,7 +51,7 @@ export class StopTransaction extends Model implements StopTransactionDto {
   declare reason?: string;
 
   @HasMany(() => MeterValue, 'stopTransactionDatabaseId')
-  declare meterValues?: MeterValue[];
+  declare meterValues?: MeterValueDto[];
 
   // Add flat idToken fields
   @Column(DataType.STRING)

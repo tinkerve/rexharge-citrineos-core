@@ -2,13 +2,21 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  ChargingStationDto,
   ConnectorDto,
   ConnectorErrorCodeEnumType,
   ConnectorFormatEnumType,
   ConnectorPowerTypeEnumType,
   ConnectorStatusEnumType,
   ConnectorTypeEnumType,
+  EvseDto,
+  EvseTypeDto,
+  MeterValueDto,
+  StartTransactionDto,
+  StatusNotificationDto,
+  TariffDto,
   TenantDto,
+  TransactionDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
 import {
@@ -22,15 +30,15 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
+import { EvseType } from '../DeviceModel/EvseType.js';
+import { Tariff } from '../Tariff/Tariffs.js';
+import { Tenant } from '../Tenant.js';
+import { MeterValue } from '../TransactionEvent/MeterValue.js';
+import { StartTransaction } from '../TransactionEvent/StartTransaction.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
 import { ChargingStation } from './ChargingStation.js';
 import { Evse } from './Evse.js';
-import { Tariff } from '../Tariff/Tariffs.js';
-import { EvseType } from '../DeviceModel/EvseType.js';
 import { StatusNotification } from './StatusNotification.js';
-import { MeterValue } from '../TransactionEvent/MeterValue.js';
-import { Transaction } from '../TransactionEvent/Transaction.js';
-import { StartTransaction } from '../TransactionEvent/StartTransaction.js';
-import { Tenant } from '../Tenant.js';
 
 @Table
 export class Connector extends Model implements ConnectorDto {
@@ -124,16 +132,16 @@ export class Connector extends Model implements ConnectorDto {
   declare termsAndConditionsUrl?: string | null;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare chargingStation?: ChargingStation;
+  declare chargingStation?: ChargingStationDto;
 
   @BelongsTo(() => Evse, 'evseId')
-  declare evse?: Evse;
+  declare evse?: EvseDto;
 
   @BelongsTo(() => EvseType, 'evseTypeConnectorId')
-  declare evseTypeByConnector?: EvseType;
+  declare evseTypeByConnector?: EvseTypeDto;
 
   @HasMany(() => EvseType, 'connectorId')
-  declare evseTypes?: EvseType[];
+  declare evseTypes?: EvseTypeDto[];
 
   @ForeignKey(() => Tariff)
   @Column({
@@ -145,19 +153,19 @@ export class Connector extends Model implements ConnectorDto {
   declare tariffId?: number | null;
 
   @BelongsTo(() => Tariff, 'tariffId')
-  declare tariff?: Tariff | null;
+  declare tariff?: TariffDto | null;
 
   @HasMany(() => StatusNotification, 'connectorId')
-  declare statusNotifications?: StatusNotification[];
+  declare statusNotifications?: StatusNotificationDto[];
 
   @HasMany(() => MeterValue, 'connectorId')
-  declare meterValues?: MeterValue[];
+  declare meterValues?: MeterValueDto[];
 
   @HasMany(() => Transaction, 'connectorId')
-  declare transactions?: Transaction[];
+  declare transactions?: TransactionDto[];
 
   @HasMany(() => StartTransaction, 'connectorDatabaseId')
-  declare startTransactions?: StartTransaction[];
+  declare startTransactions?: StartTransactionDto[];
 
   @ForeignKey(() => Tenant)
   @Column({

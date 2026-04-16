@@ -2,6 +2,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import {
+  DEFAULT_TENANT_ID,
+  OCPP2_Namespace,
+  type CertificateDto,
+  type CertificateUseEnumType,
+  type ChargingStationDto,
+  type InstallCertificateStatusEnumType,
+  type TenantDto,
+} from '@citrineos/base';
+import {
   BeforeCreate,
   BeforeUpdate,
   BelongsTo,
@@ -11,17 +20,9 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
-import { Certificate } from './Certificate.js';
-import {
-  DEFAULT_TENANT_ID,
-  OCPP2_Namespace,
-  type CertificateUseEnumType,
-  type InstallCertificateStatusEnumType,
-  type TenantDto,
-  type ChargingStationDto,
-} from '@citrineos/base';
 import { ChargingStation } from '../Location/index.js';
 import { Tenant } from '../Tenant.js';
+import { Certificate } from './Certificate.js';
 
 @Table
 export class InstallCertificateAttempt extends Model {
@@ -38,7 +39,7 @@ export class InstallCertificateAttempt extends Model {
   declare stationId: string;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare station?: ChargingStation;
+  declare station?: ChargingStationDto;
 
   @Column({
     type: DataType.STRING,
@@ -55,7 +56,7 @@ export class InstallCertificateAttempt extends Model {
   declare certificateId: number;
 
   @BelongsTo(() => Certificate, 'certificateId')
-  declare certificate?: Certificate;
+  declare certificate?: CertificateDto;
 
   @Column({
     type: DataType.STRING,

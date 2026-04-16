@@ -1,7 +1,12 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { VariableMonitoringStatusDto, TenantDto, StatusInfo } from '@citrineos/base';
+import type {
+  VariableMonitoringDto,
+  VariableMonitoringStatusDto,
+  TenantDto,
+  StatusInfo,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
@@ -31,7 +36,7 @@ export class VariableMonitoringStatus extends Model implements VariableMonitorin
    */
 
   @BelongsTo(() => VariableMonitoring, 'variableMonitoringId')
-  declare variable: VariableMonitoring;
+  declare variable: VariableMonitoringDto;
 
   @ForeignKey(() => VariableMonitoring)
   @Column(DataType.INTEGER)

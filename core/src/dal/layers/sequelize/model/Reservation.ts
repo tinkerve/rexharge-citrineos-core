@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { ReservationDto, TenantDto } from '@citrineos/base';
+import type { EvseTypeDto, ReservationDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   AutoIncrement,
@@ -76,7 +76,7 @@ export class Reservation extends Model implements ReservationDto {
   declare evseId?: number | null;
 
   @BelongsTo(() => EvseType, 'evseId')
-  declare evse?: EvseType | null;
+  declare evse?: EvseTypeDto | null;
 
   declare customData?: any | null;
 

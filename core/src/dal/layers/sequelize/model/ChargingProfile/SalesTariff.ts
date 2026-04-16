@@ -22,8 +22,8 @@ import {
   Table,
 } from 'sequelize-typescript';
 
-import { ChargingSchedule } from './ChargingSchedule.js';
 import { Tenant } from '../Tenant.js';
+import { ChargingSchedule } from './ChargingSchedule.js';
 
 @Table
 export class SalesTariff extends Model implements SalesTariffDto {
@@ -63,10 +63,10 @@ export class SalesTariff extends Model implements SalesTariffDto {
   declare chargingScheduleDatabaseId: number;
 
   @BelongsTo(() => ChargingSchedule, 'chargingScheduleDatabaseId')
-  declare chargingSchedule?: ChargingSchedule;
+  declare chargingSchedule?: ChargingScheduleDto;
 
   @HasMany(() => ChargingSchedule, 'salesTariffId')
-  declare chargingSchedulesBySalesTariff?: ChargingSchedule[];
+  declare chargingSchedulesBySalesTariff?: ChargingScheduleDto[];
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 

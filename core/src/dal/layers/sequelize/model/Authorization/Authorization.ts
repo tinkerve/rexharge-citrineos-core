@@ -11,6 +11,7 @@ import type {
   RealTimeAuthLastAttempt,
   TenantDto,
   TenantPartnerDto,
+  TransactionDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
@@ -115,7 +116,7 @@ export class Authorization extends Model implements AuthorizationDto {
   declare tenantPartner?: TenantPartnerDto | null;
 
   @HasMany(() => Transaction, 'authorizationId')
-  declare transactions?: Transaction[];
+  declare transactions?: TransactionDto[];
 
   @ForeignKey(() => Tenant)
   @Column({

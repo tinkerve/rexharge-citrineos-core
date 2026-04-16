@@ -5,10 +5,19 @@ import type {
   ChargingStationCapabilityEnumType,
   ChargingStationDto,
   ChargingStationParkingRestrictionEnumType,
+  ChargingStationSecurityInfoDto,
+  ChargingStationSequenceDto,
+  ConnectorDto,
+  EvseDto,
+  InstalledCertificateDto,
   LocationDto,
+  OCPPMessageDto,
   Point,
+  ServerNetworkProfileDto,
+  StatusNotificationDto,
   TenantDto,
-  TransactionDto,
+  VariableAttributeDto,
+  VariableMonitoringDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace, OCPPVersion } from '@citrineos/base';
 import {
@@ -27,22 +36,22 @@ import {
   Table,
 } from 'sequelize-typescript';
 
-import { StatusNotification } from './StatusNotification.js';
+import { DeleteCertificateAttempt } from '../Certificate/DeleteCertificateAttempt.js';
 import { InstalledCertificate } from '../Certificate/InstalledCertificate.js';
-import { Location } from './Location.js';
-import { Evse } from './Evse.js';
-import { Connector } from './Connector.js';
-import { ServerNetworkProfile } from './ServerNetworkProfile.js';
-import { ChargingStationNetworkProfile } from './ChargingStationNetworkProfile.js';
-import { Transaction } from '../TransactionEvent/Transaction.js';
-import { VariableAttribute } from '../DeviceModel/VariableAttribute.js';
-import { OCPPMessage } from '../OCPPMessage.js';
-import { VariableMonitoring } from '../VariableMonitoring/VariableMonitoring.js';
-import { EventData } from '../VariableMonitoring/EventData.js';
 import { ChargingStationSecurityInfo } from '../ChargingStationSecurityInfo.js';
 import { ChargingStationSequence } from '../ChargingStationSequence/ChargingStationSequence.js';
-import { DeleteCertificateAttempt } from '../Certificate/DeleteCertificateAttempt.js';
+import { VariableAttribute } from '../DeviceModel/VariableAttribute.js';
+import { OCPPMessage } from '../OCPPMessage.js';
 import { Tenant } from '../Tenant.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
+import { EventData } from '../VariableMonitoring/EventData.js';
+import { VariableMonitoring } from '../VariableMonitoring/VariableMonitoring.js';
+import { ChargingStationNetworkProfile } from './ChargingStationNetworkProfile.js';
+import { Connector } from './Connector.js';
+import { Evse } from './Evse.js';
+import { Location } from './Location.js';
+import { ServerNetworkProfile } from './ServerNetworkProfile.js';
+import { StatusNotification } from './StatusNotification.js';
 
 /**
  * Represents a charging station.
@@ -138,10 +147,10 @@ export class ChargingStation extends Model implements ChargingStationDto {
   declare locationId?: number | null;
 
   @HasMany(() => StatusNotification, 'stationPkId')
-  declare statusNotifications?: StatusNotification[] | null;
+  declare statusNotifications?: StatusNotificationDto[] | null;
 
   @HasMany(() => InstalledCertificate, 'stationPkId')
-  declare installedCertificates?: InstalledCertificate[];
+  declare installedCertificates?: InstalledCertificateDto[];
 
   @HasMany(() => Transaction, 'stationPkId')
   declare transactions?: Transaction[] | null;
@@ -150,34 +159,34 @@ export class ChargingStation extends Model implements ChargingStationDto {
    * The business Location of the charging station. Optional in case a charging station is not yet in the field, or retired.
    */
   @BelongsTo(() => Location, 'locationId')
-  declare location?: Location;
+  declare location?: LocationDto;
 
   @BelongsToMany(() => ServerNetworkProfile, () => ChargingStationNetworkProfile)
-  declare networkProfiles?: ServerNetworkProfile[] | null;
+  declare networkProfiles?: ServerNetworkProfileDto[] | null;
 
   @HasMany(() => Evse, 'stationPkId')
-  declare evses?: Evse[] | null;
+  declare evses?: EvseDto[] | null;
 
   @HasMany(() => Connector, 'stationPkId')
-  declare connectors?: Connector[] | null;
+  declare connectors?: ConnectorDto[] | null;
 
   @HasMany(() => VariableAttribute, 'stationPkId')
-  declare variableAttributes?: VariableAttribute[];
+  declare variableAttributes?: VariableAttributeDto[];
 
   @HasMany(() => OCPPMessage, 'stationPkId')
-  declare ocppMessages?: OCPPMessage[];
+  declare ocppMessages?: OCPPMessageDto[];
 
   @HasMany(() => VariableMonitoring, 'stationPkId')
-  declare variableMonitorings?: VariableMonitoring[];
+  declare variableMonitorings?: VariableMonitoringDto[];
 
   @HasMany(() => EventData, 'stationPkId')
   declare stationEventData?: EventData[];
 
   @HasMany(() => ChargingStationSecurityInfo, 'stationPkId')
-  declare securityInfo?: ChargingStationSecurityInfo[];
+  declare securityInfo?: ChargingStationSecurityInfoDto[];
 
   @HasMany(() => ChargingStationSequence, 'stationPkId')
-  declare sequences?: ChargingStationSequence[];
+  declare sequences?: ChargingStationSequenceDto[];
 
   @HasMany(() => DeleteCertificateAttempt, 'stationPkId')
   declare deleteCertificateAttempts?: DeleteCertificateAttempt[];

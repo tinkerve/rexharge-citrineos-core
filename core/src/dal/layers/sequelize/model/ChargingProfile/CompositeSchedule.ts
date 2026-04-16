@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
+import type { CompositeScheduleDto, EvseDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
-import type { CompositeScheduleDto, TenantDto } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
@@ -28,7 +28,7 @@ export class CompositeSchedule extends Model implements CompositeScheduleDto {
   declare evseId: number;
 
   @BelongsTo(() => Evse, 'evseId')
-  declare evse?: Evse;
+  declare evse?: EvseDto;
 
   @Column(DataType.INTEGER)
   declare duration: number;

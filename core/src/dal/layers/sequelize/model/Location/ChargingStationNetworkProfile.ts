@@ -2,7 +2,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ChargingStationNetworkProfileDto, TenantDto } from '@citrineos/base';
+import type {
+  ChargingStationDto,
+  ChargingStationNetworkProfileDto,
+  ServerNetworkProfileDto,
+  SetNetworkProfileDto,
+  TenantDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import {
   BeforeCreate,
@@ -35,7 +41,7 @@ export class ChargingStationNetworkProfile
   declare stationPkId?: number;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare chargingStation?: ChargingStation;
+  declare chargingStation?: ChargingStationDto;
 
   @Column({
     type: DataType.STRING,
@@ -57,7 +63,7 @@ export class ChargingStationNetworkProfile
   declare setNetworkProfileId: number;
 
   @BelongsTo(() => SetNetworkProfile, 'setNetworkProfileId')
-  declare setNetworkProfile: SetNetworkProfile;
+  declare setNetworkProfile: SetNetworkProfileDto;
 
   /**
    * If present, the websocket server that correlates to this configuration slot.
@@ -70,7 +76,7 @@ export class ChargingStationNetworkProfile
   declare websocketServerConfigId?: string;
 
   @BelongsTo(() => ServerNetworkProfile, 'websocketServerConfigId')
-  declare websocketServerConfig?: ServerNetworkProfile;
+  declare websocketServerConfig?: ServerNetworkProfileDto;
 
   @ForeignKey(() => Tenant)
   @Column({

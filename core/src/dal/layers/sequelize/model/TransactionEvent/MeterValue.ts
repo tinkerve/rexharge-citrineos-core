@@ -1,7 +1,16 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { MeterValueDto, TenantDto, SampledValue } from '@citrineos/base';
+import type {
+  ConnectorDto,
+  MeterValueDto,
+  SampledValue,
+  StopTransactionDto,
+  TariffDto,
+  TenantDto,
+  TransactionDto,
+  TransactionEventDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
@@ -13,12 +22,12 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
-import { Transaction } from './Transaction.js';
-import { TransactionEvent } from './TransactionEvent.js';
-import { StopTransaction } from './StopTransaction.js';
 import { Connector } from '../Location/Connector.js';
 import { Tariff } from '../Tariff/Tariffs.js';
 import { Tenant } from '../Tenant.js';
+import { StopTransaction } from './StopTransaction.js';
+import { Transaction } from './Transaction.js';
+import { TransactionEvent } from './TransactionEvent.js';
 
 @Table
 export class MeterValue extends Model implements MeterValueDto {
@@ -29,21 +38,21 @@ export class MeterValue extends Model implements MeterValueDto {
   declare transactionEventId?: number | null;
 
   @BelongsTo(() => TransactionEvent, 'transactionEventId')
-  declare transactionEvent?: TransactionEvent;
+  declare transactionEvent?: TransactionEventDto;
 
   @ForeignKey(() => Transaction)
   @Column(DataType.INTEGER)
   declare transactionDatabaseId?: number | null;
 
   @BelongsTo(() => Transaction, 'transactionDatabaseId')
-  declare transaction?: Transaction;
+  declare transaction?: TransactionDto;
 
   @ForeignKey(() => StopTransaction)
   @Column(DataType.INTEGER)
   declare stopTransactionDatabaseId?: number | null;
 
   @BelongsTo(() => StopTransaction, 'stopTransactionDatabaseId')
-  declare stopTransaction?: StopTransaction;
+  declare stopTransaction?: StopTransactionDto;
 
   @Column(DataType.JSONB)
   declare sampledValue: [SampledValue, ...SampledValue[]];
@@ -61,7 +70,7 @@ export class MeterValue extends Model implements MeterValueDto {
   declare connectorId?: number;
 
   @BelongsTo(() => Connector, 'connectorId')
-  declare connector?: Connector;
+  declare connector?: ConnectorDto;
 
   declare customData?: any | null;
 
@@ -70,7 +79,7 @@ export class MeterValue extends Model implements MeterValueDto {
   declare tariffId?: number | null;
 
   @BelongsTo(() => Tariff, 'tariffId')
-  declare tariff?: Tariff;
+  declare tariff?: TariffDto;
 
   @Column(DataType.STRING)
   declare transactionId?: string | null;

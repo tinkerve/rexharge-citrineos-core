@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  ComponentDto,
   MessageInfoDto,
   MessagePriorityEnumType,
   MessageStateEnumType,
@@ -89,7 +90,7 @@ export class MessageInfo extends Model implements MessageInfoDto {
    */
 
   @BelongsTo(() => Component, 'displayComponentId')
-  declare display: Component;
+  declare display: ComponentDto;
 
   @ForeignKey(() => Component)
   @Column({

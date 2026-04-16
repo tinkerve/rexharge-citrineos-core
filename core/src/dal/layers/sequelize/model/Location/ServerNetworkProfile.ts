@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  ChargingStationDto,
   OCPPVersionType,
   ServerNetworkProfileDto,
   TenantDto,
@@ -20,9 +21,9 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
 import { ChargingStation } from './ChargingStation.js';
 import { ChargingStationNetworkProfile } from './ChargingStationNetworkProfile.js';
-import { Tenant } from '../Tenant.js';
 
 @Table
 export class ServerNetworkProfile
@@ -75,7 +76,7 @@ export class ServerNetworkProfile
   declare rootCACertificateFilePath?: string;
 
   @BelongsToMany(() => ChargingStation, () => ChargingStationNetworkProfile)
-  declare chargingStations?: ChargingStation[] | null;
+  declare chargingStations?: ChargingStationDto[] | null;
 
   @ForeignKey(() => Tenant)
   @Column({

@@ -1,7 +1,13 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { ConnectorStatusEnumType, StatusNotificationDto, TenantDto } from '@citrineos/base';
+import type {
+  ChargingStationDto,
+  ConnectorStatusEnumType,
+  ConnectorDto,
+  StatusNotificationDto,
+  TenantDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
@@ -29,7 +35,7 @@ export class StatusNotification extends Model implements StatusNotificationDto {
   declare stationId: string;
 
   @BelongsTo(() => ChargingStation, 'stationPkId')
-  declare chargingStation: ChargingStation;
+  declare chargingStation: ChargingStationDto;
 
   @Column({
     type: DataType.DATE,
@@ -64,7 +70,7 @@ export class StatusNotification extends Model implements StatusNotificationDto {
   declare customData?: object | null;
 
   @BelongsTo(() => Connector, 'connectorId')
-  declare connector?: Connector;
+  declare connector?: ConnectorDto;
 
   @ForeignKey(() => Tenant)
   @Column({

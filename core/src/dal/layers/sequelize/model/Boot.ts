@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { BootDto, TenantDto } from '@citrineos/base';
+import type { BootDto, TenantDto, VariableAttributeDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
@@ -58,7 +58,7 @@ export class Boot extends Model implements BootDto {
    * Variable attributes to be sent in SetVariablesRequest on pending boot
    */
   @HasMany(() => VariableAttribute, 'bootConfigId')
-  declare pendingBootSetVariables?: VariableAttribute[];
+  declare pendingBootSetVariables?: VariableAttributeDto[];
 
   @Column(DataType.JSON)
   declare variablesRejectedOnLastBoot?: object[] | null;

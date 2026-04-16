@@ -2,11 +2,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  MeterValueDto,
   TenantDto,
+  TransactionDto,
   TransactionEventDto,
   TransactionEventEnumType,
-  TriggerReasonEnumType,
   TransactionType,
+  TriggerReasonEnumType,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
@@ -21,10 +23,10 @@ import {
   Table,
 } from 'sequelize-typescript';
 
-import { MeterValue } from './MeterValue.js';
-import { Transaction } from './Transaction.js';
 import { EvseType } from '../DeviceModel/EvseType.js';
 import { Tenant } from '../Tenant.js';
+import { MeterValue } from './MeterValue.js';
+import { Transaction } from './Transaction.js';
 
 @Table
 export class TransactionEvent extends Model implements TransactionEventDto {
@@ -37,7 +39,7 @@ export class TransactionEvent extends Model implements TransactionEventDto {
   declare eventType: TransactionEventEnumType;
 
   @HasMany(() => MeterValue, 'transactionEventId')
-  declare meterValue?: [MeterValue, ...MeterValue[]];
+  declare meterValue?: [MeterValueDto, ...MeterValueDto[]];
 
   @Column({
     type: DataType.DATE,
@@ -69,7 +71,7 @@ export class TransactionEvent extends Model implements TransactionEventDto {
   declare transactionDatabaseId?: number;
 
   @BelongsTo(() => Transaction, 'transactionDatabaseId')
-  declare transaction?: Transaction;
+  declare transaction?: TransactionDto;
 
   @Column(DataType.JSON)
   declare transactionInfo: TransactionType;
