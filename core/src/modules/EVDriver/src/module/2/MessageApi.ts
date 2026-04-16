@@ -2,11 +2,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { FastifyInstance } from 'fastify';
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
-import type { IEVDriverModuleApi } from '../interface.js';
-import { EVDriverModule } from '../module.js';
 import type { CallAction, IMessageConfirmation } from '@citrineos/base';
 import {
   AbstractModuleApi,
@@ -18,9 +13,14 @@ import {
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
-import { packageGroupCall, validateChargingProfileType } from '@util/index.js';
 import { OCPP2_0_1_Mapper } from '@dal/index.js';
+import { packageGroupCall, validateChargingProfileType } from '@util/index.js';
+import type { FastifyInstance } from 'fastify';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
+import type { IEVDriverModuleApi } from '../interface.js';
+import { EVDriverModule } from '../module.js';
 
 const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
 
@@ -171,7 +171,7 @@ export class EVDriverOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -219,7 +219,7 @@ export class EVDriverOcpp2Api
 
       // Send the CancelReservation call for each station
       return packageGroupCall(
-        this._module.sendCall,
+        this._module,
         identifiers,
         tenantId,
         this._ocppVersion ?? DEFAULT_VERSION,
@@ -308,7 +308,7 @@ export class EVDriverOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -331,7 +331,7 @@ export class EVDriverOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -401,7 +401,7 @@ export class EVDriverOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
