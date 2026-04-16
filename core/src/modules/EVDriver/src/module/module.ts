@@ -77,7 +77,6 @@ import {
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { LocalAuthListService } from './LocalAuthListService.js';
-import { GenericStatusEnumType } from '@citrineos/base/src/ocpp/model/2.1/index.js';
 
 /**
  * Component that handles provisioning related messages.
@@ -741,7 +740,7 @@ export class EVDriverModule extends AbstractModule {
           );
           if (tariff) {
             (response as OCPP2_1.AuthorizeResponse).tariff =
-              OCPP2_1_Mapper.TariffMapper.toOcpp21TariffType(tariff);
+              OCPP2_1_Mapper.TariffMapper.toTariffType(tariff);
           }
         }
       }
@@ -811,7 +810,9 @@ export class EVDriverModule extends AbstractModule {
     const response: OCPP2_response_types.VatNumberValidationResponse = {
       vatNumber: request.vatNumber,
       evseId: request.evseId,
-      status: company ? GenericStatusEnumType.Accepted : GenericStatusEnumType.Rejected,
+      status: company
+        ? OCPP2_1.GenericStatusEnumType.Accepted
+        : OCPP2_1.GenericStatusEnumType.Rejected,
       company,
     };
 

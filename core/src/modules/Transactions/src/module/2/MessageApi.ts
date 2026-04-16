@@ -32,6 +32,7 @@ export class TransactionsOcpp2Api
    *
    * @param {TransactionsModule} transactionModule - The transaction module.
    * @param {FastifyInstance} server - The server instance.
+   * @param {OCPPVersion} version - The OCPP version
    * @param {Logger<ILogObj>} [logger] - Optional logger.
    */
   constructor(
@@ -89,10 +90,11 @@ export class TransactionsOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.SetDefaultTariff,
-    (instance: TransactionsOcpp2Api) =>
+  @AsMessageEndpoint(OCPP_CallAction.SetDefaultTariff, (instance: TransactionsOcpp2Api) =>
+    getOcpp2Schema(
       (instance._ocppVersion ?? OCPPVersion.OCPP2_1) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetTransactionStatusRequestSchema',
+    ),
   )
   async setDefaultTariff(
     identifier: string[],
@@ -101,7 +103,7 @@ export class TransactionsOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? OCPPVersion.OCPP2_1,

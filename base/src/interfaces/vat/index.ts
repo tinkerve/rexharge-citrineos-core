@@ -2,9 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AddressType } from '@ocpp/model/2.1/types/VatNumberValidationResponse.js';
-
-export type { AddressType };
+import type { AddressType } from '@interfaces/dto/types/vat.js';
 
 export interface IVatProvider {
   /**

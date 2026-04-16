@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AddressType } from '@citrineos/base/src/ocpp/model/2.1/types/VatNumberValidationResponse.js';
-import type { IVatProvider } from '@citrineos/base';
+import type { AddressType, IVatProvider } from '@citrineos/base';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 

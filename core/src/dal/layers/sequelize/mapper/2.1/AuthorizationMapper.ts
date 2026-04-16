@@ -4,6 +4,7 @@
 import type { AuthorizationStatusEnumType, IdTokenEnumType } from '@citrineos/base';
 import { AuthorizationStatusEnum, IdTokenEnum, OCPP2_1 } from '@citrineos/base';
 import { Authorization } from '@/dal/index.js';
+
 export class AuthorizationMapper {
   static toAuthorizationData(authorization: Authorization): OCPP2_1.AuthorizationData {
     return {
