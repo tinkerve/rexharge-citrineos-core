@@ -57,6 +57,7 @@ export class ViesVatProvider implements IVatProvider {
         return null;
       }
       const body = (await response.json()) as ViesResponse | ViesErrorResponse;
+      this._logger.debug('VIES response body:', body);
       if ('actionSucceed' in body) {
         const error = body.errorWrappers?.[0]?.error ?? 'UNKNOWN';
         this._logger.warn(`VIES returned error "${error}" for VAT ${vatNumber}`);

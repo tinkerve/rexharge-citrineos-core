@@ -284,7 +284,9 @@ export const HashAlgorithmEnumSchema = z.enum(['SHA256', 'SHA384', 'SHA512']);
 
 export const IdTokenEnumSchema = z.enum([
   'Central',
+  'DirectPayment',
   'eMAID',
+  'EVCCID',
   'ISO14443',
   'ISO15693',
   'KeyCode',
@@ -292,6 +294,7 @@ export const IdTokenEnumSchema = z.enum([
   'MacAddress',
   'NoAuthorization',
   'Other',
+  'VIN',
 ]);
 
 export const InstallCertificateStatusEnumSchema = z.enum(['Accepted', 'Rejected', 'Failed']);

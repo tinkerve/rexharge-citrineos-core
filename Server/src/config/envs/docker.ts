@@ -93,7 +93,11 @@ export function createDockerConfig() {
           OCPP_CallAction.RemoteStopTransaction,
           OCPP_CallAction.RemoteStartTransaction,
         ],
-        requests: [OCPP_CallAction.Authorize, OCPP_CallAction.ReservationStatusUpdate],
+        requests: [
+          OCPP_CallAction.Authorize,
+          OCPP_CallAction.ReservationStatusUpdate,
+          OCPP_CallAction.VatNumberValidation,
+        ],
       },
       monitoring: {
         endpointPrefix: '/monitoring',
@@ -149,7 +153,11 @@ export function createDockerConfig() {
       transactions: {
         endpointPrefix: '/transactions',
         costUpdatedInterval: 60,
-        responses: [OCPP_CallAction.CostUpdated, OCPP_CallAction.GetTransactionStatus],
+        responses: [
+          OCPP_CallAction.CostUpdated,
+          OCPP_CallAction.GetTransactionStatus,
+          OCPP_CallAction.SetDefaultTariff,
+        ],
         requests: [
           OCPP_CallAction.MeterValues,
           OCPP_CallAction.StatusNotification,

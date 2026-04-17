@@ -126,8 +126,12 @@ export class AuthorizationMapper {
     switch (type) {
       case IdTokenEnum.Central:
         return OCPP2_1.IdTokenEnumType.Central;
+      case IdTokenEnum.DirectPayment:
+        return OCPP2_1.IdTokenEnumType.DirectPayment;
       case IdTokenEnum.eMAID:
         return OCPP2_1.IdTokenEnumType.eMAID;
+      case IdTokenEnum.EVCCID:
+        return OCPP2_1.IdTokenEnumType.EVCCID;
       case IdTokenEnum.ISO14443:
         return OCPP2_1.IdTokenEnumType.ISO14443;
       case IdTokenEnum.ISO15693:
@@ -140,6 +144,8 @@ export class AuthorizationMapper {
         return OCPP2_1.IdTokenEnumType.MacAddress;
       case IdTokenEnum.NoAuthorization:
         return OCPP2_1.IdTokenEnumType.NoAuthorization;
+      case IdTokenEnum.VIN:
+        return OCPP2_1.IdTokenEnumType.VIN;
       default:
         throw new Error(`Unknown idToken type: ${type}`);
     }
@@ -149,8 +155,12 @@ export class AuthorizationMapper {
     switch (type) {
       case OCPP2_1.IdTokenEnumType.Central:
         return IdTokenEnum.Central;
+      case OCPP2_1.IdTokenEnumType.DirectPayment:
+        return IdTokenEnum.DirectPayment;
       case OCPP2_1.IdTokenEnumType.eMAID:
         return IdTokenEnum.eMAID;
+      case OCPP2_1.IdTokenEnumType.EVCCID:
+        return IdTokenEnum.EVCCID;
       case OCPP2_1.IdTokenEnumType.ISO14443:
         return IdTokenEnum.ISO14443;
       case OCPP2_1.IdTokenEnumType.ISO15693:
@@ -163,6 +173,8 @@ export class AuthorizationMapper {
         return IdTokenEnum.MacAddress;
       case OCPP2_1.IdTokenEnumType.NoAuthorization:
         return IdTokenEnum.NoAuthorization;
+      case OCPP2_1.IdTokenEnumType.VIN:
+        return IdTokenEnum.VIN;
       default:
         throw new Error(`Unknown OCPP 2.1 idToken type: ${type}`);
     }

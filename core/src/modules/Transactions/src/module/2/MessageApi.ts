@@ -93,7 +93,7 @@ export class TransactionsOcpp2Api
   @AsMessageEndpoint(OCPP_CallAction.SetDefaultTariff, (instance: TransactionsOcpp2Api) =>
     getOcpp2Schema(
       (instance._ocppVersion ?? OCPPVersion.OCPP2_1) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'GetTransactionStatusRequestSchema',
+      'SetDefaultTariffRequestSchema',
     ),
   )
   async setDefaultTariff(
