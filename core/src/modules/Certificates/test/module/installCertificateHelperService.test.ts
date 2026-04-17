@@ -33,6 +33,20 @@ let createdCertificateInstances: any[] = [];
 let createdInstallCertificateAttemptInstances: any[] = [];
 let createdInstalledCertificateInstances: any[] = [];
 
+vi.mock('jsrsasign', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('jsrsasign')>();
+  const MockX509 = class {
+    readCertPEM = vi.fn();
+  };
+  return {
+    ...actual,
+    default: {
+      ...(actual as any).default,
+      X509: MockX509,
+    },
+  };
+});
+
 vi.mock('../../../../util/index.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../util/index.js')>();
   return {
