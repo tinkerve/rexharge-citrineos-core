@@ -23,7 +23,7 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
-import { Tariff } from '@/dal/index.js';
+import { Tariff } from '../Tariff/Tariffs.js';
 
 @Table
 export class Authorization extends Model implements AuthorizationDto {
