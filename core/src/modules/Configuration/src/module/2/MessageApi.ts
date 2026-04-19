@@ -2,26 +2,26 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { FastifyInstance } from 'fastify';
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
-import type { IConfigurationModuleApi } from '../interface.js';
-import { ConfigurationModule } from '../module.js';
 import {
-  OCPP2_request_types,
-  type CallAction,
-  type IMessageConfirmation,
-  type OCPP2_common_types,
   AbstractModuleApi,
   AsMessageEndpoint,
   DEFAULT_TENANT_ID,
   getOcpp2Schema,
+  OCPP2_request_types,
   OCPP_CallAction,
   OCPPVersion,
+  type CallAction,
+  type IMessageConfirmation,
+  type OCPP2_common_types,
 } from '@citrineos/base';
-import { packageGroupCall, validateLanguageTag } from '@util/index.js';
 import { SetNetworkProfile } from '@dal/index.js';
+import { packageGroupCall, validateLanguageTag } from '@util/index.js';
+import type { FastifyInstance } from 'fastify';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
+import type { IConfigurationModuleApi } from '../interface.js';
+import { ConfigurationModule } from '../module.js';
 
 enum SetNetworkProfileExtraQuerystrings {
   websocketServerConfigId = 'websocketServerConfigId',
@@ -91,7 +91,7 @@ export class ConfigurationOcpp2Api
     }
 
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -115,7 +115,7 @@ export class ConfigurationOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -138,7 +138,7 @@ export class ConfigurationOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -161,7 +161,7 @@ export class ConfigurationOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -199,7 +199,7 @@ export class ConfigurationOcpp2Api
     }
 
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -222,7 +222,7 @@ export class ConfigurationOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -245,7 +245,7 @@ export class ConfigurationOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -268,7 +268,7 @@ export class ConfigurationOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -291,7 +291,7 @@ export class ConfigurationOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -314,7 +314,7 @@ export class ConfigurationOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,

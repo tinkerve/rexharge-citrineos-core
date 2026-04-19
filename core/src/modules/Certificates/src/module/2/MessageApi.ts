@@ -10,13 +10,13 @@ import {
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
+import { DeleteCertificateAttempt } from '@dal/index.js';
 import { packageGroupCall } from '@util/index.js';
 import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { ICertificatesModuleApi } from '../interface.js';
 import { CertificatesModule } from '../module.js';
-import { DeleteCertificateAttempt } from '@dal/index.js';
 
 /**
  * Server API for the Certificates module.
@@ -61,7 +61,7 @@ export class CertificatesOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -115,7 +115,7 @@ export class CertificatesOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module,
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,

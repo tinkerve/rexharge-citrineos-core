@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { TariffDto, TenantDto, ConnectorDto } from '@citrineos/base';
+import type { ConnectorDto, TariffDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_Namespace } from '@citrineos/base';
 import type { CreationOptional } from 'sequelize';
 import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
@@ -11,16 +11,7 @@ import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequ
 export class Tariff extends Model implements TariffDto {
   static readonly MODEL_NAME: string = OCPP2_Namespace.Tariff;
 
-  @Column({
-    type: DataType.STRING,
-    unique: true,
-  })
-  declare stationId: string;
-
-  @Column(DataType.INTEGER)
-  declare connectorId?: number | null;
-
-  declare connector?: ConnectorDto | null;
+  declare connectors?: ConnectorDto[];
 
   @Column({
     type: DataType.CHAR(3),

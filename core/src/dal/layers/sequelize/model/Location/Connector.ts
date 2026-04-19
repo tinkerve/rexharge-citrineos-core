@@ -9,8 +9,8 @@ import type {
   ConnectorPowerTypeEnumType,
   ConnectorStatusEnumType,
   ConnectorTypeEnumType,
-  TenantDto,
   TariffDto,
+  TenantDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
 import {
@@ -118,7 +118,15 @@ export class Connector extends Model implements ConnectorDto {
 
   declare evse?: Evse;
 
-  declare tariffs?: TariffDto[];
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    onUpdate: 'CASCADE',
+    onDelete: 'SET NULL',
+  })
+  declare tariffId?: number | null;
+
+  declare tariff?: TariffDto | null;
 
   @Column({
     type: DataType.INTEGER,

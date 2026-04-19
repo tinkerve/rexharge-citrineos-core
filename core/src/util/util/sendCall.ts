@@ -2,31 +2,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-  CallAction,
-  IMessageConfirmation,
-  MessageOrigin,
-  OcppRequest,
-  OCPPVersion,
-  OCPPVersionType,
-} from '@citrineos/base';
-
-interface SendCall {
-  (
-    stationId: string,
-    tenantId: number,
-    ocppVersion: OCPPVersionType,
-    action: CallAction,
-    request: OcppRequest,
-    callbackUrl?: string,
-    correlationId?: string,
-    origin?: MessageOrigin,
-  ): Promise<IMessageConfirmation>;
-}
+import type { CallAction, IMessageConfirmation, IModule, OCPPVersion } from '@citrineos/base';
 
 /** Utility function to package and send a collection of calls using the provided delegate and associated parameters. */
 export const packageGroupCall = (
-  _sendCall: SendCall,
+  module: IModule,
   identifier: string[],
   tenantId: number,
   ocppVersion: OCPPVersion,
@@ -36,7 +16,7 @@ export const packageGroupCall = (
   correlationId?: string,
 ): Promise<IMessageConfirmation[]> => {
   const results = identifier.map((id) =>
-    _sendCall(id, tenantId, ocppVersion, action, request, callbackUrl, correlationId),
+    module.sendCall(id, tenantId, ocppVersion, action, request, callbackUrl, correlationId),
   );
 
   return Promise.all(results);
