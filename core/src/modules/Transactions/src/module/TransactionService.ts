@@ -21,7 +21,6 @@ import {
   OCPP1_6,
   OCPP2_0_1,
   OCPP2_1,
-  OCPPVersion,
 } from '@citrineos/base';
 import type {
   IAuthorizationRepository,
@@ -93,7 +92,6 @@ export class TransactionService {
     tenantId: number,
     transactionEvent: OCPP2_request_types.TransactionEventRequest,
     messageContext: IMessageContext,
-    ocppVersion?: string,
   ): Promise<OCPP2_response_types.TransactionEventResponse> {
     const idToken = transactionEvent.idToken!;
     const authorizations = await this._authorizeRepository.readAllByQuerystring(tenantId, {
@@ -166,25 +164,97 @@ export class TransactionService {
       const result = await this._applyAuthorizers(authorization, messageContext, evse, connector);
       response.idTokenInfo = this._mapAuthorizationDtoToIdTokenInfo(authorization, result);
     }
+    this._logger.debug('idToken Authorization final status:', response.idTokenInfo.status);
+    return response;
+  }
 
-    //Prepaid card authorization during transaction events
-    if (authorization.isPrepaid && response.idTokenInfo) {
-      if (authorization.prepaidBalance != null && authorization.prepaidBalance > 0) {
-        //Prepaid token with positive balance: set cacheExpiryDateTime to now
-        response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+  async authorizeOcpp21IdToken(
+    tenantId: number,
+    transactionEvent: OCPP2_request_types.TransactionEventRequest,
+    messageContext: IMessageContext,
+  ): Promise<OCPP2_1.TransactionEventResponse> {
+    const idToken = transactionEvent.idToken!;
+    const authorizations = await this._authorizeRepository.readAllByQuerystring(tenantId, {
+      idToken: idToken.idToken,
+      type: idToken as unknown as IdTokenEnumType,
+    });
 
-        //Include transactionLimit.maxCost in TransactionEventResponse (OCPP 2.1 only)
-        if (ocppVersion === OCPPVersion.OCPP2_1) {
-          (response as OCPP2_1.TransactionEventResponse).transactionLimit = {
-            maxCost: authorization.prepaidBalance,
+    const response: OCPP2_1.TransactionEventResponse = {
+      idTokenInfo: {
+        status: OCPP2_1.AuthorizationStatusEnumType.Unknown,
+      },
+    };
+
+    if (authorizations.length !== 1) {
+      return response;
+    }
+    const authorization = authorizations[0];
+
+    const idTokenInfo = OCPP2_0_1_Mapper.AuthorizationMapper.toIdTokenInfo(authorization);
+
+    if (idTokenInfo.status !== OCPP2_0_1.AuthorizationStatusEnumType.Accepted) {
+      response.idTokenInfo = idTokenInfo;
+      return response;
+    }
+
+    if (idTokenInfo.cacheExpiryDateTime && new Date() > new Date(idTokenInfo.cacheExpiryDateTime)) {
+      response.idTokenInfo = {
+        status: OCPP2_1.AuthorizationStatusEnumType.Invalid,
+        groupIdToken: idTokenInfo.groupIdToken,
+      };
+      return response;
+    } else {
+      if (
+        authorization.concurrentTransaction === true &&
+        transactionEvent.eventType === OCPP2_1.TransactionEventEnumType.Started
+      ) {
+        const hasConcurrent = await this._hasConcurrentTransactions(tenantId, authorization.id);
+        if (hasConcurrent) {
+          response.idTokenInfo = {
+            status: OCPP2_1.AuthorizationStatusEnumType.ConcurrentTx,
           };
-          this._logger.debug(
-            `C17: Set transactionLimit.maxCost=${authorization.prepaidBalance} for prepaid idToken ${authorization.idToken}`,
+          return response;
+        }
+      }
+
+      let evse: EvseDto | undefined = undefined;
+      let connector: ConnectorDto | undefined = undefined;
+      if (transactionEvent.evse) {
+        if (transactionEvent.evse.connectorId) {
+          connector = await this._locationRepository.readConnectorByStationIdAndOcpp201EvseType(
+            tenantId,
+            messageContext.stationId,
+            transactionEvent.evse,
           );
         }
-      } else if (response.idTokenInfo.status === OCPP2_0_1.AuthorizationStatusEnumType.Accepted) {
-        //Prepaid token with zero or negative balance
-        response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.NoCredit;
+        evse =
+          connector?.evse ??
+          (await this._locationRepository.readEvseByStationIdAndOcpp201EvseId(
+            tenantId,
+            messageContext.stationId,
+            transactionEvent.evse.id,
+          ));
+      }
+
+      const result = await this._applyAuthorizers(authorization, messageContext, evse, connector);
+      response.idTokenInfo = this._mapAuthorizationDtoToIdTokenInfo(authorization, result);
+    }
+
+    // C17 - Prepaid card authorization during transaction events
+    if (authorization.isPrepaid && response.idTokenInfo) {
+      if (authorization.prepaidBalance != null && authorization.prepaidBalance > 0) {
+        // C17.FR.01: Prepaid token with positive balance
+        response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+        // C17.FR.03: Include transactionLimit.maxCost
+        response.transactionLimit = {
+          maxCost: authorization.prepaidBalance,
+        };
+        this._logger.debug(
+          `C17: Set transactionLimit.maxCost=${authorization.prepaidBalance} for prepaid idToken ${authorization.idToken}`,
+        );
+      } else if (response.idTokenInfo.status === OCPP2_1.AuthorizationStatusEnumType.Accepted) {
+        // C17.FR.02: Prepaid token with zero or negative balance
+        response.idTokenInfo.status = OCPP2_1.AuthorizationStatusEnumType.NoCredit;
         response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
         this._logger.debug(
           `C17: Prepaid authorization rejected (NoCredit) for idToken ${authorization.idToken} with balance ${authorization.prepaidBalance}`,
@@ -192,7 +262,7 @@ export class TransactionService {
       }
     }
 
-    this._logger.debug('idToken Authorization final status:', response.idTokenInfo.status);
+    this._logger.debug('idToken Authorization 2.1 final status:', response.idTokenInfo.status);
     return response;
   }
 

@@ -283,12 +283,19 @@ export class TransactionsModule extends AbstractModule {
     let response: OCPP2_response_types.TransactionEventResponse | undefined = undefined;
     let transaction: Transaction | undefined = undefined;
     if (transactionEvent.idToken) {
-      response = await this._transactionService.authorizeOcpp201IdToken(
-        tenantId,
-        transactionEvent,
-        message.context,
-        message.protocol,
-      );
+      if (message.protocol === OCPPVersion.OCPP2_1) {
+        response = await this._transactionService.authorizeOcpp21IdToken(
+          tenantId,
+          transactionEvent,
+          message.context,
+        );
+      } else {
+        response = await this._transactionService.authorizeOcpp201IdToken(
+          tenantId,
+          transactionEvent,
+          message.context,
+        );
+      }
     }
     try {
       transaction =
