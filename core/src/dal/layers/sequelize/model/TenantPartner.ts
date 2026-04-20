@@ -1,14 +1,22 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type {
-  PartnerProfile,
-  TenantDto,
-  TenantPartnerDto,
-  AuthorizationDto,
-} from '@citrineos/base';
+import type { PartnerProfile, TenantDto, TenantPartnerDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { Authorization } from './Authorization/Authorization.js';
+import { AsyncJobStatus } from './AsyncJob/AsyncJobStatus.js';
+import { Tenant } from './Tenant.js';
 
 @Table
 export class TenantPartner extends Model implements TenantPartnerDto {
@@ -23,8 +31,16 @@ export class TenantPartner extends Model implements TenantPartnerDto {
   @Column(DataType.JSONB)
   declare partnerProfileOCPI: PartnerProfile;
 
-  declare authorizations: AuthorizationDto[];
+  @HasMany(() => Authorization, {
+    foreignKey: 'tenantPartnerId',
+    as: 'tenantPartnerAuthorizations',
+  })
+  declare authorizations: Authorization[];
 
+  @HasMany(() => AsyncJobStatus, 'tenantPartnerId')
+  declare asyncJobStatuses?: AsyncJobStatus[];
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -33,6 +49,7 @@ export class TenantPartner extends Model implements TenantPartnerDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

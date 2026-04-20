@@ -6,7 +6,6 @@ import { type BootstrapConfig } from '@citrineos/base';
 import { type Dialect } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { type ILogObj, Logger } from 'tslog';
-import { defineAssociations } from './model/associations.js';
 import { ComponentVariable } from './model/DeviceModel/ComponentVariable.js';
 import { Authorization } from './model/Authorization/Authorization.js';
 import { Boot } from './model/Boot.js';
@@ -92,9 +91,6 @@ export class DefaultSequelizeInstance {
       try {
         await this.instance!.authenticate();
         this.logger.info('Database connection has been established successfully');
-
-        // Define associations AFTER connection but BEFORE sync
-        defineAssociations();
 
         await this.syncDb();
 

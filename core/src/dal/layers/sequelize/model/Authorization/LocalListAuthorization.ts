@@ -9,8 +9,24 @@ import type {
   LocalListVersionDto,
   SendLocalListDto,
 } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { type AuthorizationRestrictions } from '@dal/interfaces/projections/AuthorizationRestrictions.js';
+import { Tenant } from '../Tenant.js';
+import { Authorization } from './Authorization.js';
+import { SendLocalList } from './SendLocalList.js';
+import { SendLocalListAuthorization } from './SendLocalListAuthorization.js';
+import { LocalListVersion } from './LocalListVersion.js';
+import { LocalListVersionAuthorization } from './LocalListVersionAuthorization.js';
 
 /**
  *
@@ -59,22 +75,29 @@ export class LocalListAuthorization extends Model implements AuthorizationRestri
   @Column(DataType.JSON)
   declare personalMessage?: any | null;
 
+  @ForeignKey(() => Authorization)
   @Column(DataType.INTEGER)
   declare groupAuthorizationId?: number | null;
 
+  @BelongsTo(() => Authorization, { foreignKey: 'groupAuthorizationId', as: 'groupAuth' })
   declare groupAuthorization?: AuthorizationDto;
 
+  @ForeignKey(() => Authorization)
   @Column(DataType.INTEGER)
   declare authorizationId?: string;
 
+  @BelongsTo(() => Authorization, { foreignKey: 'authorizationId', as: 'authorization' })
   declare authorization?: AuthorizationDto;
 
+  @BelongsToMany(() => SendLocalList, () => SendLocalListAuthorization)
   declare sendLocalLists?: SendLocalListDto[];
 
+  @BelongsToMany(() => LocalListVersion, () => LocalListVersionAuthorization)
   declare localListVersions?: LocalListVersionDto[];
 
   declare customData?: any | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -83,6 +106,7 @@ export class LocalListAuthorization extends Model implements AuthorizationRestri
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  CertificateDto,
   CertificateUseEnumType,
   HashAlgorithmEnumType,
   InstalledCertificateDto,
@@ -11,6 +12,7 @@ import { DEFAULT_TENANT_ID, OCPP2_Namespace, type ChargingStationDto } from '@ci
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -18,8 +20,9 @@ import {
   Table,
 } from 'sequelize-typescript';
 
-import { Certificate } from './Certificate.js';
 import { ChargingStation } from '../Location/index.js';
+import { Tenant } from '../Tenant.js';
+import { Certificate } from './Certificate.js';
 
 @Table
 export class InstalledCertificate extends Model implements InstalledCertificateDto {
@@ -68,13 +71,17 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
   })
   declare certificateType: CertificateUseEnumType;
 
+  @ForeignKey(() => Certificate)
   @Column(DataType.INTEGER)
   declare certificateId?: number | null;
 
-  certificate!: Certificate;
+  @BelongsTo(() => Certificate, 'certificateId')
+  declare certificate?: CertificateDto;
 
-  station?: ChargingStationDto;
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare station?: ChargingStationDto;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -83,6 +90,7 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

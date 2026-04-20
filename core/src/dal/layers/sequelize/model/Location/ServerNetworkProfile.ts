@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  ChargingStationDto,
   OCPPVersionType,
   ServerNetworkProfileDto,
   TenantDto,
@@ -11,13 +12,18 @@ import { DEFAULT_TENANT_ID, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
+  BelongsToMany,
   Column,
   DataType,
+  ForeignKey,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
 import { ChargingStation } from './ChargingStation.js';
+import { ChargingStationNetworkProfile } from './ChargingStationNetworkProfile.js';
 
 @Table
 export class ServerNetworkProfile
@@ -69,8 +75,10 @@ export class ServerNetworkProfile
   @Column(DataType.STRING)
   declare rootCACertificateFilePath?: string;
 
-  declare chargingStations?: ChargingStation[] | null;
+  @BelongsToMany(() => ChargingStation, () => ChargingStationNetworkProfile)
+  declare chargingStations?: ChargingStationDto[] | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: true,
@@ -79,6 +87,7 @@ export class ServerNetworkProfile
   })
   declare tenantId?: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate
