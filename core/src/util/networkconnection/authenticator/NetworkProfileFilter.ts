@@ -1,17 +1,17 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
+import type { AuthenticationOptions } from '@citrineos/base';
+import { OCPP2_0_1 } from '@citrineos/base';
 import type { IDeviceModelRepository } from '@dal/interfaces/repositories.js';
 import {
   ChargingStationNetworkProfile,
   ServerNetworkProfile,
 } from '@dal/layers/sequelize/index.js';
 import { IncomingMessage } from 'http';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
 import { AuthenticatorFilter } from './AuthenticatorFilter.js';
-import type { AuthenticationOptions } from '@citrineos/base';
-import { OCPP2_0_1 } from '@citrineos/base';
 import { UpgradeAuthenticationError } from './errors/AuthenticationError.js';
 
 /**
@@ -86,7 +86,7 @@ export class NetworkProfileFilter extends AuthenticatorFilter {
           let securityProfileAllowed = false;
           for (const configurationSlot of configurationSlotsArray) {
             const chargingStationNetworkProfile = await ChargingStationNetworkProfile.findOne({
-              where: { stationId: identifier, configurationSlot: configurationSlot },
+              where: { tenantId, stationId: identifier, configurationSlot: configurationSlot },
             });
             if (chargingStationNetworkProfile) {
               const serverNetworkProfile = await ServerNetworkProfile.findByPk(

@@ -12,13 +12,17 @@ import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 
+import { Tenant } from '../Tenant.js';
 import { ChargingSchedule } from './ChargingSchedule.js';
 
 @Table
@@ -51,16 +55,22 @@ export class SalesTariff extends Model implements SalesTariffDto {
   /**
    * Relations
    */
+  @ForeignKey(() => ChargingSchedule)
   @Column({
     type: DataType.INTEGER,
     unique: 'id_chargingScheduleDatabaseId',
   })
   declare chargingScheduleDatabaseId: number;
 
-  declare chargingSchedule?: ChargingSchedule & ChargingScheduleDto;
+  @BelongsTo(() => ChargingSchedule, 'chargingScheduleDatabaseId')
+  declare chargingSchedule?: ChargingScheduleDto;
+
+  @HasMany(() => ChargingSchedule, 'salesTariffId')
+  declare chargingSchedulesBySalesTariff?: ChargingScheduleDto[];
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -69,6 +79,7 @@ export class SalesTariff extends Model implements SalesTariffDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

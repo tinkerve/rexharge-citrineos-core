@@ -2,8 +2,16 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  AuthorizationDto,
+  ChargingNeedsDto,
+  ChargingStationDto,
+  ConnectorDto,
+  EvseDto,
+  LocationDto,
+  MeterValueDto,
   StartTransactionDto,
   StopTransactionDto,
+  TariffDto,
   TenantDto,
   TransactionDto,
   TransactionEventDto,
@@ -12,23 +20,29 @@ import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
+  HasMany,
+  HasOne,
   Model,
   Table,
 } from 'sequelize-typescript';
 import { Authorization } from '../Authorization/Authorization.js';
-import { Tariff } from '../Tariff/Tariffs.js';
 import { ChargingStation } from '../Location/ChargingStation.js';
-import type { ChargingStation as ChargingStationType } from '../Location/ChargingStation.js';
+import { Tariff } from '../Tariff/Tariffs.js';
 // keep the direct import to avoid circular dependency
 import { Connector } from '../Location/Connector.js';
 import { Evse } from '../Location/Evse.js';
 import { Location } from '../Location/Location.js';
-import type { Location as LocationType } from '../Location/Location.js';
+import { Tenant } from '../Tenant.js';
 
+import { ChargingNeeds } from '../ChargingProfile/ChargingNeeds.js';
 import { MeterValue } from './MeterValue.js';
+import { StartTransaction } from './StartTransaction.js';
+import { StopTransaction } from './StopTransaction.js';
+import { TransactionEvent } from './TransactionEvent.js';
 
 @Table
 export class Transaction extends Model implements TransactionDto {
@@ -40,7 +54,8 @@ export class Transaction extends Model implements TransactionDto {
   @ForeignKey(() => Location)
   declare locationId?: number;
 
-  location?: LocationType;
+  @BelongsTo(() => Location, 'locationId')
+  location?: LocationDto;
 
   @ForeignKey(() => ChargingStation)
   @Column({
@@ -55,29 +70,36 @@ export class Transaction extends Model implements TransactionDto {
   })
   stationId!: string;
 
-  station!: ChargingStationType;
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  station!: ChargingStationDto;
 
+  @ForeignKey(() => Evse)
   @Column(DataType.INTEGER)
   declare evseId?: number;
 
-  declare evse?: Evse | null;
+  @BelongsTo(() => Evse, 'evseId')
+  declare evse?: EvseDto | null;
 
+  @ForeignKey(() => Connector)
   @Column(DataType.INTEGER)
   declare connectorId?: number;
 
-  declare connector?: Connector | null;
+  @BelongsTo(() => Connector, 'connectorId')
+  declare connector?: ConnectorDto | null;
 
   @Column(DataType.INTEGER)
   @ForeignKey(() => Authorization)
   declare authorizationId?: number;
 
-  authorization?: Authorization;
+  @BelongsTo(() => Authorization, 'authorizationId')
+  authorization?: AuthorizationDto;
 
   @Column(DataType.INTEGER)
   @ForeignKey(() => Tariff)
   declare tariffId?: number;
 
-  tariff?: Tariff;
+  @BelongsTo(() => Tariff, 'tariffId')
+  tariff?: TariffDto;
 
   @Column({
     type: DataType.STRING,
@@ -88,16 +110,23 @@ export class Transaction extends Model implements TransactionDto {
   @Column(DataType.BOOLEAN)
   declare isActive: boolean;
 
+  @HasMany(() => TransactionEvent, 'transactionDatabaseId')
   declare transactionEvents?: TransactionEventDto[];
 
   // required only for filtering, should not be used to pull transaction events
   declare transactionEventsFilter?: TransactionEventDto[];
 
-  declare meterValues?: MeterValue[];
+  @HasMany(() => MeterValue, 'transactionDatabaseId')
+  declare meterValues?: MeterValueDto[];
 
+  @HasOne(() => StartTransaction, 'transactionDatabaseId')
   declare startTransaction?: StartTransactionDto;
 
+  @HasOne(() => StopTransaction, 'transactionDatabaseId')
   declare stopTransaction?: StopTransactionDto;
+
+  @HasMany(() => ChargingNeeds, 'transactionDatabaseId')
+  declare chargingNeeds?: ChargingNeedsDto[];
 
   @Column(DataType.STRING)
   declare chargingState?: string | null;
@@ -139,6 +168,7 @@ export class Transaction extends Model implements TransactionDto {
   @Column(DataType.JSONB)
   declare customData?: any | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -147,6 +177,7 @@ export class Transaction extends Model implements TransactionDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

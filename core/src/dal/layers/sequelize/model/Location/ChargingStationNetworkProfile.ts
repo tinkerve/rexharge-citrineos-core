@@ -2,11 +2,18 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ChargingStationNetworkProfileDto, TenantDto } from '@citrineos/base';
+import type {
+  ChargingStationDto,
+  ChargingStationNetworkProfileDto,
+  ServerNetworkProfileDto,
+  SetNetworkProfileDto,
+  TenantDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -16,6 +23,7 @@ import {
 import { ChargingStation } from './ChargingStation.js';
 import { ServerNetworkProfile } from './ServerNetworkProfile.js';
 import { SetNetworkProfile } from './SetNetworkProfile.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class ChargingStationNetworkProfile
@@ -32,6 +40,9 @@ export class ChargingStationNetworkProfile
   })
   declare stationPkId?: number;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStationDto;
+
   @Column({
     type: DataType.STRING,
   })
@@ -47,10 +58,12 @@ export class ChargingStationNetworkProfile
   })
   declare configurationSlot: number;
 
+  @ForeignKey(() => SetNetworkProfile)
   @Column(DataType.INTEGER)
   declare setNetworkProfileId: number;
 
-  declare setNetworkProfile: SetNetworkProfile;
+  @BelongsTo(() => SetNetworkProfile, 'setNetworkProfileId')
+  declare setNetworkProfile: SetNetworkProfileDto;
 
   /**
    * If present, the websocket server that correlates to this configuration slot.
@@ -58,11 +71,14 @@ export class ChargingStationNetworkProfile
    * configured host will likely be behind a load balancer and a custom DNS name.
    *
    */
+  @ForeignKey(() => ServerNetworkProfile)
   @Column(DataType.STRING)
   declare websocketServerConfigId?: string;
 
-  declare websocketServerConfig?: ServerNetworkProfile;
+  @BelongsTo(() => ServerNetworkProfile, 'websocketServerConfigId')
+  declare websocketServerConfig?: ServerNetworkProfileDto;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -71,6 +87,7 @@ export class ChargingStationNetworkProfile
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

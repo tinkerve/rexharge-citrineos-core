@@ -1,12 +1,23 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { StopTransactionDto, TenantDto } from '@citrineos/base';
+import type { MeterValueDto, StopTransactionDto, TenantDto, TransactionDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 
-import { Transaction } from './Transaction.js';
+import { Tenant } from '../Tenant.js';
 import { MeterValue } from './MeterValue.js';
+import { Transaction } from './Transaction.js';
 
 @Table
 export class StopTransaction extends Model implements StopTransactionDto {
@@ -15,13 +26,15 @@ export class StopTransaction extends Model implements StopTransactionDto {
   @Column(DataType.STRING)
   declare stationId: string;
 
+  @ForeignKey(() => Transaction)
   @Column({
     type: DataType.INTEGER,
     unique: true,
   })
   declare transactionDatabaseId: number;
 
-  declare transaction: Transaction;
+  @BelongsTo(() => Transaction, 'transactionDatabaseId')
+  declare transaction: TransactionDto;
 
   @Column(DataType.INTEGER)
   declare meterStop: number;
@@ -37,7 +50,8 @@ export class StopTransaction extends Model implements StopTransactionDto {
   @Column(DataType.STRING)
   declare reason?: string;
 
-  declare meterValues?: MeterValue[];
+  @HasMany(() => MeterValue, 'stopTransactionDatabaseId')
+  declare meterValues?: MeterValueDto[];
 
   // Add flat idToken fields
   @Column(DataType.STRING)
@@ -46,6 +60,7 @@ export class StopTransaction extends Model implements StopTransactionDto {
   @Column(DataType.STRING)
   declare idTokenType?: string;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -54,6 +69,7 @@ export class StopTransaction extends Model implements StopTransactionDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

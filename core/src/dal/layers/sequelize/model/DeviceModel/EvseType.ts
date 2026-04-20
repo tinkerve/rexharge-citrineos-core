@@ -7,12 +7,15 @@ import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
 
 @Table({
   indexes: [
@@ -52,6 +55,7 @@ export class EvseType extends Model implements OCPP2_0_1.EVSEType, EvseTypeDto {
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -61,6 +65,7 @@ export class EvseType extends Model implements OCPP2_0_1.EVSEType, EvseTypeDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

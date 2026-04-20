@@ -4,6 +4,7 @@
 import type {
   BootstrapConfig,
   CallAction,
+  ClearMessageStatusEnumType,
   HandlerProperties,
   ICache,
   IMessage,
@@ -11,12 +12,11 @@ import type {
   IMessageHandler,
   IMessageSender,
   IWebsocketConnection,
-  SystemConfig,
+  OCPP2_common_types,
   OCPP2_request_types,
   OCPP2_response_types,
   RegistrationStatusEnumType,
-  OCPP2_common_types,
-  ClearMessageStatusEnumType,
+  SystemConfig,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -24,27 +24,28 @@ import {
   BOOT_STATUS,
   CacheNamespace,
   ChargingStationSequenceTypeEnum,
+  ClearMessageStatusEnum,
   createIdentifier,
+  DataTransferStatusEnum,
+  DisplayMessageStatusEnum,
   ErrorCode,
   EventGroup,
   MessageOrigin,
   MessageState,
   Namespace,
   OCPP1_6,
+  OCPP_2_VER_LIST,
   OCPP_CallAction,
   OcppError,
   OCPPValidator,
   OCPPVersion,
-  OCPP_2_VER_LIST,
-  DataTransferStatusEnum,
   RegistrationStatusEnum,
   ResetEnum,
-  SetVariableStatusEnum,
   SetNetworkProfileStatusEnum,
+  SetVariableStatusEnum,
   type DisplayMessageStatusEnumType,
-  DisplayMessageStatusEnum,
-  ClearMessageStatusEnum,
 } from '@citrineos/base';
+import { sequelize } from '@dal/index.js';
 import type {
   IBootRepository,
   IChangeConfigurationRepository,
@@ -66,7 +67,6 @@ import {
   ServerNetworkProfile,
   SetNetworkProfile,
 } from '@dal/layers/sequelize/index.js';
-import { sequelize } from '@dal/index.js';
 import { IdGenerator, validateMessageContentType } from '@util/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -645,7 +645,7 @@ export class ConfigurationModule extends AbstractModule {
 
     if (message.payload.status == SetNetworkProfileStatusEnum.Accepted) {
       const setNetworkProfile = await SetNetworkProfile.findOne({
-        where: { correlationId: message.context.correlationId },
+        where: { tenantId: message.context.tenantId, correlationId: message.context.correlationId },
       });
       if (setNetworkProfile) {
         const serverNetworkProfile = await ServerNetworkProfile.findByPk(
@@ -657,6 +657,7 @@ export class ConfigurationModule extends AbstractModule {
             const [chargingStationNetworkProfile] = await ChargingStationNetworkProfile.findOrBuild(
               {
                 where: {
+                  tenantId: message.context.tenantId,
                   stationId: chargingStation.id,
                   configurationSlot: setNetworkProfile.configurationSlot!,
                 },

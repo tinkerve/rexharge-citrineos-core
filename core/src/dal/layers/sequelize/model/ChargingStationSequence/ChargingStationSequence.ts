@@ -6,6 +6,7 @@ import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -14,6 +15,7 @@ import {
 } from 'sequelize-typescript';
 import { ChargingStation } from '../Location/index.js';
 import type { ChargingStation as ChargingStationType } from '../Location/index.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class ChargingStationSequence extends Model {
@@ -47,8 +49,10 @@ export class ChargingStationSequence extends Model {
   })
   value!: number;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare station: ChargingStationType;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -57,6 +61,7 @@ export class ChargingStationSequence extends Model {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

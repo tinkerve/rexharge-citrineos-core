@@ -2,25 +2,27 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import {
+  DEFAULT_TENANT_ID,
+  OCPP2_Namespace,
+  type CertificateDto,
+  type CertificateUseEnumType,
+  type ChargingStationDto,
+  type InstallCertificateStatusEnumType,
+  type TenantDto,
+} from '@citrineos/base';
+import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
   Model,
   Table,
 } from 'sequelize-typescript';
-import { Certificate } from './Certificate.js';
-import {
-  DEFAULT_TENANT_ID,
-  OCPP2_Namespace,
-  type CertificateUseEnumType,
-  type InstallCertificateStatusEnumType,
-  type TenantDto,
-  type ChargingStationDto,
-} from '@citrineos/base';
 import { ChargingStation } from '../Location/index.js';
 import { Tenant } from '../Tenant.js';
+import { Certificate } from './Certificate.js';
 
 @Table
 export class InstallCertificateAttempt extends Model {
@@ -36,7 +38,8 @@ export class InstallCertificateAttempt extends Model {
   })
   declare stationId: string;
 
-  station?: ChargingStationDto;
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare station?: ChargingStationDto;
 
   @Column({
     type: DataType.STRING,
@@ -44,6 +47,7 @@ export class InstallCertificateAttempt extends Model {
   })
   declare certificateType: CertificateUseEnumType;
 
+  @ForeignKey(() => Certificate)
   @Column({
     type: DataType.INTEGER,
     onUpdate: 'CASCADE',
@@ -51,13 +55,15 @@ export class InstallCertificateAttempt extends Model {
   })
   declare certificateId: number;
 
-  certificate?: Certificate;
+  @BelongsTo(() => Certificate, 'certificateId')
+  declare certificate?: CertificateDto;
 
   @Column({
     type: DataType.STRING,
   })
   declare status?: InstallCertificateStatusEnumType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -66,6 +72,7 @@ export class InstallCertificateAttempt extends Model {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

@@ -6,12 +6,15 @@ import type { SecurityEventDto, TenantDto } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
   Index,
   Model,
   Table,
 } from 'sequelize-typescript';
+import { Tenant } from './Tenant.js';
 
 @Table
 export class SecurityEvent extends Model implements SecurityEventDto {
@@ -40,6 +43,7 @@ export class SecurityEvent extends Model implements SecurityEventDto {
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -48,6 +52,7 @@ export class SecurityEvent extends Model implements SecurityEventDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

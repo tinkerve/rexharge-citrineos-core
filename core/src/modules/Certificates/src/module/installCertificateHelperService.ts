@@ -2,35 +2,36 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import {
-  Certificate,
-  CountryNameEnumType,
-  InstallCertificateAttempt,
-  InstalledCertificate,
-  SignatureAlgorithmEnumType,
-} from '@dal/layers/sequelize/index.js';
-import type {
-  ICertificateRepository,
-  IDeleteCertificateAttemptRepository,
-  IInstallCertificateAttemptRepository,
-  IInstalledCertificateRepository,
-} from '@dal/interfaces/repositories.js';
-import { UploadExistingCertificate } from '@dal/interfaces/index.js';
-import {
-  type CertificateAuthorityService,
-  extractCertificateDetails,
-  generateCSR,
-  WebsocketNetworkConnection,
-} from '@util/index.js';
-import {
+  type CertificateDto,
   type CertificateUseEnumType,
   type IFileStorage,
   type InstallCertificateStatusEnumType,
   OCPP2_0_1,
   type WebsocketServerConfig,
 } from '@citrineos/base';
-import { type ILogObj, Logger } from 'tslog';
+import { UploadExistingCertificate } from '@dal/interfaces/index.js';
+import type {
+  ICertificateRepository,
+  IDeleteCertificateAttemptRepository,
+  IInstallCertificateAttemptRepository,
+  IInstalledCertificateRepository,
+} from '@dal/interfaces/repositories.js';
+import {
+  Certificate,
+  CountryNameEnumType,
+  InstallCertificateAttempt,
+  InstalledCertificate,
+  SignatureAlgorithmEnumType,
+} from '@dal/layers/sequelize/index.js';
+import {
+  type CertificateAuthorityService,
+  extractCertificateDetails,
+  generateCSR,
+  WebsocketNetworkConnection,
+} from '@util/index.js';
 import fs from 'fs';
 import jsrsasign from 'jsrsasign';
+import { type ILogObj, Logger } from 'tslog';
 
 export const enum PemType {
   Root = 'Root',
@@ -247,7 +248,7 @@ export class InstallCertificateHelperService {
     );
 
     if (existingInstalledCertificate) {
-      let existingCertificate: Certificate | undefined | null =
+      let existingCertificate: CertificateDto | undefined | null =
         await existingInstalledCertificate.$get('certificate');
       if (existingCertificate && existingCertificate.certificateFileId) {
         throw new Error('Cannot upload exiting certificate because it already exists');
@@ -258,7 +259,9 @@ export class InstallCertificateHelperService {
           Buffer.from(certificate),
           filePath,
         );
-        await existingCertificate.save();
+        await Certificate.create({
+          ...existingCertificate,
+        });
       } else {
         // check if certificate record exists but not tied to installed certificate
         existingCertificate = await this.certificateRepository.readOnlyOneByQuery(tenantId, {

@@ -4,7 +4,20 @@
 
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import type { TenantDto, LocalListAuthorizationDto } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
+import { LocalListAuthorization } from './LocalListAuthorization.js';
+import { SendLocalListAuthorization } from './SendLocalListAuthorization.js';
 
 @Table
 export class SendLocalList extends Model implements OCPP2_0_1.SendLocalListRequest {
@@ -23,6 +36,7 @@ export class SendLocalList extends Model implements OCPP2_0_1.SendLocalListReque
   declare updateType: OCPP2_0_1.UpdateEnumType;
 
   // ORM relation: LocalListAuthorization[]; API contract: AuthorizationData[]
+  @BelongsToMany(() => LocalListAuthorization, () => SendLocalListAuthorization)
   declare localAuthorizationList?: any;
 
   customData?: OCPP2_0_1.CustomDataType | null | undefined;
@@ -58,6 +72,7 @@ export class SendLocalList extends Model implements OCPP2_0_1.SendLocalListReque
     };
   }
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -66,6 +81,7 @@ export class SendLocalList extends Model implements OCPP2_0_1.SendLocalListReque
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

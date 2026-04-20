@@ -12,9 +12,9 @@ import type {
   IMessageHandler,
   IMessageSender,
   MeterValueDto,
-  SystemConfig,
   OCPP2_request_types,
   OCPP2_response_types,
+  SystemConfig,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -33,6 +33,7 @@ import {
   OCPPVersion,
   TransactionEventEnum,
 } from '@citrineos/base';
+import { sequelize } from '@dal/index.js';
 import type {
   IAuthorizationRepository,
   IDeviceModelRepository,
@@ -42,15 +43,15 @@ import type {
   ITariffRepository,
   ITransactionEventRepository,
 } from '@dal/interfaces/repositories.js';
-import { Authorization } from '@dal/layers/sequelize/model/Authorization/index.js';
-import { Component } from '@dal/layers/sequelize/model/DeviceModel/index.js';
-import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
-import { sequelize } from '@dal/index.js';
 import { SequelizeOCPPMessageRepository } from '@dal/layers/sequelize/index.js';
+import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
+import { Authorization } from '@dal/layers/sequelize/model/Authorization/index.js';
+import { Component, VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import {
+  StartTransaction,
+  Transaction,
+} from '@dal/layers/sequelize/model/TransactionEvent/index.js';
 import { SequelizeRepository } from '@dal/layers/sequelize/repository/Base.js';
-import { StartTransaction } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
-import { Transaction } from '@dal/layers/sequelize/model/TransactionEvent/index.js';
-import { VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import { RealTimeAuthorizer } from '@util/authorizer/RealTimeAuthorizer.js';
 import { SignedMeterValuesUtil } from '@util/security/SignedMeterValuesUtil.js';
 import type { ILogObj } from 'tslog';
@@ -545,6 +546,31 @@ export class TransactionsModule extends AbstractModule {
   }
 
   /**
+   * C19 - Cancellation prior to transaction
+   * Handles NotifySettlementRequest from Charging Station to inform CSMS
+   * that a payment has been canceled or settled.
+   */
+  @AsHandler([OCPPVersion.OCPP2_1], OCPP_CallAction.NotifySettlement)
+  protected async _handleNotifySettlement(
+    message: IMessage<OCPP2_1.NotifySettlementRequest>,
+    props?: HandlerProperties,
+  ): Promise<void> {
+    this._logger.debug('NotifySettlementRequest received:', message, props);
+
+    const request = message.payload;
+
+    this._logger.info(
+      `NotifySettlement received: pspRef=${request.pspRef}, status=${request.status}, ` +
+        `amount=${request.settlementAmount}, transactionId=${request.transactionId ?? 'none'}`,
+    );
+
+    const response: OCPP2_1.NotifySettlementResponse = {};
+
+    const messageConfirmation = await this.sendCallResultWithMessage(message, response);
+    this._logger.debug('NotifySettlement response sent:', messageConfirmation);
+  }
+
+  /**
    * Handle OCPP 1.6 requests
    */
 
@@ -737,6 +763,7 @@ export class TransactionsModule extends AbstractModule {
     const transaction = await Transaction.findOne({
       where: {
         stationId,
+        tenantId,
         transactionId: request.transactionId.toString(),
       },
       include: [StartTransaction],

@@ -5,18 +5,27 @@ import type {
   ChargingStationCapabilityEnumType,
   ChargingStationDto,
   ChargingStationParkingRestrictionEnumType,
+  ChargingStationSecurityInfoDto,
+  ChargingStationSequenceDto,
   ConnectorDto,
   EvseDto,
+  InstalledCertificateDto,
   LocationDto,
+  OCPPMessageDto,
   Point,
+  ServerNetworkProfileDto,
+  StatusNotificationDto,
   TenantDto,
-  TransactionDto,
+  VariableAttributeDto,
+  VariableMonitoringDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace, OCPPVersion } from '@citrineos/base';
 import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
+  BelongsToMany,
   Column,
   DataType,
   ForeignKey,
@@ -27,8 +36,22 @@ import {
   Table,
 } from 'sequelize-typescript';
 
-import { StatusNotification } from './StatusNotification.js';
+import { DeleteCertificateAttempt } from '../Certificate/DeleteCertificateAttempt.js';
 import { InstalledCertificate } from '../Certificate/InstalledCertificate.js';
+import { ChargingStationSecurityInfo } from '../ChargingStationSecurityInfo.js';
+import { ChargingStationSequence } from '../ChargingStationSequence/ChargingStationSequence.js';
+import { VariableAttribute } from '../DeviceModel/VariableAttribute.js';
+import { OCPPMessage } from '../OCPPMessage.js';
+import { Tenant } from '../Tenant.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
+import { EventData } from '../VariableMonitoring/EventData.js';
+import { VariableMonitoring } from '../VariableMonitoring/VariableMonitoring.js';
+import { ChargingStationNetworkProfile } from './ChargingStationNetworkProfile.js';
+import { Connector } from './Connector.js';
+import { Evse } from './Evse.js';
+import { Location } from './Location.js';
+import { ServerNetworkProfile } from './ServerNetworkProfile.js';
+import { StatusNotification } from './StatusNotification.js';
 
 /**
  * Represents a charging station.
@@ -119,26 +142,56 @@ export class ChargingStation extends Model implements ChargingStationDto {
   })
   declare use16StatusNotification0: boolean;
 
+  @ForeignKey(() => Location)
   @Column(DataType.INTEGER)
   declare locationId?: number | null;
 
-  declare statusNotifications?: StatusNotification[] | null;
+  @HasMany(() => StatusNotification, 'stationPkId')
+  declare statusNotifications?: StatusNotificationDto[] | null;
 
-  declare installedCertificates?: InstalledCertificate[];
+  @HasMany(() => InstalledCertificate, 'stationPkId')
+  declare installedCertificates?: InstalledCertificateDto[];
 
-  declare transactions?: TransactionDto[] | null;
+  @HasMany(() => Transaction, 'stationPkId')
+  declare transactions?: Transaction[] | null;
 
   /**
    * The business Location of the charging station. Optional in case a charging station is not yet in the field, or retired.
    */
+  @BelongsTo(() => Location, 'locationId')
   declare location?: LocationDto;
 
-  declare networkProfiles?: any[] | null;
+  @BelongsToMany(() => ServerNetworkProfile, () => ChargingStationNetworkProfile)
+  declare networkProfiles?: ServerNetworkProfileDto[] | null;
 
+  @HasMany(() => Evse, 'stationPkId')
   declare evses?: EvseDto[] | null;
 
+  @HasMany(() => Connector, 'stationPkId')
   declare connectors?: ConnectorDto[] | null;
 
+  @HasMany(() => VariableAttribute, 'stationPkId')
+  declare variableAttributes?: VariableAttributeDto[];
+
+  @HasMany(() => OCPPMessage, 'stationPkId')
+  declare ocppMessages?: OCPPMessageDto[];
+
+  @HasMany(() => VariableMonitoring, 'stationPkId')
+  declare variableMonitorings?: VariableMonitoringDto[];
+
+  @HasMany(() => EventData, 'stationPkId')
+  declare stationEventData?: EventData[];
+
+  @HasMany(() => ChargingStationSecurityInfo, 'stationPkId')
+  declare securityInfo?: ChargingStationSecurityInfoDto[];
+
+  @HasMany(() => ChargingStationSequence, 'stationPkId')
+  declare sequences?: ChargingStationSequenceDto[];
+
+  @HasMany(() => DeleteCertificateAttempt, 'stationPkId')
+  declare deleteCertificateAttempts?: DeleteCertificateAttempt[];
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -148,6 +201,7 @@ export class ChargingStation extends Model implements ChargingStationDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

@@ -2,7 +2,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import { DEFAULT_TENANT_ID, OCPP2_Namespace } from '@citrineos/base';
-import type { ChargingStationSecurityInfoDto, TenantDto } from '@citrineos/base';
+import type {
+  ChargingStationDto,
+  ChargingStationSecurityInfoDto,
+  TenantDto,
+} from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
@@ -27,6 +31,9 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
   @Column(DataType.INTEGER)
   declare stationPkId?: number;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStationDto;
+
   @Column({
     type: DataType.STRING,
     unique: 'stationId_tenantId',
@@ -36,6 +43,7 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
   @Column(DataType.STRING)
   publicKeyFileId!: string;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -45,6 +53,7 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

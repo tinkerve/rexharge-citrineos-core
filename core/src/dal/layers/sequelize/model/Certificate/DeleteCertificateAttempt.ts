@@ -36,7 +36,8 @@ export class DeleteCertificateAttempt extends Model {
   })
   declare stationId: string;
 
-  station?: ChargingStationDto;
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare station?: ChargingStationDto;
 
   @Column({
     type: DataType.STRING,
@@ -58,6 +59,7 @@ export class DeleteCertificateAttempt extends Model {
   })
   declare status?: DeleteCertificateStatusEnumType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -66,6 +68,7 @@ export class DeleteCertificateAttempt extends Model {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

@@ -16,12 +16,18 @@ import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { Transaction } from '../TransactionEvent/Transaction.js';
+import { ChargingSchedule } from './ChargingSchedule.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class ChargingProfile extends Model implements ChargingProfileDto {
@@ -96,17 +102,21 @@ export class ChargingProfile extends Model implements ChargingProfileDto {
   /**
    * Relations
    */
+  @HasMany(() => ChargingSchedule, 'chargingProfileDatabaseId')
   declare chargingSchedule:
     | [ChargingScheduleDto]
     | [ChargingScheduleDto, ChargingScheduleDto]
     | [ChargingScheduleDto, ChargingScheduleDto, ChargingScheduleDto];
 
+  @ForeignKey(() => Transaction)
   declare transactionDatabaseId?: number | null;
 
+  @BelongsTo(() => Transaction, 'transactionDatabaseId')
   declare transaction?: TransactionDto;
 
   declare customData?: object | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -116,6 +126,7 @@ export class ChargingProfile extends Model implements ChargingProfileDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

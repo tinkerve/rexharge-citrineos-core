@@ -11,18 +11,24 @@ import type {
   RealTimeAuthLastAttempt,
   TenantDto,
   TenantPartnerDto,
+  TransactionDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   Default,
   ForeignKey,
+  HasMany,
   Model,
   Table,
 } from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
+import { TenantPartner } from '../TenantPartner.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
 import { Tariff } from '../Tariff/Tariffs.js';
 
 @Table
@@ -86,6 +92,7 @@ export class Authorization extends Model implements AuthorizationDto {
   declare realTimeAuthUrl?: string;
 
   // Reference to another Authorization for groupAuthorization
+  @ForeignKey(() => Authorization)
   @Column(DataType.INTEGER)
   declare groupAuthorizationId?: number | null;
 
@@ -93,6 +100,7 @@ export class Authorization extends Model implements AuthorizationDto {
   @Column(DataType.INTEGER)
   declare tariffId?: number | null;
 
+  @BelongsTo(() => Authorization, { foreignKey: 'groupAuthorizationId', as: 'groupAuthorization' })
   declare groupAuthorization?: Authorization;
 
   @Default(false)
@@ -102,11 +110,20 @@ export class Authorization extends Model implements AuthorizationDto {
   declare customData?: any | null;
 
   // For cases where Authorization is owned by an upstream partner, i.e. an eMSP
+  @ForeignKey(() => TenantPartner)
   @Column(DataType.INTEGER)
   declare tenantPartnerId?: number | null;
 
+  @BelongsTo(() => TenantPartner, {
+    foreignKey: 'tenantPartnerId',
+    as: 'authTenantPartnerAuthorization',
+  })
   declare tenantPartner?: TenantPartnerDto | null;
 
+  @HasMany(() => Transaction, 'authorizationId')
+  declare transactions?: TransactionDto[];
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -116,6 +133,7 @@ export class Authorization extends Model implements AuthorizationDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

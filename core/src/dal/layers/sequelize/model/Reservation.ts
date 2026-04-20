@@ -1,19 +1,22 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { ReservationDto, TenantDto } from '@citrineos/base';
+import type { EvseTypeDto, ReservationDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 import { EvseType } from './DeviceModel/index.js';
+import { Tenant } from './Tenant.js';
 
 @Table
 export class Reservation extends Model implements ReservationDto {
@@ -69,12 +72,15 @@ export class Reservation extends Model implements ReservationDto {
   /**
    * Relations
    */
+  @ForeignKey(() => EvseType)
   declare evseId?: number | null;
 
-  declare evse?: EvseType | null;
+  @BelongsTo(() => EvseType, 'evseId')
+  declare evse?: EvseTypeDto | null;
 
   declare customData?: any | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -84,6 +90,7 @@ export class Reservation extends Model implements ReservationDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

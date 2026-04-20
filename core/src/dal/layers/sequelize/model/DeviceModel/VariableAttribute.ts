@@ -3,18 +3,23 @@
 // SPDX-License-Identifier: Apache-2.0
 import type {
   BootDto,
+  ChargingStationDto,
   ComponentDto,
+  EvseTypeDto,
+  TenantDto,
   VariableAttributeDto,
   VariableDto,
-  TenantDto,
+  VariableStatusDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Index,
   Model,
   Table,
@@ -23,8 +28,11 @@ import { CryptoUtils } from '../../../../util/CryptoUtils.js';
 
 import { ChargingStation } from '../Location/index.js';
 
+import { Boot } from '../Boot.js';
+import { Tenant } from '../Tenant.js';
+import { Component } from './Component.js';
 import { EvseType } from './EvseType.js';
-
+import { Variable } from './Variable.js';
 import { VariableStatus } from './VariableStatus.js';
 
 @Table({
@@ -117,7 +125,8 @@ export class VariableAttribute
   })
   declare stationId: string;
 
-  declare chargingStation: ChargingStation;
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation: ChargingStationDto;
 
   @Column({
     type: DataType.STRING,
@@ -183,39 +192,50 @@ export class VariableAttribute
    * Relations
    */
 
+  @BelongsTo(() => Variable, 'variableId')
   declare variable: VariableDto;
 
+  @ForeignKey(() => Variable)
   @Column({
     type: DataType.INTEGER,
     unique: 'stationPkId_type_variableId_componentId',
   })
   declare variableId?: number | null;
 
+  @BelongsTo(() => Component, 'componentId')
   declare component: ComponentDto;
 
+  @ForeignKey(() => Component)
   @Column({
     type: DataType.INTEGER,
     unique: 'stationPkId_type_variableId_componentId',
   })
   declare componentId?: number | null;
 
-  declare evse?: EvseType;
+  @BelongsTo(() => EvseType, 'evseDatabaseId')
+  declare evse?: EvseTypeDto;
 
+  @ForeignKey(() => EvseType)
   @Column(DataType.INTEGER)
   declare evseDatabaseId?: number | null;
 
   // History of variable status. Can be directly from GetVariablesResponse or SetVariablesResponse, or from NotifyReport handling, or from 'setOnCharger' option for data api
 
-  declare statuses?: VariableStatus[];
+  @HasMany(() => VariableStatus, 'variableAttributeId')
+  declare statuses?: VariableStatusDto[];
 
   // Below used to associate attributes with boot process
 
+  @BelongsTo(() => Boot, 'bootConfigId')
   declare bootConfig?: BootDto;
 
+  @ForeignKey(() => Boot)
+  @Column(DataType.STRING)
   declare bootConfigId?: string | null;
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -224,6 +244,7 @@ export class VariableAttribute
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate
