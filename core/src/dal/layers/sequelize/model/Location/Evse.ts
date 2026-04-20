@@ -1,18 +1,33 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { ChargingStationDto, ConnectorDto, EvseDto, TenantDto } from '@citrineos/base';
+import type {
+  ChargingNeedsDto,
+  ChargingStationDto,
+  CompositeScheduleDto,
+  ConnectorDto,
+  EvseDto,
+  TenantDto,
+  TransactionDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Model,
   Table,
 } from 'sequelize-typescript';
+import { ChargingNeeds } from '../ChargingProfile/ChargingNeeds.js';
+import { CompositeSchedule } from '../ChargingProfile/CompositeSchedule.js';
+import { Tenant } from '../Tenant.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
 import { ChargingStation } from './ChargingStation.js';
+import { Connector } from './Connector.js';
 
 @Table
 export class Evse extends Model implements EvseDto {
@@ -45,10 +60,22 @@ export class Evse extends Model implements EvseDto {
   @Column(DataType.BOOLEAN)
   declare removed?: boolean;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare chargingStation?: ChargingStationDto;
 
+  @HasMany(() => Connector, 'evseId')
   declare connectors?: ConnectorDto[] | null;
 
+  @HasMany(() => ChargingNeeds, 'evseId')
+  declare chargingNeeds?: ChargingNeedsDto[];
+
+  @HasMany(() => CompositeSchedule, 'evseId')
+  declare compositeSchedules?: CompositeScheduleDto[];
+
+  @HasMany(() => Transaction, 'evseId')
+  declare transactions?: TransactionDto[];
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -57,6 +84,7 @@ export class Evse extends Model implements EvseDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

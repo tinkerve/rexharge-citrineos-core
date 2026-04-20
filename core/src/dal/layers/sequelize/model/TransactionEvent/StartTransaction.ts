@@ -1,11 +1,21 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { StartTransactionDto, TenantDto } from '@citrineos/base';
+import type { ConnectorDto, StartTransactionDto, TransactionDto, TenantDto } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP1_6_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { Transaction } from './Transaction.js';
 import { Connector } from '../Location/index.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class StartTransaction extends Model implements StartTransactionDto {
@@ -28,18 +38,23 @@ export class StartTransaction extends Model implements StartTransactionDto {
   @Column(DataType.INTEGER)
   declare reservationId?: number | null;
 
+  @ForeignKey(() => Transaction)
   @Column({
     type: DataType.INTEGER,
     unique: true,
   })
   declare transactionDatabaseId: number;
 
-  declare transaction: Transaction;
+  @BelongsTo(() => Transaction, 'transactionDatabaseId')
+  declare transaction: TransactionDto;
 
+  @ForeignKey(() => Connector)
   declare connectorDatabaseId: number;
 
-  declare connector: Connector;
+  @BelongsTo(() => Connector, 'connectorDatabaseId')
+  declare connector: ConnectorDto;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -48,6 +63,7 @@ export class StartTransaction extends Model implements StartTransactionDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

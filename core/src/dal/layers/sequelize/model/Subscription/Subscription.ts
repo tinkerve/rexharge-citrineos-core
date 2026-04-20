@@ -6,12 +6,15 @@ import { DEFAULT_TENANT_ID, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
+  ForeignKey,
   Index,
   Model,
   Table,
 } from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class Subscription extends Model implements SubscriptionDto {
@@ -51,6 +54,7 @@ export class Subscription extends Model implements SubscriptionDto {
   @Column(DataType.STRING)
   declare url: string;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -59,6 +63,7 @@ export class Subscription extends Model implements SubscriptionDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

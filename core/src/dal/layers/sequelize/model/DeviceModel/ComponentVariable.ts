@@ -2,21 +2,35 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import type { TenantDto } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import { DEFAULT_TENANT_ID } from '@citrineos/base';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
+import { Component, Variable } from './index.js';
 
 @Table
 export class ComponentVariable extends Model {
   // Namespace enum not used as this is not a model required by CitrineOS
   static readonly MODEL_NAME: string = 'ComponentVariable';
 
+  @ForeignKey(() => Component)
   @Column(DataType.INTEGER)
   declare componentId: number;
 
+  @ForeignKey(() => Variable)
   @Column(DataType.INTEGER)
   declare variableId: number;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -25,6 +39,7 @@ export class ComponentVariable extends Model {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

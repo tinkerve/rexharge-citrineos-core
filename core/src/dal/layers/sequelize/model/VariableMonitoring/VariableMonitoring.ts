@@ -2,27 +2,35 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  ChargingStationDto,
   ComponentDto,
+  EventNotificationEnumType,
+  MonitorEnumType,
+  TenantDto,
   VariableDto,
   VariableMonitoringDto,
-  TenantDto,
-  MonitorEnumType,
-  EventNotificationEnumType,
+  VariableMonitoringStatusDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   AutoIncrement,
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Index,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { Component } from '../DeviceModel/Component.js';
+import { Variable } from '../DeviceModel/Variable.js';
 import { ChargingStation } from '../Location/index.js';
+import { Tenant } from '../Tenant.js';
+import { VariableMonitoringStatus } from './VariableMonitoringStatus.js';
 
 @Table
 export class VariableMonitoring extends Model implements VariableMonitoringDto {
@@ -74,22 +82,33 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
    * Relations
    */
 
+  @BelongsTo(() => Variable, 'variableId')
   declare variable: VariableDto;
 
+  @ForeignKey(() => Variable)
   @Column({
     type: DataType.INTEGER,
   })
   declare variableId?: number | null;
 
+  @BelongsTo(() => Component, 'componentId')
   declare component: ComponentDto;
 
+  @ForeignKey(() => Component)
   @Column({
     type: DataType.INTEGER,
   })
   declare componentId?: number | null;
 
+  @HasMany(() => VariableMonitoringStatus, 'variableMonitoringId')
+  declare statuses?: VariableMonitoringStatusDto[];
+
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStationDto;
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -99,6 +118,7 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

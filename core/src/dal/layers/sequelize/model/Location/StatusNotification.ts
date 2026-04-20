@@ -4,6 +4,7 @@
 import type {
   ChargingStationDto,
   ConnectorStatusEnumType,
+  ConnectorDto,
   StatusNotificationDto,
   TenantDto,
 } from '@citrineos/base';
@@ -11,6 +12,7 @@ import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -18,6 +20,8 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { ChargingStation } from './ChargingStation.js';
+import { Connector } from './Connector.js';
+import { Tenant } from '../Tenant.js';
 
 @Table
 export class StatusNotification extends Model implements StatusNotificationDto {
@@ -30,6 +34,7 @@ export class StatusNotification extends Model implements StatusNotificationDto {
   @Column(DataType.STRING)
   declare stationId: string;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare chargingStation: ChargingStationDto;
 
   @Column({
@@ -64,6 +69,10 @@ export class StatusNotification extends Model implements StatusNotificationDto {
 
   declare customData?: object | null;
 
+  @BelongsTo(() => Connector, 'connectorId')
+  declare connector?: ConnectorDto;
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -72,6 +81,7 @@ export class StatusNotification extends Model implements StatusNotificationDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

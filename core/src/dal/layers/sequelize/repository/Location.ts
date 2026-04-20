@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { BootstrapConfig, OCPP2_0_1 } from '@citrineos/base';
+import type { BootstrapConfig, ChargingStationDto, OCPP2_0_1 } from '@citrineos/base';
 import { CrudRepository, OCPPVersion } from '@citrineos/base';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
@@ -11,11 +11,11 @@ import { Logger } from 'tslog';
 import { type ILocationRepository } from '../../../interfaces/repositories.js';
 import { ChargingStation } from '../model/Location/ChargingStation.js';
 import { Connector } from '../model/Location/Connector.js';
+import { Evse } from '../model/Location/Evse.js';
+import { LatestStatusNotification } from '../model/Location/LatestStatusNotification.js';
 import { Location } from '../model/Location/Location.js';
 import { StatusNotification } from '../model/Location/StatusNotification.js';
 import { SequelizeRepository } from './Base.js';
-import { Evse } from '../model/Location/Evse.js';
-import { LatestStatusNotification } from '../model/Location/LatestStatusNotification.js';
 
 export class SequelizeLocationRepository
   extends SequelizeRepository<Location>
@@ -246,7 +246,7 @@ export class SequelizeLocationRepository
 
   async createOrUpdateChargingStation(
     tenantId: number,
-    chargingStation: ChargingStation,
+    chargingStation: ChargingStationDto,
   ): Promise<ChargingStation> {
     chargingStation.tenantId = tenantId;
     if (chargingStation.id) {

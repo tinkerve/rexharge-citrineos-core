@@ -2,20 +2,23 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+import type { TenantDto, TenantPartnerDto } from '@citrineos/base';
 import { type AsyncJobNameEnumType, DEFAULT_TENANT_ID } from '@citrineos/base';
-import type { TenantDto } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   Default,
+  ForeignKey,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Tenant } from '../Tenant.js';
 import { TenantPartner } from '../TenantPartner.js';
 
 export interface PaginatedParams {
@@ -37,10 +40,12 @@ export class AsyncJobStatus extends Model {
   @Column(DataType.STRING)
   declare jobName: AsyncJobNameEnumType;
 
+  @ForeignKey(() => TenantPartner)
   @Column(DataType.INTEGER)
   declare tenantPartnerId: number;
 
-  declare tenantPartner: TenantPartner;
+  @BelongsTo(() => TenantPartner, { foreignKey: 'tenantPartnerId', as: 'asyncJobTenantPartner' })
+  declare tenantPartner: TenantPartnerDto;
 
   @Column(DataType.DATE)
   declare finishedAt?: Date;
@@ -62,6 +67,7 @@ export class AsyncJobStatus extends Model {
   @Column(DataType.INTEGER) // Total number of objects in the client's system
   declare totalObjects?: number;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -70,6 +76,7 @@ export class AsyncJobStatus extends Model {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate
@@ -108,7 +115,7 @@ export class AsyncJobStatusDTO {
   jobId!: string;
   jobName!: AsyncJobNameEnumType;
   tenantPartnerId!: number;
-  tenantPartner?: TenantPartner;
+  tenantPartner?: TenantPartnerDto;
   createdAt!: Date;
   finishedAt?: Date;
   stoppedAt?: Date | null;

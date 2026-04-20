@@ -2,17 +2,19 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  ChargingStationDto,
   ComponentDto,
   EventDataDto,
-  VariableDto,
   TenantDto,
   EventTriggerEnumType,
   EventNotificationEnumType,
+  VariableDto,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -89,15 +91,19 @@ export class EventData extends Model implements EventDataDto {
    * Relations
    */
 
+  @BelongsTo(() => Variable, 'variableId')
   declare variable: VariableDto;
 
+  @ForeignKey(() => Variable)
   @Column({
     type: DataType.INTEGER,
   })
   declare variableId?: number;
 
+  @BelongsTo(() => Component, 'componentId')
   declare component: ComponentDto;
 
+  @ForeignKey(() => Component)
   @Column({
     type: DataType.INTEGER,
   })
@@ -105,6 +111,10 @@ export class EventData extends Model implements EventDataDto {
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
+  @BelongsTo(() => ChargingStation, 'stationPkId')
+  declare chargingStation?: ChargingStationDto;
+
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -114,6 +124,7 @@ export class EventData extends Model implements EventDataDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeCreate

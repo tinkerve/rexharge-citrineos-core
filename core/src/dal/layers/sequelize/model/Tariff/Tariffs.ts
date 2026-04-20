@@ -2,16 +2,43 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ConnectorDto, TariffDto, TenantDto } from '@citrineos/base';
+import type {
+  ConnectorDto,
+  MeterValueDto,
+  TariffDto,
+  TenantDto,
+  TransactionDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_Namespace } from '@citrineos/base';
 import type { CreationOptional } from 'sequelize';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { Connector } from '../Location/Connector.js';
+import { Tenant } from '../Tenant.js';
+import { MeterValue } from '../TransactionEvent/MeterValue.js';
+import { Transaction } from '../TransactionEvent/Transaction.js';
 
 @Table
 export class Tariff extends Model implements TariffDto {
   static readonly MODEL_NAME: string = OCPP2_Namespace.Tariff;
 
+  @HasMany(() => Connector, 'tariffId')
   declare connectors?: ConnectorDto[];
+
+  @HasMany(() => MeterValue, 'tariffId')
+  declare meterValues?: MeterValueDto[];
+
+  @HasMany(() => Transaction, 'tariffId')
+  declare transactions?: TransactionDto[];
 
   @Column({
     type: DataType.CHAR(3),
@@ -109,6 +136,7 @@ export class Tariff extends Model implements TariffDto {
     return Tariff.build({ ...data });
   }
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -117,6 +145,7 @@ export class Tariff extends Model implements TariffDto {
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate

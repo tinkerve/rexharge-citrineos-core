@@ -1,9 +1,32 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { VariableDto, TenantDto, ComponentDto } from '@citrineos/base';
+import type {
+  ComponentDto,
+  TenantDto,
+  VariableAttributeDto,
+  VariableCharacteristicsDto,
+  VariableDto,
+  VariableMonitoringDto,
+} from '@citrineos/base';
 import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
-import { BeforeCreate, BeforeUpdate, Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BeforeUpdate,
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  HasOne,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { Tenant } from '../Tenant.js';
+import { VariableMonitoring } from '../VariableMonitoring/VariableMonitoring.js';
+import { Component } from './Component.js';
+import { ComponentVariable } from './ComponentVariable.js';
 import { VariableAttribute } from './VariableAttribute.js';
 import { VariableCharacteristics } from './VariableCharacteristics.js';
 
@@ -42,11 +65,17 @@ export class Variable extends Model implements OCPP2_0_1.VariableType, VariableD
    * Relations
    */
 
+  @BelongsToMany(() => Component, { through: () => ComponentVariable, foreignKey: 'variableId' })
   declare components?: ComponentDto[];
 
-  declare variableAttributes?: VariableAttribute[];
+  @HasMany(() => VariableAttribute, 'variableId')
+  declare variableAttributes?: VariableAttributeDto[];
 
-  declare variableCharacteristics?: VariableCharacteristics;
+  @HasOne(() => VariableCharacteristics, 'variableId')
+  declare variableCharacteristics?: VariableCharacteristicsDto;
+
+  @HasMany(() => VariableMonitoring, 'variableId')
+  declare variableMonitorings?: VariableMonitoringDto[];
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
@@ -54,6 +83,7 @@ export class Variable extends Model implements OCPP2_0_1.VariableType, VariableD
   public addComponent!: (variable: ComponentDto) => Promise<void>;
   public getComponents!: () => Promise<ComponentDto[]>;
 
+  @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -63,6 +93,7 @@ export class Variable extends Model implements OCPP2_0_1.VariableType, VariableD
   })
   declare tenantId: number;
 
+  @BelongsTo(() => Tenant, 'tenantId')
   declare tenant?: TenantDto;
 
   @BeforeUpdate
