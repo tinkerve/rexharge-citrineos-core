@@ -31,6 +31,7 @@ import {
   OcppError,
   OCPPValidator,
   OCPPVersion,
+  MessageOrigin,
   TransactionEventEnum,
 } from '@citrineos/base';
 import { sequelize } from '@dal/index.js';
@@ -46,6 +47,7 @@ import type {
 import { SequelizeOCPPMessageRepository } from '@dal/layers/sequelize/index.js';
 import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
 import { Authorization } from '@dal/layers/sequelize/model/Authorization/index.js';
+import { Tariff } from '@dal/layers/sequelize/model/Tariff/Tariffs.js';
 import { Component, VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import {
   StartTransaction,
@@ -818,6 +820,55 @@ export class TransactionsModule extends AbstractModule {
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('OCPP 2.1 SetDefaultTariff response received:', message, props);
+
+    if (message.payload.status !== OCPP2_1.TariffSetStatusEnumType.Accepted) {
+      this._logger.warn(
+        `SetDefaultTariff rejected for station ${message.context.stationId}: ${message.payload.status}`,
+      );
+      return;
+    }
+
+    const tenantId = message.context.tenantId;
+    const stationId = message.context.stationId;
+
+    const storedRequest = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
+      where: {
+        tenantId,
+        stationId,
+        correlationId: message.context.correlationId,
+        origin: MessageOrigin.ChargingStationManagementSystem,
+      },
+    });
+
+    if (!storedRequest) {
+      this._logger.error(
+        `No SetDefaultTariffRequest found for correlationId ${message.context.correlationId} on station ${stationId}`,
+      );
+      return;
+    }
+
+    const request = storedRequest.message[3] as OCPP2_request_types.SetDefaultTariffRequest;
+    const tariffData = request.tariff;
+
+    const newTariff = Tariff.build({
+      tenantId,
+      currency: tariffData.currency,
+      pricePerKwh: 0,
+      tariffId: tariffData.tariffId,
+      validFrom: tariffData.validFrom ?? undefined,
+      description: tariffData.description ?? undefined,
+      energy: tariffData.energy ?? undefined,
+      chargingTime: tariffData.chargingTime ?? undefined,
+      idleTime: tariffData.idleTime ?? undefined,
+      fixedFee: tariffData.fixedFee ?? undefined,
+      reservationTime: tariffData.reservationTime ?? undefined,
+      reservationFixed: tariffData.reservationFixed ?? undefined,
+      minCost: tariffData.minCost ?? undefined,
+      maxCost: tariffData.maxCost ?? undefined,
+    });
+
+    const storedTariff = await this._tariffRepository.upsertTariffByTariffId(tenantId, newTariff);
+    this._logger.info(`Tariff ${storedTariff.id} stored for station ${stationId}`);
   }
 
   protected async deactivateOtherActiveTransactionsAtEvse201(

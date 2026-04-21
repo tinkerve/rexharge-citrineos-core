@@ -1,13 +1,14 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { BootstrapConfig, MeterValueDto } from '@citrineos/base';
+import type { BootstrapConfig, MeterValueDto, OCPP2_request_types } from '@citrineos/base';
 import {
   ChargingStationSequenceTypeEnum,
   CrudRepository,
   MeterValueUtils,
   OCPP1_6,
   OCPP2_0_1,
+  OCPP2_1,
 } from '@citrineos/base';
 import type { WhereOptions } from 'sequelize';
 import { Op } from 'sequelize';
@@ -18,7 +19,7 @@ import type {
   IChargingStationSequenceRepository,
   ITransactionEventRepository,
 } from '../../../interfaces/repositories.js';
-import { AuthorizationMapper } from '../mapper/2.0.1/AuthorizationMapper.js';
+import { AuthorizationMapper } from '../mapper/2.1/AuthorizationMapper.js';
 import { MeterValueMapper } from '../mapper/2.0.1/MeterValueMapper.js';
 import { Authorization } from '../model/Authorization/Authorization.js';
 import { EvseType } from '../model/DeviceModel/EvseType.js';
@@ -113,6 +114,7 @@ export class SequelizeTransactionEventRepository
   }
 
   /**
+   * @param tenantId tenantId
    * @param value TransactionEventRequest received from charging station. Will be used to create TransactionEvent,
    * MeterValues, and either create or update Transaction. IdTokens (and associated AdditionalInfo) and EVSEs are
    * assumed to already exist and will not be created as part of this call.
@@ -123,9 +125,11 @@ export class SequelizeTransactionEventRepository
    */
   async createOrUpdateTransactionByTransactionEventAndStationId(
     tenantId: number,
-    value: OCPP2_0_1.TransactionEventRequest,
+    value: OCPP2_request_types.TransactionEventRequest,
     stationId: string,
   ): Promise<Transaction> {
+    // In OCPP 2.1, transactionEventRequest contains tariffId
+    const infoTariffId = (value.transactionInfo as { tariffId?: string | null }).tariffId;
     return await this.s.transaction(async (sequelizeTransaction) => {
       let finalTransaction: Transaction;
       let created = false;
@@ -171,6 +175,16 @@ export class SequelizeTransactionEventRepository
           connectorId = connector.id;
           tariffId = connector.tariff?.id;
         }
+        if (infoTariffId) {
+          // Find db id using tariffId string
+          const tariff = await Tariff.findOne({
+            where: { tariffId: infoTariffId, tenantId },
+            transaction: sequelizeTransaction,
+          });
+          if (tariff) {
+            tariffId = tariff.id;
+          }
+        }
         let authorizationId = existingTransaction.authorizationId;
         if (!authorizationId && value.idToken) {
           // Find Authorization by IdToken
@@ -178,7 +192,9 @@ export class SequelizeTransactionEventRepository
             where: {
               tenantId,
               idToken: value.idToken.idToken,
-              idTokenType: AuthorizationMapper.fromIdTokenEnumType(value.idToken.type),
+              idTokenType: AuthorizationMapper.fromIdTokenEnumType(
+                value.idToken.type as OCPP2_1.IdTokenEnumType,
+              ), // use 2.1 to cover both OCPP versions
             },
             transaction: sequelizeTransaction,
           });
@@ -236,10 +252,19 @@ export class SequelizeTransactionEventRepository
                 evseId: evse.id,
                 evseTypeConnectorId: value.evse.connectorId,
               },
+              defaults: { connectorId: value.evse.connectorId },
               include: [Tariff],
             });
             newTransaction.set('connectorId', connector.id);
-            newTransaction.set('tariffId', connector.tariff?.id);
+            if (infoTariffId) {
+              const tariff = await Tariff.findOne({
+                where: { tariffId: infoTariffId, tenantId },
+                transaction: sequelizeTransaction,
+              });
+              newTransaction.set('tariffId', tariff?.id ?? connector.tariff?.id);
+            } else {
+              newTransaction.set('tariffId', connector.tariff?.id);
+            }
           }
         }
 
@@ -249,7 +274,9 @@ export class SequelizeTransactionEventRepository
             where: {
               tenantId,
               idToken: value.idToken.idToken,
-              idTokenType: AuthorizationMapper.fromIdTokenEnumType(value.idToken.type),
+              idTokenType: AuthorizationMapper.fromIdTokenEnumType(
+                value.idToken.type as OCPP2_1.IdTokenEnumType,
+              ),
             },
             transaction: sequelizeTransaction,
           });
@@ -295,7 +322,9 @@ export class SequelizeTransactionEventRepository
           where: {
             tenantId,
             idToken: value.idToken.idToken,
-            idTokenType: AuthorizationMapper.fromIdTokenEnumType(value.idToken.type),
+            idTokenType: AuthorizationMapper.fromIdTokenEnumType(
+              value.idToken.type as OCPP2_1.IdTokenEnumType,
+            ),
           },
           transaction: sequelizeTransaction,
         });
@@ -313,7 +342,8 @@ export class SequelizeTransactionEventRepository
 
       if (value.meterValue && value.meterValue.length > 0) {
         const meterValueTypes = value.meterValue.map((meterValue) =>
-          MeterValueMapper.fromMeterValueType(meterValue),
+          // meterValueType is effectively the same between OCPP 2.1 and 2.0.1
+          MeterValueMapper.fromMeterValueType(meterValue as OCPP2_0_1.MeterValueType),
         );
         const newMeterValues = await Promise.all(
           meterValueTypes.map(async (meterValueType) => {
