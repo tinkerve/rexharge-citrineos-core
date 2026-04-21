@@ -19,8 +19,7 @@ import type {
   IChargingStationSequenceRepository,
   ITransactionEventRepository,
 } from '../../../interfaces/repositories.js';
-import { AuthorizationMapper } from '../mapper/2.1/AuthorizationMapper.js';
-import { MeterValueMapper } from '../mapper/2.0.1/MeterValueMapper.js';
+import { MeterValueMapper } from '../mapper/2/MeterValueMapper.js';
 import { Authorization } from '../model/Authorization/Authorization.js';
 import { EvseType } from '../model/DeviceModel/EvseType.js';
 import { ChargingStation } from '../model/Location/ChargingStation.js';
@@ -192,9 +191,7 @@ export class SequelizeTransactionEventRepository
             where: {
               tenantId,
               idToken: value.idToken.idToken,
-              idTokenType: AuthorizationMapper.fromIdTokenEnumType(
-                value.idToken.type as OCPP2_1.IdTokenEnumType,
-              ), // use 2.1 to cover both OCPP versions
+              idTokenType: value.idToken.type,
             },
             transaction: sequelizeTransaction,
           });
@@ -274,9 +271,7 @@ export class SequelizeTransactionEventRepository
             where: {
               tenantId,
               idToken: value.idToken.idToken,
-              idTokenType: AuthorizationMapper.fromIdTokenEnumType(
-                value.idToken.type as OCPP2_1.IdTokenEnumType,
-              ),
+              idTokenType: value.idToken.type,
             },
             transaction: sequelizeTransaction,
           });
@@ -322,9 +317,7 @@ export class SequelizeTransactionEventRepository
           where: {
             tenantId,
             idToken: value.idToken.idToken,
-            idTokenType: AuthorizationMapper.fromIdTokenEnumType(
-              value.idToken.type as OCPP2_1.IdTokenEnumType,
-            ),
+            idTokenType: value.idToken.type,
           },
           transaction: sequelizeTransaction,
         });
@@ -342,8 +335,7 @@ export class SequelizeTransactionEventRepository
 
       if (value.meterValue && value.meterValue.length > 0) {
         const meterValueTypes = value.meterValue.map((meterValue) =>
-          // meterValueType is effectively the same between OCPP 2.1 and 2.0.1
-          MeterValueMapper.fromMeterValueType(meterValue as OCPP2_0_1.MeterValueType),
+          MeterValueMapper.fromMeterValueType(meterValue),
         );
         const newMeterValues = await Promise.all(
           meterValueTypes.map(async (meterValueType) => {

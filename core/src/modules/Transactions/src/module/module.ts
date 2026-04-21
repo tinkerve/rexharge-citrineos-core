@@ -22,6 +22,7 @@ import {
   AttributeEnum,
   AuthorizationStatusEnum,
   CrudRepository,
+  TariffSetStatusEnum,
   ErrorCode,
   EventGroup,
   OCPP1_6,
@@ -821,7 +822,7 @@ export class TransactionsModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('OCPP 2.1 SetDefaultTariff response received:', message, props);
 
-    if (message.payload.status !== OCPP2_1.TariffSetStatusEnumType.Accepted) {
+    if (message.payload.status !== TariffSetStatusEnum.Accepted) {
       this._logger.warn(
         `SetDefaultTariff rejected for station ${message.context.stationId}: ${message.payload.status}`,
       );
