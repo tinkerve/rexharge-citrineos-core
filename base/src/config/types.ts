@@ -180,6 +180,8 @@ export const systemConfigInputSchema = z.object({
           signingMethod: z.enum(['RSASSA-PKCS1-v1_5', 'ECDSA']),
         })
         .optional(),
+      /** Base URL for generating receipt URLs when ReceiptByCSMS is true (C21). */
+      receiptBaseUrl: z.string().optional(),
     }),
   }),
   util: z.object({
@@ -481,6 +483,8 @@ export const systemConfigSchema = z
               signingMethod: z.enum(['RSASSA-PKCS1-v1_5', 'ECDSA']),
             })
             .optional(),
+          /** Base URL for generating receipt URLs when ReceiptByCSMS is true (C21). */
+          receiptBaseUrl: z.string().optional(),
         })
         .refine(
           (obj) =>
