@@ -508,7 +508,251 @@ export class EVDriverModule extends AbstractModule {
     this._logger.debug('Authorize response sent:', messageConfirmation);
   }
 
-  //TODO: We need to create custom logic for 2.1's authorize, the above only handles for protocol 2.0.1
+  @AsHandler([OCPPVersion.OCPP2_1], OCPP_CallAction.Authorize)
+  protected async _handleAuthorize21(
+    message: IMessage<OCPP2_request_types.AuthorizeRequest>,
+    props?: HandlerProperties,
+  ): Promise<void> {
+    this._logger.debug('Authorize 2.1 received:', message, props);
+    const request: OCPP2_request_types.AuthorizeRequest = message.payload;
+    const context = message.context;
+    let response = {
+      idTokenInfo: {
+        status: AuthorizationStatusEnum.Unknown,
+      },
+    } as OCPP2_response_types.AuthorizeResponse;
+
+    // Validate ID token format
+    const tokenValidation = validateIdToken(request.idToken.type, request.idToken.idToken);
+    if (!tokenValidation.isValid) {
+      this._logger.warn(`Invalid ID token format`, {
+        type: request.idToken.type,
+        token: request.idToken.idToken,
+        error: tokenValidation.errorMessage,
+      });
+      const messageId = message.context.correlationId;
+      const error = new OcppError(
+        messageId,
+        ErrorCode.PropertyConstraintViolation,
+        tokenValidation.errorMessage || 'Invalid token value for specified type',
+      );
+      response = {
+        ...response,
+        idTokenInfo: {
+          status: AuthorizationStatusEnum.Invalid,
+        },
+      } as OCPP2_response_types.AuthorizeResponse;
+
+      this._logger.error('Token validation failed:', tokenValidation.errorMessage);
+      await this.sendCallErrorWithMessage(message, error);
+      return;
+    }
+
+    if (message.payload.idToken.type === IdTokenEnum.NoAuthorization) {
+      response = {
+        ...response,
+        idTokenInfo: {
+          status: AuthorizationStatusEnum.Accepted,
+        },
+      } as OCPP2_response_types.AuthorizeResponse;
+      await this.sendCallResultWithMessage(message, response);
+      return;
+    }
+
+    // Validate Contract Certificates based on OCPP 2.1 C07
+    if (request.iso15118CertificateHashData || request.certificate) {
+      if (request.iso15118CertificateHashData && request.iso15118CertificateHashData.length > 0) {
+        response.certificateStatus =
+          await this._certificateAuthorityService.validateCertificateHashData(
+            request.iso15118CertificateHashData,
+          );
+      }
+      if (request.certificate) {
+        response.certificateStatus =
+          await this._certificateAuthorityService.validateCertificateChainPem(request.certificate);
+      }
+      if (response.certificateStatus !== AuthorizeCertificateStatusEnum.Accepted) {
+        response = {
+          ...response,
+          idTokenInfo: {
+            status: AuthorizationStatusEnum.Invalid,
+          },
+        } as OCPP2_response_types.AuthorizeResponse;
+        const messageConfirmation = await this.sendCallResultWithMessage(message, response);
+        this._logger.debug('Authorize 2.1 response sent:', messageConfirmation);
+        return;
+      }
+    }
+
+    const authorization = await this._authorizeRepository.readOnlyOneByQuerystring(
+      context.tenantId,
+      {
+        idToken: request.idToken.idToken,
+        type: OCPP2_0_1_Mapper.AuthorizationMapper.fromIdTokenEnumType(request.idToken.type),
+      },
+    );
+
+    if (authorization) {
+      const idTokenInfo = OCPP2_0_1_Mapper.AuthorizationMapper.toIdTokenInfo(authorization);
+      if (idTokenInfo.status === AuthorizationStatusEnum.Accepted) {
+        if (
+          idTokenInfo.cacheExpiryDateTime &&
+          new Date() > new Date(idTokenInfo.cacheExpiryDateTime)
+        ) {
+          response = {
+            idTokenInfo: {
+              status: AuthorizationStatusEnum.Invalid,
+              groupIdToken: idTokenInfo.groupIdToken,
+            },
+          } as OCPP2_response_types.AuthorizeResponse;
+        } else {
+          let evseIds: Set<number> | undefined = undefined;
+          if (
+            authorization.allowedConnectorTypes &&
+            authorization.allowedConnectorTypes.length > 0
+          ) {
+            evseIds = new Set();
+            const connectorTypes: VariableAttribute[] =
+              await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
+                tenantId: context.tenantId,
+                stationId: message.context.stationId,
+                component_name: 'Connector',
+                variable_name: 'ConnectorType',
+                type: AttributeEnum.Actual,
+              });
+            for (const connectorType of connectorTypes) {
+              if (authorization.allowedConnectorTypes.indexOf(connectorType.value as string) > 0) {
+                evseIds.add(connectorType.evse?.id as number);
+              }
+            }
+          }
+          if (evseIds && evseIds.size === 0) {
+            response = {
+              idTokenInfo: {
+                status: AuthorizationStatusEnum.NotAllowedTypeEVSE,
+                groupIdToken: idTokenInfo.groupIdToken,
+              },
+            } as OCPP2_response_types.AuthorizeResponse;
+          } else {
+            if (
+              authorization.disallowedEvseIdPrefixes &&
+              authorization.disallowedEvseIdPrefixes.length > 0
+            ) {
+              evseIds = evseIds ? evseIds : new Set();
+              const evseIdAttributes: VariableAttribute[] =
+                await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
+                  tenantId: context.tenantId,
+                  stationId: message.context.stationId,
+                  component_name: 'EVSE',
+                  variable_name: 'EvseId',
+                  type: AttributeEnum.Actual,
+                });
+              for (const evseIdAttribute of evseIdAttributes) {
+                const evseIdAllowed: boolean = authorization.disallowedEvseIdPrefixes.some(
+                  (disallowedEvseId) =>
+                    (evseIdAttribute.value as string).startsWith(disallowedEvseId),
+                );
+                if (evseIdAllowed && !authorization.allowedConnectorTypes) {
+                  evseIds.add(evseIdAttribute.evse?.id as number);
+                } else if (!evseIdAllowed && authorization.allowedConnectorTypes) {
+                  evseIds.delete(evseIdAttribute.evse?.id as number);
+                }
+              }
+            }
+            if (evseIds && evseIds.size === 0) {
+              response = {
+                idTokenInfo: {
+                  status: AuthorizationStatusEnum.NotAtThisLocation,
+                  groupIdToken: idTokenInfo.groupIdToken,
+                },
+              } as OCPP2_response_types.AuthorizeResponse;
+            } else {
+              response.idTokenInfo = idTokenInfo;
+              const evseId: number[] = [...(evseIds ? evseIds.values() : [])];
+              if (evseId.length > 0) {
+                response.idTokenInfo.evseId = [evseId.pop() as number, ...evseId];
+              }
+            }
+          }
+        }
+
+        for (const authorizer of this._authorizers) {
+          if (response.idTokenInfo.status !== AuthorizationStatusEnum.Accepted) {
+            break;
+          }
+          const result: AuthorizationStatusEnumType = await authorizer.authorize(
+            authorization,
+            context,
+          );
+          response.idTokenInfo.status =
+            OCPP2_0_1_Mapper.AuthorizationMapper.fromAuthorizationStatusEnumType(result);
+        }
+
+        // C17 - Prepaid card authorization (OCPP 2.1 only)
+        if (
+          authorization.isPrepaid &&
+          response.idTokenInfo.status === AuthorizationStatusEnum.Accepted
+        ) {
+          if (authorization.prepaidBalance != null && authorization.prepaidBalance > 0) {
+            // C17.FR.01: Prepaid token with positive balance
+            response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+            this._logger.debug(
+              `C17: Prepaid authorization accepted for idToken ${authorization.idToken} with balance ${authorization.prepaidBalance}`,
+            );
+          } else {
+            // C17.FR.02: Prepaid token with zero or negative balance
+            response.idTokenInfo.status =
+              OCPP2_0_1_Mapper.AuthorizationMapper.fromAuthorizationStatusEnumType(
+                AuthorizationStatusEnum.NoCredit,
+              );
+            response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+            this._logger.debug(
+              `C17: Prepaid authorization rejected (NoCredit) for idToken ${authorization.idToken} with balance ${authorization.prepaidBalance}`,
+            );
+          }
+        }
+      } else {
+        // Blocked, Expired, Invalid, NoCredit, Unknown
+        response.idTokenInfo = idTokenInfo;
+      }
+    } else {
+      // Status is Unknown if no authorization found
+      const messageConfirmation = await this.sendCallResultWithMessage(message, response);
+      this._logger.debug('Authorize 2.1 response sent:', messageConfirmation);
+      return;
+    }
+
+    if (response.idTokenInfo.status === AuthorizationStatusEnum.Accepted) {
+      const tariffAvailable: VariableAttribute[] =
+        await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
+          tenantId: context.tenantId,
+          stationId: message.context.stationId,
+          component_name: 'TariffCostCtrlr',
+          variable_name: 'Available',
+          variable_instance: 'Tariff',
+          type: AttributeEnum.Actual,
+        });
+
+      const displayMessageAvailable: VariableAttribute[] =
+        await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
+          tenantId: context.tenantId,
+          stationId: message.context.stationId,
+          component_name: 'DisplayMessageCtrlr',
+          variable_name: 'Available',
+          type: AttributeEnum.Actual,
+        });
+
+      if (
+        (tariffAvailable.length > 0 && Boolean(tariffAvailable[0].value)) ||
+        (displayMessageAvailable.length > 0 && Boolean(displayMessageAvailable[0].value))
+      ) {
+        // TODO: The OCPP 2.1 Authorize request pricing message requires EV Driver specific pricing.
+      }
+    }
+
+    const messageConfirmation = await this.sendCallResultWithMessage(message, response);
+    this._logger.debug('Authorize 2.1 response sent:', messageConfirmation);
+  }
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ReservationStatusUpdate)
   protected async _handleReservationStatusUpdate(
