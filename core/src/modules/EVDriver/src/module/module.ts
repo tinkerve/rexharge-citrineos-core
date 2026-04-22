@@ -594,7 +594,7 @@ export class EVDriverModule extends AbstractModule {
           },
         } as OCPP2_response_types.AuthorizeResponse;
         const messageConfirmation = await this.sendCallResultWithMessage(message, response);
-        this._logger.debug('Authorize response sent:', messageConfirmation);
+        this._logger.debug('Authorize 2.1 response sent:', messageConfirmation);
         return;
       }
     }
@@ -622,10 +622,6 @@ export class EVDriverModule extends AbstractModule {
             },
           } as OCPP2_response_types.AuthorizeResponse;
         } else {
-          // If charging station does not have values and evses associated with the component/variable pairs below,
-          // this logic will break. CSMS's aiming to use the allowedConnectorTypes or disallowedEvseIdPrefixes
-          // Authorization restrictions MUST provide these variable attributes as defined in Physical Component
-          // list of Part 2 - Appendices of OCPP 2.0.1
           let evseIds: Set<number> | undefined = undefined;
           if (
             authorization.allowedConnectorTypes &&
@@ -710,6 +706,30 @@ export class EVDriverModule extends AbstractModule {
           response.idTokenInfo.status =
             OCPP2_0_1_Mapper.AuthorizationMapper.fromAuthorizationStatusEnumType(result);
         }
+
+        // C17 - Prepaid card authorization (OCPP 2.1 only)
+        if (
+          authorization.isPrepaid &&
+          response.idTokenInfo.status === AuthorizationStatusEnum.Accepted
+        ) {
+          if (authorization.prepaidBalance != null && authorization.prepaidBalance > 0) {
+            // C17.FR.01: Prepaid token with positive balance
+            response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+            this._logger.debug(
+              `C17: Prepaid authorization accepted for idToken ${authorization.idToken} with balance ${authorization.prepaidBalance}`,
+            );
+          } else {
+            // C17.FR.02: Prepaid token with zero or negative balance
+            response.idTokenInfo.status =
+              OCPP2_0_1_Mapper.AuthorizationMapper.fromAuthorizationStatusEnumType(
+                AuthorizationStatusEnum.NoCredit,
+              );
+            response.idTokenInfo.cacheExpiryDateTime = new Date().toISOString();
+            this._logger.debug(
+              `C17: Prepaid authorization rejected (NoCredit) for idToken ${authorization.idToken} with balance ${authorization.prepaidBalance}`,
+            );
+          }
+        }
       } else {
         // Blocked, Expired, Invalid, NoCredit, Unknown
         response.idTokenInfo = idTokenInfo;
@@ -717,7 +737,7 @@ export class EVDriverModule extends AbstractModule {
     } else {
       // Status is Unknown if no authorization found
       const messageConfirmation = await this.sendCallResultWithMessage(message, response);
-      this._logger.debug('Authorize response sent:', messageConfirmation);
+      this._logger.debug('Authorize 2.1 response sent:', messageConfirmation);
       return;
     }
 
@@ -747,7 +767,7 @@ export class EVDriverModule extends AbstractModule {
     }
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
-    this._logger.debug('Authorize response sent:', messageConfirmation);
+    this._logger.debug('Authorize 2.1 response sent:', messageConfirmation);
   }
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ReservationStatusUpdate)
