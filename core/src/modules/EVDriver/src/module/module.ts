@@ -818,7 +818,7 @@ export class EVDriverModule extends AbstractModule {
 
   @AsHandler([OCPPVersion.OCPP2_1], OCPP_CallAction.VatNumberValidation)
   protected async _handleVatNumberValidation(
-    message: IMessage<OCPP2_request_types.VatNumberValidationRequest>,
+    message: IMessage<OCPP2_1.VatNumberValidationRequest>,
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('VatNumberValidation request received:', message, props);
@@ -827,7 +827,7 @@ export class EVDriverModule extends AbstractModule {
 
     const company = this._vatProvider ? await this._vatProvider.getVat(request.vatNumber) : null;
 
-    const response: OCPP2_response_types.VatNumberValidationResponse = {
+    const response: OCPP2_1.VatNumberValidationResponse = {
       vatNumber: request.vatNumber,
       evseId: request.evseId,
       status: company

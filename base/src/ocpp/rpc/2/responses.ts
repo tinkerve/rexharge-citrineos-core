@@ -229,5 +229,3 @@ export type RequestStopTransactionResponse =
 export type TransactionEventResponse =
   | OCPP2_1.TransactionEventResponse
   | OCPP2_0_1.TransactionEventResponse;
-
-export type VatNumberValidationResponse = OCPP2_1.VatNumberValidationResponse;

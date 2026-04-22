@@ -2,7 +2,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { CallAction, IMessageConfirmation, OCPP2_request_types } from '@citrineos/base';
+import {
+  type CallAction,
+  type IMessageConfirmation,
+  OCPP2_1,
+  type OCPP2_request_types,
+} from '@citrineos/base';
 import {
   AbstractModuleApi,
   AsMessageEndpoint,
@@ -98,7 +103,7 @@ export class TransactionsOcpp2Api
   )
   async setDefaultTariff(
     identifier: string[],
-    request: OCPP2_request_types.SetDefaultTariffRequest,
+    request: OCPP2_1.SetDefaultTariffRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
