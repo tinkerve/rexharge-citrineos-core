@@ -12,4 +12,17 @@ export class UpsertTariffRequest {
 
   authorizationAmount?: number;
   paymentFee?: number;
+
+  // OCPP 2.1 TariffType fields
+  tariffId?: string;
+  validFrom?: string;
+  description?: any[];
+  energy?: any;
+  chargingTime?: any;
+  idleTime?: any;
+  fixedFee?: any;
+  reservationTime?: any;
+  reservationFixed?: any;
+  minCost?: any;
+  maxCost?: any;
 }

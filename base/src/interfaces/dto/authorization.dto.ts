@@ -36,6 +36,7 @@ const authorizationFields = {
   tenantPartnerId: z.number().int().nullable().optional(),
   tenantPartner: TenantPartnerSchema.nullable().optional(),
   groupAuthorizationId: z.number().int().nullable().optional(),
+  tariffId: z.number().int().nullable().optional(),
 };
 
 export const GroupAuthorizationSchema = BaseSchema.extend(authorizationFields);

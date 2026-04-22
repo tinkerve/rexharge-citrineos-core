@@ -27,6 +27,49 @@
     },
     "taxRate": {
       "type": "number"
+    },
+    "tariffAltText": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "tariffId": {
+      "type": "string"
+    },
+    "validFrom": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "description": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "energy": {
+      "type": "object"
+    },
+    "chargingTime": {
+      "type": "object"
+    },
+    "idleTime": {
+      "type": "object"
+    },
+    "fixedFee": {
+      "type": "object"
+    },
+    "reservationTime": {
+      "type": "object"
+    },
+    "reservationFixed": {
+      "type": "object"
+    },
+    "minCost": {
+      "type": "object"
+    },
+    "maxCost": {
+      "type": "object"
     }
   },
   "required": ["currency", "pricePerKwh"]

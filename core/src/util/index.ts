@@ -9,6 +9,7 @@ export { BasicAuthenticationFilter } from './networkconnection/authenticator/Bas
 
 export * from './authorization/index.js';
 export * from './authorizer/index.js';
+export * from './vatProvider/index.js';
 export { MemoryCache } from './cache/memory.js';
 export { RedisCache } from './cache/redis.js';
 export { S3Storage } from './files/s3Storage.js';
@@ -25,6 +26,9 @@ export {
   validateLanguageTag,
   validateChargingProfileType,
   validateIdToken,
+  validateOcpp21IdToken,
+  validateVINIdToken,
+  validateEVCCIDIdToken,
   validateISO15693IdToken,
   validateISO14443IdToken,
   validateIdentifierStringIdToken,
