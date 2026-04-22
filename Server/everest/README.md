@@ -4,7 +4,7 @@ In the case you don't have a charger that supports OCPP 2.0.1 to experiment with
 Foundation Energy project EVerest. [See here](https://github.com/EVerest) for the repository. They have built an open source version of
 charger firmware and also allow for using it as a simulator. They support OCPP 2.0.1 which makes it a great testing
 opportunity with CitrineOS. For the long route of setting up EVerst you can follow their documentation and build
-the project yourself. [See here for Docs](https://everest.github.io/latest/general/03_quick_start_guide.html)
+the project yourself. [See here for Docs](https://everest.github.io/latest/how-to-guides/getting-started/index.html)
 
 # Running EVerest
 
@@ -25,7 +25,7 @@ the `/Server/everest` directory so that it can pick up the `Dockerfile` and the 
 You will notice that there are two args that are configurable:
 
 - `EVEREST_IMAGE_TAG` - The image tag that will be used for the EVerest image (ghcr.io/everest/everest-demo/manager).
-- `EVEREST_TARGET_URL` - The CSMS URL that EVerest will connect to. Defaults to `host.docker.internal` assuming CitrineOS will run on same machine, since `localhost` won't work within Docker.
+- `OCPP_VERSION` - The version of OCPP to run everest for. `start-everest` will handle all 2.x versions for the given 2.x OCPP_VERSION and start-everest-16 is for OCPP1.6 only.
 
 After running `npm run start-everest` (or the Windows alternative), you should see 3 running EVerest containers
 and the `manager` container should have the appropriate EVerest logs.

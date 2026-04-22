@@ -5,6 +5,9 @@ table:
   name: ChargingStationSecurityInfos
   schema: public
 object_relationships:
+  - name: ChargingStation
+    using:
+      foreign_key_constraint_on: stationPkId
   - name: Tenant
     using:
       foreign_key_constraint_on: tenantId

@@ -7,10 +7,13 @@ table:
 object_relationships:
   - name: ChargingStation
     using:
-      foreign_key_constraint_on: stationId
+      foreign_key_constraint_on: stationPkId
   - name: Evse
     using:
       foreign_key_constraint_on: evseId
+  - name: Tariff
+    using:
+      foreign_key_constraint_on: tariffId
   - name: Tenant
     using:
       foreign_key_constraint_on: tenantId

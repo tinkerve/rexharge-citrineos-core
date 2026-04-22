@@ -22,52 +22,37 @@ import {
   eventGroupFromString,
   type IAuthenticator,
   OCPPValidator,
+  OCPPVersion,
 } from '@citrineos/base';
+import type { ISmartCharging } from '@citrineos/core';
 import {
-  CertificatesDataApi,
-  CertificatesModule,
-  CertificatesOcpp201Api,
-} from '@citrineos/certificates';
-import {
-  ConfigurationDataApi,
-  ConfigurationModule,
-  ConfigurationOcpp16Api,
-  ConfigurationOcpp201Api,
-} from '@citrineos/configuration';
-import { RepositoryStore, sequelize, Sequelize } from '@citrineos/data';
-import {
-  EVDriverDataApi,
-  EVDriverModule,
-  EVDriverOcpp16Api,
-  EVDriverOcpp201Api,
-} from '@citrineos/evdriver';
-import { MonitoringDataApi, MonitoringModule, MonitoringOcpp201Api } from '@citrineos/monitoring';
-import { AdminApi, MessageRouterImpl, WebhookDispatcher } from '@citrineos/ocpprouter';
-import { ReportingModule, ReportingOcpp16Api, ReportingOcpp201Api } from '@citrineos/reporting';
-import type { ISmartCharging } from '@citrineos/smartcharging';
-import {
-  InternalSmartCharging,
-  SmartChargingModule,
-  SmartChargingOcpp16Api,
-  SmartChargingOcpp201Api,
-} from '@citrineos/smartcharging';
-import { TenantDataApi, TenantModule } from '@citrineos/tenant';
-import {
-  TransactionsDataApi,
-  TransactionsModule,
-  TransactionsOcpp201Api,
-} from '@citrineos/transactions';
-import {
+  AdminApi,
   apiAuthPluginFp,
   Authenticator,
   BasicAuthenticationFilter,
   BrokerAwareMessageSender,
   CertificateAuthorityService,
+  CertificatesDataApi,
+  CertificatesModule,
+  CertificatesOcpp2Api,
+  ConfigurationDataApi,
+  ConfigurationModule,
+  ConfigurationOcpp16Api,
+  ConfigurationOcpp2Api,
   ConnectedStationFilter,
+  EVDriverDataApi,
+  EVDriverModule,
+  EVDriverOcpp16Api,
+  EVDriverOcpp2Api,
   IdGenerator,
   initSwagger,
+  InternalSmartCharging,
   LocalBypassAuthProvider,
   MemoryCache,
+  MessageRouterImpl,
+  MonitoringDataApi,
+  MonitoringModule,
+  MonitoringOcpp2Api,
   NetworkProfileFilter,
   OIDCAuthProvider,
   RabbitMQChannelManager,
@@ -76,9 +61,24 @@ import {
   RabbitMqSender,
   RealTimeAuthorizer,
   RedisCache,
+  ReportingModule,
+  ReportingOcpp16Api,
+  ReportingOcpp2Api,
+  RepositoryStore,
+  sequelize,
+  Sequelize,
+  SmartChargingModule,
+  SmartChargingOcpp16Api,
+  SmartChargingOcpp2Api,
+  TenantDataApi,
+  TenantModule,
+  TransactionsDataApi,
+  TransactionsModule,
+  TransactionsOcpp2Api,
   UnknownStationFilter,
+  WebhookDispatcher,
   WebsocketNetworkConnection,
-} from '@citrineos/util';
+} from '@citrineos/core';
 import cors from '@fastify/cors';
 import { type JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts';
 import type { FastifyInstance } from 'fastify';
@@ -290,14 +290,7 @@ export class CitrineOSServer {
   }
 
   protected _createHandler(): IMessageHandler {
-    const exchange = this._config.util.messageBroker.amqp?.exchange;
-    if (!exchange) {
-      throw new Error('RabbitMQ exchange is not configured');
-    }
-    if (!this._channelManager) {
-      throw new Error('RabbitMQ channel manager is not initialized');
-    }
-    return new RabbitMqReceiver(exchange, this._channelManager, this._logger);
+    return new RabbitMqReceiver(this._config, this._channelManager!, this._logger);
   }
 
   protected initHealthCheck() {
@@ -508,7 +501,8 @@ export class CitrineOSServer {
     );
     await this.initHandlersAndAddModule(module);
     this.apis.push(
-      new CertificatesOcpp201Api(module, this._server, this._logger),
+      new CertificatesOcpp2Api(module, this._server, OCPPVersion.OCPP2_0_1, this._logger),
+      new CertificatesOcpp2Api(module, this._server, OCPPVersion.OCPP2_1, this._logger),
       new CertificatesDataApi(
         module,
         this._server,
@@ -537,7 +531,8 @@ export class CitrineOSServer {
     );
     await this.initHandlersAndAddModule(module);
     this.apis.push(
-      new ConfigurationOcpp201Api(module, this._server, this._logger),
+      new ConfigurationOcpp2Api(module, this._server, OCPPVersion.OCPP2_0_1, this._logger),
+      new ConfigurationOcpp2Api(module, this._server, OCPPVersion.OCPP2_1, this._logger),
       new ConfigurationOcpp16Api(module, this._server, this._logger),
       new ConfigurationDataApi(module, this._server, this._logger),
     );
@@ -567,7 +562,8 @@ export class CitrineOSServer {
     );
     await this.initHandlersAndAddModule(module);
     this.apis.push(
-      new EVDriverOcpp201Api(module, this._server, this._logger),
+      new EVDriverOcpp2Api(module, this._server, OCPPVersion.OCPP2_0_1, this._logger),
+      new EVDriverOcpp2Api(module, this._server, OCPPVersion.OCPP2_1, this._logger),
       new EVDriverOcpp16Api(module, this._server, this._logger),
       new EVDriverDataApi(module, this._server, this._logger),
     );
@@ -583,11 +579,13 @@ export class CitrineOSServer {
       this._ocppValidator,
       this._repositoryStore.deviceModelRepository,
       this._repositoryStore.variableMonitoringRepository,
+      this._repositoryStore.ocppMessageRepository,
       this._idGenerator,
     );
     await this.initHandlersAndAddModule(module);
     this.apis.push(
-      new MonitoringOcpp201Api(module, this._server, this._logger),
+      new MonitoringOcpp2Api(module, this._server, OCPPVersion.OCPP2_0_1, this._logger),
+      new MonitoringOcpp2Api(module, this._server, OCPPVersion.OCPP2_1, this._logger),
       new MonitoringDataApi(module, this._server, this._logger),
     );
   }
@@ -606,7 +604,8 @@ export class CitrineOSServer {
     );
     await this.initHandlersAndAddModule(module);
     this.apis.push(
-      new ReportingOcpp201Api(module, this._server, this._logger),
+      new ReportingOcpp2Api(module, this._server, OCPPVersion.OCPP2_0_1, this._logger),
+      new ReportingOcpp2Api(module, this._server, OCPPVersion.OCPP2_1, this._logger),
       new ReportingOcpp16Api(module, this._server, this._logger),
     );
   }
@@ -627,7 +626,8 @@ export class CitrineOSServer {
     );
     await this.initHandlersAndAddModule(module);
     this.apis.push(
-      new SmartChargingOcpp201Api(module, this._server, this._logger),
+      new SmartChargingOcpp2Api(module, this._server, OCPPVersion.OCPP2_0_1, this._logger),
+      new SmartChargingOcpp2Api(module, this._server, OCPPVersion.OCPP2_1, this._logger),
       new SmartChargingOcpp16Api(module, this._server, this._logger),
     );
   }
@@ -653,7 +653,8 @@ export class CitrineOSServer {
     );
     await this.initHandlersAndAddModule(module);
     this.apis.push(
-      new TransactionsOcpp201Api(module, this._server, this._logger),
+      new TransactionsOcpp2Api(module, this._server, OCPPVersion.OCPP2_0_1, this._logger),
+      new TransactionsOcpp2Api(module, this._server, OCPPVersion.OCPP2_1, this._logger),
       new TransactionsDataApi(module, this._server, this._logger),
     );
   }

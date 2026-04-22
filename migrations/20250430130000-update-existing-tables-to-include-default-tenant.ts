@@ -5,7 +5,7 @@
 
 /** @type {import('sequelize-cli').Migration} */
 import { DEFAULT_TENANT_ID } from '@citrineos/base';
-import { DataTypes, QueryInterface, QueryTypes } from 'sequelize';
+import { DataTypes, QueryInterface } from 'sequelize';
 
 const TABLES = [
   'AdditionalInfos',
@@ -65,25 +65,6 @@ const TENANTS_TABLE = `Tenants`;
 
 export default {
   up: async (queryInterface: QueryInterface) => {
-    const migrationName = '20250430130000-update-existing-tables-to-include-default-tenant';
-
-    const [results] = await queryInterface.sequelize.query(
-      `SELECT EXISTS (
-      SELECT 1 
-      FROM "SequelizeMeta" 
-      WHERE name LIKE :pattern
-    ) AS migration_exists`,
-      {
-        replacements: { pattern: `${migrationName}%` },
-        type: QueryTypes.SELECT,
-      },
-    );
-
-    if ((results as any).migration_exists) {
-      console.log('Migration already run, skipping...');
-      return;
-    }
-
     for (const table of TABLES) {
       const tableDescription = await queryInterface.describeTable(table);
       if (!tableDescription[TENANT_COLUMN]) {
