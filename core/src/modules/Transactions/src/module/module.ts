@@ -284,11 +284,19 @@ export class TransactionsModule extends AbstractModule {
     let response: OCPP2_response_types.TransactionEventResponse | undefined = undefined;
     let transaction: Transaction | undefined = undefined;
     if (transactionEvent.idToken) {
-      response = await this._transactionService.authorizeOcpp201IdToken(
-        tenantId,
-        transactionEvent,
-        message.context,
-      );
+      if (message.protocol === OCPPVersion.OCPP2_1) {
+        response = await this._transactionService.authorizeOcpp21IdToken(
+          tenantId,
+          transactionEvent,
+          message.context,
+        );
+      } else {
+        response = await this._transactionService.authorizeOcpp201IdToken(
+          tenantId,
+          transactionEvent,
+          message.context,
+        );
+      }
     }
     try {
       transaction =
@@ -939,6 +947,17 @@ export class TransactionsModule extends AbstractModule {
     transaction.stoppedReason = request.reason;
     transaction.endTime = request.timestamp;
     await transaction.save();
+  }
+
+  /**
+   * Handle OCPP 2.1 responses
+   */
+  @AsHandler([OCPPVersion.OCPP2_1], OCPP_CallAction.SetDefaultTariff)
+  protected async _handleSetDefaultTariff(
+    message: IMessage<OCPP2_1.SetDefaultTariffResponse>,
+    props?: HandlerProperties,
+  ): Promise<void> {
+    this._logger.debug('OCPP 2.1 SetDefaultTariff response received:', message, props);
   }
 
   protected async deactivateOtherActiveTransactionsAtEvse201(

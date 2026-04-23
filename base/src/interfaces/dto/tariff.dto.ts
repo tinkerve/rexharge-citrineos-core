@@ -15,6 +15,18 @@ export const TariffSchema = BaseSchema.extend({
   paymentFee: z.number().min(0).nullable().optional(), // DECIMAL
   taxRate: z.number().min(0).nullable().optional(), // DECIMAL
   tariffAltText: z.record(z.string(), z.any()).nullable().optional(), // JSONB
+  // OCPP 2.1 TariffType fields
+  tariffId: z.string().nullable().optional(),
+  validFrom: z.string().datetime().nullable().optional(),
+  description: z.array(z.any()).nullable().optional(), // MessageContentType[]
+  energy: z.any().nullable().optional(), // TariffEnergyType
+  chargingTime: z.any().nullable().optional(), // TariffTimeType
+  idleTime: z.any().nullable().optional(), // TariffTimeType
+  fixedFee: z.any().nullable().optional(), // TariffFixedType
+  reservationTime: z.any().nullable().optional(), // TariffTimeType
+  reservationFixed: z.any().nullable().optional(), // TariffFixedType
+  minCost: z.any().nullable().optional(), // PriceType
+  maxCost: z.any().nullable().optional(), // PriceType
 });
 
 export const TariffProps = TariffSchema.keyof().enum;
