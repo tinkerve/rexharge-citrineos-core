@@ -27,6 +27,8 @@ const authorizationFields = {
   personalMessage: z.any().nullable().optional(),
   customData: z.any().nullable().optional(),
   concurrentTransaction: z.boolean().optional(),
+  isPrepaid: z.boolean().optional(),
+  prepaidBalance: z.number().nullable().optional(),
   realTimeAuth: AuthorizationWhitelistEnumSchema.nullable().optional(),
   realTimeAuthLastAttempt: RealTimeAuthLastAttemptSchema.nullable().optional(),
   realTimeAuthTimeout: z.number().int().nullable().optional(),
@@ -34,6 +36,7 @@ const authorizationFields = {
   tenantPartnerId: z.number().int().nullable().optional(),
   tenantPartner: TenantPartnerSchema.nullable().optional(),
   groupAuthorizationId: z.number().int().nullable().optional(),
+  tariffId: z.number().int().nullable().optional(),
 };
 
 export const GroupAuthorizationSchema = BaseSchema.extend(authorizationFields);

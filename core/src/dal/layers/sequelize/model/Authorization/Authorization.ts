@@ -29,6 +29,7 @@ import {
 import { Tenant } from '../Tenant.js';
 import { TenantPartner } from '../TenantPartner.js';
 import { Transaction } from '../TransactionEvent/Transaction.js';
+import { Tariff } from '../Tariff/Tariffs.js';
 
 @Table
 export class Authorization extends Model implements AuthorizationDto {
@@ -95,12 +96,23 @@ export class Authorization extends Model implements AuthorizationDto {
   @Column(DataType.INTEGER)
   declare groupAuthorizationId?: number | null;
 
+  @ForeignKey(() => Tariff)
+  @Column(DataType.INTEGER)
+  declare tariffId?: number | null;
+
   @BelongsTo(() => Authorization, { foreignKey: 'groupAuthorizationId', as: 'groupAuthorization' })
   declare groupAuthorization?: Authorization;
 
   @Default(false)
   @Column(DataType.BOOLEAN)
   declare concurrentTransaction?: boolean;
+
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  declare isPrepaid?: boolean;
+
+  @Column(DataType.DECIMAL)
+  declare prepaidBalance?: number | null;
 
   declare customData?: any | null;
 

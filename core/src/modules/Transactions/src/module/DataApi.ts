@@ -111,6 +111,17 @@ export class TransactionsDataApi
       taxRate: request.taxRate,
       authorizationAmount: request.authorizationAmount,
       paymentFee: request.paymentFee,
+      tariffId: request.tariffId,
+      validFrom: request.validFrom,
+      description: request.description,
+      energy: request.energy,
+      chargingTime: request.chargingTime,
+      idleTime: request.idleTime,
+      fixedFee: request.fixedFee,
+      reservationTime: request.reservationTime,
+      reservationFixed: request.reservationFixed,
+      minCost: request.minCost,
+      maxCost: request.maxCost,
     });
   }
 }
