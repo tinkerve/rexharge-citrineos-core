@@ -16,6 +16,7 @@ import type {
   OCPP2_request_types,
   OCPPMessageDto,
   RegistrationStatusEnumType,
+  SecurityEventDto,
   UpdateEnumType,
   ChargingStateEnumType,
 } from '@citrineos/base';
@@ -34,7 +35,6 @@ import type {
   VariableMonitoring,
 } from '../layers/sequelize/model/VariableMonitoring/index.js';
 import type { Location } from '../layers/sequelize/model/Location/Location.js';
-import type { SecurityEvent } from '../layers/sequelize/model/SecurityEvent.js';
 import type { Transaction } from '../layers/sequelize/model/TransactionEvent/index.js';
 import type { VariableAttribute } from '../layers/sequelize/model/DeviceModel/VariableAttribute.js';
 import type { ChangeConfiguration } from '../layers/sequelize/model/ChangeConfiguration.js';
@@ -275,19 +275,19 @@ export interface ILocationRepository extends CrudRepository<Location> {
   ): Promise<void>;
 }
 
-export interface ISecurityEventRepository extends CrudRepository<SecurityEvent> {
+export interface ISecurityEventRepository {
   createByStationId: (
     tenantId: number,
     value: OCPP2_request_types.SecurityEventNotificationRequest,
     stationId: string,
-  ) => Promise<SecurityEvent>;
+  ) => Promise<SecurityEventDto>;
   readByStationIdAndTimestamps: (
     tenantId: number,
     stationId: string,
     from?: Date,
     to?: Date,
-  ) => Promise<SecurityEvent[]>;
-  deleteByKey: (tenantId: number, key: string) => Promise<SecurityEvent | undefined>;
+  ) => Promise<SecurityEventDto[]>;
+  deleteByKey: (tenantId: number, key: string) => Promise<SecurityEventDto | undefined>;
 }
 
 export interface ISubscriptionRepository extends CrudRepository<Subscription> {
