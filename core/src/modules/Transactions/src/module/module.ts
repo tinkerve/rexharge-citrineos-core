@@ -335,6 +335,48 @@ export class TransactionsModule extends AbstractModule {
     );
 
     if (response) {
+      // For DirectPayment tokens on Started events, include transactionLimit
+      // based on PaymentCtrlr.AuthorizationAmount from the device model.
+      if (
+        transactionEvent.eventType === TransactionEventEnum.Started &&
+        response.idTokenInfo?.status === AuthorizationStatusEnum.Accepted &&
+        message.protocol === OCPPVersion.OCPP2_1 &&
+        transactionEvent.idToken?.type === OCPP2_1.IdTokenEnumType.DirectPayment
+      ) {
+        try {
+          const authAmountAttributes: VariableAttribute[] =
+            await this._deviceModelRepository.readAllByQuerystring(tenantId, {
+              tenantId,
+              stationId,
+              component_name: 'PaymentCtrlr',
+              variable_name: 'AuthorizationAmount',
+              type: AttributeEnum.Actual,
+            });
+
+          if (authAmountAttributes.length > 0 && authAmountAttributes[0].value) {
+            const authorizationAmount = parseFloat(authAmountAttributes[0].value);
+            if (!isNaN(authorizationAmount) && authorizationAmount > 0) {
+              const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
+              // Only set if not already set by another flow (e.g., C17 prepaid)
+              if (!ocpp21Response.transactionLimit) {
+                ocpp21Response.transactionLimit = {
+                  maxCost: authorizationAmount,
+                };
+                this._logger.info(
+                  `Set transactionLimit.maxCost=${authorizationAmount} for DirectPayment ` +
+                    `token on station ${stationId}, transaction ${transactionId}.`,
+                );
+              }
+            }
+          }
+        } catch (error) {
+          this._logger.error(
+            'Failed to read PaymentCtrlr.AuthorizationAmount from device model',
+            error,
+          );
+        }
+      }
+
       const messageConfirmation = await this.sendCallResultWithMessage(message, response);
       this._logger.debug('Transaction response sent: ', messageConfirmation);
       // If the transaction is accepted and interval is set, start the cost update
@@ -576,6 +618,40 @@ export class TransactionsModule extends AbstractModule {
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('NotifySettlement response sent:', messageConfirmation);
+
+    // After settlement, CSMS MAY send SetDisplayMessageRequest with receipt URL
+    // to display on the charging station (e.g., as a QR code).
+    const finalReceiptUrl = response.receiptUrl ?? request.receiptUrl;
+    if (isSettled && finalReceiptUrl) {
+      try {
+        const displayMessageId = Date.now() % 2147483647; // Unique positive integer ID
+        await this.sendCall(
+          stationId,
+          tenantId,
+          OCPPVersion.OCPP2_1,
+          OCPP_CallAction.SetDisplayMessage,
+          {
+            message: {
+              id: displayMessageId,
+              priority: OCPP2_1.MessagePriorityEnumType.AlwaysFront,
+              transactionId: request.transactionId,
+              message: {
+                format: OCPP2_1.MessageFormatEnumType.URI,
+                content: finalReceiptUrl,
+              },
+            },
+          } as OCPP2_1.SetDisplayMessageRequest,
+        );
+        this._logger.info(
+          `Sent SetDisplayMessageRequest with receiptUrl=${finalReceiptUrl} to station ${stationId}`,
+        );
+      } catch (error) {
+        this._logger.error(
+          `Failed to send SetDisplayMessageRequest to station ${stationId}`,
+          error,
+        );
+      }
+    }
   }
 
   /**
