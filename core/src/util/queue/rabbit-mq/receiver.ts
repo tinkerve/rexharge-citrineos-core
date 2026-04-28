@@ -30,22 +30,22 @@ import { RabbitMQChannelManager } from './ChannelManager.js';
  * environment variable wired into `SystemConfig.util.messageBroker.amqp.instanceIdentifier`.
  */
 export class RabbitMqReceiver extends AbstractMessageHandler {
-  private static readonly QUEUE_PREFIX = 'rabbit_queue_';
-  private static readonly CHANNEL_ID = 'receiver';
+  protected static readonly QUEUE_PREFIX = 'rabbit_queue_';
+  protected static readonly CHANNEL_ID = 'receiver';
 
   protected _channelManager: RabbitMQChannelManager;
-  private exchange: string;
-  private readonly _isRouterMode: boolean;
+  protected exchange: string;
+  protected readonly _isRouterMode: boolean;
 
   protected _consumerTags = new Map<string, string[]>();
-  private _moduleSubscriptions = new Map<
+  protected _moduleSubscriptions = new Map<
     string,
     Array<{ actions?: CallAction[]; filter?: Record<string, string> }>
   >();
-  private readonly _instanceQueueName?: string;
-  private _instanceQueueReady?: Promise<void>;
-  private _instanceConsumerTags: string[] = [];
-  private _instanceBindings = new Map<string, Array<Record<string, string>>>();
+  protected readonly _instanceQueueName?: string;
+  protected _instanceQueueReady?: Promise<void>;
+  protected _instanceConsumerTags: string[] = [];
+  protected _instanceBindings = new Map<string, Array<Record<string, string>>>();
 
   constructor(
     config: SystemConfig,
@@ -67,16 +67,23 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
       this._instanceQueueName = `rabbit_queue_router_${id}`;
     }
 
-    this._channelManager.getConnectionManager().on('connected', () => {
-      this._onReconnect().catch((err) => {
+    this._channelManager.getConnectionManager().on('connected', async () => {
+      try {
+        await this._onReconnect();
+      } catch (err) {
         this._logger.error('Failed to reinitialize after reconnect:', err);
-      });
+      }
     });
   }
 
-  private _lazyInitInstanceQueue(): Promise<void> {
+  protected _lazyInitInstanceQueue(): Promise<void> {
     if (!this._instanceQueueReady) {
-      this._instanceQueueReady = this.initializeInstanceQueue(this._instanceQueueName!);
+      this._instanceQueueReady = this.initializeInstanceQueue(this._instanceQueueName!).catch(
+        (err) => {
+          this._instanceQueueReady = undefined;
+          throw err;
+        },
+      );
     }
     return this._instanceQueueReady;
   }
@@ -110,7 +117,7 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
     this._logger.info(`[instance-queue] Initialized ${queueName} with 1 consumer`);
   }
 
-  private async _onReconnect(): Promise<void> {
+  protected async _onReconnect(): Promise<void> {
     if (this._isRouterMode) {
       await this._reinitializeInstanceQueue();
     } else {
@@ -122,7 +129,7 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
    * Re-establishes all MODULE MODE queues, bindings, and consumers after a reconnection.
    * No-op when in ROUTER MODE or when no module subscriptions have been registered.
    */
-  private async _reinitializeModuleQueues(): Promise<void> {
+  protected async _reinitializeModuleQueues(): Promise<void> {
     if (this._moduleSubscriptions.size === 0) return;
 
     // Old consumer tags reference a dead channel — reset before re-subscribing
@@ -147,7 +154,7 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
    * Re-adds all currently tracked bindings (idempotent — handles the edge case
    * where the queue was deleted and needs to be fully rebuilt).
    */
-  private async _reinitializeInstanceQueue(): Promise<void> {
+  protected async _reinitializeInstanceQueue(): Promise<void> {
     if (!this._instanceQueueReady) return; // no charger has connected yet, nothing to reinitialize
 
     const queueName = this._instanceQueueName!;
@@ -223,7 +230,7 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
    * ROUTER MODE: adds header bindings to the shared instance queue for this charger.
    * No new queue or consumer is created.
    */
-  private async _bindToInstanceQueue(
+  protected async _bindToInstanceQueue(
     identifier: string,
     actions?: CallAction[],
     filter?: { [k: string]: string },
@@ -257,7 +264,7 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
    * MODULE MODE: creates a dedicated queue per identifier with its own consumer(s).
    * Original behavior, unchanged.
    */
-  private async _subscribePerIdentifierQueue(
+  protected async _subscribePerIdentifierQueue(
     identifier: string,
     actions?: CallAction[],
     filter?: { [k: string]: string },
