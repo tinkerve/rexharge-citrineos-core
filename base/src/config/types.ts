@@ -183,6 +183,8 @@ export const systemConfigInputSchema = z.object({
           rejectUnsupportedSignedMeterValues: z.boolean().default(false).optional(),
         })
         .optional(),
+      /** Base URL for generating receipt URLs when ReceiptByCSMS is true (C21). */
+      receiptBaseUrl: z.string().optional(),
     }),
   }),
   util: z.object({
@@ -485,6 +487,8 @@ export const systemConfigSchema = z
               rejectUnsupportedSignedMeterValues: z.boolean().optional(),
             })
             .optional(),
+          /** Base URL for generating receipt URLs when ReceiptByCSMS is true (C21). */
+          receiptBaseUrl: z.string().optional(),
         })
         .refine(
           (obj) =>

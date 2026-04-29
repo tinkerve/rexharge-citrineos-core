@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { Expose } from 'class-transformer';
 import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
+import { Expose } from 'class-transformer';
 
 /**
  * Definition of Call Message (4.2.1 CALL)
@@ -75,41 +75,10 @@ export enum OCPP_CallAction {
   BatterySwap = 'BatterySwap',
   BootNotification = 'BootNotification',
   CancelReservation = 'CancelReservation',
+  CertificateSigned = 'CertificateSigned',
   ChangeAvailability = 'ChangeAvailability',
   ChangeConfiguration = 'ChangeConfiguration',
   ChangeTransactionTariff = 'ChangeTransactionTariff',
-  ClearCache = 'ClearCache',
-  ClearChargingProfile = 'ClearChargingProfile',
-  DataTransfer = 'DataTransfer',
-  DiagnosticsStatusNotification = 'DiagnosticsStatusNotification',
-  FirmwareStatusNotification = 'FirmwareStatusNotification',
-  SignedFirmwareStatusNotification = 'SignedFirmwareStatusNotification',
-  GetCompositeSchedule = 'GetCompositeSchedule',
-  GetConfiguration = 'GetConfiguration',
-  GetDiagnostics = 'GetDiagnostics',
-  GetLocalListVersion = 'GetLocalListVersion',
-  Heartbeat = 'Heartbeat',
-  MeterValues = 'MeterValues',
-  RemoteStartTransaction = 'RemoteStartTransaction',
-  RemoteStopTransaction = 'RemoteStopTransaction',
-  ReserveNow = 'ReserveNow',
-  Reset = 'Reset',
-  SendLocalList = 'SendLocalList',
-  SetChargingProfile = 'SetChargingProfile',
-  StartTransaction = 'StartTransaction',
-  StatusNotification = 'StatusNotification',
-  StopTransaction = 'StopTransaction',
-  TriggerMessage = 'TriggerMessage',
-  UnlockConnector = 'UnlockConnector',
-  UpdateFirmware = 'UpdateFirmware',
-  SignedUpdateFirmware = 'SignedUpdateFirmware',
-}
-
-export enum OCPP2_0_1_CallAction {
-  Authorize = 'Authorize',
-  BootNotification = 'BootNotification',
-  CancelReservation = 'CancelReservation',
-  CertificateSigned = 'CertificateSigned',
   ClearCache = 'ClearCache',
   ClearChargingProfile = 'ClearChargingProfile',
   ClearDERControl = 'ClearDERControl',
@@ -131,8 +100,8 @@ export enum OCPP2_0_1_CallAction {
   GetChargingProfiles = 'GetChargingProfiles',
   GetCompositeSchedule = 'GetCompositeSchedule',
   GetConfiguration = 'GetConfiguration',
-  GetDiagnostics = 'GetDiagnostics',
   GetDERControl = 'GetDERControl',
+  GetDiagnostics = 'GetDiagnostics',
   GetDisplayMessages = 'GetDisplayMessages',
   GetInstalledCertificateIds = 'GetInstalledCertificateIds',
   GetLocalListVersion = 'GetLocalListVersion',
@@ -163,9 +132,11 @@ export enum OCPP2_0_1_CallAction {
   NotifySettlement = 'NotifySettlement',
   NotifyWebPaymentStarted = 'NotifyWebPaymentStarted',
   OpenPeriodicEventStream = 'OpenPeriodicEventStream',
-  PullDynamicScheduleUpdate = 'PullDynamicScheduleUpdate',
   PublishFirmware = 'PublishFirmware',
   PublishFirmwareStatusNotification = 'PublishFirmwareStatusNotification',
+  PullDynamicScheduleUpdate = 'PullDynamicScheduleUpdate',
+  RemoteStartTransaction = 'RemoteStartTransaction',
+  RemoteStopTransaction = 'RemoteStopTransaction',
   ReportChargingProfiles = 'ReportChargingProfiles',
   ReportDERControl = 'ReportDERControl',
   RequestBatterySwap = 'RequestBatterySwap',
@@ -174,8 +145,6 @@ export enum OCPP2_0_1_CallAction {
   ReservationStatusUpdate = 'ReservationStatusUpdate',
   ReserveNow = 'ReserveNow',
   Reset = 'Reset',
-  RemoteStartTransaction = 'RemoteStartTransaction',
-  RemoteStopTransaction = 'RemoteStopTransaction',
   SecurityEventNotification = 'SecurityEventNotification',
   SendLocalList = 'SendLocalList',
   SetChargingProfile = 'SetChargingProfile',
@@ -188,6 +157,8 @@ export enum OCPP2_0_1_CallAction {
   SetVariableMonitoring = 'SetVariableMonitoring',
   SetVariables = 'SetVariables',
   SignCertificate = 'SignCertificate',
+  SignedFirmwareStatusNotification = 'SignedFirmwareStatusNotification',
+  SignedUpdateFirmware = 'SignedUpdateFirmware',
   StartTransaction = 'StartTransaction',
   StatusNotification = 'StatusNotification',
   StopTransaction = 'StopTransaction',
@@ -323,7 +294,7 @@ const OCPP_Base_CallActions = new Set<string>([
   OCPP_CallAction.UpdateFirmware,
 ]);
 
-const OCPP1_6_CallActions = new Set<string>([
+const OCPP_CallActions = new Set<string>([
   ...OCPP_Base_CallActions,
   OCPP_CallAction.ChangeConfiguration,
   OCPP_CallAction.DiagnosticsStatusNotification,
@@ -415,7 +386,7 @@ const OCPP2_1_CallActions = new Set<string>([
 ]);
 
 const ALLOWED_ACTIONS: Record<OCPPVersionType, Set<string>> = {
-  [OCPPVersion.OCPP1_6]: OCPP1_6_CallActions,
+  [OCPPVersion.OCPP1_6]: OCPP_CallActions,
   [OCPPVersion.OCPP2_0_1]: OCPP2_0_1_CallActions,
   [OCPPVersion.OCPP2_1]: OCPP2_1_CallActions,
 };
