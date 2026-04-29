@@ -25,12 +25,14 @@ import * as http from 'http';
 import * as https from 'https';
 import { Duplex } from 'stream';
 import type { SecureContextOptions } from 'tls';
+import * as tls from 'tls';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { ErrorEvent, MessageEvent } from 'ws';
 import { WebSocket, WebSocketServer } from 'ws';
 import { UpgradeAuthenticationError } from './authenticator/errors/AuthenticationError.js';
 import type { IUpgradeError } from './authenticator/errors/IUpgradeError.js';
+import { TlsCredentialManager } from './TlsCertificateManager.js';
 
 export class WebsocketNetworkConnection implements INetworkConnection {
   protected _cache: ICache;
@@ -43,7 +45,9 @@ export class WebsocketNetworkConnection implements INetworkConnection {
   // tenantId as key and number of active connections as value
   private _tenantConnectionCounts: Map<number, number> = new Map();
   // websocketServers id as key and http server as value
-  private _httpServersMap: Map<string, http.Server | https.Server>;
+  private _httpServersMap: Map<string, http.Server | https.Server> = new Map();
+  // websocketServers id as key and tls credential manager as value
+  private _certManagersMap: Map<string, TlsCredentialManager> = new Map();
   private _authenticator: IAuthenticator;
   private _router: IMessageRouter;
   private _connectionManager?: IConnectionManager;
@@ -75,11 +79,30 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     router.networkHook = this.sendMessage.bind(this);
     this._router = router;
 
-    this._httpServersMap = new Map<string, http.Server | https.Server>();
     this._config.util.networkConnection.websocketServers.forEach(async (websocketServerConfig) => {
       const _httpServer = await this._createAndStartWebsocketServer(websocketServerConfig);
       this._httpServersMap.set(websocketServerConfig.id, _httpServer);
+      if (websocketServerConfig.securityProfile > 1) {
+        const certManager = new TlsCredentialManager(websocketServerConfig);
+        this._certManagersMap.set(websocketServerConfig.id, certManager);
+      }
     });
+  }
+
+  /**
+   * Reloads the TLS certificates (from disk) for the websocket server with the given ID.
+   * This is useful when certificates are renewed and need to be updated without restarting the server.
+   *
+   * @param serverId websocketServerConfig.id
+   */
+  public reloadTlsCertificates(serverId: string): void {
+    const certManager = this._certManagersMap.get(serverId);
+    if (certManager) {
+      certManager.reload();
+    } else {
+      this._logger.error(`No TLS Credential Manager found for server ${serverId}`);
+      throw new Error(`No TLS Credential Manager found for server ${serverId}`);
+    }
   }
 
   /**
@@ -694,21 +717,21 @@ export class WebsocketNetworkConnection implements INetworkConnection {
 
   private _generateServerOptions(config: WebsocketServerConfig): https.ServerOptions {
     const serverOptions: https.ServerOptions = {
-      key: fs.readFileSync(config.tlsKeyFilePath as string),
-      cert: fs.readFileSync(config.tlsCertificateChainFilePath as string),
+      SNICallback:
+        config.securityProfile > 1
+          ? (serverName, cb) => {
+              const opts = this._certManagersMap.get(config.id)!.getServerOptions(config);
+              const ctx = tls.createSecureContext(opts);
+              cb(null, ctx);
+            }
+          : undefined,
+      ca:
+        config.securityProfile > 2 && config.rootCACertificateFilePath
+          ? fs.readFileSync(config.rootCACertificateFilePath)
+          : undefined,
+      requestCert: config.securityProfile > 2,
+      rejectUnauthorized: config.securityProfile > 2,
     };
-
-    if (config.rootCACertificateFilePath) {
-      serverOptions.ca = fs.readFileSync(config.rootCACertificateFilePath as string);
-    }
-
-    if (config.securityProfile > 2) {
-      serverOptions.requestCert = true;
-      serverOptions.rejectUnauthorized = true;
-    } else {
-      serverOptions.rejectUnauthorized = false;
-    }
-
     return serverOptions;
   }
 

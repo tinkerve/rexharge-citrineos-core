@@ -104,3 +104,4 @@ export { DefaultSequelizeInstance } from './util.js';
 // Sequelize Mappers
 export * as OCPP2_0_1_Mapper from './mapper/2.0.1/index.js';
 export * as OCPP1_6_Mapper from './mapper/1.6/index.js';
+export * as OCPP2_1_Mapper from './mapper/2.1/index.js';

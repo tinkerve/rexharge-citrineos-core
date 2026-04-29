@@ -206,7 +206,7 @@ export function validateISO14443IdToken(idToken: string): boolean {
 /**
  * Validate identifier string format per OCPP 2.0.1. We expect this validation already from the JSON schema,
  * but we add this extra validation to be sure.
- * Only allows: a-z, A-Z, 0-9, *, -, _, =, :, +, |, @, .
+ * Only allows: a-z, A-Z, 0-9, *, -, _, =, :, +, |, @, and .
  */
 export function validateIdentifierStringIdToken(idToken: string): boolean {
   return !!idToken && /^[a-zA-Z0-9*\-_=:+|@.]+$/.test(idToken);
@@ -302,11 +302,124 @@ export function validateNoAuthorizationIdToken(idToken: string): boolean {
 }
 
 /**
+ * Validate VIN (Vehicle Identification Number).
+ * Must be exactly 17 alphanumeric characters.
+ */
+export function validateVINIdToken(idToken: string): boolean {
+  return /^[A-Z0-9]{17}$/.test(idToken.toUpperCase());
+}
+
+/**
+ * Validate EVCCID (Electric Vehicle Communication Controller ID).
+ * For ISO 15118-2: MAC address (e.g. "AA:BB:CC:DD:EE:FF").
+ * For ISO 15118-20: any identifier up to 255 characters.
+ */
+export function validateEVCCIDIdToken(idToken: string): boolean {
+  if (!idToken) return false;
+  const isMacAddress = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(idToken);
+  return isMacAddress || idToken.length <= 255;
+}
+
+/**
  * Generic validation result for all validators
  */
 export interface ValidationResult {
   isValid: boolean;
   errorMessage?: string;
+}
+
+/**
+ * ID token validator for OCPP 2.1 - routes to appropriate validator based on type.
+ * Returns validation result with detailed error message if invalid.
+ */
+export function validateOcpp21IdToken(
+  idTokenType: OCPP2_1.IdTokenEnumType,
+  idToken: string,
+): ValidationResult {
+  switch (idTokenType) {
+    case OCPP2_1.IdTokenEnumType.ISO15693:
+      if (validateISO15693IdToken(idToken)) {
+        return { isValid: true };
+      }
+      return {
+        isValid: false,
+        errorMessage: 'ISO15693 tokens must be exactly 16 hexadecimal characters (0-9, A-F)',
+      };
+
+    case OCPP2_1.IdTokenEnumType.ISO14443:
+      if (validateISO14443IdToken(idToken)) {
+        return { isValid: true };
+      }
+      return {
+        isValid: false,
+        errorMessage: 'ISO14443 tokens must be either 8 or 14 hexadecimal characters (0-9, A-F)',
+      };
+
+    case OCPP2_1.IdTokenEnumType.NoAuthorization:
+      if (validateNoAuthorizationIdToken(idToken)) {
+        return { isValid: true };
+      }
+      return {
+        isValid: false,
+        errorMessage: 'NoAuthorization tokens must be empty',
+      };
+
+    case OCPP2_1.IdTokenEnumType.KeyCode:
+    case OCPP2_1.IdTokenEnumType.Local:
+    case OCPP2_1.IdTokenEnumType.MacAddress:
+    case OCPP2_1.IdTokenEnumType.Central:
+      if (validateIdentifierStringIdToken(idToken)) {
+        return { isValid: true };
+      }
+      return {
+        isValid: false,
+        errorMessage: `${idTokenType} tokens must contain only letters, numbers, and characters: * - _ = : + | @ .`,
+      };
+
+    case OCPP2_1.IdTokenEnumType.VIN:
+      if (validateVINIdToken(idToken)) {
+        return { isValid: true };
+      }
+      return {
+        isValid: false,
+        errorMessage:
+          'VIN must be exactly 17 alphanumeric characters, excluding I, O, and Q (ISO 3779)',
+      };
+
+    case OCPP2_1.IdTokenEnumType.EVCCID:
+      if (validateEVCCIDIdToken(idToken)) {
+        return { isValid: true };
+      }
+      return {
+        isValid: false,
+        errorMessage: 'EVCCID must be non-empty and at most 255 characters',
+      };
+
+    case OCPP2_1.IdTokenEnumType.DirectPayment:
+      if (idToken && idToken.length > 0) {
+        return { isValid: true };
+      }
+      return {
+        isValid: false,
+        errorMessage: 'DirectPayment tokens must be non-empty',
+      };
+
+    case OCPP2_1.IdTokenEnumType.eMAID: {
+      const errors = validateEMAIDIdToken(idToken);
+      if (errors.length === 0) {
+        return { isValid: true };
+      }
+      return {
+        isValid: false,
+        errorMessage: 'eMAID tokens must follow the eMI3 format: ' + errors.join(', '),
+      };
+    }
+
+    default:
+      return {
+        isValid: true, // IdTokenType is already validated by JSON schema, so unknown types are accepted
+      };
+  }
 }
 
 /**
@@ -602,6 +715,46 @@ export function validateMessageContentType(
 
   // Validate content against format
   return validateMessageContent(messageContent.format, messageContent.content);
+}
+
+/**
+ * Validate a time-of-day string per RFC 3339 time-hour "hh:mm" format.
+ */
+export function validateTimeOfDay(time: string): boolean {
+  return /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(time);
+}
+
+/**
+ * Validate all startTimeOfDay and endTimeOfDay fields in a TariffType per I07.FR.17.
+ * Checks every TariffConditionsType and TariffConditionsFixedType across all price arrays.
+ */
+export function validateTariffConditionsTimeFields(tariff: OCPP2_1.TariffType): ValidationResult {
+  const conditions = [
+    ...(tariff.energy?.prices.map((p) => p.conditions) ?? []),
+    ...(tariff.chargingTime?.prices.map((p) => p.conditions) ?? []),
+    ...(tariff.idleTime?.prices.map((p) => p.conditions) ?? []),
+    ...(tariff.reservationTime?.prices.map((p) => p.conditions) ?? []),
+    ...(tariff.fixedFee?.prices.map((p) => p.conditions) ?? []),
+    ...(tariff.reservationFixed?.prices.map((p) => p.conditions) ?? []),
+  ];
+
+  for (const condition of conditions) {
+    if (!condition) continue;
+    if (condition.startTimeOfDay != null && !validateTimeOfDay(condition.startTimeOfDay)) {
+      return {
+        isValid: false,
+        errorMessage: `Invalid startTimeOfDay "${condition.startTimeOfDay}": must be in "hh:mm" format (RFC 3339 time-hour ":" time-minute, e.g. "08:30")`,
+      };
+    }
+    if (condition.endTimeOfDay != null && !validateTimeOfDay(condition.endTimeOfDay)) {
+      return {
+        isValid: false,
+        errorMessage: `Invalid endTimeOfDay "${condition.endTimeOfDay}": must be in "hh:mm" format (RFC 3339 time-hour ":" time-minute, e.g. "20:00")`,
+      };
+    }
+  }
+
+  return { isValid: true };
 }
 
 /**

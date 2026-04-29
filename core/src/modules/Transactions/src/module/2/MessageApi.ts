@@ -2,7 +2,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { CallAction, IMessageConfirmation, OCPP2_request_types } from '@citrineos/base';
+import {
+  type CallAction,
+  type IMessageConfirmation,
+  OCPP2_1,
+  type OCPP2_request_types,
+} from '@citrineos/base';
 import {
   AbstractModuleApi,
   AsMessageEndpoint,
@@ -11,7 +16,7 @@ import {
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
-import { packageGroupCall } from '@util/index.js';
+import { packageGroupCall, validateTariffConditionsTimeFields } from '@util/index.js';
 import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -32,6 +37,7 @@ export class TransactionsOcpp2Api
    *
    * @param {TransactionsModule} transactionModule - The transaction module.
    * @param {FastifyInstance} server - The server instance.
+   * @param {OCPPVersion} version - The OCPP version
    * @param {Logger<ILogObj>} [logger] - Optional logger.
    */
   constructor(
@@ -84,6 +90,33 @@ export class TransactionsOcpp2Api
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.GetTransactionStatus,
+      request,
+      callbackUrl,
+    );
+  }
+
+  @AsMessageEndpoint(OCPP_CallAction.SetDefaultTariff, (instance: TransactionsOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? OCPPVersion.OCPP2_1) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'SetDefaultTariffRequestSchema',
+    ),
+  )
+  async setDefaultTariff(
+    identifier: string[],
+    request: OCPP2_1.SetDefaultTariffRequest,
+    callbackUrl?: string,
+    tenantId: number = DEFAULT_TENANT_ID,
+  ): Promise<IMessageConfirmation[]> {
+    const validation = validateTariffConditionsTimeFields(request.tariff);
+    if (!validation.isValid) {
+      return [{ success: false, payload: validation.errorMessage }];
+    }
+    return packageGroupCall(
+      this._module,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? OCPPVersion.OCPP2_1,
+      OCPP_CallAction.SetDefaultTariff,
       request,
       callbackUrl,
     );

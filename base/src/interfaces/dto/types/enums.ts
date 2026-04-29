@@ -284,7 +284,9 @@ export const HashAlgorithmEnumSchema = z.enum(['SHA256', 'SHA384', 'SHA512']);
 
 export const IdTokenEnumSchema = z.enum([
   'Central',
+  'DirectPayment',
   'eMAID',
+  'EVCCID',
   'ISO14443',
   'ISO15693',
   'KeyCode',
@@ -292,6 +294,7 @@ export const IdTokenEnumSchema = z.enum([
   'MacAddress',
   'NoAuthorization',
   'Other',
+  'VIN',
 ]);
 
 export const InstallCertificateStatusEnumSchema = z.enum(['Accepted', 'Rejected', 'Failed']);
@@ -530,6 +533,14 @@ export const TriggerReasonEnumSchema = z.enum([
   'ResetCommand',
 ]);
 
+export const TariffSetStatusEnumSchema = z.enum([
+  'Accepted',
+  'Rejected',
+  'TooManyElements',
+  'ConditionNotSupported',
+  'DuplicateTariffId',
+]);
+
 export const UpdateEnumSchema = z.enum(['Differential', 'Full']);
 
 // ============================================================================
@@ -607,6 +618,7 @@ export const SendLocalListStatusEnum = SendLocalListStatusEnumSchema.enum;
 export const SetMonitoringStatusEnum = SetMonitoringStatusEnumSchema.enum;
 export const SetNetworkProfileStatusEnum = SetNetworkProfileStatusEnumSchema.enum;
 export const SetVariableStatusEnum = SetVariableStatusEnumSchema.enum;
+export const TariffSetStatusEnum = TariffSetStatusEnumSchema.enum;
 export const TransactionEventEnum = TransactionEventEnumSchema.enum;
 export const TriggerReasonEnum = TriggerReasonEnumSchema.enum;
 export const UpdateEnum = UpdateEnumSchema.enum;
@@ -698,6 +710,7 @@ export type SendLocalListStatusEnumType = z.infer<typeof SendLocalListStatusEnum
 export type SetMonitoringStatusEnumType = z.infer<typeof SetMonitoringStatusEnumSchema>;
 export type SetNetworkProfileStatusEnumType = z.infer<typeof SetNetworkProfileStatusEnumSchema>;
 export type SetVariableStatusEnumType = z.infer<typeof SetVariableStatusEnumSchema>;
+export type TariffSetStatusEnumType = z.infer<typeof TariffSetStatusEnumSchema>;
 export type TransactionEventEnumType = z.infer<typeof TransactionEventEnumSchema>;
 export type TriggerReasonEnumType = z.infer<typeof TriggerReasonEnumSchema>;
 export type UpdateEnumType = z.infer<typeof UpdateEnumSchema>;
