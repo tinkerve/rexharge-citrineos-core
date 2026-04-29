@@ -113,6 +113,12 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
     bodySchema: object,
     optionalQuerystrings?: Record<string, any>,
   ): void {
+    if (!bodySchema) {
+      this._logger.debug(
+        `Skipping message route for ${action} — schema not available for ${this._ocppVersion}`,
+      );
+      return;
+    }
     this._logger.debug(`Adding message route for ${action}`, this._toMessagePath(action));
 
     /**

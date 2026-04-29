@@ -43,6 +43,10 @@ export type { FirmwareStatusNotificationRequest } from './types/FirmwareStatusNo
 export { default as FirmwareStatusNotificationRequestSchema } from './schemas/FirmwareStatusNotificationRequest.json' with { type: 'json' };
 export type { FirmwareStatusNotificationResponse } from './types/FirmwareStatusNotificationResponse.js';
 export { default as FirmwareStatusNotificationResponseSchema } from './schemas/FirmwareStatusNotificationResponse.json' with { type: 'json' };
+export type { SignedFirmwareStatusNotificationRequest } from './types/SignedFirmwareStatusNotificationRequest.js';
+export { default as SignedFirmwareStatusNotificationRequestSchema } from './schemas/SignedFirmwareStatusNotificationRequest.json' with { type: 'json' };
+export type { SignedFirmwareStatusNotificationResponse } from './types/SignedFirmwareStatusNotificationResponse.js';
+export { default as SignedFirmwareStatusNotificationResponseSchema } from './schemas/SignedFirmwareStatusNotificationResponse.json' with { type: 'json' };
 export type { GetCompositeScheduleRequest } from './types/GetCompositeScheduleRequest.js';
 export { default as GetCompositeScheduleRequestSchema } from './schemas/GetCompositeScheduleRequest.json' with { type: 'json' };
 export type { GetCompositeScheduleResponse } from './types/GetCompositeScheduleResponse.js';
@@ -115,3 +119,7 @@ export type { UpdateFirmwareRequest } from './types/UpdateFirmwareRequest.js';
 export { default as UpdateFirmwareRequestSchema } from './schemas/UpdateFirmwareRequest.json' with { type: 'json' };
 export type { UpdateFirmwareResponse } from './types/UpdateFirmwareResponse.js';
 export { default as UpdateFirmwareResponseSchema } from './schemas/UpdateFirmwareResponse.json' with { type: 'json' };
+export type { SignedUpdateFirmwareRequest } from './types/SignedUpdateFirmwareRequest.js';
+export { default as SignedUpdateFirmwareRequestSchema } from './schemas/SignedUpdateFirmwareRequest.json' with { type: 'json' };
+export type { SignedUpdateFirmwareResponse } from './types/SignedUpdateFirmwareResponse.js';
+export { default as SignedUpdateFirmwareResponseSchema } from './schemas/SignedUpdateFirmwareResponse.json' with { type: 'json' };

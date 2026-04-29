@@ -29,6 +29,7 @@ import {
 import { Tenant } from '../Tenant.js';
 import { TenantPartner } from '../TenantPartner.js';
 import { Transaction } from '../TransactionEvent/Transaction.js';
+import { Tariff } from '../Tariff/Tariffs.js';
 
 @Table
 export class Authorization extends Model implements AuthorizationDto {
@@ -94,6 +95,10 @@ export class Authorization extends Model implements AuthorizationDto {
   @ForeignKey(() => Authorization)
   @Column(DataType.INTEGER)
   declare groupAuthorizationId?: number | null;
+
+  @ForeignKey(() => Tariff)
+  @Column(DataType.INTEGER)
+  declare tariffId?: number | null;
 
   @BelongsTo(() => Authorization, { foreignKey: 'groupAuthorizationId', as: 'groupAuthorization' })
   declare groupAuthorization?: Authorization;

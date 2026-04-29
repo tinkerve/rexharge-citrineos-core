@@ -817,6 +817,17 @@ export class TransactionsModule extends AbstractModule {
     await transaction.save();
   }
 
+  /**
+   * Handle OCPP 2.1 responses
+   */
+  @AsHandler([OCPPVersion.OCPP2_1], OCPP_CallAction.SetDefaultTariff)
+  protected async _handleSetDefaultTariff(
+    message: IMessage<OCPP2_1.SetDefaultTariffResponse>,
+    props?: HandlerProperties,
+  ): Promise<void> {
+    this._logger.debug('OCPP 2.1 SetDefaultTariff response received:', message, props);
+  }
+
   protected async deactivateOtherActiveTransactionsAtEvse201(
     tenantId: number,
     transactionId: string,

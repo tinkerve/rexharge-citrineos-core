@@ -18,6 +18,7 @@ export { NotFoundError } from './src/interfaces/api/exceptions/NotFoundError.js'
 export { HttpMethod } from './src/interfaces/api/HttpMethods.js';
 export type { IModuleApi } from './src/interfaces/api/ModuleApi.js';
 export type { IAuthorizer } from './src/interfaces/authorizer/index.js';
+export type { IVatProvider } from './src/interfaces/vat/index.js';
 export type { ICache } from './src/interfaces/cache/cache.js';
 export {
   CacheNamespace,
@@ -187,6 +188,8 @@ export * from './src/interfaces/dto/types/ocpi.registration.js';
 export * from './src/interfaces/dto/types/sales.tariff.js';
 export * from './src/interfaces/dto/types/sampled.value.dto.js';
 export * from './src/interfaces/dto/types/transaction.type.js';
+export * from './src/interfaces/dto/types/tariff.types.js';
+export * from './src/interfaces/dto/types/vat.js';
 export * from './src/interfaces/dto/variable.attribute.dto.js';
 export * from './src/interfaces/dto/variable.characteristics.dto.js';
 export * from './src/interfaces/dto/variable.dto.js';
