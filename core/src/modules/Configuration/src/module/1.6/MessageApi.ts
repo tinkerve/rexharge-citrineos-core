@@ -2,11 +2,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { FastifyInstance } from 'fastify';
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
-import type { IConfigurationModuleApi } from '../interface.js';
-import { ConfigurationModule } from '../module.js';
 import type { CallAction, IMessageConfirmation } from '@citrineos/base';
 import {
   AbstractModuleApi,
@@ -16,7 +11,12 @@ import {
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
+import type { FastifyInstance } from 'fastify';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
+import type { IConfigurationModuleApi } from '../interface.js';
+import { ConfigurationModule } from '../module.js';
 
 /**
  * Server API for the Configuration component.
@@ -254,7 +254,10 @@ export class ConfigurationOcpp16Api
     return Promise.all(results);
   }
 
-  @AsMessageEndpoint(OCPP1_6_CallAction.SignedUpdateFirmware, OCPP1_6.SignedUpdateFirmwareRequestSchema)
+  @AsMessageEndpoint(
+    OCPP1_6_CallAction.SignedUpdateFirmware,
+    OCPP1_6.SignedUpdateFirmwareRequestSchema,
+  )
   signedUpdateFirmware(
     identifier: string[],
     request: OCPP1_6.SignedUpdateFirmwareRequest,

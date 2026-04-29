@@ -92,7 +92,7 @@ export enum SignedFirmwareStatusNotificationRequestStatus {
   InstallScheduled = 'InstallScheduled',
   InstallVerificationFailed = 'InstallVerificationFailed',
   InvalidSignature = 'InvalidSignature',
-  SignatureVerified = 'SignatureVerified'
+  SignatureVerified = 'SignatureVerified',
 }
 
 export enum GetCompositeScheduleRequestChargingRateUnit {
