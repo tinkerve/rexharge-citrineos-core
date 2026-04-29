@@ -118,6 +118,7 @@ export class CitrineOSServer {
   protected _realTimeAuthorizer!: IAuthorizer;
 
   protected readonly appName: string;
+  protected _isShuttingDown = false;
   protected _connectionManager?: RabbitMQConnectionManager;
   protected _channelManager?: RabbitMQChannelManager;
 
@@ -198,38 +199,53 @@ export class CitrineOSServer {
 
   async initialize(): Promise<void> {
     await this.initMessageBrokerConnection();
-
     // Initialize module & API
     // Always initialize API after SwaggerUI
     await this.initSystem();
-
     // Initialize database
     await this.initDb();
-
     // Set up shutdown handlers
     for (const event of ['SIGINT', 'SIGTERM', 'SIGQUIT']) {
-      process.on(event, async () => {
-        await this.shutdown();
+      process.on(event, () => {
+        this._logger.info(`Received ${event}`);
+        this.shutdown().catch((err) => {
+          console.error('Shutdown error:', err);
+          process.exit(1);
+        });
       });
     }
   }
-
   async shutdown() {
-    // todo shut down depending on setup
-    // Shut down all modules and central system
-    for (const module of this.modules) {
-      await module.shutdown();
-    }
-    await this._networkConnection?.shutdown();
-    await this._router?.shutdown();
+    if (this._isShuttingDown) return;
+    this._isShuttingDown = true;
+    this._logger.info('Shutdown initiated');
 
-    // Shutdown server
-    await this._server.close();
-
-    setTimeout(() => {
-      console.log('Exiting...');
+    const forceExit = setTimeout(() => {
+      console.log('Shutdown timed out, forcing exit');
       process.exit(1);
-    }, 2000);
+    }, this._config.shutdownGracePeriodSeconds * 1000); // Default is 30 seconds
+    forceExit.unref();
+
+    this._logger.info('Closing HTTP server...');
+    await new Promise<void>((resolve, reject) => {
+      try {
+        this._server.close(() => resolve());
+      } catch (error) {
+        reject(error);
+      }
+    });
+    this._logger.info('Closing WebSocket servers...');
+    await this._networkConnection?.shutdown();
+
+    this._logger.info('Closing RabbitMQ connections...');
+    await this._channelManager?.closeAll();
+    await this._connectionManager?.close();
+
+    this._logger.info('Closing PostgreSQL connections...');
+    await this._sequelizeInstance.connectionManager.close();
+
+    this._logger.info('Shutdown complete');
+    process.exitCode = 0;
   }
 
   async run(): Promise<void> {
