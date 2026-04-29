@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { z } from 'zod';
+import { RegistrationStatusEnum } from '@interfaces/dto/types/enums.js';
 import { EventGroup } from '@interfaces/messages/internal-types.js';
 import { OCPP1_6 } from '@ocpp/model/index.js';
 import { OCPP_CallAction, OCPPVersion, type OCPPVersionType } from '@ocpp/rpc/message.js';
-import { RegistrationStatusEnum } from '@interfaces/dto/types/enums.js';
+import { z } from 'zod';
 
 const CallActionSchema = z.nativeEnum(OCPP_CallAction);
 
@@ -24,6 +24,8 @@ export const OCPP_VERSION_LIST: OCPPVersionType[] = [
   OCPPVersion.OCPP2_0_1,
   OCPPVersion.OCPP1_6,
 ] as const;
+
+const signedMeterValuesSigningMethods = ['RSASSA-PKCS1-v1_5', 'ECDSA', 'SECP192R1'] as const;
 
 // TODO: Refactor other objects out of system config, such as certificatesModuleInputSchema etc.
 export const websocketServerInputSchema = z.object({
@@ -177,9 +179,12 @@ export const systemConfigInputSchema = z.object({
       signedMeterValuesConfiguration: z
         .object({
           publicKeyFileId: z.string(),
-          signingMethod: z.enum(['RSASSA-PKCS1-v1_5', 'ECDSA']),
+          signingMethod: z.enum(signedMeterValuesSigningMethods),
+          rejectUnsupportedSignedMeterValues: z.boolean().default(false).optional(),
         })
         .optional(),
+      /** Base URL for generating receipt URLs when ReceiptByCSMS is true (C21). */
+      receiptBaseUrl: z.string().optional(),
     }),
   }),
   util: z.object({
@@ -479,9 +484,12 @@ export const systemConfigSchema = z
           signedMeterValuesConfiguration: z
             .object({
               publicKeyFileId: z.string(),
-              signingMethod: z.enum(['RSASSA-PKCS1-v1_5', 'ECDSA']),
+              signingMethod: z.enum(signedMeterValuesSigningMethods),
+              rejectUnsupportedSignedMeterValues: z.boolean().optional(),
             })
             .optional(),
+          /** Base URL for generating receipt URLs when ReceiptByCSMS is true (C21). */
+          receiptBaseUrl: z.string().optional(),
         })
         .refine(
           (obj) =>
