@@ -64,6 +64,7 @@ import {
   ReportingModule,
   ReportingOcpp16Api,
   ReportingOcpp2Api,
+  DefaultDrizzleInstance,
   RepositoryStore,
   sequelize,
   Sequelize,
@@ -312,6 +313,9 @@ export class CitrineOSServer {
 
   protected async initDb() {
     await sequelize.DefaultSequelizeInstance.initializeSequelize();
+    if (process.env.CITRINEOS_USE_DRIZZLE_SECURITY_EVENT === 'true') {
+      await DefaultDrizzleInstance.initialize();
+    }
   }
 
   protected initCache(cache?: ICache): ICache {

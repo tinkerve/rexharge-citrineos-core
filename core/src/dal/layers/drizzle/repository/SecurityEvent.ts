@@ -9,12 +9,30 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import {
-  type SecurityEventSelect,
+  type SecurityEventEntity,
   securityEventTable,
   tenantSecurityEventTable,
 } from '../schema/SecurityEvent.js';
 import { DrizzleRepository } from './Base.js';
 import type { ISecurityEventRepository } from '@/dal/index.js';
+
+// ─── Mapper ──────────────────────────────────────────────────────────────────
+// Maps a Drizzle entity (DB row, validated by SecurityEventEntitySchema) to the
+// external SecurityEventDto contract. This keeps the ORM type contained to the
+// DAL layer while letting the rest of the system work against stable DTOs.
+export function toSecurityEventDto(entity: SecurityEventEntity): SecurityEventDto {
+  return {
+    id: entity.id,
+    stationId: entity.stationId,
+    type: entity.type ?? '',
+    // Drizzle returns timestamp as JS Date (mode: 'date'); DTO contract is ISO string.
+    timestamp: entity.timestamp.toISOString(),
+    techInfo: entity.techInfo ?? null,
+    tenantId: entity.tenantId,
+    createdAt: entity.createdAt ?? undefined,
+    updatedAt: entity.updatedAt ?? undefined,
+  };
+}
 
 export class DrizzleSecurityEventRepository
   extends DrizzleRepository<typeof securityEventTable, SecurityEventDto>
@@ -33,18 +51,8 @@ export class DrizzleSecurityEventRepository
     return this.useTenantSchema ? tenantSecurityEventTable(tenantId) : securityEventTable;
   }
 
-  protected toDto(row: SecurityEventSelect): SecurityEventDto {
-    return {
-      id: row.id,
-      stationId: row.stationId ?? '',
-      type: row.type ?? '',
-      // timestamp column is a Date in Drizzle (mode: 'date'); DTO expects an ISO string
-      timestamp: row.timestamp?.toISOString() ?? new Date().toISOString(),
-      techInfo: row.techInfo ?? null,
-      tenantId: row.tenantId,
-      createdAt: row.createdAt ?? undefined,
-      updatedAt: row.updatedAt ?? undefined,
-    };
+  protected toDto(row: SecurityEventEntity): SecurityEventDto {
+    return toSecurityEventDto(row);
   }
 
   // ─── ISecurityEventRepository methods ────────────────────────────────────
@@ -79,22 +87,21 @@ export class DrizzleSecurityEventRepository
     }
 
     if (from && to) {
-      conditions.push(between(table.timestamp!, from, to));
+      conditions.push(between(table.timestamp, from, to));
     } else if (from) {
-      conditions.push(gte(table.timestamp!, from));
+      conditions.push(gte(table.timestamp, from));
     } else if (to) {
-      conditions.push(lte(table.timestamp!, to));
+      conditions.push(lte(table.timestamp, to));
     }
 
     const rows = await this.db
       .select()
       .from(table)
       .where(and(...conditions));
-    return rows.map((row) => this.toDto(row as SecurityEventSelect));
+    return rows.map((row) => this.toDto(row as SecurityEventEntity));
   }
 
   async deleteByKey(tenantId: number, key: string): Promise<SecurityEventDto | undefined> {
-    // Delegates to base.deleteById() which handles the transaction and event emission
     return this.deleteById(tenantId, Number(key));
   }
 }

@@ -155,9 +155,9 @@ export abstract class DrizzleRepository<TTable extends CitrineTable, TDto> exten
     const filter = this.tenantFilter(table, tenantId);
     const where = filter ? and(eq(table.id, id), filter) : eq(table.id, id);
 
-    const rows = (await this.db.transaction(async (tx) =>
-      (tx.delete(table as any) as any).where(where).returning(),
-    )) as InferSelectModel<TTable>[];
+    const rows = (await (this.db.delete(table as any) as any)
+      .where(where)
+      .returning()) as InferSelectModel<TTable>[];
 
     if (!rows[0]) return undefined;
     const dto = this.toDto(rows[0]);

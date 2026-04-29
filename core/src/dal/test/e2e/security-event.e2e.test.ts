@@ -19,12 +19,6 @@
  * `npm test`, since the server child process needs Server/dist/index.js to be
  * current and sequelize-cli needs dist/migrations/*.
  *
- * Why no ChargingStation seed?
- *   Port 8081 in the local config sets allowUnknownChargingStations: true, so
- *   the CSMS accepts any stationId without a ChargingStation DB row. The
- *   SecurityEvent.stationId column is also a plain varchar with no FK to
- *   ChargingStations, so no record is needed there either.
- *
  * Why no manual Tenant seed?
  *   The migration 20250430110000-create-default-tenant inserts Tenant id=1
  *   automatically, so we rely on the real migration path here.
@@ -266,9 +260,6 @@ describe.each([
       expect(response[0]).toBe(3);
       expect(response[1]).toBe(msgId);
       expect(response[2]).toEqual({});
-
-      // Small pause for the async DB write to complete before querying.
-      await new Promise((r) => setTimeout(r, 500));
 
       const { rows } = await db.query<{ stationId: string; type: string }>(
         `SELECT "stationId", "type"

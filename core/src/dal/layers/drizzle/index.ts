@@ -4,10 +4,15 @@
 
 export { DefaultDrizzleInstance } from './util.js';
 export { DrizzleRepository } from './repository/Base.js';
-export { DrizzleSecurityEventRepository } from './repository/SecurityEvent.js';
+export { DrizzleSecurityEventRepository, toSecurityEventDto } from './repository/SecurityEvent.js';
 export {
   securityEventTable,
   tenantSecurityEventTable,
+  SecurityEventEntitySchema,
+  SecurityEventEntityInsertSchema,
+  type SecurityEventEntity,
+  type SecurityEventEntityInsert,
+  // Legacy TypeScript-only types
   type SecurityEventSelect,
   type SecurityEventInsert,
 } from './schema/SecurityEvent.js';
