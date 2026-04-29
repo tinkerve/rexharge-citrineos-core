@@ -209,20 +209,19 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     this._httpServersMap.set(websocketServerConfig.id, httpServer);
   }
 
+  getHttpServers(): ReadonlyMap<string, http.Server | https.Server> {
+    return this._httpServersMap;
+  }
+
   private _onHttpRequest(req: http.IncomingMessage, res: http.ServerResponse) {
-    if (req.method === 'GET' && req.url === '/health') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'healthy' }));
-    } else {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(
-        JSON.stringify({
-          message: `Route ${req.method}:${req.url} not found`,
-          error: 'Not Found',
-          statusCode: 404,
-        }),
-      );
-    }
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        message: `Route ${req.method}:${req.url} not found`,
+        error: 'Not Found',
+        statusCode: 404,
+      }),
+    );
   }
 
   /**

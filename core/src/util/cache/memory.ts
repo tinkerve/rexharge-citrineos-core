@@ -207,6 +207,10 @@ export class MemoryCache implements ICache {
     return true;
   }
 
+  async ping(): Promise<void> {
+    return;
+  }
+
   private resolveOnChange(namespaceKey: string, value: string) {
     const resolveOnChangeCallback = this._keySubscriptionMap.get(namespaceKey);
     if (resolveOnChangeCallback) {

@@ -308,6 +308,7 @@ export const systemConfigInputSchema = z.object({
   rbacRulesFileName: z.string().default('rbac-rules.json').optional(),
   rbacRulesDir: z.string().optional(),
   realTimeAuthDefaultTimeoutSeconds: z.number().int().min(1).default(15).optional(),
+  notReadyThresholdSeconds: z.number().int().min(1).default(60).optional(),
 });
 
 export type SystemConfigInput = z.infer<typeof systemConfigInputSchema>;
@@ -630,6 +631,7 @@ export const systemConfigSchema = z
     rbacRulesDir: z.string().optional(),
     oidcClient: oidcClientConfigSchema,
     realTimeAuthDefaultTimeoutSeconds: z.number().int().min(1).default(15),
+    notReadyThresholdSeconds: z.number().int().min(1).default(60),
   })
   .refine((obj) => obj.maxCachingSeconds >= obj.maxCallLengthSeconds, {
     message: 'maxCachingSeconds cannot be less than maxCallLengthSeconds',
