@@ -10,4 +10,4 @@
 
 import type { OcppResponse } from '../../../internal-types.js';
 
-export interface SignedUpdateFirmwareResponse extends OcppResponse {}
+export interface SignedFirmwareStatusNotificationResponse extends OcppResponse {}

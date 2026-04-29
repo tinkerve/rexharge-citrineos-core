@@ -255,7 +255,7 @@ export class ConfigurationOcpp16Api
   }
 
   @AsMessageEndpoint(
-    OCPP1_6_CallAction.SignedUpdateFirmware,
+    OCPP_CallAction.SignedUpdateFirmware,
     OCPP1_6.SignedUpdateFirmwareRequestSchema,
   )
   signedUpdateFirmware(
@@ -269,7 +269,7 @@ export class ConfigurationOcpp16Api
         id,
         tenantId,
         OCPPVersion.OCPP1_6,
-        OCPP1_6_CallAction.SignedUpdateFirmware,
+        OCPP_CallAction.SignedUpdateFirmware,
         request,
         callbackUrl,
       ),

@@ -22,9 +22,9 @@ import {
   AttributeEnum,
   AuthorizationStatusEnum,
   CrudRepository,
-  TariffSetStatusEnum,
   ErrorCode,
   EventGroup,
+  MessageOrigin,
   OCPP1_6,
   OCPP2_1,
   OCPP_2_VER_LIST,
@@ -32,7 +32,7 @@ import {
   OcppError,
   OCPPValidator,
   OCPPVersion,
-  MessageOrigin,
+  TariffSetStatusEnum,
   TransactionEventEnum,
 } from '@citrineos/base';
 import { sequelize } from '@dal/index.js';
@@ -48,8 +48,8 @@ import type {
 import { SequelizeOCPPMessageRepository } from '@dal/layers/sequelize/index.js';
 import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
 import { Authorization } from '@dal/layers/sequelize/model/Authorization/index.js';
-import { Tariff } from '@dal/layers/sequelize/model/Tariff/Tariffs.js';
 import { Component, VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
+import { Tariff } from '@dal/layers/sequelize/model/Tariff/Tariffs.js';
 import {
   StartTransaction,
   Transaction,
@@ -963,7 +963,7 @@ export class TransactionsModule extends AbstractModule {
       return;
     }
 
-    const request = storedRequest.message[3] as OCPP2_request_types.SetDefaultTariffRequest;
+    const request = storedRequest.message[3] as OCPP2_1.SetDefaultTariffRequest;
     const tariffData = request.tariff;
 
     const newTariff = Tariff.build({
