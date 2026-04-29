@@ -6,15 +6,18 @@ import type { CallAction, IMessageConfirmation } from '@citrineos/base';
 import {
   AbstractModuleApi,
   AsMessageEndpoint,
+  AttributeEnum,
+  CacheNamespace,
   DEFAULT_TENANT_ID,
   getOcpp2Schema,
   OCPP2_0_1,
+  OCPP2_1,
   OCPP2_request_types,
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
 import { OCPP2_0_1_Mapper } from '@dal/index.js';
-import { packageGroupCall, validateChargingProfileType } from '@util/index.js';
+import { packageGroupCall, TotpUtil, validateChargingProfileType } from '@util/index.js';
 import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -42,6 +45,7 @@ export class EVDriverOcpp2Api
     logger?: Logger<ILogObj>,
   ) {
     super(evDriverModule, server, version, logger);
+    this._registerInitiateWebPaymentRoute();
   }
 
   //TODO: 2.1 needs extended code for this request
@@ -409,6 +413,178 @@ export class EVDriverOcpp2Api
       request,
       callbackUrl,
     );
+  }
+
+  /**
+   * C25.FR.21-22: Sends NotifyWebPaymentStartedRequest to a charging station.
+   * CSMS uses this to lock the EVSE during the web payment process, preventing
+   * other users from occupying the EVSE while the driver completes payment.
+   * Only applicable to OCPP 2.1 stations.
+   */
+  @AsMessageEndpoint(OCPP_CallAction.NotifyWebPaymentStarted, () =>
+    getOcpp2Schema(OCPPVersion.OCPP2_1, 'NotifyWebPaymentStartedRequestSchema'),
+  )
+  async notifyWebPaymentStarted(
+    identifier: string[],
+    request: OCPP2_1.NotifyWebPaymentStartedRequest,
+    callbackUrl?: string,
+    tenantId: number = DEFAULT_TENANT_ID,
+  ): Promise<IMessageConfirmation[]> {
+    return packageGroupCall(
+      this._module,
+      identifier,
+      tenantId,
+      OCPPVersion.OCPP2_1,
+      OCPP_CallAction.NotifyWebPaymentStarted,
+      request,
+      callbackUrl,
+    );
+  }
+
+  /**
+   * Registers a custom REST endpoint for initiating a C25 QR-code web payment session.
+   *
+   * POST /evdriver/webpayment/initiate
+   *
+   * This endpoint is called by the CSMS web page after the EV driver scans a QR code.
+   * It validates the TOTP embedded in the QR URL (C25.FR.07-09), caches the driver's
+   * optional transaction limits (C25.FR.03-06), and sends NotifyWebPaymentStartedRequest
+   * to the charging station to lock the EVSE (C25.FR.21-22).
+   *
+   * Body parameters:
+   * - identifier (string, required): Charging station ID
+   * - evseId (integer, required): EVSE ID from the QR URL
+   * - totp (string, required): TOTP value from the QR URL
+   * - maxCost (number, optional): Maximum cost in currency units (C25.FR.56)
+   * - maxTime (integer, optional): Maximum duration in seconds (C25.FR.57)
+   * - maxEnergy (number, optional): Maximum energy in Wh (C25.FR.58)
+   * - timeout (integer, optional): EVSE lock timeout in seconds (default: 300)
+   * - tenantId (integer, optional): Tenant ID (default: DEFAULT_TENANT_ID)
+   */
+  private _registerInitiateWebPaymentRoute(): void {
+    const endpointPrefix = this._module.config.modules.evdriver.endpointPrefix;
+    const routePath = `${endpointPrefix}/webpayment/initiate`;
+
+    this._server.post(
+      routePath,
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['identifier', 'evseId', 'totp'],
+            properties: {
+              identifier: { type: 'string' },
+              evseId: { type: 'integer', minimum: 0 },
+              totp: { type: 'string' },
+              maxCost: { type: 'number' },
+              maxTime: { type: 'integer', minimum: 0 },
+              maxEnergy: { type: 'number', minimum: 0 },
+              timeout: { type: 'integer', minimum: 1 },
+              tenantId: { type: 'integer' },
+            },
+          },
+        },
+      },
+      async (request, reply) => {
+        const body = request.body as {
+          identifier: string;
+          evseId: number;
+          totp: string;
+          maxCost?: number;
+          maxTime?: number;
+          maxEnergy?: number;
+          timeout?: number;
+          tenantId?: number;
+        };
+
+        const { identifier, evseId, totp, maxCost, maxTime, maxEnergy } = body;
+        const tenantId = body.tenantId ?? DEFAULT_TENANT_ID;
+        const lockTimeout = body.timeout ?? 300;
+
+        // Read WebPaymentsCtrlr.SharedSecret from the device model (C25.FR.01, C25.FR.50)
+        let sharedSecret: string | undefined;
+        try {
+          const sharedSecretAttrs = await this._module.deviceModelRepository.readAllByQuerystring(
+            tenantId,
+            {
+              tenantId,
+              stationId: identifier,
+              component_name: 'WebPaymentsCtrlr',
+              variable_name: 'SharedSecret',
+              type: AttributeEnum.Actual,
+            },
+          );
+          sharedSecret = sharedSecretAttrs[0]?.value ?? undefined;
+        } catch (error) {
+          this._logger.error(
+            `C25: Failed to read WebPaymentsCtrlr.SharedSecret for station ${identifier}`,
+            error,
+          );
+          return reply
+            .code(503)
+            .send({ error: 'Failed to read station configuration. Please try again.' });
+        }
+
+        if (!sharedSecret) {
+          this._logger.warn(
+            `C25: WebPaymentsCtrlr.SharedSecret not configured for station ${identifier}`,
+          );
+          return reply.code(503).send({ error: 'Web payment not configured for this station.' });
+        }
+
+        // Validate TOTP (C25.FR.07: invalid TOTP must not proceed)
+        if (!TotpUtil.validate(sharedSecret, totp)) {
+          this._logger.warn(
+            `C25: TOTP validation failed for station ${identifier}, evseId=${evseId}. ` +
+              'QR code may be expired or fraudulent.',
+          );
+          return reply
+            .code(401)
+            .send({ error: 'TOTP validation failed. The QR code may be expired.' });
+        }
+
+        // Cache the QR transaction limits keyed by stationId:evseId (C25.FR.03-06, C25.FR.56-58)
+        // These are read by the TransactionEvent handler to set transactionLimit in the response.
+        const cacheKey = `webpayment:${identifier}:${evseId}`;
+        const limits = { maxCost, maxTime, maxEnergy };
+        await this._module.cache.set(
+          cacheKey,
+          JSON.stringify(limits),
+          CacheNamespace.Other,
+          lockTimeout,
+        );
+
+        // Send NotifyWebPaymentStarted to CS to lock the EVSE (C25.FR.21-22, optional)
+        try {
+          await this._module.sendCall(
+            identifier,
+            tenantId,
+            OCPPVersion.OCPP2_1,
+            OCPP_CallAction.NotifyWebPaymentStarted,
+            { evseId, timeout: lockTimeout } as OCPP2_1.NotifyWebPaymentStartedRequest,
+          );
+          this._logger.info(
+            `C25: NotifyWebPaymentStarted sent to station ${identifier}, ` +
+              `evseId=${evseId}, timeout=${lockTimeout}s`,
+          );
+        } catch (error) {
+          // Non-fatal: the EVSE notification is optional per C25.FR.21 ("MAY send")
+          this._logger.warn(
+            `C25: NotifyWebPaymentStarted to station ${identifier} failed (non-fatal): ${error}`,
+          );
+        }
+
+        return reply.send({
+          success: true,
+          stationId: identifier,
+          evseId,
+          timeout: lockTimeout,
+          limits: { maxCost, maxTime, maxEnergy },
+        });
+      },
+    );
+
+    this._logger.info(`C25: Registered web payment initiation endpoint at POST ${routePath}`);
   }
 
   /**

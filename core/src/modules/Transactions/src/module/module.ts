@@ -21,6 +21,7 @@ import {
   AsHandler,
   AttributeEnum,
   AuthorizationStatusEnum,
+  CacheNamespace,
   CrudRepository,
   ErrorCode,
   EventGroup,
@@ -335,6 +336,89 @@ export class TransactionsModule extends AbstractModule {
     );
 
     if (response) {
+      // For DirectPayment tokens on Started events, include transactionLimit.
+      // C25: First check cache for QR web payment limits (maxCost/maxTime/maxEnergy from QR URL).
+      // Fall back to PaymentCtrlr.AuthorizationAmount from the device model if no QR limits found.
+      if (
+        transactionEvent.eventType === TransactionEventEnum.Started &&
+        response.idTokenInfo?.status === AuthorizationStatusEnum.Accepted &&
+        message.protocol === OCPPVersion.OCPP2_1 &&
+        transactionEvent.idToken?.type === OCPP2_1.IdTokenEnumType.DirectPayment
+      ) {
+        const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
+
+        // C25.FR.03-06: Check cache for QR payment limits set by initiateWebPayment endpoint
+        if (!ocpp21Response.transactionLimit && transactionEvent.evse?.id != null) {
+          try {
+            const cacheKey = `webpayment:${stationId}:${transactionEvent.evse.id}`;
+            const cachedLimitsStr = await this._cache.get<string>(cacheKey, CacheNamespace.Other);
+            if (cachedLimitsStr) {
+              const qrLimits: { maxCost?: number; maxTime?: number; maxEnergy?: number } =
+                JSON.parse(cachedLimitsStr);
+              if (
+                qrLimits.maxCost != null ||
+                qrLimits.maxTime != null ||
+                qrLimits.maxEnergy != null
+              ) {
+                ocpp21Response.transactionLimit = {};
+                if (qrLimits.maxCost != null) {
+                  ocpp21Response.transactionLimit.maxCost = qrLimits.maxCost;
+                }
+                if (qrLimits.maxTime != null) {
+                  ocpp21Response.transactionLimit.maxTime = qrLimits.maxTime;
+                }
+                if (qrLimits.maxEnergy != null) {
+                  ocpp21Response.transactionLimit.maxEnergy = qrLimits.maxEnergy;
+                }
+                // Clear the session from cache — limits are consumed on first transaction start
+                await this._cache.remove(cacheKey, CacheNamespace.Other);
+                this._logger.info(
+                  `C25: Set transactionLimit from QR payment session for station ${stationId}, ` +
+                    `evseId=${transactionEvent.evse.id}, transaction ${transactionId}: ` +
+                    `maxCost=${qrLimits.maxCost}, maxTime=${qrLimits.maxTime}, ` +
+                    `maxEnergy=${qrLimits.maxEnergy}`,
+                );
+              }
+            }
+          } catch (error) {
+            this._logger.error('C25: Failed to read QR payment limits from cache', error);
+          }
+        }
+
+        // Fall back to PaymentCtrlr.AuthorizationAmount if no QR limits were found
+        if (!ocpp21Response.transactionLimit) {
+          try {
+            const authAmountAttributes: VariableAttribute[] =
+              await this._deviceModelRepository.readAllByQuerystring(tenantId, {
+                tenantId,
+                stationId,
+                component_name: 'PaymentCtrlr',
+                variable_name: 'AuthorizationAmount',
+                type: AttributeEnum.Actual,
+              });
+
+            if (authAmountAttributes.length > 0 && authAmountAttributes[0].value) {
+              const authorizationAmount = parseFloat(authAmountAttributes[0].value);
+              if (!isNaN(authorizationAmount) && authorizationAmount > 0) {
+                // Only set if not already set by another flow (e.g., C17 prepaid)
+                ocpp21Response.transactionLimit = {
+                  maxCost: authorizationAmount,
+                };
+                this._logger.info(
+                  `Set transactionLimit.maxCost=${authorizationAmount} for DirectPayment ` +
+                    `token on station ${stationId}, transaction ${transactionId}.`,
+                );
+              }
+            }
+          } catch (error) {
+            this._logger.error(
+              'Failed to read PaymentCtrlr.AuthorizationAmount from device model',
+              error,
+            );
+          }
+        }
+      }
+
       const messageConfirmation = await this.sendCallResultWithMessage(message, response);
       this._logger.debug('Transaction response sent: ', messageConfirmation);
       // If the transaction is accepted and interval is set, start the cost update
@@ -576,6 +660,40 @@ export class TransactionsModule extends AbstractModule {
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('NotifySettlement response sent:', messageConfirmation);
+
+    // After settlement, CSMS MAY send SetDisplayMessageRequest with receipt URL
+    // to display on the charging station (e.g., as a QR code).
+    const finalReceiptUrl = response.receiptUrl ?? request.receiptUrl;
+    if (isSettled && finalReceiptUrl) {
+      try {
+        const displayMessageId = Date.now() % 2147483647; // Unique positive integer ID
+        await this.sendCall(
+          stationId,
+          tenantId,
+          OCPPVersion.OCPP2_1,
+          OCPP_CallAction.SetDisplayMessage,
+          {
+            message: {
+              id: displayMessageId,
+              priority: OCPP2_1.MessagePriorityEnumType.AlwaysFront,
+              transactionId: request.transactionId,
+              message: {
+                format: OCPP2_1.MessageFormatEnumType.URI,
+                content: finalReceiptUrl,
+              },
+            },
+          } as OCPP2_1.SetDisplayMessageRequest,
+        );
+        this._logger.info(
+          `Sent SetDisplayMessageRequest with receiptUrl=${finalReceiptUrl} to station ${stationId}`,
+        );
+      } catch (error) {
+        this._logger.error(
+          `Failed to send SetDisplayMessageRequest to station ${stationId}`,
+          error,
+        );
+      }
+    }
   }
 
   /**
