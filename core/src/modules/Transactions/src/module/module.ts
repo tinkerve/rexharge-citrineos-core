@@ -624,9 +624,19 @@ export class TransactionsModule extends AbstractModule {
     const isSettled = request.status === OCPP2_1.PaymentStatusEnumType.Settled;
     const isRejected = request.status === OCPP2_1.PaymentStatusEnumType.Rejected;
     const isFailed = request.status === OCPP2_1.PaymentStatusEnumType.Failed;
+    const isCancelled = request.status === OCPP2_1.PaymentStatusEnumType.Canceled;
+
+    const isValidSettlementStatus = isSettled || isRejected || isFailed || isCancelled;
+    if (!isValidSettlementStatus) {
+      throw new OcppError(
+        message.context.correlationId,
+        ErrorCode.PropertyConstraintViolation,
+        `Invalid settlement status: ${request.status}. Must be one of 'Settled', 'Rejected', 'Canceled' or 'Failed'.`,
+      );
+    }
 
     if (isRejected || isFailed) {
-      this._logger.error(
+      this._logger.warn(
         `Settlement ${request.status} for station ${stationId}, ` +
           `transaction ${request.transactionId ?? 'none'}, pspRef=${request.pspRef}, ` +
           `amount=${request.settlementAmount}. ` +
