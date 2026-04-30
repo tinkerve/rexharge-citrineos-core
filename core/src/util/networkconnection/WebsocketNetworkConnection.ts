@@ -473,6 +473,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
         // Register client
         const websocketConnection: IWebsocketConnection = {
           id: websocketServerConfig.id,
+          timeConnected: new Date().toISOString(),
           protocol: ws.protocol,
           allowUnknownChargingStations: websocketServerConfig.allowUnknownChargingStations,
         };
@@ -587,19 +588,41 @@ export class WebsocketNetworkConnection implements INetworkConnection {
 
     const closedTenantId = getTenantIdFromIdentifier(identifier);
 
-    // Unregister client
-    await Promise.all([
-      this._cache.remove(identifier, CacheNamespace.Connections),
-      this._router.deregisterConnection(closedTenantId, getStationIdFromIdentifier(identifier)),
-    ]);
-
-    const prevCount = this._tenantConnectionCounts.get(closedTenantId) ?? 0;
-    if (prevCount <= 1) {
+    const prevCount = this._tenantConnectionCounts.get(closedTenantId);
+    if (prevCount === undefined) {
+      this._logger.warn(
+        `No previous connection count found for tenant ${closedTenantId} when closing connection ${identifier}`,
+      );
+    } else if (prevCount <= 1) {
       this._tenantConnectionCounts.delete(closedTenantId);
     } else {
       this._tenantConnectionCounts.set(closedTenantId, prevCount - 1);
     }
     this._identifierConnections.delete(identifier);
+
+    // Unregister client
+    const connectionStringPromise = this._cache
+      .remove<string>(identifier, CacheNamespace.Connections)
+      .catch((err) => {
+        this._logger.error(`Failed to remove connection string ${identifier} from cache`, err);
+      });
+    const deregisterPromise = this._router
+      .deregisterConnection(closedTenantId, getStationIdFromIdentifier(identifier))
+      .catch((err) => {
+        this._logger.error(`Failed to deregister connection ${identifier} from router`, err);
+      });
+
+    const connectionString = await connectionStringPromise;
+    if (connectionString) {
+      const connection: IWebsocketConnection = JSON.parse(connectionString);
+      const timeConnected = new Date().getTime() - new Date(connection.timeConnected).getTime();
+      this._logger.info(
+        `Connection ${identifier} closed after being connected for ${timeConnected} ms with code ${code} and reason ${reason.toString()}`,
+      );
+    }
+
+    await deregisterPromise;
+
     this._logger.info(
       `Connection closed for ${identifier} live connections: ${this._identifierConnections.size}`,
     );
@@ -643,6 +666,10 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     pingInterval: number,
     applyJitter: boolean,
   ): void {
+    if (this._pingTimers.has(identifier)) {
+      // Ping already scheduled, do not schedule another one
+      return;
+    }
     const jitter = applyJitter ? Math.random() * pingInterval * 1000 : 0;
 
     const sendTimer = setTimeout(
