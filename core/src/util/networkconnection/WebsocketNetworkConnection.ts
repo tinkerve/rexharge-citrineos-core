@@ -41,7 +41,10 @@ export class WebsocketNetworkConnection implements INetworkConnection {
   private _identifierConnections: Map<string, WebSocket> = new Map();
   private _pingTimers: Map<string, NodeJS.Timeout> = new Map();
   private _pongTimeouts: Map<string, NodeJS.Timeout> = new Map();
-  private _closeHandlers = new Map<string, () => void>();
+  private _closeHandlers = new Map<
+    string,
+    (code: number, reason: Buffer<ArrayBufferLike>) => void
+  >();
   // tenantId as key and number of active connections as value
   private _tenantConnectionCounts: Map<number, number> = new Map();
   // websocketServers id as key and http server as value
@@ -525,8 +528,8 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       this._onMessage(identifier, event.data.toString(), ws.protocol as OCPPVersionType);
     };
 
-    const closeHandler = () => {
-      this._handleWebsocketClose(identifier);
+    const closeHandler = (code: number, reason: Buffer<ArrayBufferLike>) => {
+      this._handleWebsocketClose(identifier, code, reason);
     };
     ws.once('close', closeHandler);
     this._closeHandlers.set(identifier, closeHandler);
@@ -564,7 +567,11 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     this._router.onMessage(identifier, message, new Date(), protocol);
   }
 
-  private async _handleWebsocketClose(identifier: string): Promise<void> {
+  private async _handleWebsocketClose(
+    identifier: string,
+    code: number,
+    reason: Buffer<ArrayBufferLike>,
+  ): Promise<void> {
     this._closeHandlers.delete(identifier);
     // Cancel any pending ping timer so it doesn't fire against a closed socket
     const timer = this._pingTimers.get(identifier);

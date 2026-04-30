@@ -20,7 +20,7 @@ export interface ICache {
    * */
   existsAnyInNamespace(namespace: string): Promise<boolean>;
 
-  remove(key: string, namespace?: string): Promise<boolean>;
+  remove<T>(key: string, namespace?: string): Promise<T | null>;
 
   /**
    * Monitors a key for potential changes to its value.
