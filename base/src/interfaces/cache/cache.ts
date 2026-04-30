@@ -89,4 +89,11 @@ export interface ICache {
    * @returns {Promise<boolean>} - Returns true if the expiration was updated successfully, false if the key does not exist.
    * */
   updateExpiration(key: string, expireSeconds: number, namespace?: string): Promise<boolean>;
+
+  /**
+   * Pings the cache to check if it is responsive, for health checks. Implementers should ensure this method is lightweight and does not cause significant delay.
+   *
+   * @returns {Promise<void>} - Resolves if the cache is responsive, rejects if it is not.
+   */
+  ping(): Promise<void>;
 }
