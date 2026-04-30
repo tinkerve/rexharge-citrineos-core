@@ -667,7 +667,7 @@ export class TransactionsModule extends AbstractModule {
     const isFailed = request.status === OCPP2_1.PaymentStatusEnumType.Failed;
 
     if (isRejected || isFailed) {
-      this._logger.warn(
+      this._logger.error(
         `Settlement ${request.status} for station ${stationId}, ` +
           `transaction ${request.transactionId ?? 'none'}, pspRef=${request.pspRef}, ` +
           `amount=${request.settlementAmount}. ` +
