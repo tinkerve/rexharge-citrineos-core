@@ -897,10 +897,22 @@ export class TransactionsModule extends AbstractModule {
           settlementData.receiptUrl = request.receiptUrl;
           settlementData.vatNumber = request.vatNumber;
         }
+
+        // Fetch existing transaction to merge customData rather than overwrite it.
+        // This preserves any existing customData fields (e.g., transactionLimit set by C23).
+        const existingTransaction =
+          await this._transactionEventRepository.readTransactionByStationIdAndTransactionId(
+            tenantId,
+            stationId,
+            request.transactionId,
+          );
+        const existingCustomData = existingTransaction?.customData ?? {};
+
         await this._transactionEventRepository.updateTransactionByStationIdAndTransactionId(
           tenantId,
           {
             customData: {
+              ...existingCustomData,
               settlement: settlementData,
             },
           } as Partial<Transaction>,
