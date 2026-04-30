@@ -48,10 +48,22 @@ export class RedisCache implements ICache {
     return keys.length > 0;
   }
 
-  remove(key: string, namespace?: string | undefined): Promise<boolean> {
+  remove<T>(
+    key: string,
+    namespace?: string | undefined,
+    classConstructor?: () => ClassConstructor<T>,
+  ): Promise<T | null> {
     namespace = namespace || 'default';
     key = `${namespace}:${key}`;
-    return this._client.del(key).then((result) => result === 1);
+    return this._client.getDel(key).then((result) => {
+      if (result) {
+        if (classConstructor) {
+          return plainToInstance(classConstructor(), JSON.parse(result));
+        }
+        return result as T;
+      }
+      return null;
+    });
   }
 
   onChange<T>(
