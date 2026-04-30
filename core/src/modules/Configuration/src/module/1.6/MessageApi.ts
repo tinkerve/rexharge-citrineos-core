@@ -54,9 +54,9 @@ export class ConfigurationOcpp16Api
       return [{ success: false, payload: errorMsg }];
     }
 
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
+    const results: Promise<IMessageConfirmation>[] = identifier.map((ocppConnectionName) =>
       this._module.sendCall(
-        id,
+        ocppConnectionName,
         tenantId,
         OCPPVersion.OCPP1_6,
         OCPP_CallAction.TriggerMessage,
@@ -75,20 +75,20 @@ export class ConfigurationOcpp16Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     this._logger.debug('ChangeConfiguration request received:', request);
-    const confirmations = identifier.map(async (stationId) => {
+    const confirmations = identifier.map(async (ocppConnectionName) => {
       const chargingStation = await this._module.locationRepository.readChargingStationByStationId(
         tenantId,
-        stationId,
+        ocppConnectionName,
       );
       if (!chargingStation) {
         return {
           success: false,
-          payload: `Charging station ${stationId} not found`,
+          payload: `Charging station ${ocppConnectionName} not found`,
         };
       }
 
       return await this._module.sendCall(
-        stationId,
+        ocppConnectionName,
         tenantId,
         OCPPVersion.OCPP1_6,
         OCPP_CallAction.ChangeConfiguration,
@@ -112,16 +112,19 @@ export class ConfigurationOcpp16Api
     const confirmations: IMessageConfirmation[] = [];
 
     await Promise.all(
-      identifier.map(async (stationId) => {
+      identifier.map(async (ocppConnectionName) => {
         const chargingStation =
-          await this._module.locationRepository.readChargingStationByStationId(tenantId, stationId);
+          await this._module.locationRepository.readChargingStationByStationId(
+            tenantId,
+            ocppConnectionName,
+          );
         if (!chargingStation) {
           confirmations.push({
             success: false,
             payload: {
-              batch: `Station ${stationId}`,
-              message: `Charging station ${stationId} not found`,
-              stationId,
+              batch: `Station ${ocppConnectionName}`,
+              message: `Charging station ${ocppConnectionName} not found`,
+              ocppConnectionName,
             },
           });
           return;
@@ -132,7 +135,7 @@ export class ConfigurationOcpp16Api
           {
             where: {
               tenantId: tenantId,
-              stationId: stationId,
+              ocppConnectionName: ocppConnectionName,
               key: 'GetConfigurationMaxKeys',
             },
           },
@@ -148,7 +151,7 @@ export class ConfigurationOcpp16Api
               try {
                 const correlationId = uuidv4();
                 const batchResult = await this._module.sendCall(
-                  stationId,
+                  ocppConnectionName,
                   tenantId,
                   OCPPVersion.OCPP1_6,
                   OCPP_CallAction.GetConfiguration,
@@ -162,7 +165,7 @@ export class ConfigurationOcpp16Api
                   payload: {
                     batch: `[${index}:${index + batch.length}]`,
                     message: `${batchResult.payload}`,
-                    stationId,
+                    ocppConnectionName,
                   },
                 });
               } catch (error) {
@@ -171,7 +174,7 @@ export class ConfigurationOcpp16Api
                   payload: {
                     batch: `[${index}:${index + batch.length}]`,
                     message: `${error}`,
-                    stationId,
+                    ocppConnectionName,
                   },
                 });
               }
@@ -201,9 +204,9 @@ export class ConfigurationOcpp16Api
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
+    const results: Promise<IMessageConfirmation>[] = identifier.map((ocppConnectionName) =>
       this._module.sendCall(
-        id,
+        ocppConnectionName,
         tenantId,
         OCPPVersion.OCPP1_6,
         OCPP_CallAction.Reset,
@@ -221,9 +224,9 @@ export class ConfigurationOcpp16Api
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
+    const results: Promise<IMessageConfirmation>[] = identifier.map((ocppConnectionName) =>
       this._module.sendCall(
-        id,
+        ocppConnectionName,
         tenantId,
         OCPPVersion.OCPP1_6,
         OCPP_CallAction.ChangeAvailability,
@@ -241,9 +244,9 @@ export class ConfigurationOcpp16Api
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
+    const results: Promise<IMessageConfirmation>[] = identifier.map((ocppConnectionName) =>
       this._module.sendCall(
-        id,
+        ocppConnectionName,
         tenantId,
         OCPPVersion.OCPP1_6,
         OCPP_CallAction.UpdateFirmware,
@@ -261,9 +264,9 @@ export class ConfigurationOcpp16Api
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
+    const results: Promise<IMessageConfirmation>[] = identifier.map((ocppConnectionName) =>
       this._module.sendCall(
-        id,
+        ocppConnectionName,
         tenantId,
         OCPPVersion.OCPP1_6,
         OCPP_CallAction.DataTransfer,

@@ -93,14 +93,21 @@ describe('RabbitMqReceiver', () => {
       });
 
       it('should bind a single filter-only entry when no actions are provided', async () => {
-        await receiver.subscribe('Router', undefined, { stationId: 'CS001', state: 'Request' });
+        await receiver.subscribe('Router', undefined, {
+          ocppConnectionName: 'CS001',
+          state: 'Request',
+        });
 
         expect(mockChannel.bindQueue).toHaveBeenCalledTimes(1);
         expect(mockChannel.bindQueue).toHaveBeenCalledWith(
           'rabbit_queue_Router',
           'test-exchange',
           '',
-          expect.objectContaining({ 'x-match': 'all', stationId: 'CS001', state: 'Request' }),
+          expect.objectContaining({
+            'x-match': 'all',
+            ocppConnectionName: 'CS001',
+            state: 'Request',
+          }),
         );
       });
 
@@ -182,7 +189,7 @@ describe('RabbitMqReceiver', () => {
 
     describe('constructor', () => {
       it('should derive the instance queue name from instanceIdentifier in config', async () => {
-        await receiver.subscribe('charger-1', undefined, { stationId: 'CS001' });
+        await receiver.subscribe('charger-1', undefined, { ocppConnectionName: 'CS001' });
 
         expect(mockChannel.assertQueue).toHaveBeenCalledWith(
           'rabbit_queue_router_pod-1',
@@ -199,7 +206,7 @@ describe('RabbitMqReceiver', () => {
           true,
         );
 
-        await fallbackReceiver.subscribe('charger-1', undefined, { stationId: 'CS001' });
+        await fallbackReceiver.subscribe('charger-1', undefined, { ocppConnectionName: 'CS001' });
 
         expect(mockChannel.assertQueue).toHaveBeenCalledWith(
           expect.stringMatching(/^rabbit_queue_router_router-\d+$/),
@@ -228,16 +235,25 @@ describe('RabbitMqReceiver', () => {
 
     describe('subscribe() — lazy initialisation', () => {
       it('should assert the instance queue and start exactly one consumer on first subscribe', async () => {
-        await receiver.subscribe('charger-1', undefined, { stationId: 'CS001' });
+        await receiver.subscribe('charger-1', undefined, { ocppConnectionName: 'CS001' });
 
         expect(mockChannel.assertQueue).toHaveBeenCalledTimes(1);
         expect(mockChannel.consume).toHaveBeenCalledTimes(1);
       });
 
       it('should not start additional consumers on subsequent subscribe calls', async () => {
-        await receiver.subscribe('charger-1', undefined, { stationId: 'CS001', state: 'Request' });
-        await receiver.subscribe('charger-1', undefined, { stationId: 'CS001', state: 'Response' });
-        await receiver.subscribe('charger-2', undefined, { stationId: 'CS002', state: 'Request' });
+        await receiver.subscribe('charger-1', undefined, {
+          ocppConnectionName: 'CS001',
+          state: 'Request',
+        });
+        await receiver.subscribe('charger-1', undefined, {
+          ocppConnectionName: 'CS001',
+          state: 'Response',
+        });
+        await receiver.subscribe('charger-2', undefined, {
+          ocppConnectionName: 'CS002',
+          state: 'Request',
+        });
 
         // initializeInstanceQueue only fires once — consume must be called exactly once
         expect(mockChannel.consume).toHaveBeenCalledTimes(1);
@@ -245,9 +261,9 @@ describe('RabbitMqReceiver', () => {
 
       it('should initialise the instance queue only once across concurrent subscribe calls', async () => {
         await Promise.all([
-          receiver.subscribe('charger-1', undefined, { stationId: 'CS001' }),
-          receiver.subscribe('charger-2', undefined, { stationId: 'CS002' }),
-          receiver.subscribe('charger-3', undefined, { stationId: 'CS003' }),
+          receiver.subscribe('charger-1', undefined, { ocppConnectionName: 'CS001' }),
+          receiver.subscribe('charger-2', undefined, { ocppConnectionName: 'CS002' }),
+          receiver.subscribe('charger-3', undefined, { ocppConnectionName: 'CS003' }),
         ]);
 
         expect(mockChannel.consume).toHaveBeenCalledTimes(1);
@@ -256,7 +272,7 @@ describe('RabbitMqReceiver', () => {
       });
 
       it('should register a reconnect handler on the connection manager', async () => {
-        await receiver.subscribe('charger-1', undefined, { stationId: 'CS001' });
+        await receiver.subscribe('charger-1', undefined, { ocppConnectionName: 'CS001' });
 
         expect(mockConnectionManager.on).toHaveBeenCalledWith('connected', expect.any(Function));
       });
@@ -264,13 +280,20 @@ describe('RabbitMqReceiver', () => {
 
     describe('subscribe() — binding behaviour', () => {
       it('should bind to the instance queue (not create a new queue) on subscribe', async () => {
-        await receiver.subscribe('charger-1', undefined, { stationId: 'CS001', state: 'Request' });
+        await receiver.subscribe('charger-1', undefined, {
+          ocppConnectionName: 'CS001',
+          state: 'Request',
+        });
 
         expect(mockChannel.bindQueue).toHaveBeenCalledWith(
           'rabbit_queue_router_pod-1',
           'test-exchange',
           '',
-          expect.objectContaining({ 'x-match': 'all', stationId: 'CS001', state: 'Request' }),
+          expect.objectContaining({
+            'x-match': 'all',
+            ocppConnectionName: 'CS001',
+            state: 'Request',
+          }),
         );
       });
 
@@ -278,7 +301,7 @@ describe('RabbitMqReceiver', () => {
         await receiver.subscribe(
           'charger-1',
           [OCPP_CallAction.BootNotification, OCPP_CallAction.Heartbeat],
-          { stationId: 'CS001' },
+          { ocppConnectionName: 'CS001' },
         );
 
         expect(mockChannel.bindQueue).toHaveBeenCalledTimes(2);
@@ -300,7 +323,7 @@ describe('RabbitMqReceiver', () => {
     describe('unsubscribe()', () => {
       it('should remove the bindings from the instance queue and return true', async () => {
         await receiver.subscribe('charger-1', undefined, {
-          stationId: 'CS001',
+          ocppConnectionName: 'CS001',
           state: 'Request',
           origin: 'CSMS',
         });
@@ -312,14 +335,14 @@ describe('RabbitMqReceiver', () => {
           'rabbit_queue_router_pod-1',
           'test-exchange',
           '',
-          expect.objectContaining({ stationId: 'CS001' }),
+          expect.objectContaining({ ocppConnectionName: 'CS001' }),
         );
       });
 
       it('should return false and log a warning when the identifier has no bindings', async () => {
         // Subscribe triggers lazy init so _instanceQueueName is set; then try to
         // unsubscribe something that was never subscribed.
-        await receiver.subscribe('charger-1', undefined, { stationId: 'CS001' });
+        await receiver.subscribe('charger-1', undefined, { ocppConnectionName: 'CS001' });
         const warnSpy = vi.spyOn((receiver as any)._logger, 'warn');
 
         const result = await receiver.unsubscribe('unknown-charger');
@@ -335,7 +358,7 @@ describe('RabbitMqReceiver', () => {
           consumerTag: 'instance-consumer-tag',
         });
 
-        await receiver.subscribe('charger-1', undefined, { stationId: 'CS001' });
+        await receiver.subscribe('charger-1', undefined, { ocppConnectionName: 'CS001' });
         await receiver.shutdown();
 
         expect(mockChannel.cancel).toHaveBeenCalledWith('instance-consumer-tag');

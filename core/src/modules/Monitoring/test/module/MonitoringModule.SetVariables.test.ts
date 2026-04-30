@@ -165,7 +165,7 @@ async function seedVariableAttribute(
   type: OCPP2_0_1.AttributeEnumType = OCPP2_0_1.AttributeEnumType.Actual,
 ): Promise<VariableAttribute> {
   return VariableAttribute.create({
-    stationId: STATION_ID,
+    ocppConnectionName: STATION_ID,
     componentId,
     variableId,
     type,
@@ -192,7 +192,7 @@ async function seedSetVariablesRequest(
   correlationId: string = CORRELATION_ID,
 ): Promise<OCPPMessage> {
   return OCPPMessage.create({
-    stationId: STATION_ID,
+    ocppConnectionName: STATION_ID,
     correlationId,
     origin: MessageOrigin.ChargingStationManagementSystem,
     state: MessageState.Request,
@@ -330,7 +330,9 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       expect(result.id).toBe(seeded.id);
       // Only the one we seeded exists
-      const allAttrs = await VariableAttribute.findAll({ where: { stationId: STATION_ID } });
+      const allAttrs = await VariableAttribute.findAll({
+        where: { ocppConnectionName: STATION_ID },
+      });
       expect(allAttrs).toHaveLength(1);
     });
 
@@ -353,7 +355,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       expect(result).toBeDefined();
       const inDb = await VariableAttribute.findOne({
-        where: { stationId: STATION_ID, type: OCPP2_0_1.AttributeEnumType.Actual },
+        where: { ocppConnectionName: STATION_ID, type: OCPP2_0_1.AttributeEnumType.Actual },
         include: [
           { model: Component, where: { name: 'Connector' } },
           { model: Variable, where: { name: 'MaxVoltage' } },
@@ -546,7 +548,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
+          { correlationId: CORRELATION_ID, ocppConnectionName: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
@@ -581,7 +583,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
+          { correlationId: CORRELATION_ID, ocppConnectionName: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
@@ -619,7 +621,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
+          { correlationId: CORRELATION_ID, ocppConnectionName: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
@@ -653,7 +655,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
+          { correlationId: CORRELATION_ID, ocppConnectionName: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
@@ -689,12 +691,12 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
+          { correlationId: CORRELATION_ID, ocppConnectionName: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
       const created = await VariableAttribute.findOne({
-        where: { stationId: STATION_ID, type: OCPP2_0_1.AttributeEnumType.Actual },
+        where: { ocppConnectionName: STATION_ID, type: OCPP2_0_1.AttributeEnumType.Actual },
         include: [
           { model: Component, where: { name: 'Connector' } },
           { model: Variable, where: { name: 'MaxVoltage' } },
@@ -749,7 +751,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
+          { correlationId: CORRELATION_ID, ocppConnectionName: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 

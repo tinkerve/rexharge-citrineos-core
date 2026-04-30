@@ -130,7 +130,7 @@ export class AdminApi extends AbstractModuleApi<IMessageRouter> implements IAdmi
   ): Promise<Subscription[]> {
     return this._subscriptionRepository.readAllByStationId(
       request.query.tenantId,
-      request.query.stationId,
+      request.query.ocppConnectionName,
     );
   }
 
@@ -302,7 +302,10 @@ export class AdminApi extends AbstractModuleApi<IMessageRouter> implements IAdmi
   async deleteWebsocketConnection(
     request: FastifyRequest<{ Querystring: ConnectionDeleteQuerystring }>,
   ): Promise<void> {
-    await this._networkConnection.disconnect(request.query.tenantId, request.query.stationId);
+    await this._networkConnection.disconnect(
+      request.query.tenantId,
+      request.query.ocppConnectionName,
+    );
   }
 
   /**

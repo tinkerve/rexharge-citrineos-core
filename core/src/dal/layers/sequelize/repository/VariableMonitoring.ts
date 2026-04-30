@@ -58,7 +58,7 @@ export class SequelizeVariableMonitoringRepository
     value: OCPP2_common_types.MonitoringDataType,
     componentId: string,
     variableId: string,
-    stationId: string,
+    ocppConnectionName: string,
   ): Promise<VariableMonitoring[]> {
     return await Promise.all(
       value.variableMonitoring.map(
@@ -68,7 +68,7 @@ export class SequelizeVariableMonitoringRepository
               const existingVariableMonitoring = await this.s.models[
                 VariableMonitoring.MODEL_NAME
               ].findOne({
-                where: { stationId, variableId, componentId },
+                where: { ocppConnectionName: ocppConnectionName, variableId, componentId },
                 transaction,
               });
 
@@ -76,7 +76,7 @@ export class SequelizeVariableMonitoringRepository
                 // If the record does not exist, build and save a new instance
                 const vm = VariableMonitoring.build({
                   tenantId,
-                  stationId,
+                  ocppConnectionName: ocppConnectionName,
                   variableId,
                   componentId,
                   ...variableMonitoring,
@@ -129,20 +129,20 @@ export class SequelizeVariableMonitoringRepository
     value: OCPP2_0_1.SetMonitoringDataType,
     componentId: string,
     variableId: string,
-    stationId: string,
+    ocppConnectionName: string,
   ): Promise<VariableMonitoring> {
     let result: VariableMonitoring | null = null;
 
     await this.s.transaction(async (transaction) => {
       const savedVariableMonitoring = await this.s.models[VariableMonitoring.MODEL_NAME].findOne({
-        where: { stationId, variableId, componentId },
+        where: { ocppConnectionName: ocppConnectionName, variableId, componentId },
         transaction,
       });
 
       if (!savedVariableMonitoring) {
         const variableMonitoring = VariableMonitoring.build({
           tenantId,
-          stationId,
+          ocppConnectionName: ocppConnectionName,
           variableId,
           componentId,
           ...value,
@@ -169,11 +169,11 @@ export class SequelizeVariableMonitoringRepository
   async rejectAllVariableMonitoringsByStationId(
     tenantId: number,
     action: CallAction,
-    stationId: string,
+    ocppConnectionName: string,
   ): Promise<void> {
     await this.readAllByQuery(tenantId, {
       where: {
-        stationId,
+        ocppConnectionName: ocppConnectionName,
       },
     }).then(async (variableMonitorings) => {
       for (const variableMonitoring of variableMonitorings) {
@@ -191,12 +191,12 @@ export class SequelizeVariableMonitoringRepository
     tenantId: number,
     action: CallAction,
     id: number,
-    stationId: string,
+    ocppConnectionName: string,
   ): Promise<void> {
     await this.readAllByQuery(tenantId, {
       where: {
         id,
-        stationId,
+        ocppConnectionName: ocppConnectionName,
       },
     }).then(async (variableMonitorings) => {
       for (const variableMonitoring of variableMonitorings) {
@@ -213,11 +213,15 @@ export class SequelizeVariableMonitoringRepository
   async updateResultByStationId(
     tenantId: number,
     result: OCPP2_0_1.SetMonitoringResultType,
-    stationId: string,
+    ocppConnectionName: string,
   ): Promise<VariableMonitoring> {
     const savedVariableMonitoring = await super
       .readAllByQuery(tenantId, {
-        where: { stationId, type: result.type, severity: result.severity },
+        where: {
+          ocppConnectionName: ocppConnectionName,
+          type: result.type,
+          severity: result.severity,
+        },
         include: [
           {
             model: Component,
@@ -273,13 +277,13 @@ export class SequelizeVariableMonitoringRepository
     event: OCPP2_0_1.EventDataType,
     componentId: string,
     variableId: string,
-    stationId: string,
+    ocppConnectionName: string,
   ): Promise<EventData> {
     return await this.eventData.create(
       tenantId,
       EventData.build({
         tenantId,
-        stationId,
+        ocppConnectionName: ocppConnectionName,
         variableId,
         componentId,
         ...event,

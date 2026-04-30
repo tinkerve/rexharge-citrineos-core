@@ -67,7 +67,7 @@ export class SmartChargingOcpp2Api
   ): Promise<IMessageConfirmation[]> {
     const responses: IMessageConfirmation[] = [];
 
-    for (const id of identifier) {
+    for (const ocppConnectionName of identifier) {
       const chargingProfileCriteria = request.chargingProfileCriteria;
 
       // OCPP 2.0.1 Part 2 K10.FR.02
@@ -116,7 +116,7 @@ export class SmartChargingOcpp2Api
       }
 
       const response = await this._module.sendCall(
-        id,
+        ocppConnectionName,
         tenantId,
         this._ocppVersion ?? DEFAULT_VERSION,
         OCPP_CallAction.ClearChargingProfile,
@@ -218,9 +218,9 @@ export class SmartChargingOcpp2Api
   ): Promise<IMessageConfirmation[]> {
     // Process each station individually
     return Promise.all(
-      identifier.map(async (id) => {
+      identifier.map(async (ocppConnectionName) => {
         this._logger.info(
-          `Received SetChargingProfile for station ${id}: ${JSON.stringify(request)}`,
+          `Received SetChargingProfile for station ${ocppConnectionName}: ${JSON.stringify(request)}`,
         );
 
         const chargingProfile = request.chargingProfile;
@@ -229,7 +229,7 @@ export class SmartChargingOcpp2Api
           await validateChargingProfileType(
             chargingProfile,
             tenantId,
-            id,
+            ocppConnectionName,
             this._module.deviceModelRepository,
             this._module.chargingProfileRepository,
             this._module.transactionEventRepository,
@@ -276,13 +276,13 @@ export class SmartChargingOcpp2Api
           const transaction =
             await this._module.transactionEventRepository.readTransactionByStationIdAndTransactionId(
               tenantId,
-              id,
+              ocppConnectionName,
               chargingProfile.transactionId,
             );
           if (!transaction) {
             return {
               success: false,
-              payload: `Transaction ${chargingProfile.transactionId} not found on station ${id}.`,
+              payload: `Transaction ${chargingProfile.transactionId} not found on station ${ocppConnectionName}.`,
             };
           }
           // OCPP 2.0.1 Part 2 K01.FR.16
@@ -367,7 +367,7 @@ export class SmartChargingOcpp2Api
           const existedChargingProfiles =
             await this._module.chargingProfileRepository.readAllByQuery(tenantId, {
               where: {
-                stationId: id,
+                ocppConnectionName: ocppConnectionName,
                 stackLevel: chargingProfile.stackLevel,
                 chargingProfilePurpose: chargingProfile.chargingProfilePurpose,
                 evseId: request.evseId,
@@ -406,14 +406,14 @@ export class SmartChargingOcpp2Api
         const acPhaseSwitchingSupported: VariableAttribute[] =
           await this._module.deviceModelRepository.readAllByQuerystring(tenantId, {
             tenantId,
-            stationId: id,
+            ocppConnectionName: ocppConnectionName,
             component_evse_id: request.evseId,
             component_name: 'SmartChargingCtrlr',
             variable_name: 'ACPhaseSwitchingSupported',
             type: AttributeEnum.Actual,
           });
         this._logger.info(
-          `Found ACPhaseSwitchingSupported for station ${id}: ${JSON.stringify(
+          `Found ACPhaseSwitchingSupported for station ${ocppConnectionName}: ${JSON.stringify(
             acPhaseSwitchingSupported,
           )}`,
         );
@@ -487,7 +487,7 @@ export class SmartChargingOcpp2Api
               if (!acPhaseSwitchingSupported.length) {
                 return {
                   success: false,
-                  payload: `phaseToUse not allowed if AC phase switching is not supported by station ${id}.`,
+                  payload: `phaseToUse not allowed if AC phase switching is not supported by station ${ocppConnectionName}.`,
                 };
               }
             }
@@ -498,14 +498,14 @@ export class SmartChargingOcpp2Api
         await this._module.chargingProfileRepository.createOrUpdateChargingProfile(
           tenantId,
           OCPP2_0_1_Mapper.ChargingProfileMapper.fromChargingProfileType(chargingProfile), //TODO: For 2.1, we need to review the mappers and update them where needed. Rename to OCPP2 mapper
-          id,
+          ocppConnectionName,
           request.evseId,
           ChargingLimitSourceEnum.CSO,
         );
 
         // Finally, send the call to the station
         return this._module.sendCall(
-          id,
+          ocppConnectionName,
           tenantId,
           this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.SetChargingProfile,
@@ -552,7 +552,7 @@ export class SmartChargingOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return Promise.all(
-      identifier.map(async (id) => {
+      identifier.map(async (ocppConnectionName) => {
         // OCPP 2.0.1 Part 2 K08.FR.05
         if (request.evseId !== 0) {
           const evse = await this._module.deviceModelRepository.findEvseByIdAndConnectorId(
@@ -563,10 +563,12 @@ export class SmartChargingOcpp2Api
           if (!evse) {
             return {
               success: false,
-              payload: `EVSE ${request.evseId} not found for station ${id}.`,
+              payload: `EVSE ${request.evseId} not found for station ${ocppConnectionName}.`,
             };
           }
-          this._logger.info(`Found evse for station ${id}: ${JSON.stringify(evse)}`);
+          this._logger.info(
+            `Found evse for station ${ocppConnectionName}: ${JSON.stringify(evse)}`,
+          );
         }
 
         // OCPP 2.0.1 Part 2 K08.FR.07
@@ -581,7 +583,7 @@ export class SmartChargingOcpp2Api
         }
 
         return this._module.sendCall(
-          id,
+          ocppConnectionName,
           tenantId,
           this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.GetCompositeSchedule,

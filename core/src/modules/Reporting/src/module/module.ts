@@ -179,7 +179,7 @@ export class ReportingModule extends AbstractModule {
       {
         where: {
           tenantId: message.context.tenantId,
-          stationId: message.context.stationId,
+          ocppConnectionName: message.context.ocppConnectionName,
           action: OCPP_CallAction.CustomerInformation,
           message: {
             requestId: requestId,
@@ -221,7 +221,7 @@ export class ReportingModule extends AbstractModule {
     );
 
     for (const monitorType of message.payload.monitor ? message.payload.monitor : []) {
-      const stationId: string = message.context.stationId;
+      const ocppConnectionName: string = message.context.ocppConnectionName;
       const [component, variable] =
         await this._deviceModelRepository.findOrCreateEvseAndComponentAndVariable(
           message.context.tenantId,
@@ -233,7 +233,7 @@ export class ReportingModule extends AbstractModule {
         monitorType,
         component ? component.id : null,
         variable ? variable.id : null,
-        stationId,
+        ocppConnectionName,
       );
     }
 
@@ -269,7 +269,7 @@ export class ReportingModule extends AbstractModule {
           await this._deviceModelRepository.createOrUpdateDeviceModelByStationId(
             message.context.tenantId,
             reportDataType,
-            message.context.stationId,
+            message.context.ocppConnectionName,
             timestamp,
           );
         for (const variableAttribute of variableAttributes) {
@@ -286,7 +286,7 @@ export class ReportingModule extends AbstractModule {
               component: variableAttribute.component,
               variable: variableAttribute.variable,
             } as OCPP2_common_types.SetVariableResultType,
-            message.context.stationId,
+            message.context.ocppConnectionName,
             timestamp,
           );
         }
@@ -311,7 +311,7 @@ export class ReportingModule extends AbstractModule {
       const success = await this._cache.set(
         message.payload.requestId.toString(),
         ReportingModule.GET_BASE_REPORT_COMPLETE_CACHE_VALUE,
-        message.context.stationId,
+        message.context.ocppConnectionName,
       );
       this._logger.info('Completed', success, message.payload.requestId);
     } else {
@@ -320,7 +320,7 @@ export class ReportingModule extends AbstractModule {
       const success = await this._cache.set(
         message.payload.requestId.toString(),
         ReportingModule.GET_BASE_REPORT_ONGOING_CACHE_VALUE,
-        message.context.stationId,
+        message.context.ocppConnectionName,
         this.config.maxCachingSeconds,
       );
       this._logger.info('Ongoing', success, message.payload.requestId);
@@ -342,7 +342,7 @@ export class ReportingModule extends AbstractModule {
     await this._securityEventRepository.createByStationId(
       message.context.tenantId,
       message.payload,
-      message.context.stationId,
+      message.context.ocppConnectionName,
     );
     await this.sendCallResultWithMessage(
       message,

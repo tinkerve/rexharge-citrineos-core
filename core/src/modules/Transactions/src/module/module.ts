@@ -277,7 +277,7 @@ export class TransactionsModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('Transaction event received:', message, props);
     const tenantId: number = message.context.tenantId;
-    const stationId: string = message.context.stationId;
+    const ocppConnectionName: string = message.context.ocppConnectionName;
 
     const transactionEvent = message.payload;
     const transactionId = transactionEvent.transactionInfo.transactionId;
@@ -303,7 +303,7 @@ export class TransactionsModule extends AbstractModule {
         await this._transactionEventRepository.createOrUpdateTransactionByTransactionEventAndStationId(
           tenantId,
           message.payload,
-          stationId,
+          ocppConnectionName,
         );
     } catch (error) {
       if ((error as any).name === 'SequelizeForeignKeyConstraintError') {
@@ -324,13 +324,13 @@ export class TransactionsModule extends AbstractModule {
         tenantId,
         transactionId,
         message.payload.reservationId,
-        stationId,
+        ocppConnectionName,
       );
     }
     await this.deactivateOtherActiveTransactionsAtEvse201(
       tenantId,
       transactionId,
-      stationId,
+      ocppConnectionName,
       transactionEvent,
     );
 
@@ -344,7 +344,7 @@ export class TransactionsModule extends AbstractModule {
         this._costUpdatedInterval
       ) {
         this._costNotifier.notifyWhileActive(
-          stationId,
+          ocppConnectionName,
           transactionId,
           message.context.tenantId,
           this._costUpdatedInterval,
@@ -374,7 +374,7 @@ export class TransactionsModule extends AbstractModule {
         const tariffAvailableAttributes: VariableAttribute[] =
           await this._deviceModelRepository.readAllByQuerystring(tenantId, {
             tenantId,
-            stationId: stationId,
+            ocppConnectionName: ocppConnectionName,
             component_name: 'TariffCostCtrlr',
             variable_instance: 'Tariff',
             variable_name: 'Available',
@@ -411,7 +411,7 @@ export class TransactionsModule extends AbstractModule {
       if (transactionEvent.meterValue) {
         const meterValuesValid = await this._signedMeterValuesUtil.validateMeterValues(
           tenantId,
-          stationId,
+          ocppConnectionName,
           transactionEvent.meterValue,
         );
 
@@ -438,7 +438,7 @@ export class TransactionsModule extends AbstractModule {
 
     const meterValues = message.payload.meterValue;
     const tenantId = message.context.tenantId;
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
     const evseId = message.payload.evseId;
 
     // When evseId is 0, the MeterValuesRequest message SHALL be associated with the entire Charging Station.
@@ -446,13 +446,13 @@ export class TransactionsModule extends AbstractModule {
       const activeTransaction: Transaction | undefined =
         await this.transactionEventRepository.getActiveTransactionByStationIdAndEvseId(
           tenantId,
-          stationId,
+          ocppConnectionName,
           evseId,
         );
       if (!activeTransaction) {
         this._logger.error(
           'Active Transaction not found on charging station {} evse {}',
-          stationId,
+          ocppConnectionName,
           evseId,
         );
       }
@@ -478,7 +478,7 @@ export class TransactionsModule extends AbstractModule {
 
     const meterValuesValid = await this._signedMeterValuesUtil.validateMeterValues(
       tenantId,
-      stationId,
+      ocppConnectionName,
       meterValues,
     );
 
@@ -510,7 +510,7 @@ export class TransactionsModule extends AbstractModule {
     this._statusNotificationService
       .processStatusNotification(
         message.context.tenantId,
-        message.context.stationId,
+        message.context.ocppConnectionName,
         message.payload,
       )
       .catch((error) => {
@@ -546,7 +546,7 @@ export class TransactionsModule extends AbstractModule {
     if (response.ongoingIndicator !== null && response.ongoingIndicator !== undefined) {
       await this._transactionService.updateTransactionStatus(
         message.context.tenantId,
-        message.context.stationId,
+        message.context.ocppConnectionName,
         message.context.correlationId,
         response.ongoingIndicator,
       );
@@ -591,7 +591,7 @@ export class TransactionsModule extends AbstractModule {
 
     await this._statusNotificationService.processOcpp16StatusNotification(
       message.context.tenantId,
-      message.context.stationId,
+      message.context.ocppConnectionName,
       message.payload,
     );
 
@@ -609,7 +609,7 @@ export class TransactionsModule extends AbstractModule {
     this._logger.debug('MeterValues request received:', message, props);
 
     const tenantId = message.context.tenantId;
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
     const connectorId = message.payload.connectorId;
     const transactionId = message.payload.transactionId;
     const meterValues = message.payload.meterValue;
@@ -629,7 +629,7 @@ export class TransactionsModule extends AbstractModule {
           await this._transactionEventRepository.updateTransactionByMeterValues(
             tenantId,
             meterValueEntities,
-            stationId,
+            ocppConnectionName,
             transactionId,
           );
         }
@@ -648,7 +648,7 @@ export class TransactionsModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('OCPP 1.6 StartTransaction request received:', message, props);
     const tenantId = message.context.tenantId;
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
     const request = message.payload;
 
     // Authorize
@@ -668,14 +668,14 @@ export class TransactionsModule extends AbstractModule {
           await this._transactionEventRepository.createTransactionByStartTransaction(
             tenantId,
             request,
-            stationId,
+            ocppConnectionName,
           );
         response.transactionId = parseInt(newTransaction.transactionId);
       } catch (error) {
         const errorMessage = (error as Error).message || '';
         if (errorMessage.includes('Charging station') && errorMessage.includes('does not exist')) {
           this._logger.error(
-            `Charging station ${stationId} does not exist for idTag ${request.idTag}`,
+            `Charging station ${ocppConnectionName} does not exist for idTag ${request.idTag}`,
           );
         } else {
           this._logger.error(`Failed to create transaction for idTag ${request.idTag}`, error);
@@ -690,7 +690,7 @@ export class TransactionsModule extends AbstractModule {
     await this.deactivateOtherActiveTransactionsAtEvse16(
       tenantId,
       response.transactionId.toString(),
-      stationId,
+      ocppConnectionName,
       request,
     );
 
@@ -706,7 +706,7 @@ export class TransactionsModule extends AbstractModule {
         tenantId,
         response.transactionId.toString(),
         request.reservationId,
-        stationId,
+        ocppConnectionName,
       );
     }
   }
@@ -719,7 +719,7 @@ export class TransactionsModule extends AbstractModule {
     this._logger.debug('OCPP 1.6 StopTransaction request received:', message, props);
 
     const tenantId = message.context.tenantId;
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
     const request = message.payload;
 
     const authorization: Authorization | undefined = request.idTag
@@ -770,7 +770,7 @@ export class TransactionsModule extends AbstractModule {
 
     const transaction = await Transaction.findOne({
       where: {
-        stationId,
+        ocppConnectionName,
         tenantId,
         transactionId: request.transactionId.toString(),
       },
@@ -785,7 +785,7 @@ export class TransactionsModule extends AbstractModule {
     const stopTransaction = await this._transactionEventRepository.createStopTransaction(
       tenantId,
       transaction.id,
-      stationId,
+      ocppConnectionName,
       request.meterStop,
       new Date(request.timestamp),
       request.transactionData?.map((data) =>
@@ -807,7 +807,7 @@ export class TransactionsModule extends AbstractModule {
       transaction.totalKwh = (request.meterStop - transaction.startTransaction.meterStart) / 1000; // Convert from Wh to kWh
     } else {
       this._logger.warn(
-        `StartTransaction record not found at station ${stationId} for transactionId ${request.transactionId}. 
+        `StartTransaction record not found at station ${ocppConnectionName} for transactionId ${request.transactionId}. 
         Cannot calculate totalKwh.`,
       );
     }
@@ -831,7 +831,7 @@ export class TransactionsModule extends AbstractModule {
   protected async deactivateOtherActiveTransactionsAtEvse201(
     tenantId: number,
     transactionId: string,
-    stationId: string,
+    ocppConnectionName: string,
     request: OCPP2_request_types.TransactionEventRequest,
   ) {
     const eventType = request.eventType;
@@ -845,7 +845,7 @@ export class TransactionsModule extends AbstractModule {
         await this._transactionService.deactivateOtherActiveTransactionsAtEvse(
           tenantId,
           transactionId,
-          stationId,
+          ocppConnectionName,
           evse,
         );
       }
@@ -855,12 +855,12 @@ export class TransactionsModule extends AbstractModule {
   protected async deactivateOtherActiveTransactionsAtEvse16(
     tenantId: number,
     transactionId: string,
-    stationId: string,
+    ocppConnectionName: string,
     request: OCPP1_6.StartTransactionRequest,
   ) {
     const connector = await this._locationRepository.readConnectorByStationIdAndOcpp16ConnectorId(
       tenantId,
-      stationId,
+      ocppConnectionName,
       request.connectorId,
     );
     if (!connector) {
@@ -870,7 +870,7 @@ export class TransactionsModule extends AbstractModule {
     await this._transactionService.deactivateOtherActiveTransactionsAtEvse(
       tenantId,
       transactionId,
-      stationId,
+      ocppConnectionName,
       request.connectorId,
     );
   }

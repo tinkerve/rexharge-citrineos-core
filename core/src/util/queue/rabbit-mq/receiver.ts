@@ -98,7 +98,7 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
    * After this is called, {@link subscribe} adds bindings to this queue instead of
    * creating per-charger queues and consumers. A single consumer handles all messages
    * for all connected chargers — requests and responses, all origins — with routing
-   * done in application code via the stationId in each message.
+   * done in application code via the ocppConnectionName in each message.
    *
    * Call once at router startup, before any chargers connect.
    *

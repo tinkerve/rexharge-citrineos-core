@@ -49,7 +49,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
   private _connectionManager?: IConnectionManager;
   private _doesChargingStationExistByStationId?: (
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
   ) => Promise<boolean>;
   private _getMaxChargingStationsForTenant?: (tenantId: number) => Promise<number | null>;
 
@@ -59,7 +59,10 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     authenticator: IAuthenticator,
     router: IMessageRouter,
     logger?: Logger<ILogObj>,
-    doesChargingStationExistByStationId?: (tenantId: number, stationId: string) => Promise<boolean>,
+    doesChargingStationExistByStationId?: (
+      tenantId: number,
+      ocppConnectionName: string,
+    ) => Promise<boolean>,
     getMaxChargingStationsForTenant?: (tenantId: number) => Promise<number | null>,
     connectionManager?: IConnectionManager,
   ) {
@@ -129,18 +132,18 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     return (identifier: string, message: string) => this.sendMessage(identifier, message);
   }
 
-  async disconnect(tenantId: number, stationId: string): Promise<boolean> {
-    const identifier = createIdentifier(tenantId, stationId);
+  async disconnect(tenantId: number, ocppConnectionName: string): Promise<boolean> {
+    const identifier = createIdentifier(tenantId, ocppConnectionName);
 
     const websocketConnection = this._identifierConnections.get(identifier);
 
     if (!websocketConnection) {
       this._logger.warn(
-        `No websocket connection found for tenantId ${tenantId} and stationId ${stationId}, will still deregister from router.`,
+        `No websocket connection found for tenantId ${tenantId} and ocppConnectionName ${ocppConnectionName}, will still deregister from router.`,
       );
     }
     websocketConnection?.close(1000, 'Disconnected by admin request');
-    const deregistered = await this._router?.deregisterConnection(tenantId, stationId);
+    const deregistered = await this._router?.deregisterConnection(tenantId, ocppConnectionName);
 
     return !!websocketConnection && deregistered;
   }
@@ -376,7 +379,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       // Pause the WebSocket event emitter until broker is established
       ws.pause();
 
-      const stationId = this._getClientIdFromUrl(req.url as string);
+      const ocppConnectionName = this._getClientIdFromUrl(req.url as string);
       // Prefer tenant resolved during upgrade; fallback to server-configured tenant.
       const tenantId = (req as any).__resolvedTenantId ?? websocketServerConfig.tenantId;
 
@@ -388,19 +391,19 @@ export class WebsocketNetworkConnection implements INetworkConnection {
         throw new Error('No method available to check if charging station exists');
       }
 
-      const exists = await checker(tenantId, stationId);
+      const exists = await checker(tenantId, ocppConnectionName);
 
       if (!exists && !websocketServerConfig.allowUnknownChargingStations) {
         this._logger.error(
           'Rejecting connection: station %s not found in tenant %s',
-          stationId,
+          ocppConnectionName,
           tenantId,
         );
         ws.close(1011, 'Unknown charging station');
         return;
       }
 
-      const identifier = createIdentifier(tenantId, stationId);
+      const identifier = createIdentifier(tenantId, ocppConnectionName);
 
       // Enforce per-tenant connection limit from the tenant's maxChargingStations field
       if (this._getMaxChargingStationsForTenant) {
@@ -421,7 +424,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       if (staleWs) {
         staleWs.terminate();
         try {
-          await this._router.deregisterConnection(tenantId, stationId);
+          await this._router.deregisterConnection(tenantId, ocppConnectionName);
         } catch (err) {
           this._logger.error(`Failed to deregister stale connection for ${identifier}`, err);
         }
@@ -441,7 +444,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
           'N/A';
         const port = req.socket.remotePort as number;
         const connLogger = this._logger.getSubLogger({
-          name: `T${tenantId}:${stationId}`,
+          name: `T${tenantId}:${ocppConnectionName}`,
         });
         connLogger.info('Client websocket connected', identifier, ip, port, ws.protocol);
 
@@ -458,7 +461,8 @@ export class WebsocketNetworkConnection implements INetworkConnection {
           pingInterval * 3,
         );
         registered =
-          registered && (await this._router.registerConnection(tenantId, stationId, ws.protocol));
+          registered &&
+          (await this._router.registerConnection(tenantId, ocppConnectionName, ws.protocol));
         if (!registered) {
           connLogger.fatal('Failed to register websocket client', identifier);
           throw new Error('Failed to register websocket client');
@@ -483,7 +487,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
   /**
    * Internal method to register event listeners for the WebSocket connection.
    *
-   * @param {string} identifier - The unique identifier of the connection, i.e. the combination of tenantId and stationId.
+   * @param {string} identifier - The unique identifier of the connection, i.e. the combination of tenantId and ocppConnectionName.
    * @param {WebSocket} ws - The WebSocket object representing the connection.
    * @param {number} pingInterval - The ping interval in seconds.
    * @return {void} This function does not return anything.

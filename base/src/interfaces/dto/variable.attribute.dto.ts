@@ -12,7 +12,7 @@ import { VariableSchema } from './variable.dto.js';
 
 export const VariableAttributeSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   chargingStation: ChargingStationSchema,
   type: AttributeEnumSchema.nullable().optional(),
   dataType: DataEnumSchema,

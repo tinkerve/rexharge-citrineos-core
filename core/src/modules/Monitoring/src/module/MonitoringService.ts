@@ -22,7 +22,7 @@ export class MonitoringService {
 
   async processClearMonitoringResult(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     clearMonitoringResult: [
       OCPP2_0_1.ClearMonitoringResultType,
       ...OCPP2_0_1.ClearMonitoringResultType[],
@@ -42,7 +42,7 @@ export class MonitoringService {
           tenantId,
           OCPP_CallAction.ClearVariableMonitoring,
           monitorId,
-          stationId,
+          ocppConnectionName,
         );
       } else {
         const statusInfo: OCPP2_0_1.StatusInfoType | undefined | null =

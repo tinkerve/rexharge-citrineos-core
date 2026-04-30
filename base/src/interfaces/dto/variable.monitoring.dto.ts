@@ -11,7 +11,7 @@ import { EventNotificationEnumSchema, MonitorEnumSchema } from './types/enums.js
 export const VariableMonitoringSchema = BaseSchema.extend({
   databaseId: z.number().int(),
   id: z.number().int(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   transaction: z.boolean(),
   value: z.number().int(),
   type: MonitorEnumSchema,
