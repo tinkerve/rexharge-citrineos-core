@@ -417,7 +417,7 @@ export class TransactionsModule extends AbstractModule {
           const settlementByCSMSAttributes: VariableAttribute[] =
             await this._deviceModelRepository.readAllByQuerystring(tenantId, {
               tenantId,
-              stationId,
+              ocppConnectionName,
               component_name: 'PaymentCtrlr',
               variable_name: 'SettlementByCSMS',
               type: AttributeEnum.Actual,
@@ -430,7 +430,7 @@ export class TransactionsModule extends AbstractModule {
           if (settlementByCSMS) {
             const totalCost = response.totalCost ?? transaction.totalCost;
             this._logger.info(
-              `C21.FR.05: SettlementByCSMS is true for station ${stationId}, ` +
+              `C21.FR.05: SettlementByCSMS is true for station ${ocppConnectionName}, ` +
                 `transaction ${transaction.transactionId}. ` +
                 `CSMS should settle totalCost=${totalCost} with PSP. ` +
                 `This requires external PSP integration.`,
@@ -610,7 +610,7 @@ export class TransactionsModule extends AbstractModule {
     this._logger.debug('NotifySettlementRequest received:', message, props);
 
     const tenantId = message.context.tenantId;
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
     const request = message.payload;
 
     this._logger.info(
@@ -637,7 +637,7 @@ export class TransactionsModule extends AbstractModule {
             },
           } as any,
           request.transactionId,
-          stationId,
+          ocppConnectionName,
         );
       } catch (error) {
         this._logger.error(
@@ -654,7 +654,7 @@ export class TransactionsModule extends AbstractModule {
       const receiptByCSMSAttributes: VariableAttribute[] =
         await this._deviceModelRepository.readAllByQuerystring(tenantId, {
           tenantId,
-          stationId,
+          ocppConnectionName,
           component_name: 'PaymentCtrlr',
           variable_name: 'ReceiptByCSMS',
           type: AttributeEnum.Actual,
@@ -668,8 +668,8 @@ export class TransactionsModule extends AbstractModule {
         const receiptBaseUrl = this.config.modules.transactions.receiptBaseUrl;
         if (receiptBaseUrl) {
           const receiptId = request.transactionId
-            ? `${stationId}-${request.transactionId}-${request.pspRef}`
-            : `${stationId}-${request.pspRef}`;
+            ? `${ocppConnectionName}-${request.transactionId}-${request.pspRef}`
+            : `${ocppConnectionName}-${request.pspRef}`;
           response.receiptUrl = `${receiptBaseUrl}/${encodeURIComponent(receiptId)}`;
           response.receiptId = receiptId;
           this._logger.info(`ReceiptByCSMS is true, generated receiptUrl=${response.receiptUrl}`);
@@ -939,18 +939,18 @@ export class TransactionsModule extends AbstractModule {
 
     if (message.payload.status !== TariffSetStatusEnum.Accepted) {
       this._logger.warn(
-        `SetDefaultTariff rejected for station ${message.context.stationId}: ${message.payload.status}`,
+        `SetDefaultTariff rejected for station ${message.context.ocppConnectionName}: ${message.payload.status}`,
       );
       return;
     }
 
     const tenantId = message.context.tenantId;
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
 
     const storedRequest = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
       where: {
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId: message.context.correlationId,
         origin: MessageOrigin.ChargingStationManagementSystem,
       },
@@ -958,7 +958,7 @@ export class TransactionsModule extends AbstractModule {
 
     if (!storedRequest) {
       this._logger.error(
-        `No SetDefaultTariffRequest found for correlationId ${message.context.correlationId} on station ${stationId}`,
+        `No SetDefaultTariffRequest found for correlationId ${message.context.correlationId} on station ${ocppConnectionName}`,
       );
       return;
     }
@@ -984,7 +984,7 @@ export class TransactionsModule extends AbstractModule {
     });
 
     const storedTariff = await this._tariffRepository.upsertTariffByTariffId(tenantId, newTariff);
-    this._logger.info(`Tariff ${storedTariff.id} stored for station ${stationId}`);
+    this._logger.info(`Tariff ${storedTariff.id} stored for station ${ocppConnectionName}`);
   }
 
   protected async deactivateOtherActiveTransactionsAtEvse201(
