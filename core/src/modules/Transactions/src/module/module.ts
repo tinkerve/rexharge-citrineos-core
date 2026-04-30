@@ -373,6 +373,47 @@ export class TransactionsModule extends AbstractModule {
           );
         }
 
+        // C23: Increasing authorization amount
+        // When CS sends TransactionEventRequest(Updated) with triggerReason=LimitSet (OCPP 2.1),
+        // it indicates the authorization amount has been increased and transactionLimit.maxCost updated.
+        if (message.protocol === OCPPVersion.OCPP2_1 && transaction && transaction.isActive) {
+          const ocpp21Payload = message.payload as unknown as OCPP2_1.TransactionEventRequest;
+          if (
+            ocpp21Payload.triggerReason === OCPP2_1.TriggerReasonEnumType.LimitSet &&
+            ocpp21Payload.transactionInfo?.transactionLimit?.maxCost != null
+          ) {
+            const newMaxCost = ocpp21Payload.transactionInfo.transactionLimit.maxCost;
+            this._logger.info(
+              `Authorization amount increased for station ${stationId}, ` +
+                `transaction ${transactionId}. New maxCost=${newMaxCost}.`,
+            );
+
+            // Store the updated maxCost in customData
+            try {
+              const existingCustomData = transaction.customData ?? {};
+              await this._transactionEventRepository.updateTransactionByStationIdAndTransactionId(
+                tenantId,
+                {
+                  customData: {
+                    ...existingCustomData,
+                    transactionLimit: {
+                      ...(existingCustomData.transactionLimit ?? {}),
+                      maxCost: newMaxCost,
+                    },
+                  },
+                } as Partial<Transaction>,
+                transactionId,
+                stationId,
+              );
+            } catch (error) {
+              this._logger.error(
+                `Failed to store updated maxCost for transaction ${transactionId}`,
+                error,
+              );
+            }
+          }
+        }
+
         // I06 - Update Tariff Information During Transaction
         const tariffAvailableAttributes: VariableAttribute[] =
           await this._deviceModelRepository.readAllByQuerystring(tenantId, {
