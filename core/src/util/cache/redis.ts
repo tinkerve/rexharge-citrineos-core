@@ -172,4 +172,8 @@ export class RedisCache implements ICache {
     key = `${namespace}:${key}`;
     return this._client.expire(key, expireSeconds);
   }
+
+  async ping(): Promise<void> {
+    await this._client.ping();
+  }
 }
