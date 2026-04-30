@@ -13,6 +13,7 @@ import {
   securityEventTable,
   tenantSecurityEventTable,
 } from '../schema/SecurityEvent.js';
+import { type Explicit } from '../types.js';
 import { DrizzleRepository } from './Base.js';
 import type { ISecurityEventRepository } from '@/dal/index.js';
 
@@ -20,8 +21,12 @@ import type { ISecurityEventRepository } from '@/dal/index.js';
 // Maps a Drizzle entity (DB row, validated by SecurityEventEntitySchema) to the
 // external SecurityEventDto contract. This keeps the ORM type contained to the
 // DAL layer while letting the rest of the system work against stable DTOs.
+//
+// Explicit<SecurityEventDto> is used so TypeScript errors if any field — including
+// optional ones — is forgotten. The value may still be undefined, but it must be
+// consciously declared. See ../types.ts for the full rationale.
 export function toSecurityEventDto(entity: SecurityEventEntity): SecurityEventDto {
-  return {
+  const dto: Explicit<SecurityEventDto> = {
     id: entity.id,
     stationId: entity.stationId,
     type: entity.type ?? '',
@@ -29,9 +34,11 @@ export function toSecurityEventDto(entity: SecurityEventEntity): SecurityEventDt
     timestamp: entity.timestamp.toISOString(),
     techInfo: entity.techInfo ?? null,
     tenantId: entity.tenantId,
-    createdAt: entity.createdAt ?? undefined,
-    updatedAt: entity.updatedAt ?? undefined,
+    tenant: undefined,
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt,
   };
+  return dto;
 }
 
 export class DrizzleSecurityEventRepository
