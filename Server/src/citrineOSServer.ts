@@ -81,7 +81,7 @@ import {
 } from '@citrineos/core';
 import cors from '@fastify/cors';
 import { type JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import fastify from 'fastify';
 import type {
   FastifyRouteSchemaDef,
@@ -90,6 +90,7 @@ import type {
 } from 'fastify/types/schema.js';
 import type { RedisClientOptions } from 'redis';
 import { type ILogObj, Logger } from 'tslog';
+import { type HealthCheckResult, HealthCheckService } from './health/HealthCheckService.js';
 
 export class CitrineOSServer {
   /**
@@ -120,6 +121,7 @@ export class CitrineOSServer {
   protected readonly appName: string;
   protected _connectionManager?: RabbitMQConnectionManager;
   protected _channelManager?: RabbitMQChannelManager;
+  protected _healthCheckService?: HealthCheckService;
 
   /**
    * Constructor for the class.
@@ -205,6 +207,8 @@ export class CitrineOSServer {
 
     // Initialize database
     await this.initDb();
+
+    this.initHealthCheckService();
 
     // Set up shutdown handlers
     for (const event of ['SIGINT', 'SIGTERM', 'SIGQUIT']) {
@@ -294,7 +298,44 @@ export class CitrineOSServer {
   }
 
   protected initHealthCheck() {
-    this._server.get('/health', async () => ({ status: 'healthy' }));
+    const respond = (reply: FastifyReply, result: HealthCheckResult) =>
+      reply
+        .code(result.status === 'pass' ? 200 : 503)
+        .header('Content-Type', 'application/health+json')
+        .send(result);
+
+    const liveness = async (_req: any, reply: FastifyReply) =>
+      respond(
+        reply,
+        this._healthCheckService
+          ? this._healthCheckService.checkLiveness()
+          : { status: 'pass', checks: {} },
+      );
+
+    const readiness = async (_req: any, reply: FastifyReply) => {
+      if (!this._healthCheckService) {
+        return respond(reply, {
+          status: 'fail',
+          checks: { init: { status: 'fail', error: 'not yet initialized' } },
+        });
+      }
+      return respond(reply, await this._healthCheckService.checkReadiness());
+    };
+
+    this._server.get('/health', liveness);
+    this._server.get('/health/live', liveness);
+    this._server.get('/health/ready', readiness);
+  }
+
+  protected initHealthCheckService() {
+    this._healthCheckService = new HealthCheckService(
+      this._networkConnection,
+      this._connectionManager,
+      this._cache,
+      this._sequelizeInstance,
+      this._config.notReadyThresholdSeconds,
+      this._logger,
+    );
   }
 
   protected initLogger() {
@@ -351,7 +392,9 @@ export class CitrineOSServer {
       provider: authProvider,
       options: {
         excludedRoutes: [
-          '/health', // Health check endpoint
+          '/health',
+          '/health/live',
+          '/health/ready',
           '/docs', // API documentation
         ],
         debug: this._config.logLevel <= 2, // Enable debug logs in dev mode
