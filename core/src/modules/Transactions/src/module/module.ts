@@ -401,7 +401,7 @@ export class TransactionsModule extends AbstractModule {
                       maxCost: newMaxCost,
                     },
                   },
-                } as any,
+                } as Partial<Transaction>,
                 transactionId,
                 stationId,
               );
