@@ -185,7 +185,9 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       ws.close(1001, 'Server shutting down');
 
       // Now manually call it and await it
-      websocketClosePromises.push(this._handleWebsocketClose(identifier));
+      websocketClosePromises.push(
+        this._handleWebsocketClose(identifier, 1001, 'Server shutting down'),
+      );
     }
     await Promise.all(websocketClosePromises);
     this._httpServersMap.forEach((server) => server.close());
@@ -444,20 +446,18 @@ export class WebsocketNetworkConnection implements INetworkConnection {
 
       const staleWs = this._identifierConnections.get(identifier);
       if (staleWs) {
-        staleWs.terminate();
-        try {
-          await this._router.deregisterConnection(tenantId, stationId);
-        } catch (err) {
-          this._logger.error(`Failed to deregister stale connection for ${identifier}`, err);
+        // Detach the close listener so the async close event doesn't race with
+        // the new connection's state; drive cleanup synchronously below.
+        const staleCloseHandler = this._closeHandlers.get(identifier);
+        if (staleCloseHandler) {
+          staleWs.removeListener('close', staleCloseHandler);
+          this._closeHandlers.delete(identifier);
         }
+        staleWs.terminate();
+        await this._handleWebsocketClose(identifier, 1006, 'Replaced by new connection');
         this._logger.warn(`Terminated stale websocket connection for ${identifier}`);
       }
 
-      this._identifierConnections.set(identifier, ws);
-      this._tenantConnectionCounts.set(
-        tenantId,
-        (this._tenantConnectionCounts.get(tenantId) ?? 0) + 1,
-      );
       try {
         // Get IP address of client
         const ip =
@@ -470,33 +470,52 @@ export class WebsocketNetworkConnection implements INetworkConnection {
         });
         connLogger.info('Client websocket connected', identifier, ip, port, ws.protocol);
 
-        // Register client
+        // Register client. Use atomic SET NX so that if another instance
+        // (sharing the same Redis cache) already holds the slot for this
+        // identifier, we lose the race deterministically and reject here
+        // rather than silently overwriting a peer's claim.
         const websocketConnection: IWebsocketConnection = {
           id: websocketServerConfig.id,
           timeConnected: new Date().toISOString(),
           protocol: ws.protocol,
           allowUnknownChargingStations: websocketServerConfig.allowUnknownChargingStations,
         };
-        let registered = await this._cache.set(
+        const claimed = await this._cache.setIfNotExist(
           identifier,
           JSON.stringify(websocketConnection),
           CacheNamespace.Connections,
           pingInterval * 3,
         );
-        registered =
-          registered && (await this._router.registerConnection(tenantId, stationId, ws.protocol));
-        if (!registered) {
-          connLogger.fatal('Failed to register websocket client', identifier);
-          throw new Error('Failed to register websocket client');
+        if (!claimed) {
+          connLogger.warn(
+            `Connection slot already held for ${identifier}, rejecting new connection`,
+          );
+          ws.close(1013, 'Already connected on another instance');
+          return;
         }
 
-        connLogger.info(
-          `Successfully connected new charging station: ${identifier} live connections: ${this._identifierConnections.size}`,
+        const registered = await this._router.registerConnection(tenantId, stationId, ws.protocol);
+        if (!registered) {
+          connLogger.fatal('Failed to register websocket client', identifier);
+          await this._cache.remove(identifier, CacheNamespace.Connections).catch((err) => {
+            this._logger.error(`Failed to remove connection string ${identifier} from cache`, err);
+          });
+          ws.close(1011, 'Failed to register connection in message router');
+          return;
+        }
+
+        this._identifierConnections.set(identifier, ws);
+        this._tenantConnectionCounts.set(
+          tenantId,
+          (this._tenantConnectionCounts.get(tenantId) ?? 0) + 1,
         );
 
         // Register all websocket events
         this._registerWebsocketEvents(identifier, ws, pingInterval);
 
+        connLogger.info(
+          `Successfully connected new charging station: ${identifier} live connections: ${this._identifierConnections.size}`,
+        );
         // Resume the WebSocket event emitter after events have been subscribed to
         ws.resume();
       } catch (error) {
@@ -530,7 +549,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     };
 
     const closeHandler = (code: number, reason: Buffer<ArrayBufferLike>) => {
-      this._handleWebsocketClose(identifier, code, reason);
+      this._handleWebsocketClose(identifier, code, reason.toString());
     };
     ws.once('close', closeHandler);
     this._closeHandlers.set(identifier, closeHandler);
@@ -571,7 +590,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
   private async _handleWebsocketClose(
     identifier: string,
     code: number,
-    reason: Buffer<ArrayBufferLike>,
+    reason: string,
   ): Promise<void> {
     this._closeHandlers.delete(identifier);
     // Cancel any pending ping timer so it doesn't fire against a closed socket
@@ -617,7 +636,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       const connection: IWebsocketConnection = JSON.parse(connectionString);
       const timeConnected = new Date().getTime() - new Date(connection.timeConnected).getTime();
       this._logger.info(
-        `Connection ${identifier} closed after being connected for ${timeConnected} ms with code ${code} and reason ${reason.toString()}`,
+        `Connection ${identifier} closed after being connected for ${timeConnected} ms with code ${code} and reason ${reason}`,
       );
     }
 
