@@ -303,6 +303,7 @@ export const systemConfigInputSchema = z.object({
   maxCallLengthSeconds: z.number().int().min(1).default(20).optional(),
   maxCachingSeconds: z.number().int().min(1).default(30).optional(),
   maxReconnectDelay: z.number().int().min(1).default(30).optional(),
+  shutdownGracePeriodSeconds: z.number().int().min(1).default(30).optional(),
   ocpiServer: z.object({
     host: z.string().default('localhost').optional(),
     port: z.number().int().min(1).default(8085).optional(),
@@ -628,6 +629,7 @@ export const systemConfigSchema = z
     maxCallLengthSeconds: z.number().int().min(1),
     maxCachingSeconds: z.number().int().min(1),
     maxReconnectDelay: z.number().int().min(1).default(30),
+    shutdownGracePeriodSeconds: z.number().int().min(1).default(30),
     ocpiServer: z.object({
       host: z.string(),
       port: z.number().int().min(1),
