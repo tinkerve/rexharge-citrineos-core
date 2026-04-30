@@ -708,7 +708,7 @@ export class TransactionsModule extends AbstractModule {
             customData: {
               settlement: settlementData,
             },
-          } as any,
+          } as Partial<Transaction>,
           request.transactionId,
           stationId,
         );
