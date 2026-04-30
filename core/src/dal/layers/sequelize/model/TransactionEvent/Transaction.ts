@@ -15,6 +15,7 @@ import type {
   TenantDto,
   TransactionDto,
   TransactionEventDto,
+  TransactionLimit,
 } from '@citrineos/base';
 import { DEFAULT_TENANT_ID, Namespace } from '@citrineos/base';
 import {
@@ -133,6 +134,9 @@ export class Transaction extends Model implements TransactionDto {
 
   @Column(DataType.BIGINT)
   declare timeSpentCharging?: number | null;
+
+  @Column(DataType.JSONB)
+  declare transactionLimit?: TransactionLimit | null;
 
   @Column(DataType.DECIMAL)
   declare meterStart?: number | null;
