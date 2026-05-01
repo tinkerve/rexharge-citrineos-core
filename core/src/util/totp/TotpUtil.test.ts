@@ -11,7 +11,7 @@
  * deterministic without needing to control Date.now().
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { TotpUtil } from './TotpUtil.js';
 import { createHmac } from 'node:crypto';
 
