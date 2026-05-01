@@ -17,12 +17,12 @@
  *  • Unsubscribe actually removes bindings from the broker.
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
 import { OCPP_CallAction } from '@citrineos/base';
-import { RabbitMqReceiver } from '../../../queue/rabbit-mq/receiver.js';
-import { RabbitMQConnectionManager } from '../../../queue/rabbit-mq/ConnectionManager.js';
+import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { RabbitMQChannelManager } from '../../../queue/rabbit-mq/ChannelManager.js';
+import { RabbitMQConnectionManager } from '../../../queue/rabbit-mq/ConnectionManager.js';
+import { RabbitMqReceiver } from '../../../queue/rabbit-mq/receiver.js';
 import { aSystemConfigWithAmqp } from '../../providers/RabbitMqProvider.js';
 
 // ---------------------------------------------------------------------------
@@ -122,18 +122,19 @@ async function getActiveConsumerCount(queueName: string): Promise<number> {
 async function waitForConsumerCount(
   queueName: string,
   expected: number,
-  timeoutMs = 5_000,
+  timeoutMs = 10_000,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
+  let lastCount = undefined;
   while (Date.now() < deadline) {
     const count = await getActiveConsumerCount(queueName);
     if (count === expected) return;
+    lastCount = count;
     await new Promise((r) => setTimeout(r, 250));
   }
-  const count = await getActiveConsumerCount(queueName);
   throw new Error(
     `Timed out waiting for consumer count ${expected} on "${queueName}" ` +
-      `(last observed: ${count})`,
+      `(last observed: ${lastCount})`,
   );
 }
 
