@@ -45,7 +45,9 @@ export class EVDriverOcpp2Api
     logger?: Logger<ILogObj>,
   ) {
     super(evDriverModule, server, version, logger);
-    this._registerInitiateWebPaymentRoute();
+    if (version === OCPPVersion.OCPP2_1) {
+      this._registerInitiateWebPaymentRoute();
+    }
   }
 
   //TODO: 2.1 needs extended code for this request
