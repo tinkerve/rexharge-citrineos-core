@@ -23,7 +23,7 @@ export interface RealTimeAuthorizationRequestBody {
   idToken: string;
   idTokenType: IdTokenEnumType;
   locationId?: string;
-  stationId: string;
+  ocppConnectionName: string;
   evseId: number;
   connectorId: number;
 }
@@ -85,7 +85,7 @@ export class RealTimeAuthorizer implements IAuthorizer {
     try {
       const chargingStation = await this._locationRepository.readChargingStationByStationId(
         context.tenantId,
-        context.stationId,
+        context.ocppConnectionName,
       );
 
       // Determine evseId and connectorId
@@ -115,7 +115,7 @@ export class RealTimeAuthorizer implements IAuthorizer {
         const realTimeAuthLastAttempt = authorization.realTimeAuthLastAttempt;
         // Check if last attempt was at the same station and connector within the timeout period
         if (
-          context.stationId === realTimeAuthLastAttempt.stationId &&
+          context.ocppConnectionName === realTimeAuthLastAttempt.ocppConnectionName &&
           connectorId! === realTimeAuthLastAttempt.connectorId
         ) {
           const lastAttempt = new Date(realTimeAuthLastAttempt.timestamp);
@@ -137,7 +137,7 @@ export class RealTimeAuthorizer implements IAuthorizer {
         idToken: authorization.idToken,
         idTokenType: authorization.idTokenType!,
         locationId: chargingStation!.locationId!.toString(),
-        stationId: context.stationId,
+        ocppConnectionName: context.ocppConnectionName,
         evseId: evseId,
         connectorId: connectorId,
       };
@@ -204,7 +204,7 @@ export class RealTimeAuthorizer implements IAuthorizer {
     authorization.realTimeAuthLastAttempt = {
       timestamp: new Date().toISOString(),
       result,
-      stationId: context.stationId,
+      ocppConnectionName: context.ocppConnectionName,
       evseId: evseId,
       connectorId: connectorId!,
     };

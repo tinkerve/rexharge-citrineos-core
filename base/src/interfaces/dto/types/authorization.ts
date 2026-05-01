@@ -16,7 +16,7 @@ export type AdditionalInfo = z.infer<typeof AdditionalInfoSchema>;
 export const RealTimeAuthLastAttemptSchema = z.object({
   timestamp: z.iso.datetime(),
   result: AuthorizationStatusEnumSchema,
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   evseId: z.number().nullable().optional(),
   connectorId: z.number(),
 });

@@ -42,12 +42,12 @@ export class MessageInfo extends Model implements MessageInfoDto {
   @Index
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_tenantId_id',
+    unique: 'stationName_tenantId_id',
   })
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @Column({
-    unique: 'stationId_tenantId_id',
+    unique: 'stationName_tenantId_id',
     type: DataType.INTEGER,
   })
   declare id: number;
@@ -106,7 +106,7 @@ export class MessageInfo extends Model implements MessageInfoDto {
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
-    unique: 'stationId_tenantId_id',
+    unique: 'stationName_tenantId_id',
   })
   declare tenantId: number;
 

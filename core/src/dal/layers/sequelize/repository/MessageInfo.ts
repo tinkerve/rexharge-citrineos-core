@@ -19,7 +19,7 @@ export class SequelizeMessageInfoRepository
     super(config, MessageInfo.MODEL_NAME, logger, sequelizeInstance);
   }
 
-  async deactivateAllByStationId(tenantId: number, stationId: string): Promise<void> {
+  async deactivateAllByStationId(tenantId: number, ocppConnectionName: string): Promise<void> {
     await this.updateAllByQuery(
       tenantId,
       {
@@ -27,7 +27,7 @@ export class SequelizeMessageInfoRepository
       },
       {
         where: {
-          stationId: stationId,
+          ocppConnectionName: ocppConnectionName,
           active: true,
         },
         returning: false,
@@ -38,13 +38,13 @@ export class SequelizeMessageInfoRepository
   async createOrUpdateByMessageInfoTypeAndStationId(
     tenantId: number,
     message: OCPP2_0_1.MessageInfoType,
-    stationId: string,
+    ocppConnectionName: string,
     componentId?: number,
   ): Promise<MessageInfo> {
     return await this.s.transaction(async (transaction) => {
       const savedMessageInfo = await this.s.models[MessageInfo.MODEL_NAME].findOne({
         where: {
-          stationId: stationId,
+          ocppConnectionName: ocppConnectionName,
           id: message.id,
         },
         transaction: transaction,
@@ -52,7 +52,7 @@ export class SequelizeMessageInfoRepository
 
       const messageInfo = {
         tenantId: tenantId,
-        stationId: stationId,
+        ocppConnectionName: ocppConnectionName,
         displayComponentId: componentId ?? null,
         id: message.id,
         priority: message.priority,

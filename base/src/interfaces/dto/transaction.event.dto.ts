@@ -11,7 +11,7 @@ import { TransactionTypeSchema } from './types/transaction.type.js';
 
 export const TransactionEventSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   eventType: TransactionEventEnumSchema,
   meterValue: z.tuple([MeterValueSchema]).rest(MeterValueSchema).optional(), // Non-empty array
   timestamp: z.iso.datetime(),

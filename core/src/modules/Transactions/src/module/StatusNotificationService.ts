@@ -44,34 +44,34 @@ export class StatusNotificationService {
   /**
    * Stores an internal record of the incoming status, then updates the device model for the updated connector.
    *
-   * @param {string} stationId - The Charging Station sending the status notification request
+   * @param ocppConnectionName - The connection name of the charging station
    * @param {StatusNotificationRequest} statusNotificationRequest
    */
   async processStatusNotification(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     statusNotificationRequest: OCPP2_0_1.StatusNotificationRequest,
   ) {
     const chargingStation = await this._locationRepository.readChargingStationByStationId(
       tenantId,
-      stationId,
+      ocppConnectionName,
     );
     if (chargingStation) {
       const statusNotification = StatusNotification.build({
         tenantId,
-        stationId,
+        ocppConnectionName: ocppConnectionName,
         ...statusNotificationRequest,
       });
       await this._locationRepository.addStatusNotificationToChargingStation(
         tenantId,
-        stationId,
+        ocppConnectionName,
         statusNotification,
       );
 
       const connector = {
         tenantId,
         connectorId: statusNotificationRequest.connectorId,
-        stationId,
+        ocppConnectionName: ocppConnectionName,
         status: OCPP2_0_1_Mapper.LocationMapper.mapConnectorStatus(
           statusNotificationRequest.connectorStatus,
         ),
@@ -81,7 +81,7 @@ export class StatusNotificationService {
       } as Connector;
 
       const connectionJson = await this._cache.get<string>(
-        createIdentifier(tenantId, stationId),
+        createIdentifier(tenantId, ocppConnectionName),
         CacheNamespace.Connections,
       );
       const connection: IWebsocketConnection | null = connectionJson
@@ -93,7 +93,7 @@ export class StatusNotificationService {
         );
         if (!connectorExists) {
           throw new Error(
-            `Connector ${statusNotificationRequest.connectorId} on station ${stationId} does not exist and allowUnknownChargingStations is false`,
+            `Connector ${statusNotificationRequest.connectorId} on station ${ocppConnectionName} does not exist and allowUnknownChargingStations is false`,
           );
         }
       }
@@ -143,25 +143,25 @@ export class StatusNotificationService {
         await this._deviceModelRepository.createOrUpdateDeviceModelByStationId(
           tenantId,
           reportDataType,
-          stationId,
+          ocppConnectionName,
           statusNotificationRequest.timestamp,
         );
       }
     } else {
       this._logger.warn(
-        `Charging station ${stationId} not found. Status notification cannot be associated with a charging station.`,
+        `Charging station ${ocppConnectionName} not found. Status notification cannot be associated with a charging station.`,
       );
     }
   }
 
   async processOcpp16StatusNotification(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     statusNotificationRequest: OCPP1_6.StatusNotificationRequest,
   ) {
     const chargingStation = await this._locationRepository.readChargingStationByStationId(
       tenantId,
-      stationId,
+      ocppConnectionName,
     );
     if (chargingStation) {
       const matchingEvse = chargingStation.evses?.find((evse) =>
@@ -172,7 +172,7 @@ export class StatusNotificationService {
       const statusNotificationInput: Partial<StatusNotification> = {
         tenantId,
         ...statusNotificationRequest,
-        stationId,
+        ocppConnectionName: ocppConnectionName,
         connectorStatus: statusNotificationRequest.status,
       };
       if (matchingEvse) {
@@ -181,14 +181,14 @@ export class StatusNotificationService {
       const statusNotification = StatusNotification.build(statusNotificationInput);
       await this._locationRepository.addStatusNotificationToChargingStation(
         tenantId,
-        stationId,
+        ocppConnectionName,
         statusNotification,
       );
 
       const connector = {
         tenantId,
         connectorId: statusNotificationRequest.connectorId,
-        stationId,
+        ocppConnectionName: ocppConnectionName,
         status: OCPP1_6_Mapper.LocationMapper.mapStatusNotificationRequestStatusToConnectorStatus(
           statusNotificationRequest.status,
         ),
@@ -214,14 +214,14 @@ export class StatusNotificationService {
           },
           {
             where: {
-              stationId,
+              ocppConnectionName: ocppConnectionName,
               tenantId,
             },
           },
         );
       } else if (statusNotificationRequest.connectorId !== 0) {
         const connectionJson = await this._cache.get<string>(
-          createIdentifier(tenantId, stationId),
+          createIdentifier(tenantId, ocppConnectionName),
           CacheNamespace.Connections,
         );
         const connection: IWebsocketConnection | null = connectionJson
@@ -233,7 +233,7 @@ export class StatusNotificationService {
           );
           if (!connectorExists) {
             throw new Error(
-              `Connector ${statusNotificationRequest.connectorId} on station ${stationId} does not exist and allowUnknownChargingStations is false`,
+              `Connector ${statusNotificationRequest.connectorId} on station ${ocppConnectionName} does not exist and allowUnknownChargingStations is false`,
             );
           }
         }
@@ -241,7 +241,7 @@ export class StatusNotificationService {
       }
     } else {
       this._logger.warn(
-        `Charging station ${stationId} not found. Status notification cannot be associated with a charging station.`,
+        `Charging station ${ocppConnectionName} not found. Status notification cannot be associated with a charging station.`,
       );
     }
   }

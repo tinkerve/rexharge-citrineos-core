@@ -404,7 +404,7 @@ export class EVDriverModule extends AbstractModule {
             const connectorTypes: VariableAttribute[] =
               await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
                 tenantId: context.tenantId,
-                stationId: message.context.stationId,
+                ocppConnectionName: message.context.ocppConnectionName,
                 component_name: 'Connector',
                 variable_name: 'ConnectorType',
                 type: AttributeEnum.Actual,
@@ -432,7 +432,7 @@ export class EVDriverModule extends AbstractModule {
               const evseIdAttributes: VariableAttribute[] =
                 await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
                   tenantId: context.tenantId,
-                  stationId: message.context.stationId,
+                  ocppConnectionName: message.context.ocppConnectionName,
                   component_name: 'EVSE',
                   variable_name: 'EvseId',
                   type: AttributeEnum.Actual,
@@ -494,7 +494,7 @@ export class EVDriverModule extends AbstractModule {
       const tariffAvailable: VariableAttribute[] =
         await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
           tenantId: context.tenantId,
-          stationId: message.context.stationId,
+          ocppConnectionName: message.context.ocppConnectionName,
           component_name: 'TariffCostCtrlr',
           variable_name: 'Available',
           variable_instance: 'Tariff',
@@ -504,7 +504,7 @@ export class EVDriverModule extends AbstractModule {
       const displayMessageAvailable: VariableAttribute[] =
         await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
           tenantId: context.tenantId,
-          stationId: message.context.stationId,
+          ocppConnectionName: message.context.ocppConnectionName,
           component_name: 'DisplayMessageCtrlr',
           variable_name: 'Available',
           type: AttributeEnum.Actual,
@@ -631,7 +631,7 @@ export class EVDriverModule extends AbstractModule {
             const connectorTypes: VariableAttribute[] =
               await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
                 tenantId: context.tenantId,
-                stationId: message.context.stationId,
+                ocppConnectionName: message.context.ocppConnectionName,
                 component_name: 'Connector',
                 variable_name: 'ConnectorType',
                 type: AttributeEnum.Actual,
@@ -659,7 +659,7 @@ export class EVDriverModule extends AbstractModule {
               const evseIdAttributes: VariableAttribute[] =
                 await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
                   tenantId: context.tenantId,
-                  stationId: message.context.stationId,
+                  ocppConnectionName: message.context.ocppConnectionName,
                   component_name: 'EVSE',
                   variable_name: 'EvseId',
                   type: AttributeEnum.Actual,
@@ -745,7 +745,7 @@ export class EVDriverModule extends AbstractModule {
       const tariffEnabled: VariableAttribute[] =
         await this._deviceModelRepository.readAllByQuerystring(context.tenantId, {
           tenantId: context.tenantId,
-          stationId: message.context.stationId,
+          ocppConnectionName: message.context.ocppConnectionName,
           component_name: 'TariffCostCtrlr',
           variable_name: 'Enabled',
           variable_instance: 'Tariff',
@@ -787,7 +787,7 @@ export class EVDriverModule extends AbstractModule {
         {
           where: {
             tenantId: message.context.tenantId,
-            stationId: message.context.stationId,
+            ocppConnectionName: message.context.ocppConnectionName,
             id: message.payload.reservationId,
           },
         },
@@ -856,7 +856,7 @@ export class EVDriverModule extends AbstractModule {
     if (message.payload.status === RequestStartStopStatusEnum.Accepted) {
       // Start transaction with charging profile succeeds,
       // we need to update db entity with the latest data from charger
-      const stationId: string = message.context.stationId;
+      const ocppConnectionName: string = message.context.ocppConnectionName;
       // 1. Clear all existing profiles: find existing active profiles and set them to isActive false
       await this._chargingProfileRepository.updateAllByQuery(
         message.context.tenantId,
@@ -865,7 +865,7 @@ export class EVDriverModule extends AbstractModule {
         },
         {
           where: {
-            stationId: stationId,
+            ocppConnectionName: ocppConnectionName,
             isActive: true,
             chargingLimitSource: ChargingLimitSourceEnum.CSO,
             chargingProfilePurpose: ChargingProfilePurposeEnum.TxProfile,
@@ -876,14 +876,14 @@ export class EVDriverModule extends AbstractModule {
       // 2. Request charging profiles to get the latest data (if configured)
       if (this._config.modules.evdriver.enableGetChargingProfilesOnStartTransaction !== false) {
         await this.sendCall(
-          stationId,
+          ocppConnectionName,
           message.context.tenantId,
           message.protocol,
           OCPP_CallAction.GetChargingProfiles,
           {
             requestId: await this._idGenerator.generateRequestId(
               message.context.tenantId,
-              message.context.stationId,
+              message.context.ocppConnectionName,
               ChargingStationSequenceTypeEnum.getChargingProfiles,
             ),
             chargingProfile: {
@@ -894,7 +894,7 @@ export class EVDriverModule extends AbstractModule {
         );
       } else {
         this._logger.info(
-          `Skipping GetChargingProfiles after RequestStartTransaction for station ${stationId} (disabled by enableGetChargingProfilesOnStartTransaction configuration)`,
+          `Skipping GetChargingProfiles after RequestStartTransaction for station ${ocppConnectionName} (disabled by enableGetChargingProfilesOnStartTransaction configuration)`,
         );
       }
     } else {
@@ -920,7 +920,7 @@ export class EVDriverModule extends AbstractModule {
     const request = await this._ocppMessageRepository.readOnlyOneByQuery(message.context.tenantId, {
       where: {
         tenantId: message.context.tenantId,
-        stationId: message.context.stationId,
+        ocppConnectionName: message.context.ocppConnectionName,
         correlationId: message.context.correlationId,
         origin: MessageOrigin.ChargingStationManagementSystem,
       },
@@ -950,7 +950,7 @@ export class EVDriverModule extends AbstractModule {
     const request = await this._ocppMessageRepository.readOnlyOneByQuery(message.context.tenantId, {
       where: {
         tenantId: message.context.tenantId,
-        stationId: message.context.stationId,
+        ocppConnectionName: message.context.ocppConnectionName,
         correlationId: message.context.correlationId,
         origin: MessageOrigin.ChargingStationManagementSystem,
       },
@@ -995,18 +995,18 @@ export class EVDriverModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('SendLocalListResponse received:', message, props);
 
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
 
     const sendLocalListRequest =
       await this._localAuthListRepository.getSendLocalListRequestByStationIdAndCorrelationId(
         message.context.tenantId,
-        stationId,
+        ocppConnectionName,
         message.context.correlationId,
       );
 
     if (!sendLocalListRequest) {
       this._logger.error(
-        `Unable to process SendLocalListResponse. SendLocalListRequest not found for StationId ${stationId} by CorrelationId ${message.context.correlationId}.`,
+        `Unable to process SendLocalListResponse. SendLocalListRequest not found for StationId ${ocppConnectionName} by CorrelationId ${message.context.correlationId}.`,
       );
       return;
     }
@@ -1017,25 +1017,25 @@ export class EVDriverModule extends AbstractModule {
       case SendLocalListStatusEnum.Accepted:
         await this._localAuthListRepository.createOrUpdateLocalListVersionFromStationIdAndSendLocalList(
           message.context.tenantId,
-          stationId,
+          ocppConnectionName,
           sendLocalListRequest,
         );
         break;
       case SendLocalListStatusEnum.Failed:
         // TODO: Surface alert for upstream handling
         this._logger.error(
-          `SendLocalListRequest failed for StationId ${stationId}: ${message.context.correlationId}, ${JSON.stringify(sendLocalListRequest)}.`,
+          `SendLocalListRequest failed for StationId ${ocppConnectionName}: ${message.context.correlationId}, ${JSON.stringify(sendLocalListRequest)}.`,
         );
         break;
       case SendLocalListStatusEnum.VersionMismatch: {
         this._logger.error(
-          `SendLocalListRequest version mismatch for StationId ${stationId}: ${message.context.correlationId}, ${JSON.stringify(sendLocalListRequest)}.`,
+          `SendLocalListRequest version mismatch for StationId ${ocppConnectionName}: ${message.context.correlationId}, ${JSON.stringify(sendLocalListRequest)}.`,
         );
         this._logger.error(
-          `Sending GetLocalListVersionRequest for StationId ${stationId} due to SendLocalListRequest version mismatch.`,
+          `Sending GetLocalListVersionRequest for StationId ${ocppConnectionName} due to SendLocalListRequest version mismatch.`,
         );
         const messageConfirmation = await this.sendCall(
-          stationId,
+          ocppConnectionName,
           message.context.tenantId,
           OCPPVersion.OCPP2_1,
           OCPP_CallAction.GetLocalListVersion,
@@ -1043,7 +1043,7 @@ export class EVDriverModule extends AbstractModule {
         );
         if (!messageConfirmation.success) {
           this._logger.error(
-            `Unable to send GetLocalListVersionRequest for StationId ${stationId} due to SendLocalListRequest version mismatch.`,
+            `Unable to send GetLocalListVersionRequest for StationId ${ocppConnectionName} due to SendLocalListRequest version mismatch.`,
             messageConfirmation,
           );
         }
@@ -1065,7 +1065,7 @@ export class EVDriverModule extends AbstractModule {
     await this._localAuthListRepository.validateOrReplaceLocalListVersionForStation(
       message.context.tenantId,
       message.payload.versionNumber,
-      message.context.stationId,
+      message.context.ocppConnectionName,
     );
   }
 
@@ -1173,13 +1173,13 @@ export class EVDriverModule extends AbstractModule {
     this._logger.debug('RemoteStartTransactionResponse received:', message, props);
 
     const tenantId = message.context.tenantId;
-    const stationId: string = message.context.stationId;
+    const ocppConnectionName: string = message.context.ocppConnectionName;
 
     if (message.payload.status === OCPP1_6.RemoteStartTransactionResponseStatus.Accepted) {
       const originalMessage = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
         where: {
           tenantId: tenantId,
-          stationId: stationId,
+          ocppConnectionName: ocppConnectionName,
           correlationId: message.context.correlationId,
           origin: MessageOrigin.ChargingStationManagementSystem,
         },
@@ -1196,7 +1196,7 @@ export class EVDriverModule extends AbstractModule {
           await this._chargingProfileRepository.createOrUpdateChargingProfile(
             tenantId,
             mapped,
-            stationId,
+            ocppConnectionName,
             originalRequest.connectorId ?? null,
             ChargingLimitSourceEnum.CSO,
             true,

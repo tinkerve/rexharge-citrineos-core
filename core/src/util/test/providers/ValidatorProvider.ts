@@ -132,7 +132,7 @@ export function aVariableAttribute(override?: Partial<VariableAttribute>): Varia
   return {
     id: faker.number.int({ min: 1, max: 999999 }),
     tenantId: faker.number.int({ min: 1, max: 100 }),
-    stationId: faker.string.alphanumeric(10),
+    ocppConnectionName: faker.string.alphanumeric(10),
     type: OCPP2_0_1.AttributeEnumType.Actual,
     value: faker.number.int({ min: 1, max: 100 }).toString(),
     dataType: OCPP2_0_1.DataEnumType.integer,
@@ -148,7 +148,7 @@ export function aTransactionEvent(override?: Partial<TransactionEvent>): Transac
   return {
     id: faker.number.int({ min: 1, max: 999999 }),
     tenantId: faker.number.int({ min: 1, max: 100 }),
-    stationId: faker.string.alphanumeric(10),
+    ocppConnectionName: faker.string.alphanumeric(10),
     eventType: OCPP2_0_1.TransactionEventEnumType.Started,
     timestamp: new Date().toISOString(),
     triggerReason: OCPP2_0_1.TriggerReasonEnumType.Authorized,
@@ -165,7 +165,7 @@ export function anEvse(override?: Partial<Evse>): Evse {
     databaseId: faker.number.int({ min: 1, max: 999999 }),
     id: faker.number.int({ min: 1, max: 10 }),
     tenantId: faker.number.int({ min: 1, max: 100 }),
-    stationId: faker.string.alphanumeric(10),
+    ocppConnectionName: faker.string.alphanumeric(10),
     connectorId: faker.number.int({ min: 1, max: 2 }),
     ...override,
   } as Evse;

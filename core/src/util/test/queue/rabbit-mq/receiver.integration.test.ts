@@ -235,7 +235,7 @@ describe('RabbitMqReceiver', () => {
       const id = `Config-${uid}`;
       await receiver.subscribe(id, [OCPP_CallAction.BootNotification], {
         tenantId: '1',
-        stationId: 'CS001',
+        ocppConnectionName: 'CS001',
       });
 
       const bindings = await getQueueBindings(`rabbit_queue_${id}`);
@@ -243,7 +243,7 @@ describe('RabbitMqReceiver', () => {
 
       expect(binding.arguments['x-match']).toBe('all');
       expect(binding.arguments['tenantId']).toBe('1');
-      expect(binding.arguments['stationId']).toBe('CS001');
+      expect(binding.arguments['ocppConnectionName']).toBe('CS001');
     }, 15_000);
 
     it('should drop the consumer count to 0 after unsubscribe', async () => {
@@ -276,7 +276,7 @@ describe('RabbitMqReceiver', () => {
 
     it('should create a single durable, non-auto-delete instance queue', async () => {
       await receiver.subscribe('charger-1', undefined, {
-        stationId: 'CS001',
+        ocppConnectionName: 'CS001',
         tenantId: '1',
         state: 'Request',
         origin: 'CSMS',
@@ -294,9 +294,18 @@ describe('RabbitMqReceiver', () => {
     it('should start exactly one consumer even after multiple chargers subscribe', async () => {
       const queueName = `rabbit_queue_router_${instanceId}-${uid}`;
 
-      await receiver.subscribe('charger-1', undefined, { stationId: 'CS001', tenantId: '1' });
-      await receiver.subscribe('charger-2', undefined, { stationId: 'CS002', tenantId: '1' });
-      await receiver.subscribe('charger-3', undefined, { stationId: 'CS003', tenantId: '1' });
+      await receiver.subscribe('charger-1', undefined, {
+        ocppConnectionName: 'CS001',
+        tenantId: '1',
+      });
+      await receiver.subscribe('charger-2', undefined, {
+        ocppConnectionName: 'CS002',
+        tenantId: '1',
+      });
+      await receiver.subscribe('charger-3', undefined, {
+        ocppConnectionName: 'CS003',
+        tenantId: '1',
+      });
 
       await waitForConsumerCount(queueName, 1);
     }, 15_000);
@@ -304,20 +313,29 @@ describe('RabbitMqReceiver', () => {
     it('should add one binding to the instance queue per charger subscribe', async () => {
       const queueName = `rabbit_queue_router_${instanceId}-${uid}`;
 
-      await receiver.subscribe('charger-1', undefined, { stationId: 'CS001', tenantId: '1' });
-      await receiver.subscribe('charger-2', undefined, { stationId: 'CS002', tenantId: '1' });
-      await receiver.subscribe('charger-3', undefined, { stationId: 'CS003', tenantId: '1' });
+      await receiver.subscribe('charger-1', undefined, {
+        ocppConnectionName: 'CS001',
+        tenantId: '1',
+      });
+      await receiver.subscribe('charger-2', undefined, {
+        ocppConnectionName: 'CS002',
+        tenantId: '1',
+      });
+      await receiver.subscribe('charger-3', undefined, {
+        ocppConnectionName: 'CS003',
+        tenantId: '1',
+      });
 
       const bindings = await getQueueBindings(queueName);
 
       expect(bindings).toHaveLength(3);
     }, 15_000);
 
-    it('should include stationId and tenantId in each charger binding', async () => {
+    it('should include ocppConnectionName and tenantId in each charger binding', async () => {
       const queueName = `rabbit_queue_router_${instanceId}-${uid}`;
 
       await receiver.subscribe('charger-1', undefined, {
-        stationId: 'CS001',
+        ocppConnectionName: 'CS001',
         tenantId: '42',
         state: 'Response',
         origin: 'CSMS',
@@ -327,7 +345,7 @@ describe('RabbitMqReceiver', () => {
       const binding = bindings[0];
 
       expect(binding.arguments['x-match']).toBe('all');
-      expect(binding.arguments['stationId']).toBe('CS001');
+      expect(binding.arguments['ocppConnectionName']).toBe('CS001');
       expect(binding.arguments['tenantId']).toBe('42');
       expect(binding.arguments['state']).toBe('Response');
       expect(binding.arguments['origin']).toBe('CSMS');
@@ -339,7 +357,7 @@ describe('RabbitMqReceiver', () => {
       await receiver.subscribe(
         'charger-1',
         [OCPP_CallAction.BootNotification, OCPP_CallAction.Heartbeat],
-        { stationId: 'CS001', tenantId: '1' },
+        { ocppConnectionName: 'CS001', tenantId: '1' },
       );
 
       const bindings = await getQueueBindings(queueName);
@@ -353,22 +371,34 @@ describe('RabbitMqReceiver', () => {
     it('should remove only the unsubscribed charger bindings from the broker', async () => {
       const queueName = `rabbit_queue_router_${instanceId}-${uid}`;
 
-      await receiver.subscribe('charger-1', undefined, { stationId: 'CS001', tenantId: '1' });
-      await receiver.subscribe('charger-2', undefined, { stationId: 'CS002', tenantId: '1' });
+      await receiver.subscribe('charger-1', undefined, {
+        ocppConnectionName: 'CS001',
+        tenantId: '1',
+      });
+      await receiver.subscribe('charger-2', undefined, {
+        ocppConnectionName: 'CS002',
+        tenantId: '1',
+      });
 
       await receiver.unsubscribe('charger-1');
 
       const bindings = await getQueueBindings(queueName);
 
       expect(bindings).toHaveLength(1);
-      expect(bindings[0].arguments['stationId']).toBe('CS002');
+      expect(bindings[0].arguments['ocppConnectionName']).toBe('CS002');
     }, 15_000);
 
     it('should keep exactly one consumer after unsubscribing a charger', async () => {
       const queueName = `rabbit_queue_router_${instanceId}-${uid}`;
 
-      await receiver.subscribe('charger-1', undefined, { stationId: 'CS001', tenantId: '1' });
-      await receiver.subscribe('charger-2', undefined, { stationId: 'CS002', tenantId: '1' });
+      await receiver.subscribe('charger-1', undefined, {
+        ocppConnectionName: 'CS001',
+        tenantId: '1',
+      });
+      await receiver.subscribe('charger-2', undefined, {
+        ocppConnectionName: 'CS002',
+        tenantId: '1',
+      });
 
       await receiver.unsubscribe('charger-1');
 
@@ -378,7 +408,10 @@ describe('RabbitMqReceiver', () => {
     it('should cancel the consumer on shutdown and auto-delete the queue', async () => {
       const queueName = `rabbit_queue_router_${instanceId}-${uid}`;
 
-      await receiver.subscribe('charger-1', undefined, { stationId: 'CS001', tenantId: '1' });
+      await receiver.subscribe('charger-1', undefined, {
+        ocppConnectionName: 'CS001',
+        tenantId: '1',
+      });
       await receiver.shutdown();
 
       // autoDelete:true — queue is removed once the last consumer is cancelled

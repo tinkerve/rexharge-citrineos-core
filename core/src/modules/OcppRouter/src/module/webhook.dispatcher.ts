@@ -49,10 +49,10 @@ export class WebhookDispatcher {
     }, WebhookDispatcher.SUBSCRIPTION_REFRESH_INTERVAL_MS);
   }
 
-  async register(tenantId: number, stationId: string) {
-    const identifier = createIdentifier(tenantId, stationId);
+  async register(tenantId: number, ocppConnectionName: string) {
+    const identifier = createIdentifier(tenantId, ocppConnectionName);
     try {
-      await this._loadSubscriptionsForConnection(tenantId, stationId);
+      await this._loadSubscriptionsForConnection(tenantId, ocppConnectionName);
       await Promise.all(
         this._onConnectionCallbacks.get(identifier)?.map((callback) => callback()) ?? [],
       );
@@ -62,8 +62,8 @@ export class WebhookDispatcher {
     }
   }
 
-  async deregister(tenantId: number, stationId: string) {
-    const identifier = createIdentifier(tenantId, stationId);
+  async deregister(tenantId: number, ocppConnectionName: string) {
+    const identifier = createIdentifier(tenantId, ocppConnectionName);
     try {
       await Promise.all(
         this._onCloseCallbacks.get(identifier)?.map((callback) => callback()) ?? [],
@@ -80,14 +80,14 @@ export class WebhookDispatcher {
 
   async dispatchMessageReceivedUnparsed(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     message: string,
     timestamp: string,
     protocol: OCPPVersionType,
     action: string,
     state: MessageState,
   ) {
-    const identifier = createIdentifier(tenantId, stationId);
+    const identifier = createIdentifier(tenantId, ocppConnectionName);
     try {
       // UUID generated so that unparsed messages don't end up referencing each other
       const messageId = uuidv4();
@@ -103,7 +103,7 @@ export class WebhookDispatcher {
 
       const messagePromise = this._ocppMessageRepository.createOCPPMessage(tenantId, {
         tenantId: tenantId,
-        stationId: stationId,
+        ocppConnectionName: ocppConnectionName,
         correlationId: messageId,
         origin: origin,
         state: state,
@@ -123,20 +123,20 @@ export class WebhookDispatcher {
 
   async dispatchMessageReceived(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     timestamp: string,
     protocol: OCPPVersionType,
     action: string,
     state: MessageState,
     rpcMessage: any,
   ) {
-    const identifier = createIdentifier(tenantId, stationId);
+    const identifier = createIdentifier(tenantId, ocppConnectionName);
     const messageId = rpcMessage[1];
     const origin = MessageOrigin.ChargingStation;
 
     const messageRecord = await this._ocppMessageRepository.createOCPPMessage(tenantId, {
       tenantId: tenantId,
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       correlationId: messageId,
       origin: origin,
       state: state,
@@ -187,14 +187,14 @@ export class WebhookDispatcher {
     rpcMessage: any,
   ) {
     const tenantId = getTenantIdFromIdentifier(identifier);
-    const stationId = getStationIdFromIdentifier(identifier);
+    const ocppConnectionName = getStationIdFromIdentifier(identifier);
 
     const messageId = rpcMessage[1];
     const origin = MessageOrigin.ChargingStationManagementSystem;
 
     const messageRecordPromise = this._ocppMessageRepository.createOCPPMessage(tenantId, {
       tenantId: tenantId,
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       correlationId: messageId,
       origin: origin,
       state: state,
@@ -246,10 +246,10 @@ export class WebhookDispatcher {
    * Loads all subscriptions for a given connection into memory
    *
    * @param {number} tenantId
-   * @param {string} stationId
+   * @param ocppConnectionName - The connection name of the charging station
    * @return {Promise<void>} a promise that resolves once all subscriptions are loaded
    */
-  protected async _loadSubscriptionsForConnection(tenantId: number, stationId: string) {
+  protected async _loadSubscriptionsForConnection(tenantId: number, ocppConnectionName: string) {
     const onConnectionCallbacks: OnConnectionCallback[] = [];
     const onCloseCallbacks: OnCloseCallback[] = [];
     const onMessageCallbacks: OnMessageCallback[] = [];
@@ -257,37 +257,37 @@ export class WebhookDispatcher {
 
     const subscriptions = await this._subscriptionRepository.readAllByStationId(
       tenantId,
-      stationId,
+      ocppConnectionName,
     );
 
     for (const subscription of subscriptions) {
       if (subscription.onConnect) {
         onConnectionCallbacks.push(this._onConnectionCallback(subscription));
         this._logger.debug(
-          `Added onConnect callback to ${subscription.url} for station ${subscription.stationId}`,
+          `Added onConnect callback to ${subscription.url} for station ${subscription.ocppConnectionName}`,
         );
       }
       if (subscription.onClose) {
         onCloseCallbacks.push(this._onCloseCallback(subscription));
         this._logger.debug(
-          `Added onClose callback to ${subscription.url} for station ${subscription.stationId}`,
+          `Added onClose callback to ${subscription.url} for station ${subscription.ocppConnectionName}`,
         );
       }
       if (subscription.onMessage) {
         onMessageCallbacks.push(this._onMessageReceivedCallback(subscription));
         this._logger.debug(
-          `Added onMessage callback to ${subscription.url} for station ${subscription.stationId}`,
+          `Added onMessage callback to ${subscription.url} for station ${subscription.ocppConnectionName}`,
         );
       }
       if (subscription.sentMessage) {
         sentMessageCallbacks.push(this._onMessageSentCallback(subscription));
         this._logger.debug(
-          `Added sentMessage callback to ${subscription.url} for station ${subscription.stationId}`,
+          `Added sentMessage callback to ${subscription.url} for station ${subscription.ocppConnectionName}`,
         );
       }
     }
 
-    const connectionIdentifier = createIdentifier(tenantId, stationId);
+    const connectionIdentifier = createIdentifier(tenantId, ocppConnectionName);
     this._onConnectionCallbacks.set(connectionIdentifier, onConnectionCallbacks);
     this._onCloseCallbacks.set(connectionIdentifier, onCloseCallbacks);
     this._onMessageCallbacks.set(connectionIdentifier, onMessageCallbacks);
@@ -298,7 +298,7 @@ export class WebhookDispatcher {
     return (info?: Map<string, string>) =>
       this._subscriptionCallback(
         {
-          stationId: subscription.stationId,
+          ocppConnectionName: subscription.ocppConnectionName,
           event: 'connected',
           info: info ? Object.fromEntries(info) : info,
         },
@@ -310,7 +310,7 @@ export class WebhookDispatcher {
     return (info?: Map<string, string>) =>
       this._subscriptionCallback(
         {
-          stationId: subscription.stationId,
+          ocppConnectionName: subscription.ocppConnectionName,
           event: 'closed',
           info: info ? Object.fromEntries(info) : info,
         },
@@ -326,7 +326,7 @@ export class WebhookDispatcher {
       ) {
         return this._subscriptionCallback(
           {
-            stationId: subscription.stationId,
+            ocppConnectionName: subscription.ocppConnectionName,
             event: 'message',
             origin: MessageOrigin.ChargingStation,
             message: message,
@@ -349,7 +349,7 @@ export class WebhookDispatcher {
       ) {
         return this._subscriptionCallback(
           {
-            stationId: subscription.stationId,
+            ocppConnectionName: subscription.ocppConnectionName,
             event: 'message',
             origin: MessageOrigin.ChargingStationManagementSystem,
             message: message,
@@ -367,13 +367,13 @@ export class WebhookDispatcher {
   /**
    * Sends a message to a given URL that has been subscribed to a station connection event
    *
-   * @param {Object} requestBody - request body containing stationId, event, origin, message, error, and info
+   * @param {Object} requestBody - request body containing ocppConnectionName, event, origin, message, error, and info
    * @param {string} url - the URL to fetch data from
    * @return {Promise<boolean>} a Promise that resolves to a boolean indicating success
    */
   protected async _subscriptionCallback(
     requestBody: {
-      stationId: string;
+      ocppConnectionName: string;
       event: string;
       origin?: MessageOrigin;
       message?: string;
@@ -393,14 +393,14 @@ export class WebhookDispatcher {
       if (!response.ok) {
         const errorText = await response.text();
         this._logger.error(
-          `Route to subscription ${url} on charging station ${requestBody.stationId} failed.
+          `Route to subscription ${url} on charging station ${requestBody.ocppConnectionName} failed.
             Event: ${requestBody.event}, ${response.status} ${response.statusText} - ${errorText}`,
         );
       }
       return response.ok;
     } catch (error) {
       this._logger.error(
-        `Route to subscription ${url} on charging station ${requestBody.stationId} failed.
+        `Route to subscription ${url} on charging station ${requestBody.ocppConnectionName} failed.
            Event: ${requestBody.event}, ${error}`,
       );
       return false;

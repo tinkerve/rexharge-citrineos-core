@@ -15,8 +15,16 @@ export const packageGroupCall = (
   callbackUrl?: string,
   correlationId?: string,
 ): Promise<IMessageConfirmation[]> => {
-  const results = identifier.map((id) =>
-    module.sendCall(id, tenantId, ocppVersion, action, request, callbackUrl, correlationId),
+  const results = identifier.map((ocppConnectionName) =>
+    module.sendCall(
+      ocppConnectionName,
+      tenantId,
+      ocppVersion,
+      action,
+      request,
+      callbackUrl,
+      correlationId,
+    ),
   );
 
   return Promise.all(results);

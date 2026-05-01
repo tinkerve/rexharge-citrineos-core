@@ -14,7 +14,7 @@ import {
 
 export const ChargingProfileSchema = BaseSchema.extend({
   databaseId: z.number().int(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   id: z.number().int().optional(),
   chargingProfileKind: ChargingProfileKindEnumSchema,
   chargingProfilePurpose: ChargingProfilePurposeEnumSchema,

@@ -76,7 +76,7 @@ export class MonitoringDataApi
       await this._module.deviceModelRepository.createOrUpdateDeviceModelByStationId(
         tenantId,
         request.body,
-        request.query.stationId,
+        request.query.ocppConnectionName,
         timestamp,
       );
 
@@ -95,7 +95,7 @@ export class MonitoringDataApi
             component: variableAttribute.component,
             variable: variableAttribute.variable,
           },
-          request.query.stationId,
+          request.query.ocppConnectionName,
           timestamp,
         );
       }
