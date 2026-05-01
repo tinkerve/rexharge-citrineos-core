@@ -350,7 +350,7 @@ export class TransactionsModule extends AbstractModule {
           const authAmountAttributes: VariableAttribute[] =
             await this._deviceModelRepository.readAllByQuerystring(tenantId, {
               tenantId,
-              stationId,
+              ocppConnectionName,
               component_name: 'PaymentCtrlr',
               variable_name: 'AuthorizationAmount',
               type: AttributeEnum.Actual,
@@ -367,7 +367,7 @@ export class TransactionsModule extends AbstractModule {
                 };
                 this._logger.info(
                   `Set transactionLimit.maxCost=${authorizationAmount} for DirectPayment ` +
-                    `token on station ${stationId}, transaction ${transactionId}.`,
+                    `token on station ${ocppConnectionName}, transaction ${transactionId}.`,
                 );
               }
             }
@@ -426,7 +426,7 @@ export class TransactionsModule extends AbstractModule {
           ) {
             const newMaxCost = ocpp21Payload.transactionInfo.transactionLimit.maxCost;
             this._logger.info(
-              `Authorization amount increased for station ${stationId}, ` +
+              `Authorization amount increased for station ${ocppConnectionName}, ` +
                 `transaction ${transactionId}. New maxCost=${newMaxCost}.`,
             );
 
@@ -445,7 +445,7 @@ export class TransactionsModule extends AbstractModule {
                   },
                 } as Partial<Transaction>,
                 transactionId,
-                stationId,
+                ocppConnectionName,
               );
             } catch (error) {
               this._logger.error(
@@ -720,7 +720,7 @@ export class TransactionsModule extends AbstractModule {
 
     if (isRejected || isFailed) {
       this._logger.warn(
-        `Settlement ${request.status} for station ${stationId}, ` +
+        `Settlement ${request.status} for station ${ocppConnectionName}, ` +
           `transaction ${request.transactionId ?? 'none'}, pspRef=${request.pspRef}, ` +
           `amount=${request.settlementAmount}. ` +
           `statusInfo=${request.statusInfo ?? 'none'}. ` +
@@ -785,8 +785,8 @@ export class TransactionsModule extends AbstractModule {
           const receiptBaseUrl = this.config.modules.transactions.receiptBaseUrl;
           if (receiptBaseUrl) {
             const receiptId = request.transactionId
-              ? `${stationId}-${request.transactionId}-${request.pspRef}`
-              : `${stationId}-${request.pspRef}`;
+              ? `${ocppConnectionName}-${request.transactionId}-${request.pspRef}`
+              : `${ocppConnectionName}-${request.pspRef}`;
             response.receiptUrl = `${receiptBaseUrl}/${encodeURIComponent(receiptId)}`;
             response.receiptId = receiptId;
             this._logger.info(`ReceiptByCSMS is true, generated receiptUrl=${response.receiptUrl}`);
@@ -812,7 +812,7 @@ export class TransactionsModule extends AbstractModule {
       try {
         const displayMessageId = Date.now() % 2147483647; // Unique positive integer ID
         await this.sendCall(
-          stationId,
+          ocppConnectionName,
           tenantId,
           OCPPVersion.OCPP2_1,
           OCPP_CallAction.SetDisplayMessage,
@@ -829,11 +829,11 @@ export class TransactionsModule extends AbstractModule {
           } as OCPP2_1.SetDisplayMessageRequest,
         );
         this._logger.info(
-          `Sent SetDisplayMessageRequest with receiptUrl=${finalReceiptUrl} to station ${stationId}`,
+          `Sent SetDisplayMessageRequest with receiptUrl=${finalReceiptUrl} to station ${ocppConnectionName}`,
         );
       } catch (error) {
         this._logger.error(
-          `Failed to send SetDisplayMessageRequest to station ${stationId}`,
+          `Failed to send SetDisplayMessageRequest to station ${ocppConnectionName}`,
           error,
         );
       }
