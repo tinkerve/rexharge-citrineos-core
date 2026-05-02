@@ -64,7 +64,7 @@
     "pkijs": "3.3.3",
     "pvutils": "1.1.5",
     "redis": "4.7.1",
-    "sequelize-cli": "6.6.2",
+    "sequelize-cli": "6.6.5",
     "sequelize-typescript": "2.1.6",
     "tsconfig-paths": "4.2.0",
     "utf-8-validate": "6.0.6"
