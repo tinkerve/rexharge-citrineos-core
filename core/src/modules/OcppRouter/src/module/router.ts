@@ -105,36 +105,42 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     }
   }
 
-  async doesChargingStationExistByStationId(tenantId: number, stationId: string): Promise<boolean> {
-    return await this._locationRepository.doesChargingStationExistByStationId(tenantId, stationId);
+  async doesChargingStationExistByStationId(
+    tenantId: number,
+    ocppConnectionName: string,
+  ): Promise<boolean> {
+    return await this._locationRepository.doesChargingStationExistByStationId(
+      tenantId,
+      ocppConnectionName,
+    );
   }
 
   // TODO: Below method should lock these tables so that a rapid connect-disconnect cannot result in race condition.
   async registerConnection(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     protocol: OCPPVersion,
   ): Promise<boolean> {
-    const dispatcherRegistration = this._webhookDispatcher.register(tenantId, stationId);
+    const dispatcherRegistration = this._webhookDispatcher.register(tenantId, ocppConnectionName);
 
-    const connectionIdentifier = createIdentifier(tenantId, stationId);
+    const connectionIdentifier = createIdentifier(tenantId, ocppConnectionName);
     const requestSubscription = this._handler.subscribe(connectionIdentifier, undefined, {
       tenantId: tenantId.toString(),
-      stationId,
+      ocppConnectionName,
       state: MessageState.Request.toString(),
       origin: MessageOrigin.ChargingStationManagementSystem.toString(),
     });
 
     const responseSubscription = this._handler.subscribe(connectionIdentifier, undefined, {
       tenantId: tenantId.toString(),
-      stationId,
+      ocppConnectionName,
       state: MessageState.Response.toString(),
       origin: MessageOrigin.ChargingStationManagementSystem.toString(),
     });
 
     const onlineCharger = this._locationRepository.setChargingStationIsOnlineAndOCPPVersion(
       tenantId,
-      stationId,
+      ocppConnectionName,
       true,
       protocol,
     );
@@ -152,8 +158,8 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
       });
   }
 
-  async deregisterConnection(tenantId: number, stationId: string): Promise<boolean> {
-    this._webhookDispatcher.deregister(tenantId, stationId).catch((err) => {
+  async deregisterConnection(tenantId: number, ocppConnectionName: string): Promise<boolean> {
+    this._webhookDispatcher.deregister(tenantId, ocppConnectionName).catch((err) => {
       this._logger.error('_webhookDispatcher deregister failed', err);
     });
 
@@ -161,25 +167,25 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     try {
       const chargingStation = await this._locationRepository.readChargingStationByStationId(
         tenantId,
-        stationId,
+        ocppConnectionName,
       );
       if (chargingStation?.protocol) {
         protocol = chargingStation.protocol as OCPPVersion;
       }
     } catch (e: any) {
       this._logger?.warn?.(
-        `Could not read charging station ${stationId} of tenant ${tenantId} to determine protocol: ${e.message}`,
+        `Could not read charging station ${ocppConnectionName} of tenant ${tenantId} to determine protocol: ${e.message}`,
       );
     }
 
     await this._locationRepository.setChargingStationIsOnlineAndOCPPVersion(
       tenantId,
-      stationId,
+      ocppConnectionName,
       false,
       protocol,
     );
 
-    const connectionIdentifier = createIdentifier(tenantId, stationId);
+    const connectionIdentifier = createIdentifier(tenantId, ocppConnectionName);
     // TODO: ensure that all queue implementations in 02_Util only unsubscribe 1 queue per call
     // ...which will require refactoring this method to unsubscribe request and response queues separately
     return await this._handler.unsubscribe(connectionIdentifier);
@@ -192,7 +198,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     protocol: OCPPVersionType,
   ): Promise<boolean> {
     const tenantId = getTenantIdFromIdentifier(identifier);
-    const stationId = getStationIdFromIdentifier(identifier);
+    const ocppConnectionName = getStationIdFromIdentifier(identifier);
     let success = true;
     let rpcMessage: any;
     let messageTypeId: MessageTypeId | undefined = undefined;
@@ -282,7 +288,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
       }
       await this._webhookDispatcher.dispatchMessageReceivedUnparsed(
         tenantId,
-        stationId,
+        ocppConnectionName,
         message,
         timestamp.toISOString(),
         protocol,
@@ -293,7 +299,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
 
     // Update latestOcppMessageTimestamp for any incoming OCPP message (non-blocking, single query)
     this._locationRepository
-      .updateChargingStationTimestamp(tenantId, stationId, timestamp.toISOString())
+      .updateChargingStationTimestamp(tenantId, ocppConnectionName, timestamp.toISOString())
       .catch((error: any) => {
         this._logger.error(`Failed to update latestOcppMessageTimestamp for ${identifier}:`, error);
       });
@@ -304,7 +310,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
   /**
    * Sends a Call message to a charging station with given identifier.
    *
-   * @param {string} stationId - The identifier of the station.
+   * @param ocppConnectionName - The connection name of the charging station
    * @param {number} tenantId - The identifier of the tenant.
    * @param {OCPPVersionType} protocol The OCPP protocol version of the message.
    * @param {CallAction} action - The action to be called.
@@ -314,7 +320,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
    * @return {Promise<boolean>} A promise that resolves to a boolean indicating if the call was sent successfully.
    */
   async sendCall(
-    stationId: string,
+    ocppConnectionName: string,
     tenantId: number,
     protocol: OCPPVersionType,
     action: CallAction,
@@ -322,7 +328,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     correlationId = uuidv4(),
     _origin?: MessageOrigin,
   ): Promise<IMessageConfirmation> {
-    const identifier = createIdentifier(tenantId, stationId);
+    const identifier = createIdentifier(tenantId, ocppConnectionName);
     const transactionNamespace = CacheNamespace.Transactions + identifier;
 
     const message: Call = [MessageTypeId.Call, correlationId, action, payload];
@@ -379,7 +385,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
    * Sends the CallResult to a charging station with given identifier.
    *
    * @param {string} correlationId - The correlation ID of the message.
-   * @param {string} stationId - The identifier of the charging station.
+   * @param ocppConnectionName - The connection name of the charging station
    * @param {number} tenantId - The identifier of the tenant.
    * @param {OCPPVersionType} protocol The OCPP protocol version of the message.
    * @param {CallAction} action - The action to be called.
@@ -389,7 +395,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
    */
   async sendCallResult(
     correlationId: string,
-    stationId: string,
+    ocppConnectionName: string,
     tenantId: number,
     protocol: OCPPVersionType,
     action: CallAction,
@@ -397,7 +403,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     _origin?: MessageOrigin,
   ): Promise<IMessageConfirmation> {
     const message: CallResult = [MessageTypeId.CallResult, correlationId, payload];
-    const identifier = createIdentifier(tenantId, stationId);
+    const identifier = createIdentifier(tenantId, ocppConnectionName);
 
     const cachedActionTimestamp = await this._cache.get<string>(
       correlationId,
@@ -443,7 +449,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
    * Sends a CallError message to a charging station with given identifier.
    *
    * @param {string} correlationId - The correlation ID of the message.
-   * @param {string} stationId - The identifier of the charging station.
+   * @param ocppConnectionName - The connection name of the charging station
    * @param {number} tenantId - The identifier of the tenant.
    * @param {OCPPVersionType} protocol The OCPP protocol version of the message.
    * @param {CallAction} _action - The action to be called.
@@ -453,7 +459,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
    */
   async sendCallError(
     correlationId: string,
-    stationId: string,
+    ocppConnectionName: string,
     tenantId: number,
     protocol: OCPPVersionType,
     action: CallAction,
@@ -461,7 +467,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     _origin?: MessageOrigin | undefined,
   ): Promise<IMessageConfirmation> {
     const message: CallError = error.asCallError();
-    const identifier = createIdentifier(tenantId, stationId);
+    const identifier = createIdentifier(tenantId, ocppConnectionName);
 
     const cachedActionTimestamp = await this._cache.get<string>(
       correlationId,
@@ -525,7 +531,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
   ): Promise<void> {
     const messageId = message[1];
     const tenantId = getTenantIdFromIdentifier(identifier);
-    const stationId = getStationIdFromIdentifier(identifier);
+    const ocppConnectionName = getStationIdFromIdentifier(identifier);
 
     let action = message[2];
     this._logger.debug('_onCall:', identifier, message, timestamp.toISOString(), protocol);
@@ -600,7 +606,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
               details: error,
             });
 
-      this.sendCallError(messageId, stationId, tenantId, protocol, action, callError)
+      this.sendCallError(messageId, ocppConnectionName, tenantId, protocol, action, callError)
         .catch((err) => {
           this._logger.error('sendCallError failed', err);
         })
@@ -764,7 +770,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
 
   /**
    *
-   * @param {string} identifier - The identifier of the client, e.g. "tenantId:stationId".
+   * @param {string} identifier - The identifier of the client, e.g. "tenantId:ocppConnectionName".
    * @param {OCPPVersionType} protocol - The OCPP protocol version.
    * @param {string} action - The OCPP CallAction to be sent. See {@link CallAction}.
    * @param {MessageState} state - The state of the message. Used for dispatching in webhook.
@@ -845,10 +851,10 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     const action = mapToCallAction(protocol, message[2]);
     const payload = message[3] as OcppRequest;
     const tenantId = getTenantIdFromIdentifier(connectionIdentifier);
-    const stationId = getStationIdFromIdentifier(connectionIdentifier);
+    const ocppConnectionName = getStationIdFromIdentifier(connectionIdentifier);
 
     const _message: IMessage<OcppRequest> = RequestBuilder.buildCall(
-      stationId,
+      ocppConnectionName,
       messageId,
       tenantId,
       action,
@@ -872,10 +878,10 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     const messageId = message[1];
     const payload = message[2] as OcppResponse;
     const tenantId = getTenantIdFromIdentifier(connectionIdentifier);
-    const stationId = getStationIdFromIdentifier(connectionIdentifier);
+    const ocppConnectionName = getStationIdFromIdentifier(connectionIdentifier);
 
     const _message: IMessage<OcppResponse> = RequestBuilder.buildCallResult(
-      stationId,
+      ocppConnectionName,
       messageId,
       tenantId,
       action,
@@ -899,10 +905,10 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     const messageId = message[1];
     const payload = new OcppError(messageId, message[2], message[3], message[4]);
     const tenantId = getTenantIdFromIdentifier(connectionIdentifier);
-    const stationId = getStationIdFromIdentifier(connectionIdentifier);
+    const ocppConnectionName = getStationIdFromIdentifier(connectionIdentifier);
 
     const _message: IMessage<OcppError> = RequestBuilder.buildCallError(
-      stationId,
+      ocppConnectionName,
       messageId,
       tenantId,
       action,
@@ -936,7 +942,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
 
     await this._webhookDispatcher.dispatchMessageReceived(
       message.context.tenantId,
-      message.context.stationId,
+      message.context.ocppConnectionName,
       message.context.timestamp,
       message.protocol,
       message.action,
@@ -950,7 +956,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
   private async _handleMessageApiCallback(message: IMessage<OcppError>): Promise<void> {
     const url: string | null = await this._cache.get(
       message.context.correlationId,
-      AbstractModule.CALLBACK_URL_CACHE_PREFIX + message.context.stationId,
+      AbstractModule.CALLBACK_URL_CACHE_PREFIX + message.context.ocppConnectionName,
     );
     if (url) {
       const headers: { [key: string]: string } = {

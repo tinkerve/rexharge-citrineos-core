@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export interface UpdateChargingStationPasswordRequest {
-  stationId: string;
+  ocppConnectionName: string;
   password?: string | null;
   setOnCharger: boolean;
 }

@@ -11,7 +11,7 @@ export const aMessageContext = (
   const item: IMessageContext = {
     correlationId: faker.string.uuid(),
     tenantId: DEFAULT_TENANT_ID,
-    stationId: faker.string.uuid(),
+    ocppConnectionName: faker.string.uuid(),
     timestamp: faker.date.recent().toISOString(),
   };
 

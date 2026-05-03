@@ -111,7 +111,7 @@ export class EVDriverOcpp2Api
               component_name: 'SmartChargingCtrlr',
               variable_name: 'Enabled',
               tenantId,
-              stationId: i,
+              ocppConnectionName: i,
             });
 
           if (smartChargingEnabled.length > 0 && smartChargingEnabled[0].value === 'false') {
@@ -207,7 +207,7 @@ export class EVDriverOcpp2Api
           this._module.reservationRepository.readOnlyOneByQuery(tenantId, {
             where: {
               id: request.reservationId,
-              stationId: identifier,
+              ocppConnectionName: identifier,
               tenantId,
             },
           }),

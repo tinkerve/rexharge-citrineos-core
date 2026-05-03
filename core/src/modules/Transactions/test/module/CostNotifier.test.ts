@@ -54,7 +54,7 @@ describe('CostNotifier', () => {
       const transaction = givenTransaction(aTransaction());
 
       costNotifier.notifyWhileActive(
-        transaction.stationId,
+        transaction.ocppConnectionName,
         transaction.transactionId,
         anyTenantId,
         intervalSeconds,
@@ -83,7 +83,7 @@ describe('CostNotifier', () => {
       const transaction = givenTransaction(aTransaction());
 
       costNotifier.notifyWhileActive(
-        transaction.stationId,
+        transaction.ocppConnectionName,
         transaction.transactionId,
         anyTenantId,
         intervalSeconds,
@@ -107,14 +107,14 @@ describe('CostNotifier', () => {
       const transaction = givenTransaction(aTransaction());
 
       costNotifier.notifyWhileActive(
-        transaction.stationId,
+        transaction.ocppConnectionName,
         transaction.transactionId,
         anyTenantId,
         intervalSeconds,
       );
 
       costNotifier.notifyWhileActive(
-        transaction.stationId,
+        transaction.ocppConnectionName,
         transaction.transactionId,
         anyTenantId,
         intervalSeconds,
@@ -131,7 +131,7 @@ describe('CostNotifier', () => {
     totalCost: number,
   ) {
     expect(module.sendCall).toHaveBeenLastCalledWith(
-      transaction.stationId,
+      transaction.ocppConnectionName,
       tenantId,
       OCPPVersion.OCPP2_0_1,
       OCPP_CallAction.CostUpdated,

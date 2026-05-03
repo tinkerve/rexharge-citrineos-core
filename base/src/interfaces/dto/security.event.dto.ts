@@ -7,7 +7,7 @@ import { BaseSchema } from './types/base.dto.js';
 
 export const SecurityEventSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   type: z.string(),
   timestamp: z.iso.datetime(),
   techInfo: z.string().nullable().optional(),

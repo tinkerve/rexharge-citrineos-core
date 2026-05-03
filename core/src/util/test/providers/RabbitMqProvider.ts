@@ -107,7 +107,7 @@ export function aConsumeMessage(override?: {
         state: override?.state ?? MessageState.Response,
         context: override?.context ?? {
           correlationId: 'test-correlation-id',
-          stationId: 'CS001',
+          ocppConnectionName: 'CS001',
           tenantId: '1',
         },
         payload: override?.payload ?? {},
@@ -148,7 +148,7 @@ export function aConsumeMessageWithPrefixedFields(override?: {
         _state: override?.state ?? MessageState.Response,
         _context: override?.context ?? {
           correlationId: 'test-correlation-id',
-          stationId: 'CS001',
+          ocppConnectionName: 'CS001',
           tenantId: '1',
         },
         _payload: override?.payload ?? {},

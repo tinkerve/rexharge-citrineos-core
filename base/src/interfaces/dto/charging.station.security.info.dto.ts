@@ -7,7 +7,7 @@ import { BaseSchema } from './types/base.dto.js';
 
 export const ChargingStationSecurityInfoSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   publicKeyFileId: z.string(),
 });
 

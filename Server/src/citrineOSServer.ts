@@ -474,8 +474,8 @@ export class CitrineOSServer {
       this._connectionManager,
     );
 
-    routerSender.onCallTimeout = (stationId, tenantId) =>
-      this._networkConnection!.disconnect(tenantId, stationId).then(() => undefined);
+    routerSender.onCallTimeout = (ocppConnectionName, tenantId) =>
+      this._networkConnection!.disconnect(tenantId, ocppConnectionName).then(() => undefined);
 
     this._router.networkHook = this._networkConnection.bindNetworkHook();
 

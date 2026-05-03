@@ -5,14 +5,14 @@
 import { DEFAULT_TENANT_ID, QuerySchema } from '@citrineos/base';
 
 export interface TransactionEventQuerystring {
-  stationId: string;
+  ocppConnectionName: string;
   transactionId: string;
   tenantId: number;
 }
 
 export const TransactionEventQuerySchema = QuerySchema('TransactionEventQuerySchema', [
   {
-    key: 'stationId',
+    key: 'ocppConnectionName',
     type: 'string',
     required: true,
   },

@@ -24,7 +24,7 @@ export const getCacheTenantPathMappingKey = (serverId: string, path: string): st
 
 /*
  * Helper methods to create a unique identifier used in the cache and queues.
- * This is usually a combination between the tenantId and the stationId.
+ * This is usually a combination between the tenantId and the ocppConnectionName.
  */
 export const IDENTIFIER_DELIMITER = ':';
 export const createIdentifier = (tenantId: number, ...args: any[]): string =>

@@ -62,12 +62,12 @@ export class SignedMeterValuesUtil {
    * OR
    * - The incoming signed meter value's public key isn't empty and it matches the configured public key
    *
-   * @param stationId - The charging station the meter values belong to
+   * @param ocppConnectionName - The connection name of the charging station
    * @param meterValues - The list of meter values
    */
   public async validateMeterValues(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     meterValues: [OCPP2_common_types.MeterValueType, ...OCPP2_common_types.MeterValueType[]],
   ): Promise<boolean> {
     for (const meterValue of meterValues) {
@@ -75,7 +75,7 @@ export class SignedMeterValuesUtil {
         if (sampledValue.signedMeterValue) {
           const validMeterValues = await this.validateSignedSampledValue(
             tenantId,
-            stationId,
+            ocppConnectionName,
             sampledValue.signedMeterValue,
           );
           if (!validMeterValues) {
@@ -90,7 +90,7 @@ export class SignedMeterValuesUtil {
 
   private async validateSignedSampledValue(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     signedMeterValue: OCPP2_common_types.SignedMeterValueType,
   ): Promise<boolean> {
     if (signedMeterValue.publicKey && signedMeterValue.publicKey.length > 0) {
@@ -100,7 +100,7 @@ export class SignedMeterValuesUtil {
       if (this._signedMeterValuesConfiguration && incomingPublicKeyIsValid) {
         await this._chargingStationSecurityInfoRepository.readOrCreateChargingStationInfo(
           tenantId,
-          stationId,
+          ocppConnectionName,
           this._signedMeterValuesConfiguration.publicKeyFileId,
         );
 
@@ -112,7 +112,7 @@ export class SignedMeterValuesUtil {
       const chargingStationPublicKeyFileId =
         await this._chargingStationSecurityInfoRepository.readChargingStationPublicKeyFileId(
           tenantId,
-          stationId,
+          ocppConnectionName,
         );
       return await this.validateSignedMeterValueSignature(
         signedMeterValue,
