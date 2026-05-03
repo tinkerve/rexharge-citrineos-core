@@ -23,6 +23,7 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
 import type { IEVDriverModuleApi, InitiateWebPaymentRequest } from '../interface.js';
+import { InitiateWebPaymentRequestSchema } from '../interface.js';
 import { EVDriverModule } from '../module.js';
 
 const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
@@ -471,20 +472,7 @@ export class EVDriverOcpp2Api
       routePath,
       {
         schema: {
-          body: {
-            type: 'object',
-            required: ['identifier', 'evseId', 'totp'],
-            properties: {
-              identifier: { type: 'string' },
-              evseId: { type: 'integer', minimum: 0 },
-              totp: { type: 'string' },
-              maxCost: { type: 'number' },
-              maxTime: { type: 'integer', minimum: 0 },
-              maxEnergy: { type: 'number', minimum: 0 },
-              timeout: { type: 'integer', minimum: 1 },
-              tenantId: { type: 'integer' },
-            },
-          },
+          body: InitiateWebPaymentRequestSchema,
         },
       },
       async (request, reply) => {
