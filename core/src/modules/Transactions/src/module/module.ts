@@ -353,7 +353,7 @@ export class TransactionsModule extends AbstractModule {
         // C25.FR.03-06: Check cache for QR payment limits set by initiateWebPayment endpoint
         if (!ocpp21Response.transactionLimit && transactionEvent.evse?.id != null) {
           try {
-            const cacheKey = `webpayment:${stationId}:${transactionEvent.evse.id}`;
+            const cacheKey = `webpayment:${tenantId}:${stationId}:${transactionEvent.evse.id}`;
             const cachedLimitsStr = await this._cache.get<string>(cacheKey, CacheNamespace.Other);
             if (cachedLimitsStr) {
               const qrLimits: { maxCost?: number; maxTime?: number; maxEnergy?: number } =
@@ -376,7 +376,7 @@ export class TransactionsModule extends AbstractModule {
                 // Clear the session from cache — limits are consumed on first transaction start
                 await this._cache.remove(cacheKey, CacheNamespace.Other);
                 this._logger.info(
-                  `C25: Set transactionLimit from QR payment session for station ${stationId}, ` +
+                  `Set transactionLimit from QR payment session for station ${stationId}, ` +
                     `evseId=${transactionEvent.evse.id}, transaction ${transactionId}: ` +
                     `maxCost=${qrLimits.maxCost}, maxTime=${qrLimits.maxTime}, ` +
                     `maxEnergy=${qrLimits.maxEnergy}`,
@@ -384,7 +384,7 @@ export class TransactionsModule extends AbstractModule {
               }
             }
           } catch (error) {
-            this._logger.error('C25: Failed to read QR payment limits from cache', error);
+            this._logger.error('Failed to read QR payment limits from cache', error);
           }
         }
 

@@ -1082,7 +1082,7 @@ export class EVDriverModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('NotifyWebPaymentStartedResponse received:', message, props);
     this._logger.info(
-      `C25: NotifyWebPaymentStarted acknowledged by station ${message.context.stationId} ` +
+      `NotifyWebPaymentStarted acknowledged by station ${message.context.stationId} ` +
         `(correlationId=${message.context.correlationId})`,
     );
   }
