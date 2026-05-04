@@ -489,7 +489,7 @@ export class EVDriverOcpp2Api
             tenantId,
             {
               tenantId,
-              stationId: identifier,
+              ocppConnectionName: identifier,
               component_name: 'WebPaymentsCtrlr',
               variable_name: 'SharedSecret',
               type: AttributeEnum.Actual,
