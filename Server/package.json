@@ -32,7 +32,7 @@
     "@types/amqplib": "0.10.1",
     "@types/ws": "8.5.4",
     "nodemon": "3.1.14",
-    "ts-node": "10.9.1"
+    "ts-node": "10.9.2"
   },
   "dependencies": {
     "@citrineos/base": "1.9.2",
