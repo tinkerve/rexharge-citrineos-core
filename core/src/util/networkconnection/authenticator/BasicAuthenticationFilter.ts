@@ -33,7 +33,7 @@ export class BasicAuthenticationFilter extends AuthenticatorFilter {
 
   protected async filter(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     request: IncomingMessage,
   ): Promise<void> {
     const { username, password } = extractBasicCredentials(request);
@@ -41,11 +41,8 @@ export class BasicAuthenticationFilter extends AuthenticatorFilter {
       throw new UpgradeAuthenticationError('Auth header missing or incorrectly formatted');
     }
 
-    if (
-      username !== ocppConnectionName ||
-      !(await this._isPasswordValid(tenantId, username, password))
-    ) {
-      throw new UpgradeAuthenticationError(`Unauthorized ${ocppConnectionName}`);
+    if (username !== stationId || !(await this._isPasswordValid(tenantId, username, password))) {
+      throw new UpgradeAuthenticationError(`Unauthorized ${stationId}`);
     }
   }
 
@@ -53,7 +50,7 @@ export class BasicAuthenticationFilter extends AuthenticatorFilter {
     return await this._deviceModelRepository
       .readAllByQuerystring(tenantId, {
         tenantId,
-        ocppConnectionName: username,
+        stationId: username,
         component_name: 'SecurityCtrlr',
         variable_name: 'BasicAuthPassword',
         type: OCPP2_0_1.AttributeEnumType.Actual,

@@ -316,7 +316,7 @@ export class CertificatesDataApi
   ): Promise<IMessageConfirmation> {
     const installReq = request.body as InstallRootCertificateRequest;
     this._logger.info(
-      `Installing ${installReq.certificateType} on charger ${installReq.ocppConnectionName}`,
+      `Installing ${installReq.certificateType} on charger ${installReq.stationId}`,
     );
 
     let rootCAPem: string;
@@ -330,7 +330,7 @@ export class CertificatesDataApi
 
     await this._module
       .sendCall(
-        installReq.ocppConnectionName,
+        installReq.stationId,
         installReq.tenantId,
         OCPPVersion.OCPP2_0_1,
         OCPP_CallAction.InstallCertificate,
@@ -420,16 +420,16 @@ export class CertificatesDataApi
   ): Promise<InstalledCertificate> {
     const installedCertificateId = request.body.installedCertificateId;
     const validBeforeParam = request.body.validBefore;
-    const ocppConnectionName = request.query.identifier;
+    const stationId = request.query.identifier;
     const tenantId = request.query.tenantId || DEFAULT_TENANT_ID;
     this._logger.info(
-      `Regenerating existing certificate ${installedCertificateId} for charger ${ocppConnectionName}`,
+      `Regenerating existing certificate ${installedCertificateId} for charger ${stationId}`,
     );
     const existingInstalledCertificate =
       await this._module.installedCertificateRepository.readOnlyOneByQuery(tenantId, {
         where: {
           id: installedCertificateId,
-          ocppConnectionName: ocppConnectionName,
+          stationId: stationId,
         },
       });
     if (!existingInstalledCertificate) {

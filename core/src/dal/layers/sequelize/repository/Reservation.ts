@@ -37,7 +37,7 @@ export class SequelizeReservationRepository
   async createOrUpdateReservation(
     tenantId: number,
     reserveNowRequest: OCPP2_0_1.ReserveNowRequest,
-    ocppConnectionName: string,
+    stationId: string,
     isActive?: boolean,
   ): Promise<Reservation | undefined> {
     let evseDBId: number | null = null;
@@ -60,7 +60,7 @@ export class SequelizeReservationRepository
       where: {
         tenantId,
         // unique constraints
-        ocppConnectionName: ocppConnectionName,
+        stationId,
         id: reserveNowRequest.id,
       },
       defaults: {
@@ -90,9 +90,7 @@ export class SequelizeReservationRepository
     }
   }
 
-  async getNextReservationId(tenantId: number, ocppConnectionName: string): Promise<number> {
-    return await this.readNextValue(tenantId, 'id', {
-      where: { ocppConnectionName: ocppConnectionName },
-    });
+  async getNextReservationId(tenantId: number, stationId: string): Promise<number> {
+    return await this.readNextValue(tenantId, 'id', { where: { stationId } });
   }
 }

@@ -31,7 +31,7 @@ export function anEvse(updateFunction?: UpdateFunction<EvseType>): EvseType {
 export function aConnector(updateFunction?: UpdateFunction<Connector>): Connector {
   const connector: Connector = {
     id: MOCK_CONNECTOR_ID,
-    ocppConnectionName: MOCK_STATION_ID,
+    stationId: MOCK_STATION_ID,
     evseId: MOCK_EVSE_ID,
     connectorId: MOCK_CONNECTOR_ID,
     evseTypeConnectorId: MOCK_CONNECTOR_ID,
@@ -44,7 +44,7 @@ export function aConnector(updateFunction?: UpdateFunction<Connector>): Connecto
 export function aEvse(updateFunction?: UpdateFunction<Evse>): Evse {
   const evse: Evse = {
     id: MOCK_EVSE_ID,
-    ocppConnectionName: MOCK_STATION_ID,
+    stationId: MOCK_STATION_ID,
     evseTypeId: MOCK_EVSE_ID,
     evseId: MOCK_EVSE_ID,
     connectors: [aConnector()],

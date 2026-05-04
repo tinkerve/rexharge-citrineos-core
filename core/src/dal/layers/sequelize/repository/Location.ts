@@ -74,12 +74,12 @@ export class SequelizeLocationRepository
 
   async readChargingStationByStationId(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<ChargingStation | undefined> {
     return (
       (await ChargingStation.findOne({
         where: {
-          ocppConnectionName: ocppConnectionName,
+          id: stationId,
           tenantId,
         },
         include: [{ model: Evse, include: [Connector] }],
@@ -89,17 +89,17 @@ export class SequelizeLocationRepository
 
   async setChargingStationIsOnlineAndOCPPVersion(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     isOnline: boolean,
     ocppVersion: OCPPVersion | null,
   ): Promise<ChargingStation | undefined> {
     const station = await ChargingStation.findOne({
-      where: { ocppConnectionName: ocppConnectionName, tenantId },
+      where: { id: stationId, tenantId },
     });
 
     if (!station) {
       this.logger.error(
-        `setChargingStationIsOnlineAndOCPPVersion: No charging station found for tenant ${tenantId} with ocppConnectionName ${ocppConnectionName}. Update skipped to prevent modifying a station from a different tenant.`,
+        `setChargingStationIsOnlineAndOCPPVersion: No charging station found for tenant ${tenantId} with stationId ${stationId}. Update skipped to prevent modifying a station from a different tenant.`,
       );
       return undefined;
     }
@@ -108,20 +108,17 @@ export class SequelizeLocationRepository
     return station;
   }
 
-  async doesChargingStationExistByStationId(
-    tenantId: number,
-    ocppConnectionName: string,
-  ): Promise<boolean> {
+  async doesChargingStationExistByStationId(tenantId: number, stationId: string): Promise<boolean> {
     return (
       (await this.chargingStation.existByQuery(tenantId, {
-        where: { ocppConnectionName: ocppConnectionName, tenantId },
+        where: { id: stationId, tenantId },
       })) > 0
     );
   }
 
   async addStatusNotificationToChargingStation(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     statusNotification: StatusNotification,
   ): Promise<void> {
     const savedStatusNotification = await this.statusNotification.create(
@@ -129,11 +126,7 @@ export class SequelizeLocationRepository
       statusNotification,
     );
     try {
-      await this.updateLatestStatusNotification(
-        tenantId,
-        ocppConnectionName,
-        savedStatusNotification,
-      );
+      await this.updateLatestStatusNotification(tenantId, stationId, savedStatusNotification);
     } catch (e: any) {
       this.logger.error(`Failed to update latest status notification with error: ${e.message}`, e);
     }
@@ -141,7 +134,7 @@ export class SequelizeLocationRepository
 
   async updateLatestStatusNotification(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     statusNotification: StatusNotification,
   ): Promise<void> {
     const evseId = statusNotification.evseId;
@@ -152,7 +145,7 @@ export class SequelizeLocationRepository
     const existingLatestStatusNotifications: LatestStatusNotification[] =
       await this.latestStatusNotification.readAllByQuery(tenantId, {
         where: {
-          ocppConnectionName: ocppConnectionName,
+          stationId,
         },
         include: [
           {
@@ -168,7 +161,7 @@ export class SequelizeLocationRepository
     const idsToDelete = existingLatestStatusNotifications.map((l) => l.id);
     await this.latestStatusNotification.deleteAllByQuery(tenantId, {
       where: {
-        ocppConnectionName: ocppConnectionName,
+        stationId,
         id: {
           [Op.in]: idsToDelete,
         },
@@ -178,7 +171,7 @@ export class SequelizeLocationRepository
       tenantId,
       LatestStatusNotification.build({
         tenantId,
-        ocppConnectionName: ocppConnectionName,
+        stationId,
         statusNotificationId,
       }),
     );
@@ -186,12 +179,12 @@ export class SequelizeLocationRepository
 
   async getChargingStationsByIds(
     tenantId: number,
-    stationNames: string[],
+    stationIds: string[],
   ): Promise<ChargingStation[]> {
     const query = {
       where: {
-        ocppConnectionName: {
-          [Op.in]: stationNames,
+        id: {
+          [Op.in]: stationIds,
         },
       },
     };
@@ -256,12 +249,12 @@ export class SequelizeLocationRepository
     chargingStation: ChargingStationDto,
   ): Promise<ChargingStation> {
     chargingStation.tenantId = tenantId;
-    if (chargingStation.ocppConnectionName) {
+    if (chargingStation.id) {
       const [savedChargingStation, chargingStationCreated] =
         await this.chargingStation.readOrCreateByQuery(tenantId, {
           where: {
             tenantId,
-            ocppConnectionName: chargingStation.ocppConnectionName,
+            id: chargingStation.id,
           },
           defaults: {
             locationId: chargingStation.locationId,
@@ -345,26 +338,26 @@ export class SequelizeLocationRepository
 
   async updateChargingStationTimestamp(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     timestamp: string,
   ): Promise<void> {
     await this.chargingStation.updateAllByQuery(
       tenantId,
       { latestOcppMessageTimestamp: timestamp },
-      { where: { ocppConnectionName: ocppConnectionName } },
+      { where: { id: stationId } },
     );
   }
 
   async readConnectorByStationIdAndOcpp16ConnectorId(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     ocpp16ConnectorId: number,
   ): Promise<Connector | undefined> {
     return (
       (await Connector.findOne({
         where: {
           tenantId,
-          ocppConnectionName: ocppConnectionName,
+          stationId,
           connectorId: ocpp16ConnectorId,
         },
         include: [Evse],
@@ -374,13 +367,13 @@ export class SequelizeLocationRepository
 
   async readEvseByStationIdAndOcpp201EvseId(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     ocpp201EvseId: number,
   ): Promise<Evse | undefined> {
     return (
       (await Evse.findOne({
         where: {
-          ocppConnectionName: ocppConnectionName,
+          stationId,
           evseTypeId: ocpp201EvseId,
           tenantId,
         },
@@ -391,14 +384,14 @@ export class SequelizeLocationRepository
 
   async readConnectorByStationIdAndOcpp201EvseType(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     ocpp201EvseType: OCPP2_0_1.EVSEType,
   ): Promise<Connector | undefined> {
     return (
       (await Connector.findOne({
         where: {
           tenantId,
-          ocppConnectionName: ocppConnectionName,
+          stationId,
           evseTypeConnectorId: ocpp201EvseType.connectorId,
         },
         include: [{ model: Evse, where: { evseTypeId: ocpp201EvseType.id }, required: true }],

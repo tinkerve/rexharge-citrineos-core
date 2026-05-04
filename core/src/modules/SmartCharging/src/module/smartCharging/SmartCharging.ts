@@ -11,7 +11,7 @@ export interface ISmartCharging {
    *
    * @param {NotifyEVChargingNeedsRequest} request - charging need request
    * @param {Transaction} transaction
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param {string} stationId
    *
    * @returns {Promise<ChargingProfileType>} charging profile
    **/
@@ -19,7 +19,7 @@ export interface ISmartCharging {
     request: OCPP2_1.NotifyEVChargingNeedsRequest,
     transaction: Transaction,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<OCPP2_1.ChargingProfileType>;
 
   /**
@@ -27,12 +27,12 @@ export interface ISmartCharging {
    *
    * @param {NotifyEVChargingScheduleRequest} request - EV charging schedule request
    * @param {Transaction} transaction
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param {string} stationId
    **/
   checkLimitsOfChargingSchedule(
     request: OCPP2_1.NotifyEVChargingScheduleRequest,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     transaction: Transaction,
   ): Promise<void>;
 }

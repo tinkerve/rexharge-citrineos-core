@@ -24,7 +24,7 @@ export const getCacheTenantPathMappingKey = (serverId: string, path: string): st
 
 /*
  * Helper methods to create a unique identifier used in the cache and queues.
- * This is usually a combination between the tenantId and the ocppConnectionName.
+ * This is usually a combination between the tenantId and the stationId.
  */
 export const IDENTIFIER_DELIMITER = ':';
 export const createIdentifier = (tenantId: number, ...args: any[]): string =>
@@ -44,10 +44,6 @@ export const getStationIdFromIdentifier = (identifier: string): string => {
  */
 export interface IWebsocketConnection {
   id: string;
-  /**
-   * Stored as ISO string in the cache, converted to Date when retrieved
-   */
-  timeConnected: string;
   protocol: string;
   allowUnknownChargingStations: boolean;
 }

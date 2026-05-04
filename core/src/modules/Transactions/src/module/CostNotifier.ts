@@ -30,24 +30,24 @@ export class CostNotifier extends Scheduler {
    * Repeatedly sends a CostUpdated call for an ongoing transaction based on the intervalSeconds.
    * Stops sending requests once the transaction becomes inactive.
    *
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param {string} stationId - The identifier of the client connection.
    * @param {string} transactionId - The identifier of the transaction.
    * @param {number} intervalSeconds - The costUpdated interval in seconds.
    * @param {number} tenantId - The identifier of the tenant.
    * @return {void} This function does not return anything.
    */
   notifyWhileActive(
-    ocppConnectionName: string,
+    stationId: string,
     transactionId: string,
     tenantId: number,
     intervalSeconds: number,
   ): void {
     this._logger.debug(
-      `Scheduling periodic cost notifications for ${ocppConnectionName} station, ${transactionId} transaction, ${tenantId} tenant`,
+      `Scheduling periodic cost notifications for ${stationId} station, ${transactionId} transaction, ${tenantId} tenant`,
     );
     this.schedule(
-      this._key(ocppConnectionName, transactionId),
-      () => this._tryNotify(ocppConnectionName, transactionId, tenantId),
+      this._key(stationId, transactionId),
+      () => this._tryNotify(stationId, transactionId, tenantId),
       intervalSeconds,
     );
   }
@@ -66,7 +66,7 @@ export class CostNotifier extends Scheduler {
     );
 
     await this._module.sendCall(
-      transaction.ocppConnectionName,
+      transaction.stationId,
       tenantId,
       OCPPVersion.OCPP2_0_1,
       OCPP_CallAction.CostUpdated,
@@ -80,39 +80,39 @@ export class CostNotifier extends Scheduler {
     );
   }
 
-  private async _tryNotify(ocppConnectionName: string, transactionId: string, tenantId: number) {
+  private async _tryNotify(stationId: string, transactionId: string, tenantId: number) {
     try {
       const transaction =
         await this._transactionEventRepository.readTransactionByStationIdAndTransactionId(
           tenantId,
-          ocppConnectionName,
+          stationId,
           transactionId,
         );
 
       if (!transaction) {
         this._logger.error(
-          `Transaction NOT FOUND in DB. Searched for ocppConnectionName: "${ocppConnectionName}", transactionId: "${transactionId}"`,
+          `Transaction NOT FOUND in DB. Searched for stationId: "${stationId}", transactionId: "${transactionId}"`,
         );
-        this.unschedule(this._key(ocppConnectionName, transactionId));
+        this.unschedule(this._key(stationId, transactionId));
         return;
       }
 
       if (!transaction?.isActive) {
         this._logger.debug(
-          `Unscheduling periodic cost notifications for ${ocppConnectionName} station, ${transactionId} transaction, ${tenantId} tenant`,
+          `Unscheduling periodic cost notifications for ${stationId} station, ${transactionId} transaction, ${tenantId} tenant`,
         );
-        this.unschedule(this._key(ocppConnectionName, transactionId));
+        this.unschedule(this._key(stationId, transactionId));
         return;
       }
 
       await this.calculateCostAndNotify(transaction, tenantId);
     } catch (error) {
       this._logger.error(`Failed to send CostUpdated call for ${transactionId} transaction`, error);
-      this.unschedule(this._key(ocppConnectionName, transactionId));
+      this.unschedule(this._key(stationId, transactionId));
     }
   }
 
-  private _key(ocppConnectionName: string, transactionId: string) {
-    return `${ocppConnectionName}:${transactionId}`;
+  private _key(stationId: string, transactionId: string) {
+    return `${stationId}:${transactionId}`;
   }
 }

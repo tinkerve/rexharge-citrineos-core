@@ -21,7 +21,6 @@ import {
   AsHandler,
   AttributeEnum,
   AuthorizationStatusEnum,
-  CacheNamespace,
   CrudRepository,
   ErrorCode,
   EventGroup,
@@ -281,7 +280,7 @@ export class TransactionsModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('Transaction event received:', message, props);
     const tenantId: number = message.context.tenantId;
-    const ocppConnectionName: string = message.context.ocppConnectionName;
+    const stationId: string = message.context.stationId;
 
     const transactionEvent = message.payload;
     const transactionId = transactionEvent.transactionInfo.transactionId;
@@ -307,7 +306,7 @@ export class TransactionsModule extends AbstractModule {
         await this._transactionEventRepository.createOrUpdateTransactionByTransactionEventAndStationId(
           tenantId,
           message.payload,
-          ocppConnectionName,
+          stationId,
         );
     } catch (error) {
       if ((error as any).name === 'SequelizeForeignKeyConstraintError') {
@@ -328,100 +327,17 @@ export class TransactionsModule extends AbstractModule {
         tenantId,
         transactionId,
         message.payload.reservationId,
-        ocppConnectionName,
+        stationId,
       );
     }
     await this.deactivateOtherActiveTransactionsAtEvse201(
       tenantId,
       transactionId,
-      ocppConnectionName,
+      stationId,
       transactionEvent,
     );
 
     if (response) {
-      // For DirectPayment tokens on Started events, include transactionLimit.
-      // C25: First check cache for QR web payment limits (maxCost/maxTime/maxEnergy from QR URL).
-      // Fall back to PaymentCtrlr.AuthorizationAmount from the device model if no QR limits found.
-      if (
-        transactionEvent.eventType === TransactionEventEnum.Started &&
-        response.idTokenInfo?.status === AuthorizationStatusEnum.Accepted &&
-        message.protocol === OCPPVersion.OCPP2_1 &&
-        transactionEvent.idToken?.type === OCPP2_1.IdTokenEnumType.DirectPayment
-      ) {
-        const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
-
-        // C25.FR.03-06: Check cache for QR payment limits set by initiateWebPayment endpoint
-        if (!ocpp21Response.transactionLimit && transactionEvent.evse?.id != null) {
-          try {
-            const cacheKey = `webpayment:${tenantId}:${ocppConnectionName}:${transactionEvent.evse.id}`;
-            const cachedLimitsStr = await this._cache.get<string>(cacheKey, CacheNamespace.Other);
-            if (cachedLimitsStr) {
-              const qrLimits: { maxCost?: number; maxTime?: number; maxEnergy?: number } =
-                JSON.parse(cachedLimitsStr);
-              if (
-                qrLimits.maxCost != null ||
-                qrLimits.maxTime != null ||
-                qrLimits.maxEnergy != null
-              ) {
-                ocpp21Response.transactionLimit = {};
-                if (qrLimits.maxCost != null) {
-                  ocpp21Response.transactionLimit.maxCost = qrLimits.maxCost;
-                }
-                if (qrLimits.maxTime != null) {
-                  ocpp21Response.transactionLimit.maxTime = qrLimits.maxTime;
-                }
-                if (qrLimits.maxEnergy != null) {
-                  ocpp21Response.transactionLimit.maxEnergy = qrLimits.maxEnergy;
-                }
-                // Clear the session from cache — limits are consumed on first transaction start
-                await this._cache.remove(cacheKey, CacheNamespace.Other);
-                this._logger.info(
-                  `Set transactionLimit from QR payment session for station ${ocppConnectionName}, ` +
-                    `evseId=${transactionEvent.evse.id}, transaction ${transactionId}: ` +
-                    `maxCost=${qrLimits.maxCost}, maxTime=${qrLimits.maxTime}, ` +
-                    `maxEnergy=${qrLimits.maxEnergy}`,
-                );
-              }
-            }
-          } catch (error) {
-            this._logger.error('Failed to read QR payment limits from cache', error);
-          }
-        }
-
-        // Fall back to PaymentCtrlr.AuthorizationAmount if no QR limits were found
-        if (!ocpp21Response.transactionLimit) {
-          try {
-            const authAmountAttributes: VariableAttribute[] =
-              await this._deviceModelRepository.readAllByQuerystring(tenantId, {
-                tenantId,
-                ocppConnectionName,
-                component_name: 'PaymentCtrlr',
-                variable_name: 'AuthorizationAmount',
-                type: AttributeEnum.Actual,
-              });
-
-            if (authAmountAttributes.length > 0 && authAmountAttributes[0].value) {
-              const authorizationAmount = parseFloat(authAmountAttributes[0].value);
-              if (!isNaN(authorizationAmount) && authorizationAmount > 0) {
-                // Only set if not already set by another flow (e.g., C17 prepaid)
-                ocpp21Response.transactionLimit = {
-                  maxCost: authorizationAmount,
-                };
-                this._logger.info(
-                  `Set transactionLimit.maxCost=${authorizationAmount} for DirectPayment ` +
-                    `token on station ${ocppConnectionName}, transaction ${transactionId}.`,
-                );
-              }
-            }
-          } catch (error) {
-            this._logger.error(
-              'Failed to read PaymentCtrlr.AuthorizationAmount from device model',
-              error,
-            );
-          }
-        }
-      }
-
       const messageConfirmation = await this.sendCallResultWithMessage(message, response);
       this._logger.debug('Transaction response sent: ', messageConfirmation);
       // If the transaction is accepted and interval is set, start the cost update
@@ -431,7 +347,7 @@ export class TransactionsModule extends AbstractModule {
         this._costUpdatedInterval
       ) {
         this._costNotifier.notifyWhileActive(
-          ocppConnectionName,
+          stationId,
           transactionId,
           message.context.tenantId,
           this._costUpdatedInterval,
@@ -457,52 +373,11 @@ export class TransactionsModule extends AbstractModule {
           );
         }
 
-        // C23: Increasing authorization amount
-        // When CS sends TransactionEventRequest(Updated) with triggerReason=LimitSet (OCPP 2.1),
-        // it indicates the authorization amount has been increased and transactionLimit.maxCost updated.
-        if (message.protocol === OCPPVersion.OCPP2_1 && transaction && transaction.isActive) {
-          const ocpp21Payload = message.payload as unknown as OCPP2_1.TransactionEventRequest;
-          if (
-            ocpp21Payload.triggerReason === OCPP2_1.TriggerReasonEnumType.LimitSet &&
-            ocpp21Payload.transactionInfo?.transactionLimit?.maxCost != null
-          ) {
-            const newMaxCost = ocpp21Payload.transactionInfo.transactionLimit.maxCost;
-            this._logger.info(
-              `Authorization amount increased for station ${ocppConnectionName}, ` +
-                `transaction ${transactionId}. New maxCost=${newMaxCost}.`,
-            );
-
-            // Store the updated maxCost in customData
-            try {
-              const existingCustomData = transaction.customData ?? {};
-              await this._transactionEventRepository.updateTransactionByStationIdAndTransactionId(
-                tenantId,
-                {
-                  customData: {
-                    ...existingCustomData,
-                    transactionLimit: {
-                      ...(existingCustomData.transactionLimit ?? {}),
-                      maxCost: newMaxCost,
-                    },
-                  },
-                } as Partial<Transaction>,
-                transactionId,
-                ocppConnectionName,
-              );
-            } catch (error) {
-              this._logger.error(
-                `Failed to store updated maxCost for transaction ${transactionId}`,
-                error,
-              );
-            }
-          }
-        }
-
         // I06 - Update Tariff Information During Transaction
         const tariffAvailableAttributes: VariableAttribute[] =
           await this._deviceModelRepository.readAllByQuerystring(tenantId, {
             tenantId,
-            ocppConnectionName: ocppConnectionName,
+            stationId: stationId,
             component_name: 'TariffCostCtrlr',
             variable_instance: 'Tariff',
             variable_name: 'Available',
@@ -542,7 +417,7 @@ export class TransactionsModule extends AbstractModule {
           const settlementByCSMSAttributes: VariableAttribute[] =
             await this._deviceModelRepository.readAllByQuerystring(tenantId, {
               tenantId,
-              ocppConnectionName,
+              stationId,
               component_name: 'PaymentCtrlr',
               variable_name: 'SettlementByCSMS',
               type: AttributeEnum.Actual,
@@ -555,7 +430,7 @@ export class TransactionsModule extends AbstractModule {
           if (settlementByCSMS) {
             const totalCost = response.totalCost ?? transaction.totalCost;
             this._logger.info(
-              `C21.FR.05: SettlementByCSMS is true for station ${ocppConnectionName}, ` +
+              `C21.FR.05: SettlementByCSMS is true for station ${stationId}, ` +
                 `transaction ${transaction.transactionId}. ` +
                 `CSMS should settle totalCost=${totalCost} with PSP. ` +
                 `This requires external PSP integration.`,
@@ -575,7 +450,7 @@ export class TransactionsModule extends AbstractModule {
       if (transactionEvent.meterValue) {
         const meterValuesValid = await this._signedMeterValuesUtil.validateMeterValues(
           tenantId,
-          ocppConnectionName,
+          stationId,
           transactionEvent.meterValue,
         );
 
@@ -602,7 +477,7 @@ export class TransactionsModule extends AbstractModule {
 
     const meterValues = message.payload.meterValue;
     const tenantId = message.context.tenantId;
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
     const evseId = message.payload.evseId;
 
     // When evseId is 0, the MeterValuesRequest message SHALL be associated with the entire Charging Station.
@@ -610,13 +485,13 @@ export class TransactionsModule extends AbstractModule {
       const activeTransaction: Transaction | undefined =
         await this.transactionEventRepository.getActiveTransactionByStationIdAndEvseId(
           tenantId,
-          ocppConnectionName,
+          stationId,
           evseId,
         );
       if (!activeTransaction) {
         this._logger.error(
           'Active Transaction not found on charging station {} evse {}',
-          ocppConnectionName,
+          stationId,
           evseId,
         );
       }
@@ -642,7 +517,7 @@ export class TransactionsModule extends AbstractModule {
 
     const meterValuesValid = await this._signedMeterValuesUtil.validateMeterValues(
       tenantId,
-      ocppConnectionName,
+      stationId,
       meterValues,
     );
 
@@ -674,7 +549,7 @@ export class TransactionsModule extends AbstractModule {
     this._statusNotificationService
       .processStatusNotification(
         message.context.tenantId,
-        message.context.ocppConnectionName,
+        message.context.stationId,
         message.payload,
       )
       .catch((error) => {
@@ -710,7 +585,7 @@ export class TransactionsModule extends AbstractModule {
     if (response.ongoingIndicator !== null && response.ongoingIndicator !== undefined) {
       await this._transactionService.updateTransactionStatus(
         message.context.tenantId,
-        message.context.ocppConnectionName,
+        message.context.stationId,
         message.context.correlationId,
         response.ongoingIndicator,
       );
@@ -720,15 +595,12 @@ export class TransactionsModule extends AbstractModule {
   /**
    * C19 - Cancellation prior to transaction
    * C21 - Settlement at end of transaction
-   * C22 - Settlement is rejected or fails
    * Handles NotifySettlementRequest from Charging Station to inform CSMS
-   * that a payment has been canceled, settled, rejected, or failed.
+   * that a payment has been canceled or settled.
    *
    * C21.FR.02: CS sends NotifySettlementRequest with status, amount, time, transId, and pspRef.
-   * C21.FR.03: If PaymentCtrlr.ReceiptByCSMS = true, CSMS responds with receiptUrl (only for Settled).
+   * C21.FR.03: If PaymentCtrlr.ReceiptByCSMS = true, CSMS responds with receiptUrl.
    * C21.FR.04: If ReceiptByCSMS = false, CS includes receiptUrl/receiptId in the request (no action needed from CSMS).
-   * C22.FR.01: If status is Rejected, store settlement data without receipt information.
-   * C22.FR.02: If status is Failed, store settlement data without receipt information.
    */
   @AsHandler([OCPPVersion.OCPP2_1], OCPP_CallAction.NotifySettlement)
   protected async _handleNotifySettlement(
@@ -738,7 +610,7 @@ export class TransactionsModule extends AbstractModule {
     this._logger.debug('NotifySettlementRequest received:', message, props);
 
     const tenantId = message.context.tenantId;
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
     const request = message.payload;
 
     this._logger.info(
@@ -746,55 +618,26 @@ export class TransactionsModule extends AbstractModule {
         `amount=${request.settlementAmount}, transactionId=${request.transactionId ?? 'none'}`,
     );
 
-    const isSettled = request.status === OCPP2_1.PaymentStatusEnumType.Settled;
-    const isRejected = request.status === OCPP2_1.PaymentStatusEnumType.Rejected;
-    const isFailed = request.status === OCPP2_1.PaymentStatusEnumType.Failed;
-    const isCancelled = request.status === OCPP2_1.PaymentStatusEnumType.Canceled;
-
-    const isValidSettlementStatus = isSettled || isRejected || isFailed || isCancelled;
-    if (!isValidSettlementStatus) {
-      throw new OcppError(
-        message.context.correlationId,
-        ErrorCode.PropertyConstraintViolation,
-        `Invalid settlement status: ${request.status}. Must be one of 'Settled', 'Rejected', 'Canceled' or 'Failed'.`,
-      );
-    }
-
-    if (isRejected || isFailed) {
-      this._logger.warn(
-        `Settlement ${request.status} for station ${ocppConnectionName}, ` +
-          `transaction ${request.transactionId ?? 'none'}, pspRef=${request.pspRef}, ` +
-          `amount=${request.settlementAmount}. ` +
-          `statusInfo=${request.statusInfo ?? 'none'}. ` +
-          `CPO may need to manually capture the amount via PSP using the pspRef.`,
-      );
-    }
-
     // Store settlement data on the transaction if a transactionId is provided
     if (request.transactionId) {
       try {
-        const settlementData: Record<string, unknown> = {
-          pspRef: request.pspRef,
-          status: request.status,
-          settlementAmount: request.settlementAmount,
-          settlementTime: request.settlementTime,
-          statusInfo: request.statusInfo,
-        };
-        //Do NOT include receipt information for Rejected/Failed statuses
-        if (isSettled) {
-          settlementData.receiptId = request.receiptId;
-          settlementData.receiptUrl = request.receiptUrl;
-          settlementData.vatNumber = request.vatNumber;
-        }
         await this._transactionEventRepository.updateTransactionByStationIdAndTransactionId(
           tenantId,
           {
             customData: {
-              settlement: settlementData,
+              settlement: {
+                pspRef: request.pspRef,
+                status: request.status,
+                settlementAmount: request.settlementAmount,
+                settlementTime: request.settlementTime,
+                receiptId: request.receiptId,
+                receiptUrl: request.receiptUrl,
+                vatNumber: request.vatNumber,
+              },
             },
-          } as Partial<Transaction>,
+          } as any,
           request.transactionId,
-          ocppConnectionName,
+          stationId,
         );
       } catch (error) {
         this._logger.error(
@@ -806,80 +649,43 @@ export class TransactionsModule extends AbstractModule {
 
     const response: OCPP2_1.NotifySettlementResponse = {};
 
-    // Only generate receiptUrl for successful (Settled) settlements.
-    // Do NOT include receiptUrl or receiptId for Rejected/Failed statuses.
-    if (isSettled) {
-      try {
-        const receiptByCSMSAttributes: VariableAttribute[] =
-          await this._deviceModelRepository.readAllByQuerystring(tenantId, {
-            tenantId,
-            ocppConnectionName,
-            component_name: 'PaymentCtrlr',
-            variable_name: 'ReceiptByCSMS',
-            type: AttributeEnum.Actual,
-          });
+    // C21.FR.03: If PaymentCtrlr.ReceiptByCSMS is true, generate and include receiptUrl in response
+    try {
+      const receiptByCSMSAttributes: VariableAttribute[] =
+        await this._deviceModelRepository.readAllByQuerystring(tenantId, {
+          tenantId,
+          stationId,
+          component_name: 'PaymentCtrlr',
+          variable_name: 'ReceiptByCSMS',
+          type: AttributeEnum.Actual,
+        });
 
-        const receiptByCSMS =
-          receiptByCSMSAttributes.length > 0 &&
-          receiptByCSMSAttributes[0].value?.toLowerCase() === 'true';
+      const receiptByCSMS =
+        receiptByCSMSAttributes.length > 0 &&
+        receiptByCSMSAttributes[0].value?.toLowerCase() === 'true';
 
-        if (receiptByCSMS) {
-          const receiptBaseUrl = this.config.modules.transactions.receiptBaseUrl;
-          if (receiptBaseUrl) {
-            const receiptId = request.transactionId
-              ? `${ocppConnectionName}-${request.transactionId}-${request.pspRef}`
-              : `${ocppConnectionName}-${request.pspRef}`;
-            response.receiptUrl = `${receiptBaseUrl}/${encodeURIComponent(receiptId)}`;
-            response.receiptId = receiptId;
-            this._logger.info(`ReceiptByCSMS is true, generated receiptUrl=${response.receiptUrl}`);
-          } else {
-            this._logger.warn(
-              'ReceiptByCSMS is true but no receiptBaseUrl configured in transactions module config. ' +
-                'Cannot generate receiptUrl.',
-            );
-          }
+      if (receiptByCSMS) {
+        const receiptBaseUrl = this.config.modules.transactions.receiptBaseUrl;
+        if (receiptBaseUrl) {
+          const receiptId = request.transactionId
+            ? `${stationId}-${request.transactionId}-${request.pspRef}`
+            : `${stationId}-${request.pspRef}`;
+          response.receiptUrl = `${receiptBaseUrl}/${encodeURIComponent(receiptId)}`;
+          response.receiptId = receiptId;
+          this._logger.info(`ReceiptByCSMS is true, generated receiptUrl=${response.receiptUrl}`);
+        } else {
+          this._logger.warn(
+            'ReceiptByCSMS is true but no receiptBaseUrl configured in transactions module config. ' +
+              'Cannot generate receiptUrl.',
+          );
         }
-      } catch (error) {
-        this._logger.error('Failed to read PaymentCtrlr.ReceiptByCSMS from device model', error);
       }
+    } catch (error) {
+      this._logger.error('Failed to read PaymentCtrlr.ReceiptByCSMS from device model', error);
     }
 
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('NotifySettlement response sent:', messageConfirmation);
-
-    // After settlement, CSMS MAY send SetDisplayMessageRequest with receipt URL
-    // to display on the charging station (e.g., as a QR code).
-    const finalReceiptUrl = response.receiptUrl ?? request.receiptUrl;
-    if (isSettled && finalReceiptUrl) {
-      try {
-        const displayMessageId = Date.now() % 2147483647; // Unique positive integer ID
-        await this.sendCall(
-          ocppConnectionName,
-          tenantId,
-          OCPPVersion.OCPP2_1,
-          OCPP_CallAction.SetDisplayMessage,
-          {
-            message: {
-              id: displayMessageId,
-              priority: OCPP2_1.MessagePriorityEnumType.AlwaysFront,
-              transactionId: request.transactionId,
-              message: {
-                format: OCPP2_1.MessageFormatEnumType.URI,
-                content: finalReceiptUrl,
-              },
-            },
-          } as OCPP2_1.SetDisplayMessageRequest,
-        );
-        this._logger.info(
-          `Sent SetDisplayMessageRequest with receiptUrl=${finalReceiptUrl} to station ${ocppConnectionName}`,
-        );
-      } catch (error) {
-        this._logger.error(
-          `Failed to send SetDisplayMessageRequest to station ${ocppConnectionName}`,
-          error,
-        );
-      }
-    }
   }
 
   /**
@@ -895,7 +701,7 @@ export class TransactionsModule extends AbstractModule {
 
     await this._statusNotificationService.processOcpp16StatusNotification(
       message.context.tenantId,
-      message.context.ocppConnectionName,
+      message.context.stationId,
       message.payload,
     );
 
@@ -913,7 +719,7 @@ export class TransactionsModule extends AbstractModule {
     this._logger.debug('MeterValues request received:', message, props);
 
     const tenantId = message.context.tenantId;
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
     const connectorId = message.payload.connectorId;
     const transactionId = message.payload.transactionId;
     const meterValues = message.payload.meterValue;
@@ -933,7 +739,7 @@ export class TransactionsModule extends AbstractModule {
           await this._transactionEventRepository.updateTransactionByMeterValues(
             tenantId,
             meterValueEntities,
-            ocppConnectionName,
+            stationId,
             transactionId,
           );
         }
@@ -952,7 +758,7 @@ export class TransactionsModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('OCPP 1.6 StartTransaction request received:', message, props);
     const tenantId = message.context.tenantId;
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
     const request = message.payload;
 
     // Authorize
@@ -972,14 +778,14 @@ export class TransactionsModule extends AbstractModule {
           await this._transactionEventRepository.createTransactionByStartTransaction(
             tenantId,
             request,
-            ocppConnectionName,
+            stationId,
           );
         response.transactionId = parseInt(newTransaction.transactionId);
       } catch (error) {
         const errorMessage = (error as Error).message || '';
         if (errorMessage.includes('Charging station') && errorMessage.includes('does not exist')) {
           this._logger.error(
-            `Charging station ${ocppConnectionName} does not exist for idTag ${request.idTag}`,
+            `Charging station ${stationId} does not exist for idTag ${request.idTag}`,
           );
         } else {
           this._logger.error(`Failed to create transaction for idTag ${request.idTag}`, error);
@@ -994,7 +800,7 @@ export class TransactionsModule extends AbstractModule {
     await this.deactivateOtherActiveTransactionsAtEvse16(
       tenantId,
       response.transactionId.toString(),
-      ocppConnectionName,
+      stationId,
       request,
     );
 
@@ -1010,7 +816,7 @@ export class TransactionsModule extends AbstractModule {
         tenantId,
         response.transactionId.toString(),
         request.reservationId,
-        ocppConnectionName,
+        stationId,
       );
     }
   }
@@ -1023,7 +829,7 @@ export class TransactionsModule extends AbstractModule {
     this._logger.debug('OCPP 1.6 StopTransaction request received:', message, props);
 
     const tenantId = message.context.tenantId;
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
     const request = message.payload;
 
     const authorization: Authorization | undefined = request.idTag
@@ -1074,7 +880,7 @@ export class TransactionsModule extends AbstractModule {
 
     const transaction = await Transaction.findOne({
       where: {
-        ocppConnectionName,
+        stationId,
         tenantId,
         transactionId: request.transactionId.toString(),
       },
@@ -1089,7 +895,7 @@ export class TransactionsModule extends AbstractModule {
     const stopTransaction = await this._transactionEventRepository.createStopTransaction(
       tenantId,
       transaction.id,
-      ocppConnectionName,
+      stationId,
       request.meterStop,
       new Date(request.timestamp),
       request.transactionData?.map((data) =>
@@ -1111,7 +917,7 @@ export class TransactionsModule extends AbstractModule {
       transaction.totalKwh = (request.meterStop - transaction.startTransaction.meterStart) / 1000; // Convert from Wh to kWh
     } else {
       this._logger.warn(
-        `StartTransaction record not found at station ${ocppConnectionName} for transactionId ${request.transactionId}. 
+        `StartTransaction record not found at station ${stationId} for transactionId ${request.transactionId}. 
         Cannot calculate totalKwh.`,
       );
     }
@@ -1133,18 +939,18 @@ export class TransactionsModule extends AbstractModule {
 
     if (message.payload.status !== TariffSetStatusEnum.Accepted) {
       this._logger.warn(
-        `SetDefaultTariff rejected for station ${message.context.ocppConnectionName}: ${message.payload.status}`,
+        `SetDefaultTariff rejected for station ${message.context.stationId}: ${message.payload.status}`,
       );
       return;
     }
 
     const tenantId = message.context.tenantId;
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
 
     const storedRequest = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
       where: {
         tenantId,
-        ocppConnectionName,
+        stationId,
         correlationId: message.context.correlationId,
         origin: MessageOrigin.ChargingStationManagementSystem,
       },
@@ -1152,7 +958,7 @@ export class TransactionsModule extends AbstractModule {
 
     if (!storedRequest) {
       this._logger.error(
-        `No SetDefaultTariffRequest found for correlationId ${message.context.correlationId} on station ${ocppConnectionName}`,
+        `No SetDefaultTariffRequest found for correlationId ${message.context.correlationId} on station ${stationId}`,
       );
       return;
     }
@@ -1178,13 +984,13 @@ export class TransactionsModule extends AbstractModule {
     });
 
     const storedTariff = await this._tariffRepository.upsertTariffByTariffId(tenantId, newTariff);
-    this._logger.info(`Tariff ${storedTariff.id} stored for station ${ocppConnectionName}`);
+    this._logger.info(`Tariff ${storedTariff.id} stored for station ${stationId}`);
   }
 
   protected async deactivateOtherActiveTransactionsAtEvse201(
     tenantId: number,
     transactionId: string,
-    ocppConnectionName: string,
+    stationId: string,
     request: OCPP2_request_types.TransactionEventRequest,
   ) {
     const eventType = request.eventType;
@@ -1198,7 +1004,7 @@ export class TransactionsModule extends AbstractModule {
         await this._transactionService.deactivateOtherActiveTransactionsAtEvse(
           tenantId,
           transactionId,
-          ocppConnectionName,
+          stationId,
           evse,
         );
       }
@@ -1208,12 +1014,12 @@ export class TransactionsModule extends AbstractModule {
   protected async deactivateOtherActiveTransactionsAtEvse16(
     tenantId: number,
     transactionId: string,
-    ocppConnectionName: string,
+    stationId: string,
     request: OCPP1_6.StartTransactionRequest,
   ) {
     const connector = await this._locationRepository.readConnectorByStationIdAndOcpp16ConnectorId(
       tenantId,
-      ocppConnectionName,
+      stationId,
       request.connectorId,
     );
     if (!connector) {
@@ -1223,7 +1029,7 @@ export class TransactionsModule extends AbstractModule {
     await this._transactionService.deactivateOtherActiveTransactionsAtEvse(
       tenantId,
       transactionId,
-      ocppConnectionName,
+      stationId,
       request.connectorId,
     );
   }

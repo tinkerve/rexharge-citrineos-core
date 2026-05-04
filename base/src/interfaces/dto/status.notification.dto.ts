@@ -9,7 +9,7 @@ import { ConnectorStatusEnumSchema } from './types/enums.js';
 
 export const StatusNotificationSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  ocppConnectionName: z.string(),
+  stationId: z.string(),
   timestamp: z.iso.datetime().nullable().optional(),
   connectorStatus: ConnectorStatusEnumSchema,
   evseId: z.number().int().nullable().optional(),

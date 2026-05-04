@@ -18,28 +18,28 @@ export abstract class AuthenticatorFilter {
   protected abstract shouldFilter(options: AuthenticationOptions): boolean;
   protected abstract filter(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     request: IncomingMessage,
     options?: AuthenticationOptions,
   ): Promise<void>;
 
   async authenticate(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     request: IncomingMessage,
     options: AuthenticationOptions,
   ): Promise<void> {
     if (this.shouldFilter(options)) {
-      this._logger.debug(`Applying filter for: ${ocppConnectionName}`);
+      this._logger.debug(`Applying filter for: ${stationId}`);
       try {
-        await this.filter(tenantId, ocppConnectionName, request, options);
-        this._logger.debug(`Filter passed for: ${ocppConnectionName}`);
+        await this.filter(tenantId, stationId, request, options);
+        this._logger.debug(`Filter passed for: ${stationId}`);
       } catch (error) {
-        this._logger.warn(`Filter failed for: ${ocppConnectionName}`);
+        this._logger.warn(`Filter failed for: ${stationId}`);
         throw error;
       }
     } else {
-      this._logger.debug(`Filter skipped for: ${ocppConnectionName}`);
+      this._logger.debug(`Filter skipped for: ${stationId}`);
     }
   }
 }

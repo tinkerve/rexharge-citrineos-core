@@ -60,7 +60,7 @@ export class SequelizeLocalAuthListRepository
 
   async createSendLocalListFromRequestData(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     correlationId: string,
     updateType: OCPP2_0_1.UpdateEnumType,
     versionNumber: number,
@@ -70,7 +70,7 @@ export class SequelizeLocalAuthListRepository
       tenantId,
       SendLocalList.build({
         tenantId,
-        ocppConnectionName: ocppConnectionName,
+        stationId,
         correlationId,
         versionNumber,
         updateType,
@@ -136,11 +136,11 @@ export class SequelizeLocalAuthListRepository
   async validateOrReplaceLocalListVersionForStation(
     tenantId: number,
     versionNumber: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<void> {
     await this.s.transaction(async (transaction) => {
       const localListVersion = await LocalListVersion.findOne({
-        where: { ocppConnectionName: ocppConnectionName },
+        where: { stationId },
         transaction,
       });
       if (localListVersion && localListVersion.versionNumber === versionNumber) {
@@ -155,7 +155,7 @@ export class SequelizeLocalAuthListRepository
       }
       if (!localListVersion) {
         const newLocalListVersion = await LocalListVersion.create(
-          { tenantId, ocppConnectionName: ocppConnectionName, versionNumber },
+          { tenantId, stationId, versionNumber },
           { transaction },
         );
         this.emit('created', [newLocalListVersion]);
@@ -168,30 +168,28 @@ export class SequelizeLocalAuthListRepository
 
   async getSendLocalListRequestByStationIdAndCorrelationId(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     correlationId: string,
   ): Promise<SendLocalList | undefined> {
-    return this.sendLocalList.readOnlyOneByQuery(tenantId, {
-      where: { ocppConnectionName: ocppConnectionName, correlationId },
-    });
+    return this.sendLocalList.readOnlyOneByQuery(tenantId, { where: { stationId, correlationId } });
   }
 
   async createOrUpdateLocalListVersionFromStationIdAndSendLocalList(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     sendLocalList: SendLocalList,
   ): Promise<LocalListVersion> {
     switch (sendLocalList.updateType) {
       case OCPP2_0_1.UpdateEnumType.Full:
         return this.replaceLocalListVersionFromStationIdAndSendLocalList(
           tenantId,
-          ocppConnectionName,
+          stationId,
           sendLocalList,
         );
       case OCPP2_0_1.UpdateEnumType.Differential:
         return this.updateLocalListVersionFromStationIdAndSendLocalListRequest(
           tenantId,
-          ocppConnectionName,
+          stationId,
           sendLocalList,
         );
     }
@@ -199,12 +197,12 @@ export class SequelizeLocalAuthListRepository
 
   private async replaceLocalListVersionFromStationIdAndSendLocalList(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     sendLocalList: SendLocalList,
   ): Promise<LocalListVersion> {
     const localListVersion = await this.s.transaction(async (transaction) => {
       const oldLocalListVersion = await LocalListVersion.findOne({
-        where: { ocppConnectionName: ocppConnectionName },
+        where: { stationId },
         include: [LocalListAuthorization],
         transaction,
       });
@@ -215,16 +213,13 @@ export class SequelizeLocalAuthListRepository
           transaction,
         });
         // Destroy old version
-        await LocalListVersion.destroy({
-          where: { ocppConnectionName: ocppConnectionName },
-          transaction,
-        });
+        await LocalListVersion.destroy({ where: { stationId }, transaction });
       }
 
       const localListVersion = await LocalListVersion.create(
         {
           tenantId,
-          ocppConnectionName: ocppConnectionName,
+          stationId,
           versionNumber: sendLocalList.versionNumber,
         },
         { transaction },
@@ -255,7 +250,7 @@ export class SequelizeLocalAuthListRepository
 
   private async updateLocalListVersionFromStationIdAndSendLocalListRequest(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     sendLocalList: SendLocalList,
   ): Promise<LocalListVersion> {
     const localListVersion = await this.s.transaction(async (transaction) => {
@@ -264,11 +259,11 @@ export class SequelizeLocalAuthListRepository
         const localListVersion = await this._updateAllByQuery(
           tenantId,
           { versionNumber: sendLocalList.versionNumber },
-          { where: { ocppConnectionName: ocppConnectionName }, transaction },
+          { where: { stationId }, transaction },
         );
         if (localListVersion.length !== 1) {
           throw new Error(
-            `LocalListVersion not found for ${ocppConnectionName} during differential version update: ${JSON.stringify(localListVersion)}`,
+            `LocalListVersion not found for ${stationId} during differential version update: ${JSON.stringify(localListVersion)}`,
           );
         } else {
           return localListVersion[0];
@@ -276,15 +271,13 @@ export class SequelizeLocalAuthListRepository
       }
 
       const localListVersion = await LocalListVersion.findOne({
-        where: { ocppConnectionName: ocppConnectionName },
+        where: { stationId },
         include: [LocalListAuthorization],
         transaction,
       });
 
       if (!localListVersion) {
-        throw new Error(
-          `LocalListVersion not found for ${ocppConnectionName} during differential update`,
-        );
+        throw new Error(`LocalListVersion not found for ${stationId} during differential update`);
       }
 
       for (const sendAuth of sendLocalList.localAuthorizationList) {

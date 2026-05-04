@@ -10,7 +10,7 @@ import { Transaction } from '@citrineos/core';
 export function aTransaction(updateFunction?: UpdateFunction<Transaction>): Transaction {
   const item: Transaction = {
     id: faker.string.uuid(),
-    ocppConnectionName: faker.string.uuid(),
+    stationId: faker.string.uuid(),
     transactionId: faker.string.uuid(),
     isActive: true,
     chargingState: OCPP2_0_1.ChargingStateEnumType.Charging,

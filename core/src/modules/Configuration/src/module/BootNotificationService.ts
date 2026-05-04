@@ -74,10 +74,10 @@ export class BootNotificationService {
 
   async createBootNotificationResponse(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<OCPP2_response_types.BootNotificationResponse> {
     // Unknown chargers, chargers without a BootConfig, will use SystemConfig.unknownChargerStatus for status.
-    const bootConfig = await this._bootRepository.readByKey(tenantId, ocppConnectionName);
+    const bootConfig = await this._bootRepository.readByKey(tenantId, stationId);
     const bootStatus = this.determineBootStatus(bootConfig);
 
     // When any BootConfig field is not set, the corresponding field on the SystemConfig will be used.
@@ -95,11 +95,11 @@ export class BootNotificationService {
   async updateBootConfig(
     bootNotificationResponse: OCPP2_0_1.BootNotificationResponse,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<Boot> {
     let bootConfigDbEntity: Boot | undefined = await this._bootRepository.readByKey(
       tenantId,
-      ocppConnectionName,
+      stationId,
     );
     if (!bootConfigDbEntity) {
       const unknownChargerBootConfig: BootConfig = {
@@ -109,7 +109,7 @@ export class BootNotificationService {
       bootConfigDbEntity = await this._bootRepository.createOrUpdateByKey(
         tenantId,
         unknownChargerBootConfig,
-        ocppConnectionName,
+        stationId,
       );
     }
     if (!bootConfigDbEntity) {
@@ -127,12 +127,12 @@ export class BootNotificationService {
    * If the new boot is accepted and the charger actions were previously blacklisted, then whitelist the charger actions.
    * If the new boot is not accepted and charger actions were previously whitelisted, then blacklist the charger actions.
    *
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param stationId
    * @param cachedBootStatus
    * @param bootNotificationResponseStatus
    */
   async cacheChargerActionsPermissions(
-    ocppConnectionName: string,
+    stationId: string,
     cachedBootStatus: RegistrationStatusEnumType | null,
     bootNotificationResponseStatus: OCPP2_0_1.RegistrationStatusEnumType,
   ): Promise<void> {
@@ -143,13 +143,13 @@ export class BootNotificationService {
         const promises = Array.from(Object.keys(OCPP2_0_1_CALL_SCHEMA_RECORD)).map(
           async (action) => {
             if (action !== OCPP_CallAction.BootNotification) {
-              return this._cache.remove(action, ocppConnectionName);
+              return this._cache.remove(action, stationId);
             }
           },
         );
         await Promise.all(promises);
         // Remove cached boot status
-        await this._cache.remove(BOOT_STATUS, ocppConnectionName);
+        await this._cache.remove(BOOT_STATUS, stationId);
         this._logger.debug('Cached boot status removed: ', cachedBootStatus);
       }
     } else if (!cachedBootStatus) {
@@ -160,7 +160,7 @@ export class BootNotificationService {
       // TriggerMessage will need to un-blacklist the message it triggers
       const promises = Array.from(Object.keys(OCPP2_0_1_CALL_SCHEMA_RECORD)).map(async (action) => {
         if (action !== OCPP_CallAction.BootNotification) {
-          return this._cache.set(action, 'blacklisted', ocppConnectionName);
+          return this._cache.set(action, 'blacklisted', stationId);
         }
       });
       await Promise.all(promises);
@@ -168,14 +168,14 @@ export class BootNotificationService {
   }
 
   async createGetBaseReportRequest(
-    ocppConnectionName: string,
+    stationId: string,
     maxCachingSeconds: number,
   ): Promise<OCPP2_0_1.GetBaseReportRequest> {
     // OCTT tool does not meet B07.FR.04; instead always sends requestId === 0
     // Commenting out this line, using requestId === 0 until fixed (10/26/2023)
     // const requestId = Math.floor(Math.random() * ConfigurationModule.GET_BASE_REPORT_REQUEST_ID_MAX);
     const requestId = 0;
-    await this._cache.set(requestId.toString(), 'ongoing', ocppConnectionName, maxCachingSeconds);
+    await this._cache.set(requestId.toString(), 'ongoing', stationId, maxCachingSeconds);
 
     return {
       requestId: requestId,
@@ -187,13 +187,13 @@ export class BootNotificationService {
    * Based on the GetBaseReportMessageConfirmation, checks the cache to ensure GetBaseReport truly succeeded.
    * If GetBaseReport did not succeed, this method will throw. Otherwise, it will finish without throwing.
    *
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param stationId
    * @param requestId
    * @param getBaseReportMessageConfirmation
    * @param maxCachingSeconds
    */
   async confirmGetBaseReportSuccess(
-    ocppConnectionName: string,
+    stationId: string,
     requestId: string,
     getBaseReportMessageConfirmation: IMessageConfirmation,
     maxCachingSeconds: number,
@@ -207,14 +207,14 @@ export class BootNotificationService {
       let getBaseReportCacheValue = await this._cache.onChange(
         requestId,
         maxCachingSeconds,
-        ocppConnectionName,
+        stationId,
       );
 
       while (getBaseReportCacheValue === 'ongoing') {
         getBaseReportCacheValue = await this._cache.onChange(
           requestId,
           maxCachingSeconds,
-          ocppConnectionName,
+          stationId,
         );
       }
 
@@ -266,9 +266,9 @@ export class BootNotificationService {
 
   async createOcpp16BootNotificationResponse(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<OCPP1_6.BootNotificationResponse> {
-    const boot = await this._bootRepository.readByKey(tenantId, ocppConnectionName);
+    const boot = await this._bootRepository.readByKey(tenantId, stationId);
     const status = this.determineOcpp16BootStatus(boot);
 
     return {
@@ -287,12 +287,12 @@ export class BootNotificationService {
    * If the new boot is accepted and the charger actions were previously blacklisted, then whitelist the charger actions.
    * If the new boot is not accepted and charger actions were previously whitelisted, then blacklist the charger actions.
    *
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param stationId
    * @param cachedBootStatus
    * @param bootNotificationResponseStatus
    */
   async cacheOcpp16ChargerActionsPermissions(
-    ocppConnectionName: string,
+    stationId: string,
     cachedBootStatus: OCPP1_6.BootNotificationResponseStatus | null,
     bootNotificationResponseStatus: OCPP1_6.BootNotificationResponseStatus,
   ): Promise<void> {
@@ -303,15 +303,15 @@ export class BootNotificationService {
         const promises = Array.from(Object.keys(OCPP1_6_CALL_SCHEMA_RECORD)).map(
           async ([action]) => {
             if (action !== OCPP_CallAction.BootNotification) {
-              return this._cache.remove(action, ocppConnectionName);
+              return this._cache.remove(action, stationId);
             }
           },
         );
         await Promise.all(promises);
         // Remove cached boot status
-        await this._cache.remove(BOOT_STATUS, ocppConnectionName);
+        await this._cache.remove(BOOT_STATUS, stationId);
         this._logger.debug(
-          `Cached boot status ${cachedBootStatus} removed for station ${ocppConnectionName}.`,
+          `Cached boot status ${cachedBootStatus} removed for station ${stationId}.`,
         );
       }
     } else if (!cachedBootStatus) {
@@ -321,7 +321,7 @@ export class BootNotificationService {
       // ChangeConfiguration, GetConfiguration and TriggerMessage will need to un-blacklist the message it triggers
       const promises = Array.from(Object.keys(OCPP1_6_CALL_SCHEMA_RECORD)).map(async (action) => {
         if (action !== OCPP_CallAction.BootNotification) {
-          return this._cache.set(action, 'blacklisted', ocppConnectionName);
+          return this._cache.set(action, 'blacklisted', stationId);
         }
       });
       await Promise.all(promises);
@@ -331,7 +331,7 @@ export class BootNotificationService {
   async updateOcpp16BootConfig(
     response: OCPP1_6.BootNotificationResponse,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<Boot> {
     const heartbeatInterval =
       response.status === OCPP1_6.BootNotificationResponseStatus.Accepted
@@ -350,13 +350,13 @@ export class BootNotificationService {
     let bootConfigDbEntity: Boot | undefined = await this._bootRepository.createOrUpdateByKey(
       tenantId,
       unknownChargerBootConfig,
-      ocppConnectionName,
+      stationId,
     );
     if (bootConfigDbEntity) {
       bootConfigDbEntity = await this._bootRepository.updateLastBootTimeByKey(
         tenantId,
         response.currentTime,
-        ocppConnectionName,
+        stationId,
       );
     }
 

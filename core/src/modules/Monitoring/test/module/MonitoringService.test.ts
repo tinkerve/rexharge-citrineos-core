@@ -33,7 +33,7 @@ describe('MonitoringService', () => {
 
       await monitoringService.processClearMonitoringResult(
         DEFAULT_TENANT_ID,
-        'ocppConnectionName',
+        'stationId',
         monitoringResults,
       );
 
@@ -54,7 +54,7 @@ describe('MonitoringService', () => {
 
       await monitoringService.processClearMonitoringResult(
         DEFAULT_TENANT_ID,
-        'ocppConnectionName',
+        'stationId',
         monitoringResults,
       );
 

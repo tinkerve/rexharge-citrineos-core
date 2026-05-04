@@ -39,7 +39,7 @@ export class BrokerAwareMessageSender extends AbstractMessageSender implements I
   private _buffer: AnyMessage[] = [];
 
   /**
-   * Active Call timeouts keyed by connection identifier (`tenantId:ocppConnectionName`).
+   * Active Call timeouts keyed by connection identifier (`tenantId:stationId`).
    * When a timeout fires the entry is deleted and `_onCallTimeout` is invoked.
    */
   private _callTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
@@ -49,7 +49,7 @@ export class BrokerAwareMessageSender extends AbstractMessageSender implements I
    * Typically used to close the corresponding WebSocket connection.
    * Can be set after construction to avoid circular dependency issues.
    */
-  onCallTimeout?: (ocppConnectionName: string, tenantId: number) => Promise<void>;
+  onCallTimeout?: (stationId: string, tenantId: number) => Promise<void>;
 
   constructor(
     private readonly _inner: IMessageSender,
@@ -125,8 +125,8 @@ export class BrokerAwareMessageSender extends AbstractMessageSender implements I
    * CallError – the charger will wait until the connection is closed by the timer.
    */
   private _handleDisconnectedCall(message: IMessage<OcppRequest>): IMessageConfirmation {
-    const { ocppConnectionName, tenantId } = message.context;
-    const identifier = `${tenantId}:${ocppConnectionName}`;
+    const { stationId, tenantId } = message.context;
+    const identifier = `${tenantId}:${stationId}`;
 
     // If a timeout for this identifier is already running, let it be – a second
     // Call from the same station while the first is still pending would be
@@ -149,7 +149,7 @@ export class BrokerAwareMessageSender extends AbstractMessageSender implements I
         `BrokerAwareMessageSender: Call timeout expired for ${identifier} – closing connection.`,
       );
       if (this.onCallTimeout) {
-        this.onCallTimeout(ocppConnectionName, tenantId).catch((err) => {
+        this.onCallTimeout(stationId, tenantId).catch((err) => {
           this._logger.error(
             `BrokerAwareMessageSender: error closing connection for ${identifier}`,
             err,
@@ -168,7 +168,7 @@ export class BrokerAwareMessageSender extends AbstractMessageSender implements I
   private _bufferMessage(message: AnyMessage): IMessageConfirmation {
     this._logger.info(
       `BrokerAwareMessageSender: broker down – buffering message ` +
-        `(state=${message.state}) for ${message.context.ocppConnectionName}.`,
+        `(state=${message.state}) for ${message.context.stationId}.`,
     );
     this._buffer.push(message);
     return { success: true };
@@ -201,13 +201,13 @@ export class BrokerAwareMessageSender extends AbstractMessageSender implements I
         const result = await this._inner.send(message);
         if (!result.success) {
           this._logger.error(
-            `BrokerAwareMessageSender: failed to flush message for ${message.context.ocppConnectionName}:`,
+            `BrokerAwareMessageSender: failed to flush message for ${message.context.stationId}:`,
             result.payload,
           );
         }
       } catch (err) {
         this._logger.error(
-          `BrokerAwareMessageSender: error flushing message for ${message.context.ocppConnectionName}:`,
+          `BrokerAwareMessageSender: error flushing message for ${message.context.stationId}:`,
           err,
         );
       }

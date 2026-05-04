@@ -282,7 +282,7 @@ export class CertificatesModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('Sign certificate request received:', message, props);
     const tenantId = message.context.tenantId;
-    const ocppConnectionName: string = message.context.ocppConnectionName;
+    const stationId: string = message.context.stationId;
     const csrString: string = message.payload.csr.replace(/\n/g, '');
     const certificateType: CertificateSigningUseEnumType | undefined | null =
       message.payload.certificateType;
@@ -312,11 +312,11 @@ export class CertificatesModule extends AbstractModule {
 
     let certificateChainPem: string;
     try {
-      await this._verifySignCertRequest(csrString, tenantId, ocppConnectionName, certificateType);
+      await this._verifySignCertRequest(csrString, tenantId, stationId, certificateType);
 
       certificateChainPem = await this._certificateAuthorityService.getCertificateChain(
         csrString,
-        ocppConnectionName,
+        stationId,
         certificateType,
       );
     } catch (error) {
@@ -341,21 +341,15 @@ export class CertificatesModule extends AbstractModule {
 
     await this.installCertificateHelperService.prepareToInstallCertificate(
       tenantId,
-      ocppConnectionName,
+      stationId,
       certificateChainPem,
       certificateType as unknown as CertificateUseEnumType,
     );
 
-    await this.sendCall(
-      ocppConnectionName,
-      tenantId,
-      message.protocol,
-      OCPP_CallAction.CertificateSigned,
-      {
-        certificateChain: certificateChainPem,
-        certificateType: certificateType,
-      } as OCPP2_request_types.CertificateSignedRequest,
-    );
+    await this.sendCall(stationId, tenantId, message.protocol, OCPP_CallAction.CertificateSigned, {
+      certificateChain: certificateChainPem,
+      certificateType: certificateType,
+    } as OCPP2_request_types.CertificateSignedRequest);
   }
 
   /**
@@ -370,7 +364,7 @@ export class CertificatesModule extends AbstractModule {
     this._logger.debug('CertificateSigned received:', message, props);
     await this.installCertificateHelperService.finalizeInstalledCertificate(
       message.context.tenantId,
-      message.context.ocppConnectionName,
+      message.context.stationId,
       message.payload.status as unknown as InstallCertificateStatusEnumType,
     );
     // TODO: If rejected, retry and/or send to callbackUrl if originally part of a triggered refresh
@@ -384,11 +378,11 @@ export class CertificatesModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('DeleteCertificate received:', message, props);
     const tenantId = message.context.tenantId;
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
     const existingPendingDeleteCertificateAttempt =
       await this.deleteCertificateAttemptRepository.readOnlyOneByQuery(tenantId, {
         where: {
-          ocppConnectionName: ocppConnectionName,
+          stationId,
           status: null,
         },
       });
@@ -400,7 +394,7 @@ export class CertificatesModule extends AbstractModule {
         const existingInstalledCertificates =
           await this.installedCertificateRepository.readAllByQuery(tenantId, {
             where: {
-              ocppConnectionName: ocppConnectionName,
+              stationId,
               hashAlgorithm: existingPendingDeleteCertificateAttempt.hashAlgorithm,
               issuerNameHash: existingPendingDeleteCertificateAttempt.issuerNameHash,
               issuerKeyHash: existingPendingDeleteCertificateAttempt.issuerKeyHash,
@@ -424,14 +418,14 @@ export class CertificatesModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('GetInstalledCertificateIds received:', message, props);
     const tenantId = message.context.tenantId;
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
     const correlationId = message.context.correlationId;
     const certificateHashDataList: OCPP2_common_types.CertificateHashDataChainType[] =
       message.payload.certificateHashDataChain!;
     if (message.payload.status === GetInstalledCertificateStatusEnum.NotFound) {
       const request = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
         where: {
-          ocppConnectionName: ocppConnectionName,
+          stationId,
           correlationId,
           origin: MessageOrigin.ChargingStationManagementSystem,
         },
@@ -449,21 +443,21 @@ export class CertificatesModule extends AbstractModule {
         }
         if (certificateType) {
           this._logger.debug(
-            `GetInstalledCertificateIdsRequest sent to ${ocppConnectionName} had certificateType: ${certificateType}. Cleaning up installed certificates of this type in DB if any.`,
+            `GetInstalledCertificateIdsRequest sent to ${stationId} had certificateType: ${certificateType}. Cleaning up installed certificates of this type in DB if any.`,
           );
           await this.installedCertificateRepository.deleteAllByQuery(tenantId, {
             where: {
-              ocppConnectionName: ocppConnectionName,
+              stationId,
               certificateType,
             },
           });
         } else {
           this._logger.debug(
-            `GetInstalledCertificateIdsRequest sent to ${ocppConnectionName} had no certificateType. Cleaning up all installed certificates in DB if any.`,
+            `GetInstalledCertificateIdsRequest sent to ${stationId} had no certificateType. Cleaning up all installed certificates in DB if any.`,
           );
           await this.installedCertificateRepository.deleteAllByQuery(tenantId, {
             where: {
-              ocppConnectionName: ocppConnectionName,
+              stationId,
             },
           });
         }
@@ -478,7 +472,7 @@ export class CertificatesModule extends AbstractModule {
         let existingInstalledCertificate =
           await this._installedCertificateRepository.readOnlyOneByQuery(tenantId, {
             where: {
-              ocppConnectionName: ocppConnectionName,
+              stationId: stationId,
               certificateType: certificateType,
             },
           });
@@ -495,7 +489,7 @@ export class CertificatesModule extends AbstractModule {
           existingInstalledCertificate.issuerNameHash = certificateHashData.issuerNameHash;
           existingInstalledCertificate.issuerKeyHash = certificateHashData.issuerKeyHash;
           existingInstalledCertificate.serialNumber = certificateHashData.serialNumber;
-          existingInstalledCertificate.ocppConnectionName = ocppConnectionName;
+          existingInstalledCertificate.stationId = stationId;
           existingInstalledCertificate.certificateType = certificateType;
           await existingInstalledCertificate.save();
           this._logger.debug(
@@ -515,7 +509,7 @@ export class CertificatesModule extends AbstractModule {
     this._logger.debug('InstallCertificate received:', message, props);
     await this.installCertificateHelperService.finalizeInstalledCertificate(
       message.context.tenantId,
-      message.context.ocppConnectionName,
+      message.context.stationId,
       message.payload.status,
     );
   }
@@ -523,7 +517,7 @@ export class CertificatesModule extends AbstractModule {
   private async _verifySignCertRequest(
     csrString: string,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     certificateType?: CertificateSigningUseEnumType | null,
   ): Promise<void> {
     // Verify certificate type
@@ -547,7 +541,7 @@ export class CertificatesModule extends AbstractModule {
       // Verify organization name match the one stored in the device model
       const organizationName = await this._deviceModelRepository.readAllByQuerystring(tenantId, {
         tenantId: tenantId,
-        ocppConnectionName: ocppConnectionName,
+        stationId: stationId,
         component_name: 'SecurityCtrlr',
         variable_name: 'OrganizationName',
         type: AttributeEnum.Actual,
@@ -569,6 +563,6 @@ export class CertificatesModule extends AbstractModule {
       }
     }
 
-    this._logger.info(`Verified SignCertRequest for station ${ocppConnectionName} successfully.`);
+    this._logger.info(`Verified SignCertRequest for station ${stationId} successfully.`);
   }
 }

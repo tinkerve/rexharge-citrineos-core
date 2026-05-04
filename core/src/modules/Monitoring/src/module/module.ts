@@ -145,7 +145,7 @@ export class MonitoringModule extends AbstractModule {
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('NotifyEvent received:', message, props);
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
 
     const events = message.payload.eventData as OCPP2_common_types.EventDataType[];
     for (const event of events) {
@@ -160,7 +160,7 @@ export class MonitoringModule extends AbstractModule {
         event,
         component?.id,
         variable?.id,
-        ocppConnectionName,
+        stationId,
       );
       const reportDataType: OCPP2_common_types.ReportDataType = {
         component,
@@ -174,7 +174,7 @@ export class MonitoringModule extends AbstractModule {
       await this._deviceModelRepository.createOrUpdateDeviceModelByStationId(
         message.context.tenantId,
         reportDataType,
-        ocppConnectionName,
+        stationId,
         message.payload.generatedAt,
       );
     }
@@ -201,7 +201,7 @@ export class MonitoringModule extends AbstractModule {
       await this._variableMonitoringRepository.updateResultByStationId(
         message.context.tenantId,
         setMonitoringResultType,
-        message.context.ocppConnectionName,
+        message.context.stationId,
       );
     }
   }
@@ -215,7 +215,7 @@ export class MonitoringModule extends AbstractModule {
 
     await this._monitoringService.processClearMonitoringResult(
       message.context.tenantId,
-      message.context.ocppConnectionName,
+      message.context.stationId,
       message.payload.clearMonitoringResult,
     );
   }
@@ -289,23 +289,23 @@ export class MonitoringModule extends AbstractModule {
       // After setting monitoring base, variable monitorings on charger side are influenced
       // To get all the latest monitoring data, we intend to mask all variable monitorings on the charger as rejected.
       // Then request a GetMonitoringReport for all monitorings
-      const ocppConnectionName: string = message.context.ocppConnectionName;
+      const stationId: string = message.context.stationId;
       await this._variableMonitoringRepository.rejectAllVariableMonitoringsByStationId(
         message.context.tenantId,
         OCPP_CallAction.SetVariableMonitoring,
-        ocppConnectionName,
+        stationId,
       );
-      this._logger.debug('Rejected all variable monitorings on the charger', ocppConnectionName);
+      this._logger.debug('Rejected all variable monitorings on the charger', stationId);
 
       await this.sendCall(
-        ocppConnectionName,
+        stationId,
         message.context.tenantId,
         message.protocol,
         OCPP_CallAction.GetMonitoringReport,
         {
           requestId: await this._idGenerator.generateRequestId(
             message.context.tenantId,
-            message.context.ocppConnectionName,
+            message.context.stationId,
             ChargingStationSequenceTypeEnum.getMonitoringReport,
           ),
         } as OCPP2_request_types.GetMonitoringReportRequest,
@@ -322,7 +322,7 @@ export class MonitoringModule extends AbstractModule {
     await this._deviceModelRepository.createOrUpdateByGetVariablesResultAndStationId(
       message.context.tenantId,
       message.payload.getVariableResult,
-      message.context.ocppConnectionName,
+      message.context.stationId,
       message.context.timestamp,
     );
   }
@@ -334,18 +334,18 @@ export class MonitoringModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('SetVariables response received:', message, props);
     const tenantId = message.context.tenantId;
-    const ocppConnectionName = message.context.ocppConnectionName;
+    const stationId = message.context.stationId;
     const correlationId = message.context.correlationId;
     const setVariablesDataMap: SetVariableDataMap =
       await this.getSetVariablesDataMapFromOriginalSetVariablesRequest(
         tenantId,
-        ocppConnectionName,
+        stationId,
         correlationId,
       );
     for (const setVariableResultType of message.payload.setVariableResult) {
       await this.handleSetVariableResultType(
         tenantId,
-        ocppConnectionName,
+        stationId,
         setVariableResultType,
         setVariablesDataMap,
         message.context.timestamp,
@@ -355,7 +355,7 @@ export class MonitoringModule extends AbstractModule {
 
   protected async getSetVariablesDataMapFromOriginalSetVariablesRequest(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     correlationId: string,
   ) {
     // map where key is `${component}-${componentInstance}-${variable}-${variableInstance}` and value is the SetVariableData
@@ -363,7 +363,7 @@ export class MonitoringModule extends AbstractModule {
     const requestOcppMessage = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
       where: {
         tenantId,
-        ocppConnectionName: ocppConnectionName,
+        stationId,
         correlationId,
         origin: MessageOrigin.ChargingStationManagementSystem,
       },
@@ -389,7 +389,7 @@ export class MonitoringModule extends AbstractModule {
 
   protected async handleSetVariableResultType(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     setVariableResultType: OCPP2_common_types.SetVariableResultType,
     setVariablesDataMap: SetVariableDataMap,
     timestamp: string,
@@ -412,7 +412,7 @@ export class MonitoringModule extends AbstractModule {
       const attributeType = applicableSetVariableData.attributeType ?? AttributeEnum.Actual;
       const existingVariableAttribute = await this.getExistingOrCreateVariableAttribute(
         tenantId,
-        ocppConnectionName,
+        stationId,
         componentName,
         componentInstance,
         variableName,
@@ -426,7 +426,7 @@ export class MonitoringModule extends AbstractModule {
       await this._deviceModelRepository.updateResultByStationId(
         tenantId,
         setVariableResultType,
-        ocppConnectionName,
+        stationId,
         timestamp,
         existingVariableAttribute || undefined,
       );
@@ -435,7 +435,7 @@ export class MonitoringModule extends AbstractModule {
 
   protected async getExistingOrCreateVariableAttribute(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     componentName: string,
     componentInstance: string | null,
     variableName: string,
@@ -445,7 +445,7 @@ export class MonitoringModule extends AbstractModule {
   ): Promise<VariableAttribute> {
     let existingVariableAttribute = (await this.deviceModelRepository.readOnlyOneByQuery(tenantId, {
       where: {
-        ocppConnectionName,
+        stationId,
         type: attributeType,
       },
       include: [
@@ -483,7 +483,7 @@ export class MonitoringModule extends AbstractModule {
               },
             } as OCPP2_common_types.SetVariableDataType,
           ],
-          ocppConnectionName,
+          stationId,
           new Date().toISOString(),
         );
       if (createdVariableAttributes && createdVariableAttributes.length === 1) {

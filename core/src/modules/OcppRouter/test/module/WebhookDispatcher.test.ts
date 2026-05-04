@@ -56,11 +56,11 @@ describe('WebhookDispatcher', () => {
       const subscription = aSubscription();
       givenSubscriptions(subscription);
 
-      await webhookDispatcher.register(subscription.tenantId, subscription.ocppConnectionName);
+      await webhookDispatcher.register(subscription.tenantId, subscription.stationId);
 
       expect(subscriptionRepository.readAllByStationId).toBeCalledWith(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
       );
     });
 
@@ -68,7 +68,7 @@ describe('WebhookDispatcher', () => {
       const subscription = aSubscription({ onConnect: true });
       givenSubscriptions(subscription);
 
-      await webhookDispatcher.register(subscription.tenantId, subscription.ocppConnectionName);
+      await webhookDispatcher.register(subscription.tenantId, subscription.stationId);
 
       expect(fetch).toBeCalledTimes(1);
       expect(fetch).toHaveBeenCalledWith(subscription.url, {
@@ -77,7 +77,7 @@ describe('WebhookDispatcher', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ocppConnectionName: subscription.ocppConnectionName,
+          stationId: subscription.stationId,
           event: 'connected',
         }),
       });
@@ -87,7 +87,7 @@ describe('WebhookDispatcher', () => {
       const subscription = aSubscription({ onConnect: false });
       givenSubscriptions(subscription);
 
-      await webhookDispatcher.register(subscription.tenantId, subscription.ocppConnectionName);
+      await webhookDispatcher.register(subscription.tenantId, subscription.stationId);
 
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -97,9 +97,9 @@ describe('WebhookDispatcher', () => {
     it('should send request for subscriptions with enabled onClose', async () => {
       const subscription = aSubscription({ onClose: true });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
-      await webhookDispatcher.deregister(subscription.tenantId, subscription.ocppConnectionName);
+      await webhookDispatcher.deregister(subscription.tenantId, subscription.stationId);
 
       expect(fetch).toBeCalledTimes(1);
       expect(fetch).toHaveBeenCalledWith(subscription.url, {
@@ -108,7 +108,7 @@ describe('WebhookDispatcher', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ocppConnectionName: subscription.ocppConnectionName,
+          stationId: subscription.stationId,
           event: 'closed',
         }),
       });
@@ -117,9 +117,9 @@ describe('WebhookDispatcher', () => {
     it('should not send request for subscriptions with disabled onClose', async () => {
       const subscription = aSubscription({ onClose: false });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
-      await webhookDispatcher.deregister(subscription.tenantId, subscription.ocppConnectionName);
+      await webhookDispatcher.deregister(subscription.tenantId, subscription.stationId);
 
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -130,10 +130,10 @@ describe('WebhookDispatcher', () => {
         messageRegexFilter: undefined,
       });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -143,11 +143,11 @@ describe('WebhookDispatcher', () => {
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(fetch).toHaveBeenCalledWith(subscription.url, expect.anything());
 
-      await webhookDispatcher.deregister(subscription.tenantId, subscription.ocppConnectionName);
+      await webhookDispatcher.deregister(subscription.tenantId, subscription.stationId);
 
       fetch.mockClear();
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -162,11 +162,11 @@ describe('WebhookDispatcher', () => {
     it('should not send request for subscriptions with disabled onMessage', async () => {
       const subscription = aSubscription({ onMessage: false });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       await webhookDispatcher.dispatchMessageReceived(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         'Any timestamp',
         'ocpp2.0.1',
         'BootNotification',
@@ -183,7 +183,7 @@ describe('WebhookDispatcher', () => {
         messageRegexFilter: 'Accepted',
       });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       const rpcMessage = [3, '123', { status: 'Accepted' }];
       const timestamp = 'Any timestamp';
@@ -193,7 +193,7 @@ describe('WebhookDispatcher', () => {
 
       await webhookDispatcher.dispatchMessageReceived(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         timestamp,
         protocol,
         action,
@@ -207,7 +207,7 @@ describe('WebhookDispatcher', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ocppConnectionName: subscription.ocppConnectionName,
+          stationId: subscription.stationId,
           event: 'message',
           origin: MessageOrigin.ChargingStation,
           message: JSON.stringify(rpcMessage),
@@ -228,7 +228,7 @@ describe('WebhookDispatcher', () => {
         messageRegexFilter: undefined,
       });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       const rpcMessage = [2, '123', 'BootNotification', { reason: 'PowerUp' }];
       const timestamp = 'Any timestamp';
@@ -238,7 +238,7 @@ describe('WebhookDispatcher', () => {
 
       await webhookDispatcher.dispatchMessageReceived(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         timestamp,
         protocol,
         action,
@@ -252,7 +252,7 @@ describe('WebhookDispatcher', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ocppConnectionName: subscription.ocppConnectionName,
+          stationId: subscription.stationId,
           event: 'message',
           origin: MessageOrigin.ChargingStation,
           message: JSON.stringify(rpcMessage),
@@ -273,11 +273,11 @@ describe('WebhookDispatcher', () => {
         messageRegexFilter: 'Accepted',
       });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       await webhookDispatcher.dispatchMessageReceived(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         'Any timestamp',
         'ocpp2.0.1',
         'BootNotification',
@@ -291,7 +291,7 @@ describe('WebhookDispatcher', () => {
     it('should create OCPP message record', async () => {
       const subscription = aSubscription({ onMessage: true, messageRegexFilter: undefined });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       const rpcMessage = [2, '123', 'BootNotification', {}];
       const timestamp = 'Any timestamp';
@@ -300,7 +300,7 @@ describe('WebhookDispatcher', () => {
 
       await webhookDispatcher.dispatchMessageReceived(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         timestamp,
         protocol,
         action,
@@ -312,7 +312,7 @@ describe('WebhookDispatcher', () => {
         subscription.tenantId,
         expect.objectContaining({
           tenantId: subscription.tenantId,
-          ocppConnectionName: subscription.ocppConnectionName,
+          stationId: subscription.stationId,
           correlationId: '123',
           origin: MessageOrigin.ChargingStation,
           state: MessageState.Request,
@@ -332,14 +332,14 @@ describe('WebhookDispatcher', () => {
 
       const subscription = aSubscription({ onMessage: true, messageRegexFilter: undefined });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       // OCPP response (type 3) has no action field in the message itself
       const rpcMessage = [3, '123', { status: 'Accepted' }];
 
       await webhookDispatcher.dispatchMessageReceived(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         'Any timestamp',
         'ocpp2.0.1',
         undefined as any,
@@ -360,10 +360,10 @@ describe('WebhookDispatcher', () => {
     it('should not send request for subscriptions with disabled sentMessage', async () => {
       const subscription = aSubscription({ sentMessage: false });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -380,7 +380,7 @@ describe('WebhookDispatcher', () => {
         messageRegexFilter: 'totalCost',
       });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       const rpcMessage = [3, '123', { totalCost: 12.54 }];
       const timestamp = 'Any timestamp';
@@ -389,7 +389,7 @@ describe('WebhookDispatcher', () => {
       const action = 'CostUpdated';
 
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         action,
         MessageState.Response,
         timestamp,
@@ -403,7 +403,7 @@ describe('WebhookDispatcher', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ocppConnectionName: subscription.ocppConnectionName,
+          stationId: subscription.stationId,
           event: 'message',
           origin: MessageOrigin.ChargingStationManagementSystem,
           message: JSON.stringify(rpcMessage),
@@ -424,7 +424,7 @@ describe('WebhookDispatcher', () => {
         messageRegexFilter: undefined,
       });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       const rpcMessage = [2, '123', 'BootNotification', {}];
       const timestamp = 'Any timestamp';
@@ -433,7 +433,7 @@ describe('WebhookDispatcher', () => {
       const action = 'BootNotification';
 
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         action,
         MessageState.Request,
         timestamp,
@@ -447,7 +447,7 @@ describe('WebhookDispatcher', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ocppConnectionName: subscription.ocppConnectionName,
+          stationId: subscription.stationId,
           event: 'message',
           origin: MessageOrigin.ChargingStationManagementSystem,
           message: JSON.stringify(rpcMessage),
@@ -468,10 +468,10 @@ describe('WebhookDispatcher', () => {
         messageRegexFilter: 'totalCost',
       });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -485,7 +485,7 @@ describe('WebhookDispatcher', () => {
     it('should create OCPP message record', async () => {
       const subscription = aSubscription({ sentMessage: true, messageRegexFilter: undefined });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       const rpcMessage = [2, '123', 'BootNotification', {}];
       const timestamp = 'Any timestamp';
@@ -493,7 +493,7 @@ describe('WebhookDispatcher', () => {
       const action = 'BootNotification';
 
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         action,
         MessageState.Request,
         timestamp,
@@ -505,7 +505,7 @@ describe('WebhookDispatcher', () => {
         subscription.tenantId,
         expect.objectContaining({
           tenantId: subscription.tenantId,
-          ocppConnectionName: subscription.ocppConnectionName,
+          stationId: subscription.stationId,
           correlationId: '123',
           origin: MessageOrigin.ChargingStationManagementSystem,
           state: MessageState.Request,
@@ -522,7 +522,7 @@ describe('WebhookDispatcher', () => {
     it('should dispatch message to subscribers with onMessage enabled', async () => {
       const subscription = aSubscription({ onMessage: true, messageRegexFilter: undefined });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       const message = 'some raw unparsed message';
       const timestamp = 'Any timestamp';
@@ -531,7 +531,7 @@ describe('WebhookDispatcher', () => {
 
       await webhookDispatcher.dispatchMessageReceivedUnparsed(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         message,
         timestamp,
         protocol,
@@ -552,11 +552,11 @@ describe('WebhookDispatcher', () => {
     it('should not dispatch message to subscribers with onMessage disabled', async () => {
       const subscription = aSubscription({ onMessage: false });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       await webhookDispatcher.dispatchMessageReceivedUnparsed(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         'Any message',
         'Any timestamp',
         'ocpp2.0.1',
@@ -573,11 +573,11 @@ describe('WebhookDispatcher', () => {
         messageRegexFilter: 'Accepted',
       });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       await webhookDispatcher.dispatchMessageReceivedUnparsed(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         'Rejected reservation',
         'Any timestamp',
         'ocpp2.0.1',
@@ -591,11 +591,11 @@ describe('WebhookDispatcher', () => {
     it('should send message with origin ChargingStation', async () => {
       const subscription = aSubscription({ onMessage: true, messageRegexFilter: undefined });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       await webhookDispatcher.dispatchMessageReceivedUnparsed(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         'Any raw message',
         'Any timestamp',
         'ocpp2.0.1',
@@ -614,7 +614,7 @@ describe('WebhookDispatcher', () => {
     it('should create OCPP message record with generated correlation ID', async () => {
       const subscription = aSubscription({ onMessage: true, messageRegexFilter: undefined });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       const message = 'Any raw message';
       const timestamp = 'Any timestamp';
@@ -623,7 +623,7 @@ describe('WebhookDispatcher', () => {
 
       await webhookDispatcher.dispatchMessageReceivedUnparsed(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
         message,
         timestamp,
         protocol,
@@ -635,7 +635,7 @@ describe('WebhookDispatcher', () => {
         subscription.tenantId,
         expect.objectContaining({
           tenantId: subscription.tenantId,
-          ocppConnectionName: subscription.ocppConnectionName,
+          stationId: subscription.stationId,
           correlationId: expect.any(String),
           origin: MessageOrigin.ChargingStation,
           state: MessageState.Request,
@@ -655,10 +655,10 @@ describe('WebhookDispatcher', () => {
         messageRegexFilter: undefined,
       });
       givenSubscriptions(subscription);
-      await givenRegisteredStations(subscription.ocppConnectionName);
+      await givenRegisteredStations(subscription.stationId);
 
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -669,7 +669,7 @@ describe('WebhookDispatcher', () => {
       expect(fetch).toHaveBeenCalledWith(subscription.url, expect.anything());
 
       const newSubscription = aSubscription({
-        ocppConnectionName: subscription.ocppConnectionName,
+        stationId: subscription.stationId,
         sentMessage: true,
         messageRegexFilter: undefined,
       });
@@ -677,7 +677,7 @@ describe('WebhookDispatcher', () => {
 
       fetch.mockClear();
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -692,12 +692,12 @@ describe('WebhookDispatcher', () => {
       expect(subscriptionRepository.readAllByStationId).toHaveBeenCalledTimes(1);
       expect(subscriptionRepository.readAllByStationId).toHaveBeenCalledWith(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
       );
 
       fetch.mockClear();
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -710,22 +710,22 @@ describe('WebhookDispatcher', () => {
     });
 
     it('should periodically remove deleted subscriptions for registered stations', async () => {
-      const ocppConnectionName = faker.string.uuid();
+      const stationId = faker.string.uuid();
       const subscription = aSubscription({
-        ocppConnectionName: ocppConnectionName,
+        stationId: stationId,
         sentMessage: true,
         messageRegexFilter: undefined,
       });
       const anotherSubscription = aSubscription({
-        ocppConnectionName: ocppConnectionName,
+        stationId: stationId,
         sentMessage: true,
         messageRegexFilter: undefined,
       });
       givenSubscriptions(subscription, anotherSubscription);
-      await givenRegisteredStations(ocppConnectionName);
+      await givenRegisteredStations(stationId);
 
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -741,7 +741,7 @@ describe('WebhookDispatcher', () => {
 
       fetch.mockClear();
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -758,12 +758,12 @@ describe('WebhookDispatcher', () => {
       expect(subscriptionRepository.readAllByStationId).toHaveBeenCalledTimes(1);
       expect(subscriptionRepository.readAllByStationId).toHaveBeenCalledWith(
         subscription.tenantId,
-        subscription.ocppConnectionName,
+        subscription.stationId,
       );
 
       fetch.mockClear();
       await webhookDispatcher.dispatchMessageSent(
-        createIdentifier(subscription.tenantId, subscription.ocppConnectionName),
+        createIdentifier(subscription.tenantId, subscription.stationId),
         'BootNotification',
         MessageState.Request,
         'Any timestamp',
@@ -781,8 +781,8 @@ describe('WebhookDispatcher', () => {
   }
 
   async function givenRegisteredStations(...stationIds: string[]) {
-    for (const ocppConnectionName of stationIds) {
-      await webhookDispatcher.register(DEFAULT_TENANT_ID, ocppConnectionName);
+    for (const stationId of stationIds) {
+      await webhookDispatcher.register(DEFAULT_TENANT_ID, stationId);
     }
     fetch.mockClear();
   }

@@ -10,7 +10,7 @@ import type { WebsocketServerConfig } from '@config/types.js';
 export interface INetworkConnection {
   bindNetworkHook(): (identifier: string, message: string) => Promise<void>;
 
-  disconnect(tenantId: number, ocppConnectionName: string): Promise<boolean>;
+  disconnect(tenantId: number, stationId: string): Promise<boolean>;
 
   shutdown(): Promise<void>;
 

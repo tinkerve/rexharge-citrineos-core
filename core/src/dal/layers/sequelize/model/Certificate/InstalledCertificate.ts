@@ -33,13 +33,13 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
     type: DataType.INTEGER,
     allowNull: true,
   })
-  declare stationId?: number;
+  declare stationPkId?: number;
 
   @Column({
     type: DataType.STRING(36),
     allowNull: false,
   })
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @Column({
     type: DataType.STRING,
@@ -78,7 +78,7 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
   @BelongsTo(() => Certificate, 'certificateId')
   declare certificate?: CertificateDto;
 
-  @BelongsTo(() => ChargingStation, 'stationId')
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare station?: ChargingStationDto;
 
   @ForeignKey(() => Tenant)
@@ -94,14 +94,14 @@ export class InstalledCertificate extends Model implements InstalledCertificateD
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationId(instance: InstalledCertificate): Promise<void> {
-    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
+  static async resolveStationPkId(instance: InstalledCertificate): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
       const station = await ChargingStation.findOne({
-        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
-        attributes: ['id'],
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
       });
       if (station) {
-        instance.stationId = station.id;
+        instance.stationPkId = station.pkId;
       }
     }
   }

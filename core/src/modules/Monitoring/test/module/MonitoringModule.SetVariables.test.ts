@@ -39,7 +39,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const TENANT_ID = DEFAULT_TENANT_ID;
-const OCPP_CONNECTION_NAME = 'CS-001';
+const STATION_ID = 'CS-001';
 const CORRELATION_ID = 'corr-abc-123';
 
 // ---------------------------------------------------------------------------
@@ -147,11 +147,7 @@ function makeModule(): MonitoringModule {
 
 async function seedBase(): Promise<void> {
   await Tenant.create({ id: TENANT_ID as any });
-  await ChargingStation.create({
-    ocppConnectionName: OCPP_CONNECTION_NAME,
-    isOnline: false,
-    tenantId: TENANT_ID,
-  });
+  await ChargingStation.create({ id: STATION_ID, isOnline: false, tenantId: TENANT_ID });
 }
 
 async function seedComponent(name: string, instance: string | null = null): Promise<Component> {
@@ -169,7 +165,7 @@ async function seedVariableAttribute(
   type: OCPP2_0_1.AttributeEnumType = OCPP2_0_1.AttributeEnumType.Actual,
 ): Promise<VariableAttribute> {
   return VariableAttribute.create({
-    ocppConnectionName: OCPP_CONNECTION_NAME,
+    stationId: STATION_ID,
     componentId,
     variableId,
     type,
@@ -196,7 +192,7 @@ async function seedSetVariablesRequest(
   correlationId: string = CORRELATION_ID,
 ): Promise<OCPPMessage> {
   return OCPPMessage.create({
-    ocppConnectionName: OCPP_CONNECTION_NAME,
+    stationId: STATION_ID,
     correlationId,
     origin: MessageOrigin.ChargingStationManagementSystem,
     state: MessageState.Request,
@@ -229,7 +225,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       const map = await (module as any).getSetVariablesDataMapFromOriginalSetVariablesRequest(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         CORRELATION_ID,
       );
 
@@ -256,7 +252,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       const map = await (module as any).getSetVariablesDataMapFromOriginalSetVariablesRequest(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         CORRELATION_ID,
       );
 
@@ -278,7 +274,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       const map = await (module as any).getSetVariablesDataMapFromOriginalSetVariablesRequest(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         CORRELATION_ID,
       );
 
@@ -300,7 +296,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       const map = await (module as any).getSetVariablesDataMapFromOriginalSetVariablesRequest(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         CORRELATION_ID, // different from 'other-corr-id'
       );
 
@@ -323,7 +319,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       const result = await (module as any).getExistingOrCreateVariableAttribute(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         'Connector',
         null,
         'MaxVoltage',
@@ -334,9 +330,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       expect(result.id).toBe(seeded.id);
       // Only the one we seeded exists
-      const allAttrs = await VariableAttribute.findAll({
-        where: { ocppConnectionName: OCPP_CONNECTION_NAME },
-      });
+      const allAttrs = await VariableAttribute.findAll({ where: { stationId: STATION_ID } });
       expect(allAttrs).toHaveLength(1);
     });
 
@@ -348,7 +342,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       const result = await (module as any).getExistingOrCreateVariableAttribute(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         'Connector',
         null,
         'MaxVoltage',
@@ -359,10 +353,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       expect(result).toBeDefined();
       const inDb = await VariableAttribute.findOne({
-        where: {
-          ocppConnectionName: OCPP_CONNECTION_NAME,
-          type: OCPP2_0_1.AttributeEnumType.Actual,
-        },
+        where: { stationId: STATION_ID, type: OCPP2_0_1.AttributeEnumType.Actual },
         include: [
           { model: Component, where: { name: 'Connector' } },
           { model: Variable, where: { name: 'MaxVoltage' } },
@@ -386,7 +377,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
 
       const result = await (module as any).getExistingOrCreateVariableAttribute(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         'EVSE',
         '1',
         'Power',
@@ -428,7 +419,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
       const module = makeModule();
       await (module as any).handleSetVariableResultType(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         result,
         dataMap,
         new Date().toISOString(),
@@ -469,7 +460,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
       const module = makeModule();
       await (module as any).handleSetVariableResultType(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         result,
         dataMap,
         new Date().toISOString(),
@@ -509,7 +500,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
       const module = makeModule();
       await (module as any).handleSetVariableResultType(
         TENANT_ID,
-        OCPP_CONNECTION_NAME,
+        STATION_ID,
         result,
         dataMap,
         new Date().toISOString(),
@@ -555,11 +546,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          {
-            correlationId: CORRELATION_ID,
-            ocppConnectionName: OCPP_CONNECTION_NAME,
-            tenantId: TENANT_ID,
-          },
+          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
@@ -594,11 +581,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          {
-            correlationId: CORRELATION_ID,
-            ocppConnectionName: OCPP_CONNECTION_NAME,
-            tenantId: TENANT_ID,
-          },
+          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
@@ -636,11 +619,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          {
-            correlationId: CORRELATION_ID,
-            ocppConnectionName: OCPP_CONNECTION_NAME,
-            tenantId: TENANT_ID,
-          },
+          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
@@ -674,11 +653,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          {
-            correlationId: CORRELATION_ID,
-            ocppConnectionName: OCPP_CONNECTION_NAME,
-            tenantId: TENANT_ID,
-          },
+          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
@@ -714,19 +689,12 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          {
-            correlationId: CORRELATION_ID,
-            ocppConnectionName: OCPP_CONNECTION_NAME,
-            tenantId: TENANT_ID,
-          },
+          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 
       const created = await VariableAttribute.findOne({
-        where: {
-          ocppConnectionName: OCPP_CONNECTION_NAME,
-          type: OCPP2_0_1.AttributeEnumType.Actual,
-        },
+        where: { stationId: STATION_ID, type: OCPP2_0_1.AttributeEnumType.Actual },
         include: [
           { model: Component, where: { name: 'Connector' } },
           { model: Variable, where: { name: 'MaxVoltage' } },
@@ -781,11 +749,7 @@ describe('MonitoringModule – SetVariables response handling', () => {
               }),
             ];
           }),
-          {
-            correlationId: CORRELATION_ID,
-            ocppConnectionName: OCPP_CONNECTION_NAME,
-            tenantId: TENANT_ID,
-          },
+          { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
         ),
       );
 

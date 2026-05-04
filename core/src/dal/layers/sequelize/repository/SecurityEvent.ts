@@ -22,13 +22,13 @@ export class SequelizeSecurityEventRepository
   async createByStationId(
     tenantId: number,
     value: OCPP2_0_1.SecurityEventNotificationRequest,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<SecurityEvent> {
     return await this.create(
       tenantId,
       SecurityEvent.build({
         tenantId,
-        ocppConnectionName: ocppConnectionName,
+        stationId,
         ...value,
       }),
     );
@@ -36,14 +36,14 @@ export class SequelizeSecurityEventRepository
 
   async readByStationIdAndTimestamps(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     from?: Date,
     to?: Date,
   ): Promise<SecurityEvent[]> {
     const timestampQuery = this.generateTimestampQuery(from?.toISOString(), to?.toISOString());
     return await this.readAllByQuery(tenantId, {
       where: {
-        ocppConnectionName: ocppConnectionName,
+        stationId,
         ...timestampQuery,
       },
     }).then((row) => row as SecurityEvent[]);

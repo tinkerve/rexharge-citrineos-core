@@ -8,7 +8,7 @@ import { BaseSchema } from './types/base.dto.js';
 
 export const StartTransactionSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  ocppConnectionName: z.string(),
+  stationId: z.string(),
   meterStart: z.number().int(), // Wh
   timestamp: z.iso.datetime(),
   reservationId: z.number().int().nullable().optional(),

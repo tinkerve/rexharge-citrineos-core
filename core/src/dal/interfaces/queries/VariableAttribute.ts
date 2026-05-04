@@ -10,7 +10,7 @@ import {
 } from '@citrineos/base';
 
 export interface VariableAttributeQuerystring {
-  ocppConnectionName: string;
+  stationId: string;
   tenantId: number;
   type?: AttributeEnumType;
   value?: string;
@@ -25,7 +25,7 @@ export interface VariableAttributeQuerystring {
 
 export const VariableAttributeQuerySchema = QuerySchema('VariableAttributeQuerySchema', [
   {
-    key: 'ocppConnectionName',
+    key: 'stationId',
     type: 'string',
     required: true,
   },
@@ -75,7 +75,7 @@ export const VariableAttributeQuerySchema = QuerySchema('VariableAttributeQueryS
 
 export interface CreateOrUpdateVariableAttributeQuerystring {
   tenantId: number;
-  ocppConnectionName: string;
+  stationId: string;
   setOnCharger?: boolean; // Used to indicate value has already been accepted by the station via means other than ocpp
 }
 
@@ -89,7 +89,7 @@ export const CreateOrUpdateVariableAttributeQuerySchema = QuerySchema(
       defaultValue: String(DEFAULT_TENANT_ID),
     },
     {
-      key: 'ocppConnectionName',
+      key: 'stationId',
       type: 'string',
       required: true,
     },

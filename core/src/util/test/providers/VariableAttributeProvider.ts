@@ -7,7 +7,7 @@ import { DEFAULT_TENANT_ID, IVariableAttributeDto, OCPP2_0_1 } from '@citrineos/
 
 export function aVariableAttribute(override?: Partial<VariableAttribute>): VariableAttribute {
   const variableAttribute = {
-    ocppConnectionName: faker.string.uuid(),
+    stationId: faker.string.uuid(),
     type: OCPP2_0_1.AttributeEnumType.Actual,
     dataType: OCPP2_0_1.DataEnumType.string,
     value: faker.string.alpha(),

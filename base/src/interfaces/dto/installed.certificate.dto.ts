@@ -8,7 +8,7 @@ import { CertificateUseEnumSchema, HashAlgorithmEnumSchema } from './types/enums
 
 export const InstalledCertificateSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  ocppConnectionName: z.string().max(36),
+  stationId: z.string().max(36),
   hashAlgorithm: HashAlgorithmEnumSchema,
   issuerNameHash: z.string().nullable().optional(),
   issuerKeyHash: z.string().nullable().optional(),

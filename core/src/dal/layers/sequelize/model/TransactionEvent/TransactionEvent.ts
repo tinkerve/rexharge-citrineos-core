@@ -33,7 +33,7 @@ export class TransactionEvent extends Model implements TransactionEventDto {
   static readonly MODEL_NAME: string = OCPP2_Namespace.TransactionEventRequest;
 
   @Column(DataType.STRING)
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @Column(DataType.STRING)
   declare eventType: TransactionEventEnumType;

@@ -87,7 +87,7 @@ vi.mock('../../../../dal/layers/sequelize/index.js', async (importOriginal) => {
 
   class MockInstallCertificateAttempt {
     id?: number;
-    ocppConnectionName?: string;
+    stationId?: string;
     certificateType?: string;
     certificateId?: number;
     status?: string;
@@ -106,7 +106,7 @@ vi.mock('../../../../dal/layers/sequelize/index.js', async (importOriginal) => {
 
   class MockInstalledCertificate {
     id?: number;
-    ocppConnectionName?: string;
+    stationId?: string;
     certificateId?: number;
     certificateType?: string;
     save = vi.fn().mockResolvedValue(this);
@@ -141,7 +141,7 @@ describe('InstallCertificateHelperService', () => {
 
   const mockHash = 'abc123hash';
   const tenantId = 1;
-  const ocppConnectionName = 'cp001';
+  const stationId = 'cp001';
 
   const mockCertificateReadOnlyOneByQuery = vi.fn();
   const mockInstalledCertificateReadOnlyOneByQuery = vi.fn();
@@ -191,7 +191,7 @@ describe('InstallCertificateHelperService', () => {
 
       await service.prepareToInstallCertificate(
         tenantId,
-        ocppConnectionName,
+        stationId,
         MOCK_CERTIFICATE,
         MOCK_CERT_TYPE_V2G as any,
       );
@@ -199,7 +199,7 @@ describe('InstallCertificateHelperService', () => {
       expect(service.getCertificateHash).toHaveBeenCalledWith(MOCK_CERTIFICATE);
       expect(mockInstallCertificateAttemptReadOnlyOneByQuery).toHaveBeenCalledWith(tenantId, {
         where: {
-          ocppConnectionName,
+          stationId,
           certificateType: MOCK_CERT_TYPE_V2G,
           status: null,
         },
@@ -233,7 +233,7 @@ describe('InstallCertificateHelperService', () => {
 
       await service.prepareToInstallCertificate(
         tenantId,
-        ocppConnectionName,
+        stationId,
         MOCK_CERTIFICATE,
         MOCK_CERT_TYPE_V2G as any,
       );
@@ -279,7 +279,7 @@ describe('InstallCertificateHelperService', () => {
 
       await service.prepareToInstallCertificate(
         tenantId,
-        ocppConnectionName,
+        stationId,
         MOCK_CERTIFICATE,
         MOCK_CERT_TYPE_V2G as any,
       );
@@ -297,11 +297,7 @@ describe('InstallCertificateHelperService', () => {
     it('should do nothing if no pending install attempt exists', async () => {
       mockInstallCertificateAttemptReadOnlyOneByQuery.mockResolvedValue(undefined);
 
-      await service.finalizeInstalledCertificate(
-        tenantId,
-        ocppConnectionName,
-        MOCK_STATUS_REJECTED as any,
-      );
+      await service.finalizeInstalledCertificate(tenantId, stationId, MOCK_STATUS_REJECTED as any);
 
       expect(mockInstalledCertificateReadOnlyOneByQuery).not.toHaveBeenCalled();
     });
@@ -316,11 +312,7 @@ describe('InstallCertificateHelperService', () => {
       mockInstallCertificateAttemptReadOnlyOneByQuery.mockResolvedValue(mockAttempt);
       mockInstalledCertificateReadOnlyOneByQuery.mockResolvedValue(undefined);
 
-      await service.finalizeInstalledCertificate(
-        tenantId,
-        ocppConnectionName,
-        MOCK_STATUS_REJECTED as any,
-      );
+      await service.finalizeInstalledCertificate(tenantId, stationId, MOCK_STATUS_REJECTED as any);
 
       expect(mockAttempt.status).toBe(MOCK_STATUS_REJECTED);
       expect(mockAttemptSave).toHaveBeenCalled();
@@ -345,11 +337,7 @@ describe('InstallCertificateHelperService', () => {
       mockInstallCertificateAttemptReadOnlyOneByQuery.mockResolvedValue(mockAttempt);
       mockInstalledCertificateReadOnlyOneByQuery.mockResolvedValue(mockInstalledCert);
 
-      await service.finalizeInstalledCertificate(
-        tenantId,
-        ocppConnectionName,
-        MOCK_STATUS_ACCEPTED as any,
-      );
+      await service.finalizeInstalledCertificate(tenantId, stationId, MOCK_STATUS_ACCEPTED as any);
 
       expect(mockInstalledCert.certificateId).toBe(100);
       expect(mockInstalledSave).toHaveBeenCalled();
@@ -373,11 +361,7 @@ describe('InstallCertificateHelperService', () => {
       mockInstalledCertificateReadOnlyOneByQuery.mockResolvedValue(undefined);
       mockFileStorageGetFile.mockResolvedValue(Buffer.from(MOCK_CERTIFICATE));
 
-      await service.finalizeInstalledCertificate(
-        tenantId,
-        ocppConnectionName,
-        MOCK_STATUS_ACCEPTED as any,
-      );
+      await service.finalizeInstalledCertificate(tenantId, stationId, MOCK_STATUS_ACCEPTED as any);
 
       expect(mockAttempt.$get).toHaveBeenCalledWith('certificate');
       expect(mockFileStorageGetFile).toHaveBeenCalledWith('file123');
@@ -405,11 +389,7 @@ describe('InstallCertificateHelperService', () => {
       mockInstalledCertificateReadOnlyOneByQuery.mockResolvedValue(undefined);
       mockFileStorageGetFile.mockResolvedValue(null);
 
-      await service.finalizeInstalledCertificate(
-        tenantId,
-        ocppConnectionName,
-        MOCK_STATUS_ACCEPTED as any,
-      );
+      await service.finalizeInstalledCertificate(tenantId, stationId, MOCK_STATUS_ACCEPTED as any);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to retrieve certificate file from storage for certificate',
@@ -494,11 +474,7 @@ describe('InstallCertificateHelperService', () => {
       mockCertificateReadOnlyOneByQuery.mockResolvedValue(undefined);
       vi.spyOn(service, 'createNewCertificate').mockResolvedValue({ id: 100 } as Certificate);
 
-      await service.handleUploadExistingCertificate(
-        tenantId,
-        ocppConnectionName,
-        mockUploadRequest,
-      );
+      await service.handleUploadExistingCertificate(tenantId, stationId, mockUploadRequest);
 
       expect(mockExtractCertificateDetails).toHaveBeenCalledWith(MOCK_CERTIFICATE);
     });
@@ -513,7 +489,7 @@ describe('InstallCertificateHelperService', () => {
       mockInstalledCertificateReadOnlyOneByQuery.mockResolvedValue(mockInstalledCert);
 
       await expect(
-        service.handleUploadExistingCertificate(tenantId, ocppConnectionName, mockUploadRequest),
+        service.handleUploadExistingCertificate(tenantId, stationId, mockUploadRequest),
       ).rejects.toThrow('Cannot upload exiting certificate because it already exists');
     });
 
@@ -534,7 +510,7 @@ describe('InstallCertificateHelperService', () => {
 
       await service.handleUploadExistingCertificate(
         tenantId,
-        ocppConnectionName,
+        stationId,
         mockUploadRequest,
         '/custom/path',
       );
@@ -562,11 +538,7 @@ describe('InstallCertificateHelperService', () => {
       mockInstalledCertificateReadOnlyOneByQuery.mockResolvedValue(mockInstalledCert);
       mockCertificateReadOnlyOneByQuery.mockResolvedValue(mockExistingCert);
 
-      await service.handleUploadExistingCertificate(
-        tenantId,
-        ocppConnectionName,
-        mockUploadRequest,
-      );
+      await service.handleUploadExistingCertificate(tenantId, stationId, mockUploadRequest);
 
       expect(mockCertificateReadOnlyOneByQuery).toHaveBeenCalledWith(tenantId, {
         where: { certificateFileHash: mockHash },
@@ -587,11 +559,7 @@ describe('InstallCertificateHelperService', () => {
       mockCertificateReadOnlyOneByQuery.mockResolvedValue(undefined);
       vi.spyOn(service, 'createNewCertificate').mockResolvedValue({ id: 100 } as Certificate);
 
-      await service.handleUploadExistingCertificate(
-        tenantId,
-        ocppConnectionName,
-        mockUploadRequest,
-      );
+      await service.handleUploadExistingCertificate(tenantId, stationId, mockUploadRequest);
 
       expect(service.createNewCertificate).toHaveBeenCalled();
       expect(mockInstalledCert.certificateId).toBe(100);
@@ -605,7 +573,7 @@ describe('InstallCertificateHelperService', () => {
 
       const result = await service.handleUploadExistingCertificate(
         tenantId,
-        ocppConnectionName,
+        stationId,
         mockUploadRequest,
       );
 
@@ -620,11 +588,7 @@ describe('InstallCertificateHelperService', () => {
       mockCertificateReadOnlyOneByQuery.mockResolvedValue(undefined);
       vi.spyOn(service, 'createNewCertificate').mockResolvedValue({ id: 100 } as Certificate);
 
-      await service.handleUploadExistingCertificate(
-        tenantId,
-        ocppConnectionName,
-        mockUploadRequest,
-      );
+      await service.handleUploadExistingCertificate(tenantId, stationId, mockUploadRequest);
 
       expect(service.createNewCertificate).toHaveBeenCalledWith(
         MOCK_CERTIFICATE,

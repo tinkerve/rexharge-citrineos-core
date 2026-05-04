@@ -60,17 +60,17 @@ export class CertificateAuthorityService {
    * Retrieves the certificate chain for V2G- and Charging Station certificates.
    *
    * @param {string} csrString - The Certificate Signing Request string.
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param {string} stationId - The station identifier.
    * @param {CertificateSigningUseEnumType} [certificateType] - The type of certificate to retrieve.
    * @return {Promise<string>} The certificate chain without the root certificate.
    */
   async getCertificateChain(
     csrString: string,
-    ocppConnectionName: string,
+    stationId: string,
     certificateType?: CertificateSigningUseEnumType | null,
   ): Promise<string> {
     this._logger.info(
-      `Getting certificate chain for certificateType: ${certificateType} and ocppConnectionName: ${ocppConnectionName}`,
+      `Getting certificate chain for certificateType: ${certificateType} and stationId: ${stationId}`,
     );
 
     switch (certificateType) {

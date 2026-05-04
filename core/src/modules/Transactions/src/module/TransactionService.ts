@@ -146,7 +146,7 @@ export class TransactionService {
         if (transactionEvent.evse.connectorId) {
           connector = await this._locationRepository.readConnectorByStationIdAndOcpp201EvseType(
             tenantId,
-            messageContext.ocppConnectionName,
+            messageContext.stationId,
             transactionEvent.evse,
           );
         }
@@ -154,7 +154,7 @@ export class TransactionService {
           connector?.evse ??
           (await this._locationRepository.readEvseByStationIdAndOcpp201EvseId(
             tenantId,
-            messageContext.ocppConnectionName,
+            messageContext.stationId,
             transactionEvent.evse.id,
           ));
       }
@@ -221,7 +221,7 @@ export class TransactionService {
         if (transactionEvent.evse.connectorId) {
           connector = await this._locationRepository.readConnectorByStationIdAndOcpp201EvseType(
             tenantId,
-            messageContext.ocppConnectionName,
+            messageContext.stationId,
             transactionEvent.evse,
           );
         }
@@ -229,7 +229,7 @@ export class TransactionService {
           connector?.evse ??
           (await this._locationRepository.readEvseByStationIdAndOcpp201EvseId(
             tenantId,
-            messageContext.ocppConnectionName,
+            messageContext.stationId,
             transactionEvent.evse.id,
           ));
       }
@@ -349,7 +349,7 @@ export class TransactionService {
       // Check authorizers
       const connector = await this._locationRepository.readConnectorByStationIdAndOcpp16ConnectorId(
         tenantId,
-        context.ocppConnectionName,
+        context.stationId,
         connectorId,
       );
       response.idTagInfo.status =
@@ -384,7 +384,7 @@ export class TransactionService {
     tenantId: number,
     transactionId: string,
     reservationId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<void> {
     await this._reservationRepository.updateAllByQuery(
       tenantId,
@@ -396,7 +396,7 @@ export class TransactionService {
         where: {
           tenantId,
           id: reservationId,
-          ocppConnectionName: ocppConnectionName,
+          stationId: stationId,
         },
       },
     );
@@ -405,7 +405,7 @@ export class TransactionService {
   async deactivateOtherActiveTransactionsAtEvse(
     tenantId: number,
     transactionId: string,
-    ocppConnectionName: string,
+    stationId: string,
     evseIdentifier: OCPP2_0_1.EVSEType | number,
   ): Promise<void> {
     let evseTypeId: number | undefined;
@@ -414,7 +414,7 @@ export class TransactionService {
       // OCPP 1.6: evseIdentifier is a connector ID — resolve to EVSE type ID
       const connector = await this._locationRepository.readConnectorByStationIdAndOcpp16ConnectorId(
         tenantId,
-        ocppConnectionName,
+        stationId,
         evseIdentifier,
       );
       evseTypeId = connector?.evse?.evseTypeId;
@@ -425,7 +425,7 @@ export class TransactionService {
 
     if (evseTypeId === undefined) {
       this._logger.warn(
-        `Could not resolve EVSE for station ${ocppConnectionName} with identifier ${JSON.stringify(evseIdentifier)}, skipping deactivation of concurrent transactions`,
+        `Could not resolve EVSE for station ${stationId} with identifier ${JSON.stringify(evseIdentifier)}, skipping deactivation of concurrent transactions`,
       );
       return;
     }
@@ -433,28 +433,28 @@ export class TransactionService {
     const deactivated =
       await this._transactionEventRepository.deactivateActiveTransactionsByStationIdAndEvseId(
         tenantId,
-        ocppConnectionName,
+        stationId,
         evseTypeId,
         transactionId,
       );
 
     if (deactivated.length > 0) {
       this._logger.info(
-        `Deactivated ${deactivated.length} concurrent transaction(s) at station ${ocppConnectionName} EVSE ${evseTypeId}`,
+        `Deactivated ${deactivated.length} concurrent transaction(s) at station ${stationId} EVSE ${evseTypeId}`,
       );
     }
   }
 
   async updateTransactionStatus(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     correlationId: string,
     ongoingIndicator: boolean,
   ) {
     const request = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
       where: {
         tenantId,
-        ocppConnectionName: ocppConnectionName,
+        stationId,
         correlationId,
         origin: MessageOrigin.ChargingStationManagementSystem,
       },
@@ -477,7 +477,7 @@ export class TransactionService {
         tenantId,
         { isActive: ongoingIndicator },
         transactionId,
-        ocppConnectionName,
+        stationId,
       );
     if (!updatedTransaction) {
       this._logger.error(`Update transaction ${transactionId} failed.`);

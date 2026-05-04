@@ -158,7 +158,7 @@ export abstract class AbstractModule implements IModule {
         await this._cache.set(
           message.context.correlationId,
           JSON.stringify(message.payload),
-          message.context.ocppConnectionName,
+          message.context.stationId,
           this._config.maxCachingSeconds,
         );
 
@@ -221,7 +221,7 @@ export abstract class AbstractModule implements IModule {
   async handleMessageApiCallback(message: IMessage<OcppResponse>): Promise<void> {
     const url: string | null = await this._cache.get(
       message.context.correlationId,
-      AbstractModule.CALLBACK_URL_CACHE_PREFIX + message.context.ocppConnectionName,
+      AbstractModule.CALLBACK_URL_CACHE_PREFIX + message.context.stationId,
     );
     if (url) {
       this._logger.debug(
@@ -260,7 +260,7 @@ export abstract class AbstractModule implements IModule {
   /**
    * Sends a call with the specified identifier, tenantId, protocol, action, payload, and origin.
    *
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param {string} stationId - The identifier of the station making the call.
    * @param {number} tenantId - The identifier of the tenant.
    * @param {string} protocol - The subprotocol of the Websocket, i.e. "ocpp1.6" or "ocpp2.0.1".
    * @param {CallAction} action - The action to be performed.
@@ -271,7 +271,7 @@ export abstract class AbstractModule implements IModule {
    * @return {Promise<IMessageConfirmation>} A promise that resolves to the message confirmation.
    */
   public async sendCall(
-    ocppConnectionName: string,
+    stationId: string,
     tenantId: number,
     protocol: OCPPVersionType,
     action: CallAction,
@@ -280,7 +280,7 @@ export abstract class AbstractModule implements IModule {
     correlationId?: string,
     origin: MessageOrigin = MessageOrigin.ChargingStationManagementSystem,
   ): Promise<IMessageConfirmation> {
-    const identifier = createIdentifier(tenantId, ocppConnectionName);
+    const identifier = createIdentifier(tenantId, stationId);
     const _correlationId: string = correlationId === undefined ? uuidv4() : correlationId;
 
     payload = this._ocppValidator.sanitizeOCPPPayload(payload);
@@ -305,7 +305,7 @@ export abstract class AbstractModule implements IModule {
         .set(
           _correlationId,
           callbackUrl,
-          AbstractModule.CALLBACK_URL_CACHE_PREFIX + ocppConnectionName,
+          AbstractModule.CALLBACK_URL_CACHE_PREFIX + stationId,
           this._config.maxCachingSeconds,
         )
         .then((value) => {
@@ -333,7 +333,7 @@ export abstract class AbstractModule implements IModule {
         }
         return this._sender.sendRequest(
           RequestBuilder.buildCall(
-            ocppConnectionName,
+            stationId,
             _correlationId,
             tenantId,
             action,
@@ -357,7 +357,7 @@ export abstract class AbstractModule implements IModule {
    * Sends the call result message and returns a Promise that resolves with the confirmation message.
    *
    * @param {string} correlationId - The correlation ID of the message.
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param {string} stationId - The identifier of the station making the call.
    * @param {number} tenantId - The identifier of the tenant.
    * @param {string} protocol - The subprotocol of the Websocket, i.e. "ocpp1.6" or "ocpp2.0.1".
    * @param {CallAction} action - The call action.
@@ -367,7 +367,7 @@ export abstract class AbstractModule implements IModule {
    */
   public sendCallResult(
     correlationId: string,
-    ocppConnectionName: string,
+    stationId: string,
     tenantId: number,
     protocol: OCPPVersionType,
     action: CallAction,
@@ -389,7 +389,7 @@ export abstract class AbstractModule implements IModule {
 
     return this._sender.sendResponse(
       RequestBuilder.buildCallResult(
-        ocppConnectionName,
+        stationId,
         correlationId,
         tenantId,
         action,
@@ -439,7 +439,7 @@ export abstract class AbstractModule implements IModule {
    * Sends the call error message and returns a Promise that resolves with the confirmation message.
    *
    * @param {string} correlationId - The correlation ID of the message.
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param {string} stationId - The identifier of the station making the call.
    * @param {number} tenantId - The identifier of the tenant.
    * @param {string} protocol - The subprotocol of the Websocket, i.e. "ocpp1.6" or "ocpp2.0.1".
    * @param {CallAction} action - The call action.
@@ -449,7 +449,7 @@ export abstract class AbstractModule implements IModule {
    */
   public sendCallError(
     correlationId: string,
-    ocppConnectionName: string,
+    stationId: string,
     tenantId: number,
     protocol: OCPPVersionType,
     action: CallAction,
@@ -458,7 +458,7 @@ export abstract class AbstractModule implements IModule {
   ): Promise<IMessageConfirmation> {
     return this._sender.sendResponse(
       RequestBuilder.buildCallError(
-        ocppConnectionName,
+        stationId,
         correlationId,
         tenantId,
         action,

@@ -43,13 +43,13 @@ export class ChargingProfile extends Model implements ChargingProfileDto {
 
   @Column({
     type: DataType.STRING,
-    unique: 'stationName_tenantId_id',
+    unique: 'stationId_tenantId_id',
   })
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationName_tenantId_id',
+    unique: 'stationId_tenantId_id',
   })
   declare id: number;
 
@@ -122,7 +122,7 @@ export class ChargingProfile extends Model implements ChargingProfileDto {
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
-    unique: 'stationName_tenantId_id',
+    unique: 'stationId_tenantId_id',
   })
   declare tenantId: number;
 

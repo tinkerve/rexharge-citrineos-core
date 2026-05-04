@@ -29,12 +29,12 @@ export class LatestStatusNotification extends Model implements LatestStatusNotif
 
   @ForeignKey(() => ChargingStation)
   @Column(DataType.INTEGER)
-  declare stationId?: number;
+  declare stationPkId?: number;
 
   @Column(DataType.STRING)
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
-  @BelongsTo(() => ChargingStation, 'stationId')
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare chargingStation: ChargingStationDto;
 
   @ForeignKey(() => StatusNotification)
@@ -56,14 +56,14 @@ export class LatestStatusNotification extends Model implements LatestStatusNotif
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationId(instance: LatestStatusNotification): Promise<void> {
-    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
+  static async resolveStationPkId(instance: LatestStatusNotification): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
       const station = await ChargingStation.findOne({
-        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
-        attributes: ['id'],
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
       });
       if (station) {
-        instance.stationId = station.id;
+        instance.stationPkId = station.pkId;
       }
     }
   }

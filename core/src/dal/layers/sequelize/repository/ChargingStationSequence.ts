@@ -43,14 +43,14 @@ export class SequelizeChargingStationSequenceRepository
 
   async getNextSequenceValue(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     type: ChargingStationSequenceTypeEnumType,
   ): Promise<number> {
     return await this.s.transaction(async (transaction) => {
       const [storedSequence, sequenceCreated] = await this.readOrCreateByQuery(tenantId, {
         where: {
           tenantId: tenantId,
-          ocppConnectionName: ocppConnectionName,
+          stationId: stationId,
           type: type,
         },
         defaults: {

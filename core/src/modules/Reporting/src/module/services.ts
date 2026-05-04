@@ -15,19 +15,19 @@ export class DeviceModelService {
   /**
    * Fetches the ItemsPerMessage attribute from the device model.
    * Returns null if no such attribute exists.
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param stationId Charging station identifier.
    * @returns ItemsPerMessage as a number or null if no such attribute exists.
    */
   async getItemsPerMessageByComponentAndVariableInstanceAndStationId(
     componentName: string,
     variableInstance: string,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<number | null> {
     const itemsPerMessageAttributes: VariableAttribute[] =
       await this._deviceModelRepository.readAllByQuerystring(tenantId, {
         tenantId: tenantId,
-        ocppConnectionName: ocppConnectionName,
+        stationId: stationId,
         component_name: componentName,
         variable_name: 'ItemsPerMessage',
         variable_instance: variableInstance,
@@ -50,19 +50,19 @@ export class DeviceModelService {
    * are associated with alternate options. That structure is not supported by this logic, and that
    * structure is a violation of Part 2 - Specification of OCPP 2.0.1.
    * In that case, the first attribute will be returned.
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param stationId Charging station identifier.
    * @returns BytesPerMessage as a number or null if no such attribute exists.
    */
   async getBytesPerMessageByComponentAndVariableInstanceAndStationId(
     componentName: string,
     variableInstance: string,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<number | null> {
     const bytesPerMessageAttributes: VariableAttribute[] =
       await this._deviceModelRepository.readAllByQuerystring(tenantId, {
         tenantId: tenantId,
-        ocppConnectionName: ocppConnectionName,
+        stationId: stationId,
         component_name: componentName,
         variable_name: 'BytesPerMessage',
         variable_instance: variableInstance,

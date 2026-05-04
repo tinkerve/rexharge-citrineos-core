@@ -43,7 +43,7 @@ export function aBoot(updateFunction?: UpdateFunction<Boot>): Boot {
     variablesRejectedOnLastBoot: [aSetVariable()],
     pendingBootSetVariables: [
       {
-        ocppConnectionName: faker.string.uuid(),
+        stationId: faker.string.uuid(),
         evseDatabaseId: faker.number.int({ min: 0, max: 100 }),
         dataType: OCPP2_0_1.DataEnumType.string,
         type: OCPP2_0_1.AttributeEnumType.Actual,

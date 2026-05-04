@@ -32,7 +32,7 @@ vi.mock('../../../../dal/layers/sequelize/model/Location/index.js', async (impor
   class MockStatusNotification {
     id?: number;
     tenantId?: number;
-    ocppConnectionName?: string;
+    stationId?: string;
     timestamp?: string;
     status?: string;
     connectorId?: number;
