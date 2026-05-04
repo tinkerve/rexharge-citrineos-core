@@ -357,12 +357,19 @@ export class TransactionsModule extends AbstractModule {
             stationTransactionLimit.maxSoC === dbTransactionLimit.maxSoC;
 
           if (!limitsMatch) {
-            ocpp21Response.transactionLimit = {
-              maxCost: dbTransactionLimit.maxCost,
-              maxEnergy: dbTransactionLimit.maxEnergy,
-              maxTime: dbTransactionLimit.maxTime,
-              maxSoC: dbTransactionLimit.maxSoC,
-            };
+            ocpp21Response.transactionLimit = {};
+            if (dbTransactionLimit.maxCost !== undefined) {
+              ocpp21Response.transactionLimit.maxCost = dbTransactionLimit.maxCost;
+            }
+            if (dbTransactionLimit.maxEnergy !== undefined) {
+              ocpp21Response.transactionLimit.maxEnergy = dbTransactionLimit.maxEnergy;
+            }
+            if (dbTransactionLimit.maxTime !== undefined) {
+              ocpp21Response.transactionLimit.maxTime = dbTransactionLimit.maxTime;
+            }
+            if (dbTransactionLimit.maxSoC !== undefined) {
+              ocpp21Response.transactionLimit.maxSoC = dbTransactionLimit.maxSoC;
+            }
             this._logger.info(
               `Including transactionLimit in response for station ${ocppConnectionName}, ` +
                 `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
@@ -518,12 +525,19 @@ export class TransactionsModule extends AbstractModule {
             stationTransactionLimit.maxSoC === dbTransactionLimit.maxSoC;
 
           if (!limitsMatch) {
-            ocpp21Response.transactionLimit = {
-              maxCost: dbTransactionLimit.maxCost,
-              maxEnergy: dbTransactionLimit.maxEnergy,
-              maxTime: dbTransactionLimit.maxTime,
-              maxSoC: dbTransactionLimit.maxSoC,
-            };
+            ocpp21Response.transactionLimit = {};
+            if (dbTransactionLimit.maxCost !== undefined) {
+              ocpp21Response.transactionLimit.maxCost = dbTransactionLimit.maxCost;
+            }
+            if (dbTransactionLimit.maxEnergy !== undefined) {
+              ocpp21Response.transactionLimit.maxEnergy = dbTransactionLimit.maxEnergy;
+            }
+            if (dbTransactionLimit.maxTime !== undefined) {
+              ocpp21Response.transactionLimit.maxTime = dbTransactionLimit.maxTime;
+            }
+            if (dbTransactionLimit.maxSoC !== undefined) {
+              ocpp21Response.transactionLimit.maxSoC = dbTransactionLimit.maxSoC;
+            }
             this._logger.info(
               `Including transactionLimit in response for station ${ocppConnectionName}, ` +
                 `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
