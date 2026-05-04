@@ -25,7 +25,7 @@ export class SecurityEvent extends Model implements SecurityEventDto {
    */
   @Index
   @Column(DataType.STRING)
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @Column(DataType.STRING)
   declare type: string;

@@ -55,28 +55,28 @@ describe('BasicAuthenticationFilter', () => {
       ['9a06661c-2332-4897-b0d4-2187671dbe7b', 'bc2696f3-66d5-4027-9eae-be74c1e85fa7'],
     ])(
       'should reject when station identifier does not match username',
-      async (ocppConnectionName, username) => {
-        givenPassword(ocppConnectionName, password.hash);
+      async (stationId, username) => {
+        givenPassword(stationId, password.hash);
 
         await expect(
           filter.authenticate(
             DEFAULT_TENANT_ID,
-            ocppConnectionName,
+            stationId,
             aRequestWithAuthorization(basicAuth(username, password.plaintext)),
             authenticationOptions,
           ),
-        ).rejects.toThrow(`Unauthorized ${ocppConnectionName}`);
+        ).rejects.toThrow(`Unauthorized ${stationId}`);
         expect(deviceModelRepository.readAllByQuerystring).not.toHaveBeenCalled();
       },
     );
 
     it('should reject when missing Authorization header', async () => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
 
       await expect(
         filter.authenticate(
           DEFAULT_TENANT_ID,
-          ocppConnectionName,
+          stationId,
           aRequestWithAuthorization(undefined),
           authenticationOptions,
         ),
@@ -85,12 +85,12 @@ describe('BasicAuthenticationFilter', () => {
     });
 
     it('should reject when Authorization header is empty', async () => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
 
       await expect(
         filter.authenticate(
           DEFAULT_TENANT_ID,
-          ocppConnectionName,
+          stationId,
           aRequestWithAuthorization(''),
           authenticationOptions,
         ),
@@ -99,12 +99,12 @@ describe('BasicAuthenticationFilter', () => {
     });
 
     it('should reject when Authorization header is not Basic', async () => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
 
       await expect(
         filter.authenticate(
           DEFAULT_TENANT_ID,
-          ocppConnectionName,
+          stationId,
           aRequestWithAuthorization(
             `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNwMDAxIiwiaWF0IjoxNTE2MjM5MDIyfQ.Y3LDdxSufp_2nOqUmBWTR5CyQ2eEBWPPzjRIJqc6bn8`,
           ),
@@ -115,12 +115,12 @@ describe('BasicAuthenticationFilter', () => {
     });
 
     it('should reject when missing username', async () => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
 
       await expect(
         filter.authenticate(
           DEFAULT_TENANT_ID,
-          ocppConnectionName,
+          stationId,
           aRequestWithAuthorization(basicAuth('', password.plaintext)),
           authenticationOptions,
         ),
@@ -129,13 +129,13 @@ describe('BasicAuthenticationFilter', () => {
     });
 
     it('should reject when missing password', async () => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
 
       await expect(
         filter.authenticate(
           DEFAULT_TENANT_ID,
-          ocppConnectionName,
-          aRequestWithAuthorization(basicAuth(ocppConnectionName, '')),
+          stationId,
+          aRequestWithAuthorization(basicAuth(stationId, '')),
           authenticationOptions,
         ),
       ).rejects.toThrow('Auth header missing or incorrectly formatted');
@@ -143,12 +143,12 @@ describe('BasicAuthenticationFilter', () => {
     });
 
     it('should reject when missing username and password', async () => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
 
       await expect(
         filter.authenticate(
           DEFAULT_TENANT_ID,
-          ocppConnectionName,
+          stationId,
           aRequestWithAuthorization(basicAuth('', '')),
           authenticationOptions,
         ),
@@ -157,20 +157,20 @@ describe('BasicAuthenticationFilter', () => {
     });
 
     it('should reject when password is not found for station', async () => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
       givenNoPassword();
 
       await expect(
         filter.authenticate(
           DEFAULT_TENANT_ID,
-          ocppConnectionName,
-          aRequestWithAuthorization(basicAuth(ocppConnectionName, password.plaintext)),
+          stationId,
+          aRequestWithAuthorization(basicAuth(stationId, password.plaintext)),
           authenticationOptions,
         ),
-      ).rejects.toThrow(`Unauthorized ${ocppConnectionName}`);
+      ).rejects.toThrow(`Unauthorized ${stationId}`);
       expect(deviceModelRepository.readAllByQuerystring).toHaveBeenCalledWith(DEFAULT_TENANT_ID, {
         tenantId: DEFAULT_TENANT_ID,
-        ocppConnectionName: ocppConnectionName,
+        stationId: stationId,
         component_name: 'SecurityCtrlr',
         variable_name: 'BasicAuthPassword',
         type: OCPP2_0_1.AttributeEnumType.Actual,
@@ -205,17 +205,17 @@ describe('BasicAuthenticationFilter', () => {
     ])(
       'should reject when password does not match',
       async ({ actualPassword, authenticationPassword }) => {
-        const ocppConnectionName = faker.string.uuid().toString();
-        givenPassword(ocppConnectionName, actualPassword);
+        const stationId = faker.string.uuid().toString();
+        givenPassword(stationId, actualPassword);
 
         await expect(
           filter.authenticate(
             DEFAULT_TENANT_ID,
-            ocppConnectionName,
-            aRequestWithAuthorization(basicAuth(ocppConnectionName, authenticationPassword)),
+            stationId,
+            aRequestWithAuthorization(basicAuth(stationId, authenticationPassword)),
             authenticationOptions,
           ),
-        ).rejects.toThrow(`Unauthorized ${ocppConnectionName}`);
+        ).rejects.toThrow(`Unauthorized ${stationId}`);
       },
     );
 
@@ -231,14 +231,14 @@ describe('BasicAuthenticationFilter', () => {
     ])(
       'should do nothing when password matches',
       async ({ actualPassword, authenticationPassword }) => {
-        const ocppConnectionName = faker.string.uuid().toString();
-        givenPassword(ocppConnectionName, actualPassword);
+        const stationId = faker.string.uuid().toString();
+        givenPassword(stationId, actualPassword);
 
         await expect(async () => {
           await filter.authenticate(
             DEFAULT_TENANT_ID,
-            ocppConnectionName,
-            aRequestWithAuthorization(basicAuth(ocppConnectionName, authenticationPassword)),
+            stationId,
+            aRequestWithAuthorization(basicAuth(stationId, authenticationPassword)),
             authenticationOptions,
           );
         }).not.toThrow();
@@ -253,11 +253,11 @@ describe('BasicAuthenticationFilter', () => {
     });
 
     it('should do nothing when missing Authorization header', async () => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
 
       await filter.authenticate(
         DEFAULT_TENANT_ID,
-        ocppConnectionName,
+        stationId,
         aRequestWithAuthorization(undefined),
         authenticationOptions,
       );
@@ -265,12 +265,12 @@ describe('BasicAuthenticationFilter', () => {
     });
 
     it('should do nothing when Authorization header is present', async () => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
 
       await filter.authenticate(
         DEFAULT_TENANT_ID,
-        ocppConnectionName,
-        aRequestWithAuthorization(basicAuth(ocppConnectionName, password.plaintext)),
+        stationId,
+        aRequestWithAuthorization(basicAuth(stationId, password.plaintext)),
         authenticationOptions,
       );
 
@@ -278,9 +278,9 @@ describe('BasicAuthenticationFilter', () => {
     });
   });
 
-  function givenPassword(ocppConnectionName: string, passwordHash: string): void {
+  function givenPassword(stationId: string, passwordHash: string): void {
     const passwordVariable = aBasicAuthPasswordVariable({
-      ocppConnectionName: ocppConnectionName,
+      stationId: stationId,
       value: passwordHash,
     } as Partial<VariableAttribute>);
 

@@ -10,7 +10,7 @@ import { ChargingRateUnitEnumSchema } from './types/enums.js';
 export const ChargingScheduleSchema = BaseSchema.extend({
   databaseId: z.number().int(),
   id: z.number().int(),
-  ocppConnectionName: z.string(),
+  stationId: z.string(),
   chargingRateUnit: ChargingRateUnitEnumSchema,
   chargingSchedulePeriod: z.tuple([z.any()]).rest(z.any()), // Non-empty array of JSONB
   duration: z.number().int().nullable().optional(),

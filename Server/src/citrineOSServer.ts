@@ -64,7 +64,6 @@ import {
   ReportingModule,
   ReportingOcpp16Api,
   ReportingOcpp2Api,
-  DefaultDrizzleInstance,
   RepositoryStore,
   sequelize,
   Sequelize,
@@ -82,7 +81,7 @@ import {
 } from '@citrineos/core';
 import cors from '@fastify/cors';
 import { type JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts';
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import fastify from 'fastify';
 import type {
   FastifyRouteSchemaDef,
@@ -91,7 +90,6 @@ import type {
 } from 'fastify/types/schema.js';
 import type { RedisClientOptions } from 'redis';
 import { type ILogObj, Logger } from 'tslog';
-import { type HealthCheckResult, HealthCheckService } from './health/HealthCheckService.js';
 
 export class CitrineOSServer {
   /**
@@ -120,10 +118,8 @@ export class CitrineOSServer {
   protected _realTimeAuthorizer!: IAuthorizer;
 
   protected readonly appName: string;
-  protected _isShuttingDown = false;
   protected _connectionManager?: RabbitMQConnectionManager;
   protected _channelManager?: RabbitMQChannelManager;
-  protected _healthCheckService?: HealthCheckService;
 
   /**
    * Constructor for the class.
@@ -202,56 +198,38 @@ export class CitrineOSServer {
 
   async initialize(): Promise<void> {
     await this.initMessageBrokerConnection();
+
     // Initialize module & API
     // Always initialize API after SwaggerUI
     await this.initSystem();
+
     // Initialize database
     await this.initDb();
 
-    this.initHealthCheckService();
-
     // Set up shutdown handlers
     for (const event of ['SIGINT', 'SIGTERM', 'SIGQUIT']) {
-      process.on(event, () => {
-        this._logger.info(`Received ${event}`);
-        this.shutdown().catch((err) => {
-          console.error('Shutdown error:', err);
-          process.exit(1);
-        });
+      process.on(event, async () => {
+        await this.shutdown();
       });
     }
   }
+
   async shutdown() {
-    if (this._isShuttingDown) return;
-    this._isShuttingDown = true;
-    this._logger.info('Shutdown initiated');
-
-    const forceExit = setTimeout(() => {
-      console.log('Shutdown timed out, forcing exit');
-      process.exit(1);
-    }, this._config.shutdownGracePeriodSeconds * 1000); // Default is 30 seconds
-    forceExit.unref();
-
-    this._logger.info('Closing HTTP server...');
-    await new Promise<void>((resolve, reject) => {
-      try {
-        this._server.close(() => resolve());
-      } catch (error) {
-        reject(error);
-      }
-    });
-    this._logger.info('Closing WebSocket servers...');
+    // todo shut down depending on setup
+    // Shut down all modules and central system
+    for (const module of this.modules) {
+      await module.shutdown();
+    }
     await this._networkConnection?.shutdown();
+    await this._router?.shutdown();
 
-    this._logger.info('Closing RabbitMQ connections...');
-    await this._channelManager?.closeAll();
-    await this._connectionManager?.close();
+    // Shutdown server
+    await this._server.close();
 
-    this._logger.info('Closing PostgreSQL connections...');
-    await this._sequelizeInstance.connectionManager.close();
-
-    this._logger.info('Shutdown complete');
-    process.exitCode = 0;
+    setTimeout(() => {
+      console.log('Exiting...');
+      process.exit(1);
+    }, 2000);
   }
 
   async run(): Promise<void> {
@@ -316,44 +294,7 @@ export class CitrineOSServer {
   }
 
   protected initHealthCheck() {
-    const respond = (reply: FastifyReply, result: HealthCheckResult) =>
-      reply
-        .code(result.status === 'pass' ? 200 : 503)
-        .header('Content-Type', 'application/health+json')
-        .send(result);
-
-    const liveness = async (_req: any, reply: FastifyReply) =>
-      respond(
-        reply,
-        this._healthCheckService
-          ? this._healthCheckService.checkLiveness()
-          : { status: 'pass', checks: {} },
-      );
-
-    const readiness = async (_req: any, reply: FastifyReply) => {
-      if (!this._healthCheckService) {
-        return respond(reply, {
-          status: 'fail',
-          checks: { init: { status: 'fail', error: 'not yet initialized' } },
-        });
-      }
-      return respond(reply, await this._healthCheckService.checkReadiness());
-    };
-
-    this._server.get('/health', liveness);
-    this._server.get('/health/live', liveness);
-    this._server.get('/health/ready', readiness);
-  }
-
-  protected initHealthCheckService() {
-    this._healthCheckService = new HealthCheckService(
-      this._networkConnection,
-      this._connectionManager,
-      this._cache,
-      this._sequelizeInstance,
-      this._config.notReadyThresholdSeconds,
-      this._logger,
-    );
+    this._server.get('/health', async () => ({ status: 'healthy' }));
   }
 
   protected initLogger() {
@@ -371,9 +312,6 @@ export class CitrineOSServer {
 
   protected async initDb() {
     await sequelize.DefaultSequelizeInstance.initializeSequelize();
-    if (process.env.CITRINEOS_USE_DRIZZLE_SECURITY_EVENT === 'true') {
-      await DefaultDrizzleInstance.initialize();
-    }
   }
 
   protected initCache(cache?: ICache): ICache {
@@ -413,9 +351,7 @@ export class CitrineOSServer {
       provider: authProvider,
       options: {
         excludedRoutes: [
-          '/health',
-          '/health/live',
-          '/health/ready',
+          '/health', // Health check endpoint
           '/docs', // API documentation
         ],
         debug: this._config.logLevel <= 2, // Enable debug logs in dev mode
@@ -478,8 +414,8 @@ export class CitrineOSServer {
       this._connectionManager,
     );
 
-    routerSender.onCallTimeout = (ocppConnectionName, tenantId) =>
-      this._networkConnection!.disconnect(tenantId, ocppConnectionName).then(() => undefined);
+    routerSender.onCallTimeout = (stationId, tenantId) =>
+      this._networkConnection!.disconnect(tenantId, stationId).then(() => undefined);
 
     this._router.networkHook = this._networkConnection.bindNetworkHook();
 

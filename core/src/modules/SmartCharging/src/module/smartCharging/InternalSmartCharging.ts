@@ -31,7 +31,7 @@ export class InternalSmartCharging implements ISmartCharging {
    *
    * @param request - The `NotifyEVChargingNeedsRequest` containing details about the EV's charging requirements.
    * @param transaction - The ID of the transaction associated with the charging profile.
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param stationId - The ID of the station
    * @returns A `ChargingProfileType`.
    *
    * @throws Error if the energy transfer mode is unsupported.
@@ -40,7 +40,7 @@ export class InternalSmartCharging implements ISmartCharging {
     request: OCPP2_0_1.NotifyEVChargingNeedsRequest,
     transaction: Transaction,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<OCPP2_0_1.ChargingProfileType> {
     const { chargingNeeds } = request;
 
@@ -51,13 +51,13 @@ export class InternalSmartCharging implements ISmartCharging {
     // Default values
     const profileId = await this._chargingProfileRepository.getNextChargingProfileId(
       tenantId,
-      ocppConnectionName,
+      stationId,
     );
     const nativePurpose = ChargingProfilePurposeEnum.TxProfile;
     // Find existing charging profile and then add 1 as stack level
     const stackLevel = await this._chargingProfileRepository.getNextStackLevel(
       tenantId,
-      ocppConnectionName,
+      stationId,
       transaction.id,
       nativePurpose,
     );
@@ -65,7 +65,7 @@ export class InternalSmartCharging implements ISmartCharging {
     // Create charging schedule
     const scheduleId = await this._chargingProfileRepository.getNextChargingScheduleId(
       tenantId,
-      ocppConnectionName,
+      stationId,
     );
     let limit = 0;
     let numberPhases: number | undefined;
@@ -104,12 +104,7 @@ export class InternalSmartCharging implements ISmartCharging {
         throw new Error('Unsupported energy transfer mode');
     }
 
-    await this._validateLimitAgainstExistingProfile(
-      limit,
-      tenantId,
-      ocppConnectionName,
-      transaction.id,
-    );
+    await this._validateLimitAgainstExistingProfile(limit, tenantId, stationId, transaction.id);
 
     const departureTime = chargingNeeds.departureTime
       ? new Date(chargingNeeds.departureTime)
@@ -152,13 +147,13 @@ export class InternalSmartCharging implements ISmartCharging {
   async checkLimitsOfChargingSchedule(
     request: OCPP2_0_1.NotifyEVChargingScheduleRequest,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     transaction: Transaction,
   ): Promise<void> {
     const givenChargingPeriods = request.chargingSchedule.chargingSchedulePeriod;
     const existingChargingProfile = await this._findExistingChargingProfileWithHighestStackLevel(
       tenantId,
-      ocppConnectionName,
+      stationId,
       transaction.id,
     );
 
@@ -203,7 +198,7 @@ export class InternalSmartCharging implements ISmartCharging {
 
   private async _findExistingChargingProfileWithHighestStackLevel(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     transactionDatabaseId: string,
   ): Promise<ChargingProfile | undefined> {
     const existingChargingProfiles = await this._chargingProfileRepository.readAllByQuery(
@@ -211,7 +206,7 @@ export class InternalSmartCharging implements ISmartCharging {
       {
         where: {
           tenantId,
-          ocppConnectionName,
+          stationId,
           transactionDatabaseId,
           chargingProfilePurpose: ChargingProfilePurposeEnum.TxProfile,
         },
@@ -230,12 +225,12 @@ export class InternalSmartCharging implements ISmartCharging {
   private async _validateLimitAgainstExistingProfile(
     limit: number,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     transactionDataBaseId: string,
   ): Promise<void> {
     const existingChargingProfile = await this._findExistingChargingProfileWithHighestStackLevel(
       tenantId,
-      ocppConnectionName,
+      stationId,
       transactionDataBaseId,
     );
 

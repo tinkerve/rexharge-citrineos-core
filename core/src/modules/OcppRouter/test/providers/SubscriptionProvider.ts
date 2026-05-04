@@ -8,7 +8,7 @@ import { faker } from '@faker-js/faker';
 export function aSubscription(override?: Partial<Subscription>): Subscription {
   return {
     tenantId: DEFAULT_TENANT_ID,
-    ocppConnectionName: faker.string.uuid(),
+    stationId: faker.string.uuid(),
     onConnect: true,
     onClose: true,
     onMessage: true,

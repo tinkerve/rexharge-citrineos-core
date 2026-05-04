@@ -93,7 +93,7 @@ function makeMessage<T extends OcppRequest>(
   return {
     context: {
       tenantId: DEFAULT_TENANT_ID,
-      ocppConnectionName: 'station-001',
+      stationId: 'station-001',
       correlationId: 'corr-001',
       timestamp: new Date().toISOString(),
     },

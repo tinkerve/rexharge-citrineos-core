@@ -21,7 +21,7 @@ export class CompositeSchedule extends Model implements CompositeScheduleDto {
   static readonly MODEL_NAME: string = Namespace.CompositeSchedule;
 
   @Column(DataType.STRING)
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @ForeignKey(() => Evse)
   @Column(DataType.INTEGER)

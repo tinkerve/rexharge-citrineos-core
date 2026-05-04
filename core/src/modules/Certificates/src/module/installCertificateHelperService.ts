@@ -76,7 +76,7 @@ export class InstallCertificateHelperService {
 
   async prepareToInstallCertificate(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     certificate: string,
     certificateType: CertificateUseEnumType,
   ) {
@@ -84,7 +84,7 @@ export class InstallCertificateHelperService {
     const existingPendingInstallCertificateAttempt =
       await this.installCertificateAttemptRepository.readOnlyOneByQuery(tenantId, {
         where: {
-          ocppConnectionName: ocppConnectionName,
+          stationId: stationId,
           certificateType: certificateType,
           status: null,
         },
@@ -125,7 +125,7 @@ export class InstallCertificateHelperService {
         );
       }
       const installCertificateAttempt = new InstallCertificateAttempt();
-      installCertificateAttempt.ocppConnectionName = ocppConnectionName;
+      installCertificateAttempt.stationId = stationId;
       installCertificateAttempt.certificateType = certificateType;
       installCertificateAttempt.certificateId = existingCertificate!.id;
       await installCertificateAttempt.save();
@@ -134,13 +134,13 @@ export class InstallCertificateHelperService {
 
   async finalizeInstalledCertificate(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     status: InstallCertificateStatusEnumType,
   ) {
     const existingPendingInstallCertificateAttempt =
       await this.installCertificateAttemptRepository.readOnlyOneByQuery(tenantId, {
         where: {
-          ocppConnectionName: ocppConnectionName,
+          stationId,
           status: null,
         },
       });
@@ -155,7 +155,7 @@ export class InstallCertificateHelperService {
         const existingInstalledCertificate =
           await this.installedCertificateRepository.readOnlyOneByQuery(tenantId, {
             where: {
-              ocppConnectionName: ocppConnectionName,
+              stationId,
               certificateType: existingPendingInstallCertificateAttempt.certificateType,
             },
           });
@@ -178,7 +178,7 @@ export class InstallCertificateHelperService {
             const cert = new jsrsasign.X509();
             cert.readCertPEM(certificateString);
             const installedCertificate = new InstalledCertificate();
-            installedCertificate.ocppConnectionName = ocppConnectionName;
+            installedCertificate.stationId = stationId;
             installedCertificate.certificateId =
               existingPendingInstallCertificateAttempt.certificateId;
             installedCertificate.certificateType =
@@ -241,7 +241,7 @@ export class InstallCertificateHelperService {
       tenantId,
       {
         where: {
-          ocppConnectionName: identifier,
+          stationId: identifier,
           certificateType: uploadExistingCertificate.certificateType,
         },
       },
@@ -306,7 +306,7 @@ export class InstallCertificateHelperService {
         );
       }
       existingInstalledCertificate = new InstalledCertificate();
-      existingInstalledCertificate.ocppConnectionName = identifier;
+      existingInstalledCertificate.stationId = identifier;
       existingInstalledCertificate.certificateId = existingCertificate.id;
       existingInstalledCertificate.certificateType = uploadExistingCertificate.certificateType;
       existingInstalledCertificate = await existingInstalledCertificate.save();

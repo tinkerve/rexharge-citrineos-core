@@ -5,13 +5,13 @@
 import { DEFAULT_TENANT_ID, QuerySchema } from '@citrineos/base';
 
 export interface NetworkProfileQuerystring {
-  ocppConnectionName: string;
+  stationId: string;
   tenantId: number;
 }
 
 export const NetworkProfileQuerySchema = QuerySchema('NetworkProfileQuerySchema', [
   {
-    key: 'ocppConnectionName',
+    key: 'stationId',
     type: 'string',
     required: true,
   },
@@ -24,14 +24,14 @@ export const NetworkProfileQuerySchema = QuerySchema('NetworkProfileQuerySchema'
 ]);
 
 export interface NetworkProfileDeleteQuerystring {
-  ocppConnectionName: string;
+  stationId: string;
   configurationSlot: number[];
   tenantId: number;
 }
 
 export const NetworkProfileDeleteQuerySchema = QuerySchema('NetworkProfileDeleteQuerySchema', [
   {
-    key: 'ocppConnectionName',
+    key: 'stationId',
     type: 'string',
     required: true,
   },

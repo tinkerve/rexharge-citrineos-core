@@ -41,7 +41,7 @@ export class EVDriverDataApi
     const tenantId = request.query.tenantId;
     return await this._module.localAuthListRepository.readOnlyOneByQuery(tenantId, {
       tenantId: tenantId,
-      ocppConnectionName: request.query.ocppConnectionName,
+      stationId: request.query.stationId,
     });
   }
 

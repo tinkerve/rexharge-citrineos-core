@@ -92,7 +92,6 @@ export function createLocalConfig() {
           OCPP_CallAction.UnlockConnector,
           OCPP_CallAction.RemoteStopTransaction,
           OCPP_CallAction.RemoteStartTransaction,
-          OCPP_CallAction.NotifyWebPaymentStarted,
         ],
         requests: [
           OCPP_CallAction.Authorize,

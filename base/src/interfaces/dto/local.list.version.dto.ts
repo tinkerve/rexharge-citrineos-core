@@ -8,7 +8,7 @@ import { LocalListAuthorizationSchema } from './local.list.authorization.dto.js'
 
 export const LocalListVersionSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  ocppConnectionName: z.string(),
+  stationId: z.string(),
   versionNumber: z.number().int(),
   localAuthorizationList: z
     .array(z.lazy(() => LocalListAuthorizationSchema))

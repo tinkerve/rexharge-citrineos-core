@@ -7,7 +7,7 @@ import { BaseSchema } from './types/base.dto.js';
 
 export const ChangeConfigurationSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  ocppConnectionName: z.string(),
+  stationId: z.string(),
   key: z.string(),
   value: z.string().nullable().optional(),
   readonly: z.boolean().nullable().optional(),

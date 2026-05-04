@@ -84,7 +84,7 @@ export class ConfigurationDataApi
     return this._module.bootRepository.createOrUpdateByKey(
       request.query.tenantId,
       request.body,
-      request.query.ocppConnectionName,
+      request.query.stationId,
     );
   }
 
@@ -92,20 +92,14 @@ export class ConfigurationDataApi
   getBootConfig(
     request: FastifyRequest<{ Querystring: ChargingStationKeyQuerystring }>,
   ): Promise<Boot | undefined> {
-    return this._module.bootRepository.readByKey(
-      request.query.tenantId,
-      request.query.ocppConnectionName,
-    );
+    return this._module.bootRepository.readByKey(request.query.tenantId, request.query.stationId);
   }
 
   @AsDataEndpoint(Namespace.BootConfig, HttpMethod.Delete, ChargingStationKeyQuerySchema)
   deleteBootConfig(
     request: FastifyRequest<{ Querystring: ChargingStationKeyQuerystring }>,
   ): Promise<Boot | undefined> {
-    return this._module.bootRepository.deleteByKey(
-      request.query.tenantId,
-      request.query.ocppConnectionName,
-    );
+    return this._module.bootRepository.deleteByKey(request.query.tenantId, request.query.stationId);
   }
 
   @AsDataEndpoint(
@@ -120,10 +114,10 @@ export class ConfigurationDataApi
       Querystring: UpdateChargingStationPasswordQueryString;
     }>,
   ): Promise<IMessageConfirmation> {
-    const ocppConnectionName = request.body.ocppConnectionName;
+    const stationId = request.body.stationId;
     const tenantId = request.query.tenantId;
 
-    this._logger.debug(`Updating password for ${ocppConnectionName} station in tenant ${tenantId}`);
+    this._logger.debug(`Updating password for ${stationId} station in tenant ${tenantId}`);
 
     if (request.body.setOnCharger && !request.body.password) {
       return {
@@ -140,24 +134,20 @@ export class ConfigurationDataApi
       try {
         await this.updatePasswordOnStation(
           password,
-          ocppConnectionName,
+          stationId,
           tenantId,
           request.query.callbackUrl,
         );
       } catch (error) {
-        this._logger.warn(`Failed updating password on ${ocppConnectionName} station`, error);
+        this._logger.warn(`Failed updating password on ${stationId} station`, error);
         return {
           success: false,
-          payload: `Failed updating password on ${ocppConnectionName} station`,
+          payload: `Failed updating password on ${stationId} station`,
         };
       }
     }
-    const variableAttributes = await this.updatePasswordForStation(
-      password,
-      tenantId,
-      ocppConnectionName,
-    );
-    this._logger.debug(`Successfully updated password for ${ocppConnectionName} station`);
+    const variableAttributes = await this.updatePasswordForStation(password, tenantId, stationId);
+    this._logger.debug(`Successfully updated password for ${stationId} station`);
     return {
       success: true,
       payload: `Updated ${variableAttributes.length} attributes`,
@@ -169,10 +159,7 @@ export class ConfigurationDataApi
     request: FastifyRequest<{ Querystring: NetworkProfileQuerystring }>,
   ): Promise<ChargingStationNetworkProfile[]> {
     return ChargingStationNetworkProfile.findAll({
-      where: {
-        ocppConnectionName: request.query.ocppConnectionName,
-        tenantId: request.query.tenantId,
-      },
+      where: { stationId: request.query.stationId, tenantId: request.query.tenantId },
       include: [SetNetworkProfile, ServerNetworkProfile],
     });
   }
@@ -187,7 +174,7 @@ export class ConfigurationDataApi
   ): Promise<IMessageConfirmation> {
     const destroyedRows = await ChargingStationNetworkProfile.destroy({
       where: {
-        ocppConnectionName: request.query.ocppConnectionName,
+        stationId: request.query.stationId,
         tenantId: request.query.tenantId,
         configurationSlot: {
           [Op.in]: request.query.configurationSlot,
@@ -214,7 +201,7 @@ export class ConfigurationDataApi
 
   private async updatePasswordOnStation(
     password: string,
-    ocppConnectionName: string,
+    stationId: string,
     tenantId: number,
     callbackUrl?: string,
   ): Promise<void> {
@@ -222,11 +209,11 @@ export class ConfigurationDataApi
     const cacheCallbackPromise: Promise<string | null> = this._module.cache.onChange(
       correlationId,
       this._module.config.maxCachingSeconds,
-      ocppConnectionName,
+      stationId,
     );
 
     const messageConfirmation = await this._module.sendCall(
-      ocppConnectionName,
+      stationId,
       tenantId,
       OCPPVersion.OCPP2_0_1,
       OCPP_CallAction.SetVariables,
@@ -244,16 +231,12 @@ export class ConfigurationDataApi
       correlationId,
     );
     if (!messageConfirmation.success) {
-      throw new Error(
-        `Failed sending request to ${ocppConnectionName} station for updating password`,
-      );
+      throw new Error(`Failed sending request to ${stationId} station for updating password`);
     }
 
     const responseJsonString = await cacheCallbackPromise;
     if (!responseJsonString) {
-      throw new Error(
-        `${ocppConnectionName} station did not respond in time for updating password`,
-      );
+      throw new Error(`${stationId} station did not respond in time for updating password`);
     }
 
     const setVariablesResponse: OCPP2_0_1.SetVariablesResponse = JSON.parse(responseJsonString);
@@ -261,14 +244,14 @@ export class ConfigurationDataApi
       (result) => result.attributeStatus === OCPP2_0_1.SetVariableStatusEnumType.Accepted,
     );
     if (!passwordUpdated) {
-      throw new Error(`Failure updating password on ${ocppConnectionName} station`);
+      throw new Error(`Failure updating password on ${stationId} station`);
     }
   }
 
   private async updatePasswordForStation(
     password: string,
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<VariableAttribute[]> {
     const timestamp = new Date().toISOString();
     const variableAttributes =
@@ -293,7 +276,7 @@ export class ConfigurationDataApi
             supportsMonitoring: false,
           },
         },
-        ocppConnectionName,
+        stationId,
         timestamp,
       );
     for (let variableAttribute of variableAttributes) {
@@ -309,7 +292,7 @@ export class ConfigurationDataApi
           component: variableAttribute.component,
           variable: variableAttribute.variable,
         },
-        ocppConnectionName,
+        stationId,
         timestamp,
       );
     }

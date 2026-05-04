@@ -13,9 +13,9 @@ export class IdGenerator {
 
   async generateRequestId(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     type: ChargingStationSequenceTypeEnumType,
   ): Promise<number> {
-    return this._stationSequenceRepository.getNextSequenceValue(tenantId, ocppConnectionName, type);
+    return this._stationSequenceRepository.getNextSequenceValue(tenantId, stationId, type);
   }
 }

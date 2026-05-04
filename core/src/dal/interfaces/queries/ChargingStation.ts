@@ -5,13 +5,13 @@
 import { DEFAULT_TENANT_ID, QuerySchema } from '@citrineos/base';
 
 export interface ChargingStationKeyQuerystring {
-  ocppConnectionName: string;
+  stationId: string;
   tenantId: number;
 }
 
 export const ChargingStationKeyQuerySchema = QuerySchema('ChargingStationKeyQuerySchema', [
   {
-    key: 'ocppConnectionName',
+    key: 'stationId',
     type: 'string',
     required: true,
   },

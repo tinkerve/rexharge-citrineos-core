@@ -25,20 +25,20 @@ export class ChargingStationSequence extends Model {
   @Column({
     type: DataType.INTEGER,
     allowNull: true,
-    unique: 'stationId_type',
+    unique: 'stationPkId_type',
   })
-  declare stationId?: number;
+  declare stationPkId?: number;
 
   @Column({
     type: DataType.STRING(36),
     allowNull: false,
   })
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
-    unique: 'stationId_type',
+    unique: 'stationPkId_type',
   })
   type!: ChargingStationSequenceTypeEnumType;
 
@@ -49,7 +49,7 @@ export class ChargingStationSequence extends Model {
   })
   value!: number;
 
-  @BelongsTo(() => ChargingStation, 'stationId')
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare station: ChargingStationType;
 
   @ForeignKey(() => Tenant)
@@ -65,14 +65,14 @@ export class ChargingStationSequence extends Model {
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationId(instance: ChargingStationSequence): Promise<void> {
-    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
+  static async resolveStationPkId(instance: ChargingStationSequence): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
       const station = await ChargingStation.findOne({
-        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
-        attributes: ['id'],
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
       });
       if (station) {
-        instance.stationId = station.id;
+        instance.stationPkId = station.pkId;
       }
     }
   }

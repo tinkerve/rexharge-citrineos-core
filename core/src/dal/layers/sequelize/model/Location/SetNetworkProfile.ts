@@ -39,20 +39,20 @@ export class SetNetworkProfile extends Model implements SetNetworkProfileDto {
   @ForeignKey(() => ChargingStation)
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_correlationId',
+    unique: 'stationPkId_correlationId',
   })
-  declare stationId?: number;
+  declare stationPkId?: number;
 
-  @BelongsTo(() => ChargingStation, 'stationId')
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare chargingStation?: ChargingStationDto;
 
   @Column(DataType.STRING)
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @Index
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_correlationId',
+    unique: 'stationPkId_correlationId',
   })
   declare correlationId: string;
 
@@ -127,14 +127,14 @@ export class SetNetworkProfile extends Model implements SetNetworkProfileDto {
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationId(instance: SetNetworkProfile): Promise<void> {
-    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
+  static async resolveStationPkId(instance: SetNetworkProfile): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
       const station = await ChargingStation.findOne({
-        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
-        attributes: ['id'],
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
       });
       if (station) {
-        instance.stationId = station.id;
+        instance.stationPkId = station.pkId;
       }
     }
   }

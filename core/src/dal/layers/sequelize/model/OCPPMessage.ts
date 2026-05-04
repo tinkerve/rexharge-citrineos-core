@@ -25,11 +25,11 @@ export class OCPPMessage extends Model implements OCPPMessageDto {
 
   @ForeignKey(() => ChargingStation)
   @Column(DataType.INTEGER)
-  declare stationId?: number;
+  declare stationPkId?: number;
 
   @Index
   @Column(DataType.STRING)
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @Index
   @Column(DataType.STRING)
@@ -50,7 +50,7 @@ export class OCPPMessage extends Model implements OCPPMessageDto {
   @Column(DataType.JSONB)
   declare message: any;
 
-  @BelongsTo(() => ChargingStation, 'stationId')
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare chargingStation?: ChargingStationDto;
 
   @ForeignKey(() => OCPPMessage)
@@ -85,14 +85,14 @@ export class OCPPMessage extends Model implements OCPPMessageDto {
   declare responseMessages?: OCPPMessage[];
 
   @BeforeCreate
-  static async resolveStationId(instance: OCPPMessage): Promise<void> {
-    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
+  static async resolveStationPkId(instance: OCPPMessage): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
       const station = await ChargingStation.findOne({
-        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
-        attributes: ['id'],
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
       });
       if (station) {
-        instance.stationId = station.id;
+        instance.stationPkId = station.pkId;
       }
     }
   }

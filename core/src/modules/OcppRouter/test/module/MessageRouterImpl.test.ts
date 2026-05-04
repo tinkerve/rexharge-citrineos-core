@@ -161,14 +161,14 @@ describe('MessageRouterImpl', () => {
       // Request subscription
       expect(handler.subscribe).toHaveBeenCalledWith(IDENTIFIER, undefined, {
         tenantId: TENANT_ID.toString(),
-        ocppConnectionName: STATION_ID,
+        stationId: STATION_ID,
         state: MessageState.Request.toString(),
         origin: MessageOrigin.ChargingStationManagementSystem.toString(),
       });
       // Response subscription
       expect(handler.subscribe).toHaveBeenCalledWith(IDENTIFIER, undefined, {
         tenantId: TENANT_ID.toString(),
-        ocppConnectionName: STATION_ID,
+        stationId: STATION_ID,
         state: MessageState.Response.toString(),
         origin: MessageOrigin.ChargingStationManagementSystem.toString(),
       });
@@ -961,11 +961,7 @@ describe('MessageRouterImpl', () => {
       cache.get.mockResolvedValueOnce(callbackUrl);
 
       const message: any = {
-        context: {
-          correlationId: CORRELATION_ID,
-          ocppConnectionName: STATION_ID,
-          tenantId: TENANT_ID,
-        },
+        context: { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
         payload: new OcppError(CORRELATION_ID, ErrorCode.InternalError, 'test', {}),
       };
 
@@ -982,11 +978,7 @@ describe('MessageRouterImpl', () => {
       cache.get.mockResolvedValue(null);
 
       const message: any = {
-        context: {
-          correlationId: CORRELATION_ID,
-          ocppConnectionName: STATION_ID,
-          tenantId: TENANT_ID,
-        },
+        context: { correlationId: CORRELATION_ID, stationId: STATION_ID, tenantId: TENANT_ID },
         payload: new OcppError(CORRELATION_ID, ErrorCode.InternalError, 'test', {}),
       };
 

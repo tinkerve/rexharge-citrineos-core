@@ -7,7 +7,7 @@ import { LocalListAuthorizationSchema } from './local.list.authorization.dto.js'
 
 export const SendLocalListSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  ocppConnectionName: z.string(),
+  stationId: z.string(),
   correlationId: z.string(),
   versionNumber: z.number().int(),
   updateType: z.string(),

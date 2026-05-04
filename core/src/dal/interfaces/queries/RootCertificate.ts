@@ -53,7 +53,7 @@ export const InstallRootCertificateSchema = QuerySchema('InstallRootCertificateS
     required: true,
   },
   {
-    key: 'ocppConnectionName',
+    key: 'stationId',
     type: 'string',
     required: true,
   },

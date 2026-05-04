@@ -29,16 +29,16 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
 
   @ForeignKey(() => ChargingStation)
   @Column(DataType.INTEGER)
-  declare stationId?: number;
+  declare stationPkId?: number;
 
-  @BelongsTo(() => ChargingStation, 'stationId')
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare chargingStation?: ChargingStationDto;
 
   @Column({
     type: DataType.STRING,
-    unique: 'stationName_tenantId',
+    unique: 'stationId_tenantId',
   })
-  ocppConnectionName!: string;
+  stationId!: string;
 
   @Column(DataType.STRING)
   publicKeyFileId!: string;
@@ -49,7 +49,7 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
-    unique: 'stationName_tenantId',
+    unique: 'stationId_tenantId',
   })
   declare tenantId: number;
 
@@ -57,15 +57,15 @@ export class ChargingStationSecurityInfo extends Model implements ChargingStatio
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationId(instance: ChargingStationSecurityInfo): Promise<void> {
-    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
+  static async resolveStationPkId(instance: ChargingStationSecurityInfo): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
       const { ChargingStation } = await import('./Location/ChargingStation.js');
       const station = await ChargingStation.findOne({
-        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
-        attributes: ['id'],
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
       });
       if (station) {
-        instance.stationId = station.id;
+        instance.stationPkId = station.pkId;
       }
     }
   }

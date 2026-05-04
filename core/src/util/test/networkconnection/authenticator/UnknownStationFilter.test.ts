@@ -28,12 +28,12 @@ describe('UnknownStationFilter', () => {
   it.each([true, false])(
     'should never reject known station',
     async (allowUnknownChargingStations) => {
-      const ocppConnectionName = faker.string.uuid().toString();
+      const stationId = faker.string.uuid().toString();
       givenStationExists();
 
       await filter.authenticate(
         DEFAULT_TENANT_ID,
-        ocppConnectionName,
+        stationId,
         aRequest(),
         anAuthenticationOptions({ allowUnknownChargingStations }),
       );
@@ -41,37 +41,37 @@ describe('UnknownStationFilter', () => {
   );
 
   it('should reject unknown station when unknown stations are not allowed', async () => {
-    const ocppConnectionName = faker.string.uuid().toString();
+    const stationId = faker.string.uuid().toString();
     givenStationDoesNotExist();
 
     await expect(
       filter.authenticate(
         DEFAULT_TENANT_ID,
-        ocppConnectionName,
+        stationId,
         aRequest(),
         anAuthenticationOptions({ allowUnknownChargingStations: false }),
       ),
-    ).rejects.toThrow(`Unknown identifier ${ocppConnectionName}`);
+    ).rejects.toThrow(`Unknown identifier ${stationId}`);
 
     expect(locationRepository.doesChargingStationExistByStationId).toHaveBeenCalledWith(
       DEFAULT_TENANT_ID,
-      ocppConnectionName,
+      stationId,
     );
   });
 
   it('should not reject unknown station when unknown stations are allowed', async () => {
-    const ocppConnectionName = faker.string.uuid().toString();
+    const stationId = faker.string.uuid().toString();
     givenStationDoesNotExist();
 
     await filter.authenticate(
       DEFAULT_TENANT_ID,
-      ocppConnectionName,
+      stationId,
       aRequest(),
       anAuthenticationOptions({ allowUnknownChargingStations: true }),
     );
 
     expect(locationRepository.doesChargingStationExistByStationId).not.toHaveBeenCalledWith(
-      ocppConnectionName,
+      stationId,
     );
   });
 

@@ -78,14 +78,14 @@ export const aSetVariablesResponseMessage = (
   overrides: Partial<{
     correlationId: string;
     tenantId: number;
-    ocppConnectionName: string;
+    stationId: string;
     timestamp: string;
   }> = {},
 ) => ({
   context: {
     correlationId: overrides.correlationId ?? 'corr-default',
     tenantId: overrides.tenantId ?? DEFAULT_TENANT_ID,
-    ocppConnectionName: overrides.ocppConnectionName ?? 'CS-001',
+    stationId: overrides.stationId ?? 'CS-001',
     timestamp: overrides.timestamp ?? '2025-01-01T00:00:00.000Z',
   },
   payload,

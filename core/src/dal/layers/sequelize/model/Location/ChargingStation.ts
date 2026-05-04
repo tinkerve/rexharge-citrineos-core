@@ -64,7 +64,7 @@ export class ChargingStation extends Model implements ChargingStationDto {
   @AutoIncrement
   @PrimaryKey
   @Column(DataType.INTEGER)
-  declare id: number;
+  declare pkId: number;
 
   /**
    * The tenant-scoped charging station identifier — used in WebSocket routing
@@ -74,9 +74,9 @@ export class ChargingStation extends Model implements ChargingStationDto {
   @Index
   @Column({
     type: DataType.STRING(36),
-    unique: 'ChargingStations_stationName_tenantId_key',
+    unique: 'ChargingStations_id_tenantId_key',
   })
-  declare ocppConnectionName: string;
+  declare id: string;
 
   @Column(DataType.BOOLEAN)
   declare isOnline: boolean;
@@ -146,13 +146,13 @@ export class ChargingStation extends Model implements ChargingStationDto {
   @Column(DataType.INTEGER)
   declare locationId?: number | null;
 
-  @HasMany(() => StatusNotification, 'stationId')
+  @HasMany(() => StatusNotification, 'stationPkId')
   declare statusNotifications?: StatusNotificationDto[] | null;
 
-  @HasMany(() => InstalledCertificate, 'stationId')
+  @HasMany(() => InstalledCertificate, 'stationPkId')
   declare installedCertificates?: InstalledCertificateDto[];
 
-  @HasMany(() => Transaction, 'stationId')
+  @HasMany(() => Transaction, 'stationPkId')
   declare transactions?: Transaction[] | null;
 
   /**
@@ -164,31 +164,31 @@ export class ChargingStation extends Model implements ChargingStationDto {
   @BelongsToMany(() => ServerNetworkProfile, () => ChargingStationNetworkProfile)
   declare networkProfiles?: ServerNetworkProfileDto[] | null;
 
-  @HasMany(() => Evse, 'stationId')
+  @HasMany(() => Evse, 'stationPkId')
   declare evses?: EvseDto[] | null;
 
-  @HasMany(() => Connector, 'stationId')
+  @HasMany(() => Connector, 'stationPkId')
   declare connectors?: ConnectorDto[] | null;
 
-  @HasMany(() => VariableAttribute, 'stationId')
+  @HasMany(() => VariableAttribute, 'stationPkId')
   declare variableAttributes?: VariableAttributeDto[];
 
-  @HasMany(() => OCPPMessage, 'stationId')
+  @HasMany(() => OCPPMessage, 'stationPkId')
   declare ocppMessages?: OCPPMessageDto[];
 
-  @HasMany(() => VariableMonitoring, 'stationId')
+  @HasMany(() => VariableMonitoring, 'stationPkId')
   declare variableMonitorings?: VariableMonitoringDto[];
 
-  @HasMany(() => EventData, 'stationId')
+  @HasMany(() => EventData, 'stationPkId')
   declare stationEventData?: EventData[];
 
-  @HasMany(() => ChargingStationSecurityInfo, 'stationId')
+  @HasMany(() => ChargingStationSecurityInfo, 'stationPkId')
   declare securityInfo?: ChargingStationSecurityInfoDto[];
 
-  @HasMany(() => ChargingStationSequence, 'stationId')
+  @HasMany(() => ChargingStationSequence, 'stationPkId')
   declare sequences?: ChargingStationSequenceDto[];
 
-  @HasMany(() => DeleteCertificateAttempt, 'stationId')
+  @HasMany(() => DeleteCertificateAttempt, 'stationPkId')
   declare deleteCertificateAttempts?: DeleteCertificateAttempt[];
 
   @ForeignKey(() => Tenant)
@@ -197,7 +197,7 @@ export class ChargingStation extends Model implements ChargingStationDto {
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
-    unique: 'ChargingStations_stationName_tenantId_key',
+    unique: 'ChargingStations_id_tenantId_key',
   })
   declare tenantId: number;
 

@@ -47,18 +47,18 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
 
   @ForeignKey(() => ChargingStation)
   @Column(DataType.INTEGER)
-  declare stationId?: number;
+  declare stationPkId?: number;
 
   @Index
   @Column({
     type: DataType.STRING,
-    unique: 'stationName_tenantId_Id',
+    unique: 'stationId_tenantId_Id',
   })
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationName_tenantId_Id',
+    unique: 'stationId_tenantId_Id',
   })
   declare id: number;
 
@@ -105,7 +105,7 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
-  @BelongsTo(() => ChargingStation, 'stationId')
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare chargingStation?: ChargingStationDto;
 
   @ForeignKey(() => Tenant)
@@ -114,7 +114,7 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
-    unique: 'stationName_tenantId_Id',
+    unique: 'stationId_tenantId_Id',
   })
   declare tenantId: number;
 
@@ -122,16 +122,16 @@ export class VariableMonitoring extends Model implements VariableMonitoringDto {
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationId(instance: VariableMonitoring): Promise<void> {
-    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
+  static async resolveStationPkId(instance: VariableMonitoring): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
       // Lazy load ChargingStation to avoid circular dependency
       const { ChargingStation } = await import('../Location/index.js');
       const station = await ChargingStation.findOne({
-        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
-        attributes: ['id'],
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
       });
       if (station) {
-        instance.stationId = station.id;
+        instance.stationPkId = station.pkId;
       }
     }
   }

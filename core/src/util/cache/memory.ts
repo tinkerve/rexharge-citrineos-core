@@ -67,22 +67,10 @@ export class MemoryCache implements ICache {
     return Promise.resolve(false);
   }
 
-  async remove<T>(
-    key: string,
-    namespace?: string,
-    classConstructor?: () => ClassConstructor<T>,
-  ): Promise<T | null> {
+  async remove(key: string, namespace?: string): Promise<boolean> {
     namespace = namespace || 'default';
     const namespaceKey = `${namespace}:${key}`;
-    const value = this._cache.get(namespaceKey);
-    this._cache.delete(namespaceKey);
-    if (value !== undefined) {
-      if (classConstructor) {
-        return plainToInstance(classConstructor(), JSON.parse(value));
-      }
-      return value as T;
-    }
-    return null;
+    return this._cache.delete(namespaceKey);
   }
 
   onChange<T>(
@@ -217,10 +205,6 @@ export class MemoryCache implements ICache {
       }, expireSeconds * 1000),
     );
     return true;
-  }
-
-  async ping(): Promise<void> {
-    return;
   }
 
   private resolveOnChange(namespaceKey: string, value: string) {

@@ -36,18 +36,18 @@ export class Evse extends Model implements EvseDto {
   @ForeignKey(() => ChargingStation)
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_evseTypeId',
+    unique: 'stationPkId_evseTypeId',
   })
-  declare stationId?: number;
+  declare stationPkId?: number;
 
   @Column({
     type: DataType.STRING,
   })
-  declare ocppConnectionName: string;
+  declare stationId: string;
 
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_evseTypeId',
+    unique: 'stationPkId_evseTypeId',
   })
   declare evseTypeId?: number; // This is the serial int used in OCPP 2.0.1 to refer to the EVSE.
 
@@ -60,7 +60,7 @@ export class Evse extends Model implements EvseDto {
   @Column(DataType.BOOLEAN)
   declare removed?: boolean;
 
-  @BelongsTo(() => ChargingStation, 'stationId')
+  @BelongsTo(() => ChargingStation, 'stationPkId')
   declare chargingStation?: ChargingStationDto;
 
   @HasMany(() => Connector, 'evseId')
@@ -88,14 +88,14 @@ export class Evse extends Model implements EvseDto {
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationId(instance: Evse): Promise<void> {
-    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
+  static async resolveStationPkId(instance: Evse): Promise<void> {
+    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
       const station = await ChargingStation.findOne({
-        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
-        attributes: ['id'],
+        where: { id: instance.stationId, tenantId: instance.tenantId },
+        attributes: ['pkId'],
       });
       if (station) {
-        instance.stationId = station.id;
+        instance.stationPkId = station.pkId;
       }
     }
   }

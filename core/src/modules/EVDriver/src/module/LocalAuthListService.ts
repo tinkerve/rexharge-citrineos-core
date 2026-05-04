@@ -29,26 +29,26 @@ export class LocalAuthListService {
   /**
    * Validates a SendLocalListRequest and persists it, then returns the correlation Id.
    *
-   * @param ocppConnectionName - The connection name of the charging station
+   * @param {string} stationId - The ID of the station to which the SendLocalListRequest belongs.
    * @param {string} correlationId - The correlation Id that will be used for the SendLocalListRequest.
    * @param {SendLocalListRequest} sendLocalListRequest - The SendLocalListRequest to validate and persist.
    * @return {SendLocalList} The persisted SendLocalList.
    */
   async persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     correlationId: string,
     sendLocalListRequest: OCPP2_request_types.SendLocalListRequest,
   ): Promise<SendLocalList> {
     const localListVersion = await this._localAuthListRepository.readOnlyOneByQuery(tenantId, {
       where: {
-        ocppConnectionName: ocppConnectionName,
+        stationId: stationId,
       },
       include: [LocalListAuthorization],
     });
     const sendLocalList = await this.createSendLocalListFromStationIdAndRequestAndCurrentVersion(
       tenantId,
-      ocppConnectionName,
+      stationId,
       correlationId,
       sendLocalListRequest,
       localListVersion,
@@ -69,7 +69,7 @@ export class LocalAuthListService {
     }
 
     const itemsPerMessageSendLocalList =
-      (await this.getItemsPerMessageSendLocalListByStationId(tenantId, ocppConnectionName)) ||
+      (await this.getItemsPerMessageSendLocalListByStationId(tenantId, stationId)) ||
       (sendLocalListRequest.localAuthorizationList
         ? sendLocalListRequest.localAuthorizationList?.length
         : 0);
@@ -89,7 +89,7 @@ export class LocalAuthListService {
 
   private async createSendLocalListFromStationIdAndRequestAndCurrentVersion(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
     correlationId: string,
     sendLocalListRequest: OCPP2_request_types.SendLocalListRequest,
     localListVersion?: LocalListVersion,
@@ -102,7 +102,7 @@ export class LocalAuthListService {
 
     if (localListVersion && localListVersion.versionNumber >= sendLocalListRequest.versionNumber) {
       throw new Error(
-        `Current LocalListVersion for ${ocppConnectionName} is ${localListVersion.versionNumber}, cannot send LocalListVersion ${sendLocalListRequest.versionNumber} (version number must be higher)`,
+        `Current LocalListVersion for ${stationId} is ${localListVersion.versionNumber}, cannot send LocalListVersion ${sendLocalListRequest.versionNumber} (version number must be higher)`,
       );
     }
 
@@ -121,7 +121,7 @@ export class LocalAuthListService {
 
     return await this._localAuthListRepository.createSendLocalListFromRequestData(
       tenantId,
-      ocppConnectionName,
+      stationId,
       correlationId,
       sendLocalListRequest.updateType,
       sendLocalListRequest.versionNumber,
@@ -152,12 +152,12 @@ export class LocalAuthListService {
 
   private async getItemsPerMessageSendLocalListByStationId(
     tenantId: number,
-    ocppConnectionName: string,
+    stationId: string,
   ): Promise<number | null> {
     const itemsPerMessageSendLocalList: VariableAttribute[] =
       await this._deviceModelRepository.readAllByQuerystring(tenantId, {
         tenantId: tenantId,
-        ocppConnectionName: ocppConnectionName,
+        stationId: stationId,
         component_name: 'LocalAuthListCtrlr',
         component_instance: null,
         variable_name: 'ItemsPerMessage',
