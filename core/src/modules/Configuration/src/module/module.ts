@@ -234,23 +234,23 @@ export class ConfigurationModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('BootNotification received:', message, props);
 
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
     const tenantId = message.context.tenantId;
     const timestamp = message.context.timestamp;
     const chargingStation = message.payload.chargingStation;
 
     const bootNotificationResponse: OCPP2_response_types.BootNotificationResponse =
-      await this._bootService.createBootNotificationResponse(tenantId, stationId);
+      await this._bootService.createBootNotificationResponse(tenantId, ocppConnectionName);
 
     // Check cached boot status for charger. Only Pending and Rejected statuses are cached.
     const cachedBootStatus: RegistrationStatusEnumType | null = await this._cache.get(
       BOOT_STATUS,
-      stationId,
+      ocppConnectionName,
     );
 
     // Blacklist or whitelist charger actions in cache
     await this._bootService.cacheChargerActionsPermissions(
-      stationId,
+      ocppConnectionName,
       cachedBootStatus,
       bootNotificationResponse.status,
     );
@@ -263,7 +263,7 @@ export class ConfigurationModule extends AbstractModule {
     // reference to the ChargingStation record, so the station must exist first.
     (async () => {
       const connectionJson = await this._cache.get<string>(
-        createIdentifier(tenantId, stationId),
+        createIdentifier(tenantId, ocppConnectionName),
         CacheNamespace.Connections,
       );
       const connection: IWebsocketConnection | null = connectionJson
@@ -272,11 +272,11 @@ export class ConfigurationModule extends AbstractModule {
       if (!connection?.allowUnknownChargingStations) {
         const exists = await this._locationRepository.doesChargingStationExistByStationId(
           tenantId,
-          stationId,
+          ocppConnectionName,
         );
         if (!exists) {
           throw new Error(
-            `Charging station ${stationId} does not exist and allowUnknownChargingStations is false`,
+            `Charging station ${ocppConnectionName} does not exist and allowUnknownChargingStations is false`,
           );
         }
       }
@@ -284,7 +284,7 @@ export class ConfigurationModule extends AbstractModule {
         tenantId,
         ChargingStation.build({
           tenantId,
-          id: stationId,
+          ocppConnectionName,
           chargePointVendor: chargingStation.vendorName,
           chargePointModel: chargingStation.model,
           chargePointSerialNumber: chargingStation.serialNumber,
@@ -296,12 +296,12 @@ export class ConfigurationModule extends AbstractModule {
       await this._deviceModelService.updateDeviceModel(
         chargingStation,
         tenantId,
-        stationId,
+        ocppConnectionName,
         timestamp,
       );
     })().catch((error) => {
       this._logger.error(
-        `Error updating station ${stationId} or device model with boot info:`,
+        `Error updating station ${ocppConnectionName} or device model with boot info:`,
         error,
       );
     });
@@ -315,14 +315,14 @@ export class ConfigurationModule extends AbstractModule {
       (!cachedBootStatus || bootNotificationResponse.status !== cachedBootStatus)
     ) {
       // Cache boot status for charger if (not accepted) and ((not already cached) or (different status from cached status)).
-      await this._cache.set(BOOT_STATUS, bootNotificationResponse.status, stationId);
+      await this._cache.set(BOOT_STATUS, bootNotificationResponse.status, ocppConnectionName);
     }
 
     // Update charger-specific boot config with details of most recently sent BootNotificationResponse
     const bootConfigDbEntity: Boot = await this._bootService.updateBootConfig(
       bootNotificationResponse,
       tenantId,
-      stationId,
+      ocppConnectionName,
     );
 
     // If boot notification is not pending, do not start configuration.
@@ -341,15 +341,15 @@ export class ConfigurationModule extends AbstractModule {
       this._config.modules.configuration.ocpp2_0_1?.getBaseReportOnPending
     ) {
       // Remove Notify Report from blacklist
-      await this._cache.remove(OCPP_CallAction.NotifyReport, stationId);
+      await this._cache.remove(OCPP_CallAction.NotifyReport, ocppConnectionName);
 
       const getBaseReportRequest = await this._bootService.createGetBaseReportRequest(
-        stationId,
+        ocppConnectionName,
         this._config.maxCachingSeconds,
       );
 
       const getBaseReportConfirmation = await this.sendCall(
-        stationId,
+        ocppConnectionName,
         tenantId,
         message.protocol,
         OCPP_CallAction.GetBaseReport,
@@ -357,7 +357,7 @@ export class ConfigurationModule extends AbstractModule {
       );
 
       await this._bootService.confirmGetBaseReportSuccess(
-        stationId,
+        ocppConnectionName,
         getBaseReportRequest.requestId.toString(),
         getBaseReportConfirmation,
         this._config.maxCachingSeconds,
@@ -378,13 +378,16 @@ export class ConfigurationModule extends AbstractModule {
       bootConfigDbEntity.variablesRejectedOnLastBoot = [];
 
       let setVariableData: OCPP2_common_types.SetVariableDataType[] =
-        await this._deviceModelRepository.readAllSetVariableByStationId(tenantId, stationId);
+        await this._deviceModelRepository.readAllSetVariableByStationId(
+          tenantId,
+          ocppConnectionName,
+        );
 
       // If ItemsPerMessageSetVariables not set, send all variables at once
       const itemsPerMessageSetVariables =
         (await this._deviceModelService.getItemsPerMessageSetVariablesByStationId(
           tenantId,
-          stationId,
+          ocppConnectionName,
         )) ?? setVariableData.length;
 
       while (setVariableData.length > 0) {
@@ -393,11 +396,11 @@ export class ConfigurationModule extends AbstractModule {
         const cacheCallbackPromise: Promise<string | null> = this._cache.onChange(
           correlationId,
           this._config.maxCachingSeconds,
-          stationId,
+          ocppConnectionName,
         ); // x2 fudge factor for any network lag
 
         await this.sendCall(
-          stationId,
+          ocppConnectionName,
           tenantId,
           message.protocol,
           OCPP_CallAction.SetVariables,
@@ -457,14 +460,14 @@ export class ConfigurationModule extends AbstractModule {
 
     if (rebootSetVariable) {
       // Charger SHALL not be in a transaction as it has not yet successfully booted, therefore it is appropriate to send an Immediate Reset
-      await this.sendCall(stationId, tenantId, message.protocol, OCPP_CallAction.Reset, {
+      await this.sendCall(ocppConnectionName, tenantId, message.protocol, OCPP_CallAction.Reset, {
         type: ResetEnum.Immediate,
       } as OCPP2_request_types.ResetRequest);
     } else {
       // We could trigger the new boot immediately rather than wait for the retry, as nothing more now needs to be done.
       // However, B02.FR.02 - Spec allows for TriggerMessageRequest - OCTT fails over trigger
       // Commenting out until OCTT behavior changes.
-      // this.sendCall(stationId, tenantId, OCPPVersion.OCPP2_0_1, OCPP_CallAction.TriggerMessage,
+      // this.sendCall(ocppConnectionName, tenantId, OCPPVersion.OCPP2_0_1, OCPP_CallAction.TriggerMessage,
       //   { requestedMessage: MessageTriggerEnumType.BootNotification } as TriggerMessageRequest);
     }
   }
@@ -497,7 +500,7 @@ export class ConfigurationModule extends AbstractModule {
       {
         where: {
           tenantId: message.context.tenantId,
-          stationId: message.context.stationId,
+          ocppConnectionName: message.context.ocppConnectionName,
           action: OCPP_CallAction.GetDisplayMessages,
           message: {
             requestId: requestId,
@@ -554,14 +557,14 @@ export class ConfigurationModule extends AbstractModule {
         const component: Component = await this._deviceModelRepository.findOrCreateEvseAndComponent(
           tenantId,
           messageInfoType.display,
-          message.context.stationId,
+          message.context.ocppConnectionName,
         );
         componentId = component.id;
       }
       await this._messageInfoRepository.createOrUpdateByMessageInfoTypeAndStationId(
         tenantId,
         messageInfoType,
-        message.context.stationId,
+        message.context.ocppConnectionName,
         componentId,
       );
     }
@@ -652,13 +655,18 @@ export class ConfigurationModule extends AbstractModule {
           setNetworkProfile.websocketServerConfigId!,
         );
         if (serverNetworkProfile) {
-          const chargingStation = await ChargingStation.findByPk(message.context.stationId);
+          const chargingStation = await ChargingStation.findOne({
+            where: {
+              ocppConnectionName: message.context.ocppConnectionName,
+              tenantId: message.context.tenantId,
+            },
+          });
           if (chargingStation) {
             const [chargingStationNetworkProfile] = await ChargingStationNetworkProfile.findOrBuild(
               {
                 where: {
                   tenantId: message.context.tenantId,
-                  stationId: chargingStation.id,
+                  ocppConnectionName: chargingStation.ocppConnectionName,
                   configurationSlot: setNetworkProfile.configurationSlot!,
                 },
               },
@@ -694,17 +702,17 @@ export class ConfigurationModule extends AbstractModule {
     if (status === DisplayMessageStatusEnum.Accepted) {
       await this._messageInfoRepository.deactivateAllByStationId(
         message.context.tenantId,
-        message.context.stationId,
+        message.context.ocppConnectionName,
       );
       await this.sendCall(
-        message.context.stationId,
+        message.context.ocppConnectionName,
         message.context.tenantId,
         message.protocol,
         OCPP_CallAction.GetDisplayMessages,
         {
           requestId: await this._idGenerator.generateRequestId(
             message.context.tenantId,
-            message.context.stationId,
+            message.context.ocppConnectionName,
             ChargingStationSequenceTypeEnum.getDisplayMessages,
           ), //TODO: When we add 2.1 config, we will need to adjust this logic to vary by message protoco
         } as OCPP2_request_types.GetDisplayMessagesRequest,
@@ -765,17 +773,17 @@ export class ConfigurationModule extends AbstractModule {
     if (status === ClearMessageStatusEnum.Accepted) {
       await this._messageInfoRepository.deactivateAllByStationId(
         message.context.tenantId,
-        message.context.stationId,
+        message.context.ocppConnectionName,
       );
       await this.sendCall(
-        message.context.stationId,
+        message.context.ocppConnectionName,
         message.context.tenantId,
         message.protocol,
         OCPP_CallAction.GetDisplayMessages,
         {
           requestId: await this._idGenerator.generateRequestId(
             message.context.tenantId,
-            message.context.stationId,
+            message.context.ocppConnectionName,
             ChargingStationSequenceTypeEnum.getDisplayMessages,
           ),
         } as OCPP2_request_types.GetDisplayMessagesRequest,
@@ -809,22 +817,22 @@ export class ConfigurationModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('OCPP 1.6 BootNotification request received:', message, props);
 
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
     const tenantId = message.context.tenantId;
     const request = message.payload;
 
     // 1. Send BootNotification response
     // Create BootNotification response
     const bootNotificationResponse: OCPP1_6.BootNotificationResponse =
-      await this._bootService.createOcpp16BootNotificationResponse(tenantId, stationId);
+      await this._bootService.createOcpp16BootNotificationResponse(tenantId, ocppConnectionName);
     // Check cached boot status for charger. Only Pending and Rejected statuses are cached.
     const cachedBootStatus: OCPP1_6.BootNotificationResponseStatus | null = await this._cache.get(
       BOOT_STATUS,
-      stationId,
+      ocppConnectionName,
     );
     // Blacklist or whitelist charger actions
     await this._bootService.cacheOcpp16ChargerActionsPermissions(
-      stationId,
+      ocppConnectionName,
       cachedBootStatus,
       bootNotificationResponse.status,
     );
@@ -832,10 +840,10 @@ export class ConfigurationModule extends AbstractModule {
     const bootNotificationResponseMessageConfirmation: IMessageConfirmation =
       await this.sendCallResultWithMessage(message, bootNotificationResponse);
     // Create or update charging station
-    this._logger.debug(`Creating or updating charging station: ${stationId}`);
+    this._logger.debug(`Creating or updating charging station: ${ocppConnectionName}`);
     (async () => {
       const connectionJson = await this._cache.get<string>(
-        createIdentifier(tenantId, stationId),
+        createIdentifier(tenantId, ocppConnectionName),
         CacheNamespace.Connections,
       );
       const connection: IWebsocketConnection | null = connectionJson
@@ -844,11 +852,11 @@ export class ConfigurationModule extends AbstractModule {
       if (!connection?.allowUnknownChargingStations) {
         const exists = await this._locationRepository.doesChargingStationExistByStationId(
           tenantId,
-          stationId,
+          ocppConnectionName,
         );
         if (!exists) {
           throw new Error(
-            `Charging station ${stationId} does not exist and allowUnknownChargingStations is false`,
+            `Charging station ${ocppConnectionName} does not exist and allowUnknownChargingStations is false`,
           );
         }
       }
@@ -856,7 +864,7 @@ export class ConfigurationModule extends AbstractModule {
         tenantId,
         ChargingStation.build({
           tenantId,
-          id: stationId,
+          ocppConnectionName,
           chargePointVendor: request.chargePointVendor,
           chargePointModel: request.chargePointModel,
           chargePointSerialNumber: request.chargePointSerialNumber,
@@ -869,7 +877,7 @@ export class ConfigurationModule extends AbstractModule {
         }),
       );
     })().catch((error) => {
-      this._logger.error(`Error updating station ${stationId} with boot info:`, error);
+      this._logger.error(`Error updating station ${ocppConnectionName} with boot info:`, error);
     });
     // Check if response was successful
     if (!bootNotificationResponseMessageConfirmation.success) {
@@ -884,13 +892,13 @@ export class ConfigurationModule extends AbstractModule {
       bootNotificationResponse.status !== OCPP1_6.BootNotificationResponseStatus.Accepted &&
       (!cachedBootStatus || bootNotificationResponse.status !== cachedBootStatus)
     ) {
-      await this._cache.set(BOOT_STATUS, bootNotificationResponse.status, stationId);
+      await this._cache.set(BOOT_STATUS, bootNotificationResponse.status, ocppConnectionName);
     }
     // Update boot with details of most recently sent BootNotificationResponse
     const bootEntity = await this._bootService.updateOcpp16BootConfig(
       bootNotificationResponse,
       tenantId,
-      stationId,
+      ocppConnectionName,
     );
 
     // 3. Sync configurations
@@ -908,11 +916,11 @@ export class ConfigurationModule extends AbstractModule {
     const configurations: ChangeConfiguration[] =
       await this._changeConfigurationRepository.readAllByQuery(tenantId, {
         where: {
-          stationId,
+          ocppConnectionName,
         },
       });
     // Remove ChangeConfiguration call action from blacklist
-    await this._cache.remove(OCPP_CallAction.ChangeConfiguration, stationId);
+    await this._cache.remove(OCPP_CallAction.ChangeConfiguration, ocppConnectionName);
     // Set each configuration on Charging Station
     for (const config of configurations) {
       const correlationId = uuidv4();
@@ -920,11 +928,11 @@ export class ConfigurationModule extends AbstractModule {
       const cacheCallbackPromise: Promise<string | null> = this._cache.onChange(
         correlationId,
         this._config.maxCachingSeconds,
-        stationId,
+        ocppConnectionName,
       );
       const changeConfigurationResponseMessageConfirmation: IMessageConfirmation =
         await this.sendCall(
-          stationId,
+          ocppConnectionName,
           tenantId,
           OCPPVersion.OCPP1_6,
           OCPP_CallAction.ChangeConfiguration,
@@ -944,10 +952,10 @@ export class ConfigurationModule extends AbstractModule {
 
     // Get Configurations from charging station
     // Remove GetConfiguration call action from blacklist
-    await this._cache.remove(OCPP_CallAction.GetConfiguration, stationId);
+    await this._cache.remove(OCPP_CallAction.GetConfiguration, ocppConnectionName);
     // Send GetConfiguration request to charger
     const getConfigurationResponseMessageConfirmation: IMessageConfirmation = await this.sendCall(
-      stationId,
+      ocppConnectionName,
       tenantId,
       OCPPVersion.OCPP1_6,
       OCPP_CallAction.GetConfiguration,
@@ -967,10 +975,16 @@ export class ConfigurationModule extends AbstractModule {
     );
 
     // 4. Trigger another boot when pending
-    await this._cache.remove(OCPP_CallAction.TriggerMessage, stationId);
-    await this.sendCall(stationId, tenantId, OCPPVersion.OCPP1_6, OCPP_CallAction.TriggerMessage, {
-      requestedMessage: OCPP1_6.TriggerMessageRequestRequestedMessage.BootNotification,
-    } as OCPP1_6.TriggerMessageRequest);
+    await this._cache.remove(OCPP_CallAction.TriggerMessage, ocppConnectionName);
+    await this.sendCall(
+      ocppConnectionName,
+      tenantId,
+      OCPPVersion.OCPP1_6,
+      OCPP_CallAction.TriggerMessage,
+      {
+        requestedMessage: OCPP1_6.TriggerMessageRequestRequestedMessage.BootNotification,
+      } as OCPP1_6.TriggerMessageRequest,
+    );
   }
 
   /**
@@ -984,14 +998,14 @@ export class ConfigurationModule extends AbstractModule {
     this._logger.debug('OCPP 1.6 GetConfiguration response received:', message, props);
 
     const tenantId = message.context.tenantId;
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
     const configurations = message.payload.configurationKey;
 
     if (configurations && configurations.length > 0) {
       for (const config of configurations) {
         if (config.key) {
           await this._changeConfigurationRepository.createOrUpdateChangeConfiguration(tenantId, {
-            stationId,
+            ocppConnectionName,
             key: config.key,
             value: config.value,
             readonly: config.readonly,
@@ -1009,12 +1023,12 @@ export class ConfigurationModule extends AbstractModule {
     this._logger.debug('OCPP 1.6 ChangeConfiguration response received:', message, props);
 
     const tenantId = message.context.tenantId;
-    const stationId = message.context.stationId;
+    const ocppConnectionName = message.context.ocppConnectionName;
     const correlationId = message.context.correlationId;
 
     const request = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
       where: {
-        stationId,
+        ocppConnectionName: ocppConnectionName,
         correlationId,
         origin: MessageOrigin.ChargingStationManagementSystem,
       },
@@ -1043,14 +1057,14 @@ export class ConfigurationModule extends AbstractModule {
         tenantId,
         {
           tenantId,
-          stationId,
+          ocppConnectionName,
           key,
           value,
         } as ChangeConfiguration,
       );
       if (!config) {
         this._logger.error(
-          `Failed to create or update configuration ${key}:${value} on ${stationId}`,
+          `Failed to create or update configuration ${key}:${value} on ${ocppConnectionName}`,
         );
       } else {
         this._logger.debug(`Updated changeConfiguration ${key}:${value}`);

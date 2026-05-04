@@ -10,7 +10,7 @@ import { EventGroup, MessageOrigin, MessageState } from '@interfaces/messages/in
 
 export class RequestBuilder {
   static buildCall(
-    stationId: string,
+    ocppConnectionName: string,
     correlationId: string,
     tenantId: number,
     action: CallAction,
@@ -25,7 +25,7 @@ export class RequestBuilder {
       eventGroup: eventGroup,
       action,
       context: {
-        stationId,
+        ocppConnectionName,
         correlationId,
         tenantId,
         timestamp: timestamp.toISOString(),
@@ -37,7 +37,7 @@ export class RequestBuilder {
   }
 
   static buildCallResult(
-    stationId: string,
+    ocppConnectionName: string,
     correlationId: string,
     tenantId: number,
     action: CallAction,
@@ -52,7 +52,7 @@ export class RequestBuilder {
       eventGroup: eventGroup,
       action,
       context: {
-        stationId,
+        ocppConnectionName,
         correlationId,
         tenantId,
         timestamp: timestamp.toISOString(),
@@ -64,7 +64,7 @@ export class RequestBuilder {
   }
 
   static buildCallError(
-    stationId: string,
+    ocppConnectionName: string,
     correlationId: string,
     tenantId: number,
     action: CallAction,
@@ -79,7 +79,7 @@ export class RequestBuilder {
       eventGroup: eventGroup,
       action,
       context: {
-        stationId,
+        ocppConnectionName,
         correlationId,
         tenantId,
         timestamp: timestamp.toISOString(),

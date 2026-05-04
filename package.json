@@ -1,6 +1,6 @@
 {
   "name": "@citrineos/workspace",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "type": "module",
   "private": false,
   "scripts": {
@@ -23,7 +23,8 @@
     "fi": "npm run fresh && npm run install-all",
     "sync-db": "ts-node ./db.sync.ts",
     "force-sync-db": "ts-node ./db.force-sync.ts",
-    "test": "vitest run",
+    "test": "vitest run --exclude='**/*.e2e.test.ts'",
+    "test:e2e": "npm run build && vitest run --include='**/test/e2e/*.e2e.test.ts'",
     "coverage": "vitest run --coverage",
     "prepare": "husky",
     "migrate": "npx sequelize-cli db:migrate --debug && echo migration completed successfully"
@@ -51,13 +52,13 @@
   },
   "dependencies": {
     "@fastify/swagger": "9.7.0",
-    "@fastify/swagger-ui": "5.2.5",
+    "@fastify/swagger-ui": "5.2.6",
     "@google-cloud/storage": "7.19.0",
     "@peculiar/webcrypto": "1.5.0",
     "acme-client": "5.4.0",
     "ajv": "8.18.0",
     "ajv-formats": "3.0.1",
-    "asn1js": "3.0.7",
+    "asn1js": "3.0.10",
     "bufferutil": "4.1.0",
     "jsrsasign": "11.1.1",
     "jwks-rsa": "4.0.1",

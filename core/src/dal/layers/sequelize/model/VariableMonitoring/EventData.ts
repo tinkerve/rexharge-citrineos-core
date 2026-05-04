@@ -36,18 +36,18 @@ export class EventData extends Model implements EventDataDto {
 
   @ForeignKey(() => ChargingStation)
   @Column(DataType.INTEGER)
-  declare stationPkId?: number;
+  declare stationId?: number;
 
   @Index
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_tenantId_eventId',
+    unique: 'stationName_tenantId_eventId',
   })
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_eventId',
+    unique: 'stationName_eventId',
   })
   declare eventId: number;
 
@@ -111,7 +111,7 @@ export class EventData extends Model implements EventDataDto {
 
   declare customData?: OCPP2_0_1.CustomDataType | null;
 
-  @BelongsTo(() => ChargingStation, 'stationPkId')
+  @BelongsTo(() => ChargingStation, 'stationId')
   declare chargingStation?: ChargingStationDto;
 
   @ForeignKey(() => Tenant)
@@ -120,7 +120,7 @@ export class EventData extends Model implements EventDataDto {
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
-    unique: 'stationId_tenantId_eventId',
+    unique: 'stationName_tenantId_eventId',
   })
   declare tenantId: number;
 
@@ -128,16 +128,16 @@ export class EventData extends Model implements EventDataDto {
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationPkId(instance: EventData): Promise<void> {
-    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+  static async resolveStationId(instance: EventData): Promise<void> {
+    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
       // Lazy load ChargingStation to avoid circular dependency
       const { ChargingStation } = await import('../Location/index.js');
       const station = await ChargingStation.findOne({
-        where: { id: instance.stationId, tenantId: instance.tenantId },
-        attributes: ['pkId'],
+        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
+        attributes: ['id'],
       });
       if (station) {
-        instance.stationPkId = station.pkId;
+        instance.stationId = station.id;
       }
     }
   }

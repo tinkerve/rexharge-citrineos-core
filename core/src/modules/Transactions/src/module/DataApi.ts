@@ -54,7 +54,7 @@ export class TransactionsDataApi
   ): Promise<Transaction | undefined> {
     return this._module.transactionEventRepository.readTransactionByStationIdAndTransactionId(
       request.query.tenantId,
-      request.query.stationId,
+      request.query.ocppConnectionName,
       request.query.transactionId,
     );
   }

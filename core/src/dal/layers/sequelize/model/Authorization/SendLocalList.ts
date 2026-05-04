@@ -24,7 +24,7 @@ export class SendLocalList extends Model implements OCPP2_0_1.SendLocalListReque
   static readonly MODEL_NAME: string = OCPP2_Namespace.SendLocalListRequest;
 
   @Column(DataType.STRING)
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @Column(DataType.STRING)
   declare correlationId: string;

@@ -68,7 +68,7 @@ export class MonitoringOcpp2Api
     // For each station, check request size, process monitoring data, and handle batch sending
     const confirmations: IMessageConfirmation[] = [];
 
-    for (const id of identifier) {
+    for (const ocppConnectionName of identifier) {
       try {
         // Request size check
         const maxBytes =
@@ -76,13 +76,13 @@ export class MonitoringOcpp2Api
             this._componentMonitoringCtrlr,
             OCPP_CallAction.SetVariableMonitoring,
             tenantId,
-            id,
+            ocppConnectionName,
           );
         const requestBytes = getSizeOfRequest(request);
 
         if (maxBytes && requestBytes > maxBytes) {
           throw new Error(
-            `The request size exceeds the limit of ${maxBytes} bytes for identifier ${id}.`,
+            `The request size exceeds the limit of ${maxBytes} bytes for identifier ${ocppConnectionName}.`,
           );
         }
 
@@ -114,7 +114,7 @@ export class MonitoringOcpp2Api
               data,
               component.id,
               variable.id,
-              id,
+              ocppConnectionName,
             );
           }
         }
@@ -125,12 +125,12 @@ export class MonitoringOcpp2Api
             this._componentMonitoringCtrlr,
             OCPP_CallAction.SetVariableMonitoring,
             tenantId,
-            id,
+            ocppConnectionName,
           )) ?? setMonitoringData.length;
 
         // Split up the setMonitoringData into batches and call sendCall for each
         const result = await this.processBatches(
-          id,
+          ocppConnectionName,
           tenantId,
           this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.SetVariableMonitoring,
@@ -165,9 +165,13 @@ export class MonitoringOcpp2Api
   ): Promise<IMessageConfirmation[]> {
     const confirmations: IMessageConfirmation[] = [];
 
-    for (const id of identifier) {
+    for (const ocppConnectionName of identifier) {
       try {
-        this._logger.debug('ClearVariableMonitoring request received for station', id, request);
+        this._logger.debug(
+          'ClearVariableMonitoring request received for station',
+          ocppConnectionName,
+          request,
+        );
 
         // Request size check
         const maxBytes =
@@ -175,13 +179,13 @@ export class MonitoringOcpp2Api
             this._componentMonitoringCtrlr,
             OCPP_CallAction.ClearVariableMonitoring,
             tenantId,
-            id,
+            ocppConnectionName,
           );
         const requestBytes = getSizeOfRequest(request);
 
         if (maxBytes && requestBytes > maxBytes) {
           throw new Error(
-            `The request size exceeds the limit of ${maxBytes} bytes for identifier ${id}.`,
+            `The request size exceeds the limit of ${maxBytes} bytes for identifier ${ocppConnectionName}.`,
           );
         }
 
@@ -192,12 +196,12 @@ export class MonitoringOcpp2Api
             this._componentMonitoringCtrlr,
             OCPP_CallAction.ClearVariableMonitoring,
             tenantId,
-            id,
+            ocppConnectionName,
           )) ?? ids.length;
 
         // Batches
         const result = await this.processBatches(
-          id,
+          ocppConnectionName,
           tenantId,
           this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.ClearVariableMonitoring,
@@ -278,7 +282,7 @@ export class MonitoringOcpp2Api
   ): Promise<IMessageConfirmation[]> {
     const confirmations: IMessageConfirmation[] = [];
 
-    for (const id of identifier) {
+    for (const ocppConnectionName of identifier) {
       try {
         const setVariableData: OCPP2_common_types.SetVariableDataType[] = request.setVariableData;
 
@@ -286,7 +290,7 @@ export class MonitoringOcpp2Api
         await this._module.deviceModelRepository.createOrUpdateBySetVariablesDataAndStationId(
           tenantId,
           setVariableData,
-          id,
+          ocppConnectionName,
           new Date().toISOString(),
         );
 
@@ -296,12 +300,12 @@ export class MonitoringOcpp2Api
             this._componentDeviceDataCtrlr,
             OCPP_CallAction.SetVariables,
             tenantId,
-            id,
+            ocppConnectionName,
           )) ?? setVariableData.length;
 
         // Batches
         const result = await this.processBatches(
-          id,
+          ocppConnectionName,
           tenantId,
           this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.SetVariables,
@@ -336,7 +340,7 @@ export class MonitoringOcpp2Api
   ): Promise<IMessageConfirmation[]> {
     const confirmations: IMessageConfirmation[] = [];
 
-    for (const id of identifier) {
+    for (const ocppConnectionName of identifier) {
       try {
         // Request size check
         const maxBytes =
@@ -344,13 +348,13 @@ export class MonitoringOcpp2Api
             this._componentDeviceDataCtrlr,
             OCPP_CallAction.GetVariables,
             tenantId,
-            id,
+            ocppConnectionName,
           );
         const requestBytes = getSizeOfRequest(request);
 
         if (maxBytes && requestBytes > maxBytes) {
           throw new Error(
-            `The request size exceeds the limit of ${maxBytes} bytes for identifier ${id}.`,
+            `The request size exceeds the limit of ${maxBytes} bytes for identifier ${ocppConnectionName}.`,
           );
         }
 
@@ -362,12 +366,12 @@ export class MonitoringOcpp2Api
             this._componentDeviceDataCtrlr,
             OCPP_CallAction.GetVariables,
             tenantId,
-            id,
+            ocppConnectionName,
           )) ?? getVariableData.length;
 
         // Batches
         const result = await this.processBatches(
-          id,
+          ocppConnectionName,
           tenantId,
           this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.GetVariables,
@@ -391,7 +395,7 @@ export class MonitoringOcpp2Api
   /**
    * Processes data in batches and sends them to the specified OCPP action.
    *
-   * @param {string} stationId - The station's identifier.
+   * @param ocppConnectionName - The connection name of the charging station
    * @param {string} tenantId - The tenant identifier.
    * @param {OCPPVersion} version - The OCPP version to use.
    * @param {OCPP_CallAction} action - The OCPP 2.0.1 action to call.
@@ -402,7 +406,7 @@ export class MonitoringOcpp2Api
    * @returns {Promise<IMessageConfirmation[]>} - Array of message confirmations for each batch.
    */
   private async processBatches(
-    stationId: string,
+    ocppConnectionName: string,
     tenantId: number,
     version: OCPPVersion,
     action: OCPP_CallAction,
@@ -418,7 +422,7 @@ export class MonitoringOcpp2Api
       const batchRequest = { ...requestData, [dataKey]: batch };
       try {
         const confirmation = await this._module.sendCall(
-          stationId,
+          ocppConnectionName,
           tenantId,
           version,
           action,

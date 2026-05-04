@@ -7,7 +7,6 @@ import type {
   OCPP2_common_types,
   SystemConfig,
 } from '@citrineos/base';
-import { SignedMeterValuesConfig } from '@citrineos/base';
 import { sequelize } from '@dal/index.js';
 import type { IChargingStationSecurityInfoRepository } from '@dal/interfaces/repositories.js';
 import * as crypto from 'node:crypto';
@@ -23,7 +22,9 @@ export class SignedMeterValuesUtil {
   private readonly _logger: Logger<ILogObj>;
   private readonly _chargingStationSecurityInfoRepository: IChargingStationSecurityInfoRepository;
 
-  private readonly _signedMeterValuesConfiguration: SignedMeterValuesConfig | undefined;
+  private readonly _signedMeterValuesConfiguration:
+    | SystemConfig['modules']['transactions']['signedMeterValuesConfiguration']
+    | undefined;
 
   /**
    * @param {IFileStorage} [fileStorage] - The `fileStorage` allows access to the configured file storage.
@@ -61,12 +62,12 @@ export class SignedMeterValuesUtil {
    * OR
    * - The incoming signed meter value's public key isn't empty and it matches the configured public key
    *
-   * @param stationId - The charging station the meter values belong to
+   * @param ocppConnectionName - The connection name of the charging station
    * @param meterValues - The list of meter values
    */
   public async validateMeterValues(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     meterValues: [OCPP2_common_types.MeterValueType, ...OCPP2_common_types.MeterValueType[]],
   ): Promise<boolean> {
     for (const meterValue of meterValues) {
@@ -74,7 +75,7 @@ export class SignedMeterValuesUtil {
         if (sampledValue.signedMeterValue) {
           const validMeterValues = await this.validateSignedSampledValue(
             tenantId,
-            stationId,
+            ocppConnectionName,
             sampledValue.signedMeterValue,
           );
           if (!validMeterValues) {
@@ -89,7 +90,7 @@ export class SignedMeterValuesUtil {
 
   private async validateSignedSampledValue(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     signedMeterValue: OCPP2_common_types.SignedMeterValueType,
   ): Promise<boolean> {
     if (signedMeterValue.publicKey && signedMeterValue.publicKey.length > 0) {
@@ -99,7 +100,7 @@ export class SignedMeterValuesUtil {
       if (this._signedMeterValuesConfiguration && incomingPublicKeyIsValid) {
         await this._chargingStationSecurityInfoRepository.readOrCreateChargingStationInfo(
           tenantId,
-          stationId,
+          ocppConnectionName,
           this._signedMeterValuesConfiguration.publicKeyFileId,
         );
 
@@ -111,7 +112,7 @@ export class SignedMeterValuesUtil {
       const chargingStationPublicKeyFileId =
         await this._chargingStationSecurityInfoRepository.readChargingStationPublicKeyFileId(
           tenantId,
-          stationId,
+          ocppConnectionName,
         );
       return await this.validateSignedMeterValueSignature(
         signedMeterValue,
@@ -127,6 +128,15 @@ export class SignedMeterValuesUtil {
   ): Promise<boolean> {
     const incomingPublicKeyString = signedMeterValue.publicKey;
     const signingMethod = signedMeterValue.signingMethod;
+
+    if (this._signedMeterValuesConfiguration?.signingMethod !== signingMethod) {
+      this._logger.warn(
+        'Invalid signature because incoming signing method does not match configured signing method.',
+      );
+      return this._signedMeterValuesConfiguration?.rejectUnsupportedSignedMeterValues
+        ? false
+        : true;
+    }
 
     if (!this._signedMeterValuesConfiguration?.publicKeyFileId) {
       this._logger.warn('Invalid signature because public key is missing from system config.');
@@ -149,13 +159,6 @@ export class SignedMeterValuesUtil {
     ) {
       this._logger.warn(
         'Invalid signature because no configured public key and incoming signed meter values has no public key.',
-      );
-      return false;
-    }
-
-    if (this._signedMeterValuesConfiguration?.signingMethod !== signingMethod) {
-      this._logger.warn(
-        'Invalid signature because incoming signing method does not match configured signing method.',
       );
       return false;
     }

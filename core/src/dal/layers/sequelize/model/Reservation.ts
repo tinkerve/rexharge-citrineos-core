@@ -32,15 +32,15 @@ export class Reservation extends Model implements ReservationDto {
 
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_tenantId_id',
+    unique: 'stationName_tenantId_id',
   })
   declare id: number;
 
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_tenantId_id',
+    unique: 'stationName_tenantId_id',
   })
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @Column({
     type: DataType.DATE,
@@ -86,7 +86,7 @@ export class Reservation extends Model implements ReservationDto {
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
-    unique: 'stationId_tenantId_id',
+    unique: 'stationName_tenantId_id',
   })
   declare tenantId: number;
 

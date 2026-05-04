@@ -54,7 +54,7 @@ export class NetworkProfileFilter extends AuthenticatorFilter {
   ) {
     const r = await this._deviceModelRepository.readAllByQuerystring(tenantId, {
       tenantId,
-      stationId: identifier,
+      ocppConnectionName: identifier,
       component_name: 'OCPPCommCtrlr',
       variable_name: 'NetworkConfigurationPriority',
       type: OCPP2_0_1.AttributeEnumType.Actual,
@@ -86,7 +86,11 @@ export class NetworkProfileFilter extends AuthenticatorFilter {
           let securityProfileAllowed = false;
           for (const configurationSlot of configurationSlotsArray) {
             const chargingStationNetworkProfile = await ChargingStationNetworkProfile.findOne({
-              where: { tenantId, stationId: identifier, configurationSlot: configurationSlot },
+              where: {
+                tenantId,
+                ocppConnectionName: identifier,
+                configurationSlot: configurationSlot,
+              },
             });
             if (chargingStationNetworkProfile) {
               const serverNetworkProfile = await ServerNetworkProfile.findByPk(

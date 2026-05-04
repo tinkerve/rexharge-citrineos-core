@@ -10,6 +10,6 @@
 export interface IMessageContext {
   correlationId: string;
   tenantId: number;
-  stationId: string;
+  ocppConnectionName: string;
   timestamp: string; // Iso Timestamp
 }

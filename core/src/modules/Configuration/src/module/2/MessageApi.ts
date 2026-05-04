@@ -75,9 +75,9 @@ export class ConfigurationOcpp2Api
       const websocketServerConfigId =
         extraQueries[SetNetworkProfileExtraQuerystrings.websocketServerConfigId];
       await Promise.all(
-        identifier.map((stationId) =>
+        identifier.map((ocppConnectionName) =>
           SetNetworkProfile.build({
-            stationId,
+            ocppConnectionName,
             tenantId,
             correlationId,
             configurationSlot: request.configurationSlot,
@@ -336,9 +336,9 @@ export class ConfigurationOcpp2Api
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
+    const results: Promise<IMessageConfirmation>[] = identifier.map((ocppConnectionName) =>
       this._module.sendCall(
-        id,
+        ocppConnectionName,
         tenantId,
         this._ocppVersion ?? DEFAULT_VERSION,
         OCPP_CallAction.DataTransfer,

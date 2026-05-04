@@ -97,7 +97,7 @@ export class SequelizeChargingProfileRepository
   async createOrUpdateChargingProfile(
     tenantId: number,
     chargingProfile: ChargingProfileInput,
-    stationId: string,
+    ocppConnectionName: string,
     evseId?: number | null,
     chargingLimitSource?: ChargingLimitSourceEnumType,
     isActive?: boolean,
@@ -106,7 +106,7 @@ export class SequelizeChargingProfileRepository
     if (chargingProfile.transactionId) {
       const activeTransaction = await Transaction.findOne({
         where: {
-          stationId,
+          ocppConnectionName: ocppConnectionName,
           transactionId: chargingProfile.transactionId,
         },
       });
@@ -116,12 +116,12 @@ export class SequelizeChargingProfileRepository
     const [savedChargingProfile, profileCreated] = await this.readOrCreateByQuery(tenantId, {
       where: {
         tenantId: tenantId,
-        stationId: stationId,
+        ocppConnectionName: ocppConnectionName,
         id: chargingProfile.id,
       },
       defaults: {
         ...chargingProfile,
-        stationId: stationId,
+        ocppConnectionName: ocppConnectionName,
         evseId: evseId,
         transactionDatabaseId: transactionDBId,
         chargingLimitSource: chargingLimitSource ?? ChargingLimitSourceEnum.CSO,
@@ -137,7 +137,7 @@ export class SequelizeChargingProfileRepository
             | [ChargingSchedule]
             | [ChargingSchedule, ChargingSchedule]
             | [ChargingSchedule, ChargingSchedule, ChargingSchedule],
-          stationId: stationId,
+          ocppConnectionName: ocppConnectionName,
           transactionDatabaseId: transactionDBId,
           evseId: evseId,
           chargingLimitSource: chargingLimitSource ?? ChargingLimitSourceEnum.CSO,
@@ -165,7 +165,7 @@ export class SequelizeChargingProfileRepository
         tenantId,
         ChargingSchedule.build({
           tenantId,
-          stationId,
+          ocppConnectionName: ocppConnectionName,
           chargingProfileDatabaseId: savedChargingProfile.databaseId,
           ...chargingSchedule,
         }),
@@ -188,18 +188,18 @@ export class SequelizeChargingProfileRepository
   async createChargingNeeds(
     tenantId: number,
     chargingNeedsReq: OCPP2_0_1.NotifyEVChargingNeedsRequest,
-    stationId: string,
+    ocppConnectionName: string,
   ): Promise<ChargingNeeds> {
     const activeTransaction = await Transaction.findOne({
       where: {
-        stationId,
+        ocppConnectionName: ocppConnectionName,
         isActive: true,
       },
       include: [{ model: Evse, where: { evseTypeId: chargingNeedsReq.evseId }, required: true }],
     });
     if (!activeTransaction) {
       throw new Error(
-        `No active transaction found on station ${stationId} evse ${chargingNeedsReq.evseId}`,
+        `No active transaction found on station ${ocppConnectionName} evse ${chargingNeedsReq.evseId}`,
       );
     }
 
@@ -234,29 +234,33 @@ export class SequelizeChargingProfileRepository
   async createCompositeSchedule(
     tenantId: number,
     compositeSchedule: CompositeScheduleInput,
-    stationId: string,
+    ocppConnectionName: string,
   ): Promise<CompositeSchedule> {
     return await this.compositeSchedule.create(
       tenantId,
       CompositeSchedule.build({
         tenantId,
         ...compositeSchedule,
-        stationId,
+        ocppConnectionName: ocppConnectionName,
       }),
     );
   }
 
-  async getNextChargingScheduleId(tenantId: number, stationId: string): Promise<number> {
-    return await this.chargingSchedule.readNextValue(tenantId, 'id', { where: { stationId } });
+  async getNextChargingScheduleId(tenantId: number, ocppConnectionName: string): Promise<number> {
+    return await this.chargingSchedule.readNextValue(tenantId, 'id', {
+      where: { ocppConnectionName: ocppConnectionName },
+    });
   }
 
-  async getNextChargingProfileId(tenantId: number, stationId: string): Promise<number> {
-    return await this.readNextValue(tenantId, 'id', { where: { stationId } });
+  async getNextChargingProfileId(tenantId: number, ocppConnectionName: string): Promise<number> {
+    return await this.readNextValue(tenantId, 'id', {
+      where: { ocppConnectionName: ocppConnectionName },
+    });
   }
 
   async getNextStackLevel(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     transactionDatabaseId: number | null,
     profilePurpose: ChargingProfilePurposeEnumType,
   ): Promise<number> {
@@ -265,7 +269,7 @@ export class SequelizeChargingProfileRepository
       'stackLevel',
       {
         where: {
-          stationId,
+          ocppConnectionName: ocppConnectionName,
           transactionDatabaseId: transactionDatabaseId,
           chargingProfilePurpose: profilePurpose,
         },
