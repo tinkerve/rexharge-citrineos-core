@@ -72,7 +72,6 @@ export class SequelizeRepository<T extends Model<any, any>> extends CrudReposito
     const options = query ? (query as AggregateOptions<any>) : undefined;
     const maxValue = await this.s.models[namespace].max(columnName, options);
     if (maxValue === null || maxValue === undefined) {
-      // maxValue can be 0, so we need to specifically check for null or undefined
       return startValue ?? 1;
     }
     if (typeof maxValue !== 'number' || isNaN(maxValue)) {
@@ -114,25 +113,6 @@ export class SequelizeRepository<T extends Model<any, any>> extends CrudReposito
     _namespace: string = this.namespace,
   ): Promise<T> {
     return await value.save();
-  }
-
-  protected async _bulkCreate(
-    tenantId: number,
-    values: T[],
-    namespace: string = this.namespace,
-  ): Promise<T[]> {
-    return await (this.s.models[namespace] as ModelStatic<T>).bulkCreate(values as any);
-  }
-
-  protected async _createByKey(
-    tenantId: number,
-    value: T,
-    key: string,
-    namespace: string = this.namespace,
-  ): Promise<T> {
-    const primaryKey = this.s.models[namespace].primaryKeyAttribute;
-    value.setDataValue(primaryKey, key);
-    return (await this.s.models[namespace].create(value.toJSON())) as T;
   }
 
   protected async _readOrCreateByQuery(
@@ -227,10 +207,7 @@ export class SequelizeRepository<T extends Model<any, any>> extends CrudReposito
   ): Promise<T[]> {
     return this.s.transaction(async (transaction) => {
       const entriesToDelete = await this.s.models[namespace]
-        .findAll({
-          ...query,
-          transaction,
-        })
+        .findAll({ ...query, transaction })
         .then((rows) => rows as T[]);
 
       const deletedCount = await this.s.models[namespace].destroy({ ...query, transaction });

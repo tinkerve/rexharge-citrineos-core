@@ -23,7 +23,8 @@
     "fi": "npm run fresh && npm run install-all",
     "sync-db": "ts-node ./db.sync.ts",
     "force-sync-db": "ts-node ./db.force-sync.ts",
-    "test": "vitest run",
+    "test": "vitest run --exclude='**/*.e2e.test.ts'",
+    "test:e2e": "npm run build && vitest run --include='**/test/e2e/*.e2e.test.ts'",
     "coverage": "vitest run --coverage",
     "prepare": "husky",
     "migrate": "npx sequelize-cli db:migrate --debug && echo migration completed successfully"

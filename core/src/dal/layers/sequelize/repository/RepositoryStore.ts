@@ -36,6 +36,7 @@ import { SequelizeDeviceModelRepository } from './DeviceModel.js';
 import { SequelizeLocationRepository } from './Location.js';
 import { SequelizeMessageInfoRepository } from './MessageInfo.js';
 import { SequelizeSecurityEventRepository } from './SecurityEvent.js';
+import { DrizzleSecurityEventRepository } from '../../drizzle/index.js';
 import { SequelizeSubscriptionRepository } from './Subscription.js';
 import { SequelizeTariffRepository } from './Tariff.js';
 import { SequelizeTransactionEventRepository } from './TransactionEvent.js';
@@ -156,11 +157,15 @@ export class RepositoryStore {
       logger,
       sequelizeInstance,
     );
-    this.securityEventRepository = new SequelizeSecurityEventRepository(
-      config,
-      logger,
-      sequelizeInstance,
-    );
+    if (process.env.CITRINEOS_USE_DRIZZLE_SECURITY_EVENT === 'true') {
+      this.securityEventRepository = new DrizzleSecurityEventRepository(config, logger);
+    } else {
+      this.securityEventRepository = new SequelizeSecurityEventRepository(
+        config,
+        logger,
+        sequelizeInstance,
+      );
+    }
     this.subscriptionRepository = new SequelizeSubscriptionRepository(
       config,
       logger,
