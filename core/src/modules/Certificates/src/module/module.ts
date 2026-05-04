@@ -177,8 +177,12 @@ export class CertificatesModule extends AbstractModule {
       new sequelize.SequelizeDeleteCertificateAttemptRepository(config, logger);
     this._ocppMessageRepository =
       ocppMessageRepository || new SequelizeOCPPMessageRepository(config, this._logger);
-    this._certificateAuthorityService =
-      certificateAuthorityService || new CertificateAuthorityService(config, cache, this._logger);
+    if (!certificateAuthorityService) {
+      throw new Error(
+        'certificateAuthorityService is required. Use CertificateAuthorityService.create() to initialize it.',
+      );
+    }
+    this._certificateAuthorityService = certificateAuthorityService;
 
     this._installCertificateHelperService =
       installCertificateHelperService ||

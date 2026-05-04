@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import * as fs from 'fs';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { RbacRules } from '@citrineos/base';
 import { RbacRulesSchema } from '@citrineos/base';
 import { UrlMatcher } from './UrlMatcher.js';
+import { LocalStorage } from '../../files/localStorage.js';
 import path from 'path';
 
 /**
@@ -15,6 +15,7 @@ import path from 'path';
 export class RbacRulesLoader {
   private _rules: RbacRules = {};
   private readonly _logger: Logger<ILogObj>;
+  private readonly _storage: LocalStorage;
 
   /**
    * Creates a new RBAC rules loader
@@ -24,7 +25,11 @@ export class RbacRulesLoader {
    */
   constructor(rulesFilePath: string, logger: Logger<ILogObj>) {
     this._logger = logger.getSubLogger({ name: 'RbacRulesLoader' });
-    this.loadRules(rulesFilePath);
+    // RBAC rules are always local files. defaultFilePath is unused since loadRules always passes an absolute path.
+    this._storage = new LocalStorage('', '');
+    this.loadRules(rulesFilePath).catch((error) => {
+      this._logger.error('Failed to initialize RBAC rules:', error);
+    });
   }
 
   /**
@@ -32,15 +37,17 @@ export class RbacRulesLoader {
    *
    * @param filePath Path to the JSON rules file
    */
-  private loadRules(filePath: string): void {
-    const absoluteFilePath = path.join(process.cwd(), filePath);
+  private async loadRules(filePath: string): Promise<void> {
+    const absoluteFilePath = path.isAbsolute(filePath)
+      ? filePath
+      : path.join(process.cwd(), filePath);
     try {
-      if (!fs.existsSync(absoluteFilePath)) {
+      const rulesContent = await this._storage.getFile(absoluteFilePath);
+      if (rulesContent === undefined) {
         this._logger.warn(`Rules file not found at ${absoluteFilePath}, using empty rules`);
         return;
       }
 
-      const rulesContent = fs.readFileSync(absoluteFilePath, 'utf8');
       const parsedRules = JSON.parse(rulesContent);
 
       // Validate rules against the schema

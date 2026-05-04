@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { readFileSync } from 'fs';
-import { SystemConfig } from '@citrineos/base';
+import type { IFileStorage, SystemConfig } from '@citrineos/base';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { faker } from '@faker-js/faker';
@@ -10,21 +9,8 @@ import { Acme } from '../../../certificate/client/acme.js';
 import { aValidSignedCertificate } from '../../providers/ACME.js';
 import * as CertificateUtil from '../../../certificate/CertificateUtil.js';
 import { Client } from 'acme-client';
-import { beforeAll, describe, expect, it, Mock, Mocked, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, Mock, Mocked, vi } from 'vitest';
 
-vi.mock('fs', async () => {
-  const actual = await vi.importActual('fs');
-  const fakeReadFileSync = vi.fn(() => 'fake cert contents');
-
-  return {
-    ...actual,
-    default: {
-      ...actual,
-      readFileSync: fakeReadFileSync, // for `import fs from 'fs'`
-    },
-    readFileSync: fakeReadFileSync, // for `import { readFileSync } from 'fs'`
-  };
-});
 vi.mock('../../../certificate/CertificateUtil');
 
 describe('ACME', () => {
@@ -32,18 +18,27 @@ describe('ACME', () => {
   const mockMtlsCertificateAuthorityKey = faker.lorem.word();
   let mockCertUtil: Mocked<typeof CertificateUtil>;
   let mockClient: Mocked<Client>;
+  let mockFileStorage: IFileStorage;
 
   let systemConfig: SystemConfig;
   const logger: Logger<ILogObj> | undefined = undefined;
   let acme: Acme;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     global.fetch = vi.fn();
-    (readFileSync as Mock)
-      .mockReturnValueOnce(mockTlsCertificateChain)
-      .mockReturnValueOnce(mockMtlsCertificateAuthorityKey)
-      .mockReturnValueOnce(faker.lorem.word());
     mockCertUtil = CertificateUtil as Mocked<typeof CertificateUtil>;
+
+    mockFileStorage = {
+      saveFile: vi.fn().mockResolvedValue(undefined),
+      getFile: vi
+        .fn()
+        .mockResolvedValueOnce(mockTlsCertificateChain)
+        .mockResolvedValueOnce(mockMtlsCertificateAuthorityKey)
+        .mockResolvedValueOnce(faker.lorem.word()),
+      exists: vi.fn().mockResolvedValue(false),
+      createDirectory: vi.fn().mockResolvedValue(undefined),
+      deleteFile: vi.fn().mockResolvedValue(undefined),
+    } as unknown as IFileStorage;
 
     systemConfig = {
       util: {
@@ -69,11 +64,15 @@ describe('ACME', () => {
       },
     } as any;
     mockClient = {} as unknown as Mocked<Client>;
-    acme = new Acme(systemConfig, logger, mockClient);
+    acme = await Acme.create(systemConfig, mockFileStorage, logger, mockClient);
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
   describe('getCertificateChain', () => {
-    it('successes', async () => {
+    it('succeeds', async () => {
       const mockLeafPem = faker.lorem.word();
       const mockSubCAPem = faker.lorem.word();
       const mockCertificate = aValidSignedCertificate();
@@ -90,6 +89,75 @@ describe('ACME', () => {
         givenCSR,
         mockSubCAPem,
         mockMtlsCertificateAuthorityKey,
+      );
+    });
+  });
+
+  describe('signCertificateByExternalCA', () => {
+    const folderPath = '/usr/local/apps/citrineos/Server/src/assets/.well-known/acme-challenge';
+
+    it('creates directory, saves challenge file, and removes on cleanup when directory does not exist', async () => {
+      const mockCert = faker.lorem.word();
+      const mockToken = faker.lorem.word();
+      const mockKeyAuth = faker.lorem.word();
+      const mockAuthz = { identifier: { value: faker.internet.domainName() } };
+
+      (mockFileStorage.exists as Mock).mockResolvedValueOnce(false);
+      (mockClient as any).auto = vi.fn().mockImplementation(async (options: any) => {
+        await options.challengeCreateFn(mockAuthz, { token: mockToken }, mockKeyAuth);
+        await options.challengeRemoveFn({}, {}, '');
+        return mockCert;
+      });
+
+      const givenCSR = faker.lorem.word();
+      const actualResult = await acme.signCertificateByExternalCA(givenCSR);
+
+      expect(actualResult).toBe(mockCert);
+      expect(mockFileStorage.exists).toHaveBeenCalledWith(folderPath);
+      expect(mockFileStorage.createDirectory).toHaveBeenCalledWith(folderPath, { recursive: true });
+      expect(mockFileStorage.saveFile).toHaveBeenCalledWith(
+        `${folderPath}/${mockToken}`,
+        Buffer.from(mockKeyAuth),
+      );
+      expect(mockFileStorage.deleteFile).toHaveBeenCalledWith(folderPath, {
+        recursive: true,
+        force: true,
+      });
+    });
+
+    it('skips directory creation when directory already exists', async () => {
+      const mockCert = faker.lorem.word();
+      const mockToken = faker.lorem.word();
+      const mockKeyAuth = faker.lorem.word();
+
+      (mockFileStorage.exists as Mock).mockResolvedValueOnce(true);
+      (mockClient as any).auto = vi.fn().mockImplementation(async (options: any) => {
+        await options.challengeCreateFn(
+          { identifier: { value: faker.internet.domainName() } },
+          { token: mockToken },
+          mockKeyAuth,
+        );
+        await options.challengeRemoveFn({}, {}, '');
+        return mockCert;
+      });
+
+      const givenCSR = faker.lorem.word();
+      const actualResult = await acme.signCertificateByExternalCA(givenCSR);
+
+      expect(actualResult).toBe(mockCert);
+      expect(mockFileStorage.exists).toHaveBeenCalledWith(folderPath);
+      expect(mockFileStorage.createDirectory).not.toHaveBeenCalled();
+      expect(mockFileStorage.deleteFile).toHaveBeenCalledWith(folderPath, {
+        recursive: true,
+        force: true,
+      });
+    });
+
+    it('throws when client returns no certificate', async () => {
+      (mockClient as any).auto = vi.fn().mockResolvedValue(undefined);
+
+      await expect(acme.signCertificateByExternalCA(faker.lorem.word())).rejects.toThrow(
+        'Failed to get signed certificate',
       );
     });
   });

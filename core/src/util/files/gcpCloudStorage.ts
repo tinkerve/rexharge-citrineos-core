@@ -91,6 +91,21 @@ export class GcpCloudStorage implements ConfigStore {
     }
   }
 
+  async exists(_path: string): Promise<boolean> {
+    throw new Error('exists is not implemented for GCP Cloud Storage');
+  }
+
+  async createDirectory(_path: string, _options?: { recursive?: boolean }): Promise<void> {
+    throw new Error('createDirectory is not implemented for GCP Cloud Storage');
+  }
+
+  async deleteFile(
+    _path: string,
+    _options?: { recursive?: boolean; force?: boolean },
+  ): Promise<void> {
+    throw new Error('deleteFile is not implemented for GCP Cloud Storage');
+  }
+
   /**
    * Load JSON config from GCS and parse as SystemConfig.
    */

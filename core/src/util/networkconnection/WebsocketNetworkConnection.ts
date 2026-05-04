@@ -6,6 +6,7 @@ import type {
   IAuthenticator,
   ICache,
   IConnectionManager,
+  IFileStorage,
   IMessageRouter,
   INetworkConnection,
   IWebsocketConnection,
@@ -20,7 +21,6 @@ import {
   getStationIdFromIdentifier,
   getTenantIdFromIdentifier,
 } from '@citrineos/base';
-import fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
 import { Duplex } from 'stream';
@@ -54,6 +54,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
   private _authenticator: IAuthenticator;
   private _router: IMessageRouter;
   private _connectionManager?: IConnectionManager;
+  private _fileStorage: IFileStorage;
   private _doesChargingStationExistByStationId?: (
     tenantId: number,
     ocppConnectionName: string,
@@ -65,6 +66,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     cache: ICache,
     authenticator: IAuthenticator,
     router: IMessageRouter,
+    fileStorage: IFileStorage,
     logger?: Logger<ILogObj>,
     doesChargingStationExistByStationId?: (
       tenantId: number,
@@ -78,6 +80,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     this._config = config;
     this._doesChargingStationExistByStationId = doesChargingStationExistByStationId;
     this._connectionManager = connectionManager;
+    this._fileStorage = fileStorage;
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
@@ -774,7 +777,9 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     return undefined;
   }
 
-  private _generateServerOptions(config: WebsocketServerConfig): https.ServerOptions {
+  private async _generateServerOptions(
+    config: WebsocketServerConfig,
+  ): Promise<https.ServerOptions> {
     const serverOptions: https.ServerOptions = {
       SNICallback:
         config.securityProfile > 1
@@ -786,7 +791,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
           : undefined,
       ca:
         config.securityProfile > 2 && config.rootCACertificateFilePath
-          ? fs.readFileSync(config.rootCACertificateFilePath)
+          ? (await this._fileStorage.getFile(config.rootCACertificateFilePath))!
           : undefined,
       requestCert: config.securityProfile > 2,
       rejectUnauthorized: config.securityProfile > 2,
@@ -794,7 +799,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     return serverOptions;
   }
 
-  private _createAndStartWebsocketServer(
+  private async _createAndStartWebsocketServer(
     wsConfig: WebsocketServerConfig,
   ): Promise<http.Server | https.Server> {
     for (const [key, value] of Object.entries(wsConfig.tenantPathMapping ?? {})) {
@@ -805,13 +810,13 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       );
     }
 
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       let httpServer: http.Server | https.Server;
       switch (wsConfig.securityProfile) {
         case 3: // mTLS
         case 2: // TLS
           httpServer = https.createServer(
-            this._generateServerOptions(wsConfig),
+            await this._generateServerOptions(wsConfig),
             this._onHttpRequest.bind(this),
           );
           break;

@@ -194,7 +194,6 @@ export class CitrineOSServer {
     // Initialize repository store
     this.initRepositoryStore();
     this.initIdGenerator();
-    this.initCertificateAuthorityService();
     this.initSmartChargingService();
     this.initRealTimeAuthorizer();
   }
@@ -463,6 +462,7 @@ export class CitrineOSServer {
       this._cache,
       this._authenticator,
       this._router,
+      this._fileStorage,
       this._logger,
       this._repositoryStore.locationRepository.doesChargingStationExistByStationId.bind(
         this._repositoryStore.locationRepository,
@@ -498,6 +498,8 @@ export class CitrineOSServer {
   }
 
   protected async initAllModules() {
+    await this.initCertificateAuthorityService();
+
     if (this._config.modules.certificates) {
       await this.initCertificatesModule();
     }
@@ -558,6 +560,7 @@ export class CitrineOSServer {
       this._repositoryStore.installCertificateAttemptRepository,
       this._repositoryStore.deleteCertificateAttemptRepository,
       this._repositoryStore.ocppMessageRepository,
+      this._certificateAuthorityService,
     );
     await this.initHandlersAndAddModule(module);
     this.apis.push(
@@ -805,10 +808,11 @@ export class CitrineOSServer {
     this._idGenerator = new IdGenerator(this._repositoryStore.chargingStationSequenceRepository);
   }
 
-  protected initCertificateAuthorityService() {
-    this._certificateAuthorityService = new CertificateAuthorityService(
+  protected async initCertificateAuthorityService() {
+    this._certificateAuthorityService = await CertificateAuthorityService.create(
       this._config,
       this._cache,
+      this._fileStorage,
       this._logger,
     );
   }

@@ -33,10 +33,6 @@ import {
   RegenerateInstalledCertificateSchema,
   TenantQuerySchema,
   type TenantQueryString,
-  TlsCertificateSchema,
-  TlsCertificatesRequest,
-  UpdateTlsCertificateQuerySchema,
-  type UpdateTlsCertificateQueryString,
   UploadExistingCertificate,
   UploadExistingCertificateSchema,
 } from '@dal/interfaces/index.js';
@@ -84,55 +80,6 @@ export class CertificatesDataApi
   /**
    * Data Endpoint Methods
    */
-  @AsDataEndpoint(
-    OCPP2_Namespace.TlsCertificates,
-    HttpMethod.Put,
-    UpdateTlsCertificateQuerySchema,
-    TlsCertificateSchema,
-  )
-  async putTlsCertificates(
-    request: FastifyRequest<{
-      Body: TlsCertificatesRequest;
-      Querystring: UpdateTlsCertificateQueryString;
-    }>,
-  ): Promise<void> {
-    const serverId = (request.query as UpdateTlsCertificateQueryString).id as string;
-    this._logger.info(`Receive update TLS certificates request for server ${serverId}`);
-
-    const certRequest = request.body as TlsCertificatesRequest;
-    const serverConfig: WebsocketServerConfig | undefined = this._websocketServersConfig.find(
-      (config) => config.id === serverId,
-    );
-
-    if (!serverConfig) {
-      throw new Error(`websocketServer id ${serverId} does not exist.`);
-    } else if (serverConfig && serverConfig.securityProfile < 2) {
-      throw new Error(`websocketServer ${serverId} is not tls or mtls server.`);
-    } else if (serverConfig.securityProfile === 3 && !certRequest.subCAKey) {
-      throw new Error(`WebsocketServer ${serverId} is mtls server but subCAKey is missing.`);
-    }
-
-    const tlsKey: string = (await this._fileStorage.getFile(certRequest.privateKey))!.toString();
-    let tlsCertificateChain = '';
-    for (const fileId of certRequest.certificateChain) {
-      tlsCertificateChain += (await this._fileStorage.getFile(fileId))!.toString();
-    }
-    const rootCA: string | undefined = certRequest.rootCA
-      ? (await this._fileStorage.getFile(certRequest.rootCA))!.toString()
-      : undefined;
-    const subCAKey: string | undefined = certRequest.subCAKey
-      ? (await this._fileStorage.getFile(certRequest.subCAKey))!.toString()
-      : undefined;
-
-    this._module.installCertificateHelperService.updateCertificates(
-      serverConfig,
-      serverId,
-      tlsKey,
-      tlsCertificateChain,
-      subCAKey,
-      rootCA,
-    );
-  }
 
   /**
    * This endpoint is used to create certificate chain, root CA, sub CA and leaf certificate
@@ -180,7 +127,13 @@ export class CertificatesDataApi
     certificateFromReq.isCA = true;
     certificateFromReq.pathLen = certRequest.pathLen ? certRequest.pathLen : 1;
 
+    let leafCertPem: string;
+    let subCACertPem: string; // combined with leafCertPem to form the chain
+    let leafKeyPem: string;
+    let subCAKeyPem: string;
+    let rootCACertPem: string | undefined;
     let responseBody: Certificate[];
+
     if (certRequest.selfSigned) {
       // Generate self-signed root CA certificate
       const [rootCertificatePem, rootPrivateKeyPem] = generateCertificate(
@@ -250,6 +203,11 @@ export class CertificatesDataApi
         certRequest.filePath,
       );
 
+      leafCertPem = leafCertificatePem;
+      subCACertPem = subCertificatePem;
+      leafKeyPem = leafPrivateKeyPem;
+      subCAKeyPem = subPrivateKeyPem;
+      rootCACertPem = rootCertificatePem;
       responseBody = [leafCertificate, subCertificate, certificateFromReq];
     } else {
       // Generate sub CA certificate and private key signed by external CA server
@@ -297,8 +255,22 @@ export class CertificatesDataApi
         certRequest.filePath,
       );
 
+      leafCertPem = leafCertificatePem;
+      subCACertPem = certificatePem;
+      leafKeyPem = leafPrivateKeyPem;
+      subCAKeyPem = privateKeyPem;
       responseBody = [leafCertificate, certificateFromReq];
     }
+
+    // Concatenate certificate chain
+    // store chain and keys for websocket servers
+    await this._module.installCertificateHelperService.saveCertificatesToServerConfigs(
+      this._websocketServersConfig,
+      leafCertPem + subCACertPem,
+      leafKeyPem,
+      subCAKeyPem,
+      rootCACertPem,
+    );
 
     return responseBody;
   }

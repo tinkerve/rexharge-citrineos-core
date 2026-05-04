@@ -29,7 +29,6 @@ import {
   generateCSR,
   WebsocketNetworkConnection,
 } from '@util/index.js';
-import fs from 'fs';
 import jsrsasign from 'jsrsasign';
 import { type ILogObj, Logger } from 'tslog';
 
@@ -37,11 +36,6 @@ export const enum PemType {
   Root = 'Root',
   SubCA = 'SubCA',
   Leaf = 'Leaf',
-}
-
-interface RollBackFile {
-  oldFilePath: string;
-  newFilePath: string;
 }
 
 export class InstallCertificateHelperService {
@@ -331,6 +325,7 @@ export class InstallCertificateHelperService {
 
   /**
    * Store certificate in file storage and db.
+   * @param tenantId tenant id
    * @param certificateEntity certificate to be stored in db
    * @param certPem certificate pem to be stored in file storage
    * @param keyPem private key pem to be stored in file storage
@@ -367,82 +362,47 @@ export class InstallCertificateHelperService {
     return await this.certificateRepository.createOrUpdateCertificate(tenantId, certificateEntity);
   }
 
-  updateCertificates(
-    serverConfig: WebsocketServerConfig,
-    serverId: string,
-    tlsKey: string,
-    tlsCertificateChain: string,
-    subCAKey?: string,
-    rootCA?: string,
-  ) {
-    let rollbackFiles: RollBackFile[] = [];
-
-    if (serverConfig.tlsKeyFilePath && serverConfig.tlsCertificateChainFilePath) {
-      try {
-        rollbackFiles = this.replaceFile(serverConfig.tlsKeyFilePath, tlsKey, rollbackFiles);
-        rollbackFiles = this.replaceFile(
+  /**
+   * Saves generated TLS certificate files to the configured file paths of all TLS-enabled websocket servers.
+   *
+   * @param websocketServersConfig - List of websocket server configurations to save certificates for.
+   * @param certificateChainPem - Certificate chain PEM string (leaf + subCA concatenated).
+   * @param leafKeyPem - Leaf certificate private key PEM string.
+   * @param subCAKeyPem - Sub CA private key PEM string.
+   * @param rootCACertPem - Root CA certificate PEM string. Only present for self-signed certificate chains.
+   */
+  async saveCertificatesToServerConfigs(
+    websocketServersConfig: WebsocketServerConfig[],
+    certificateChainPem: string,
+    leafKeyPem: string,
+    subCAKeyPem: string,
+    rootCACertPem?: string,
+  ): Promise<void> {
+    const tlsServers = websocketServersConfig.filter((c) => c.securityProfile >= 2);
+    for (const serverConfig of tlsServers) {
+      if (serverConfig.tlsCertificateChainFilePath) {
+        await this.fileStorage.saveFile(
           serverConfig.tlsCertificateChainFilePath,
-          tlsCertificateChain,
-          rollbackFiles,
+          Buffer.from(certificateChainPem),
         );
-        if (serverConfig.mtlsCertificateAuthorityKeyFilePath && subCAKey) {
-          rollbackFiles = this.replaceFile(
-            serverConfig.mtlsCertificateAuthorityKeyFilePath,
-            subCAKey,
-            rollbackFiles,
-          );
-        }
-        if (serverConfig.rootCACertificateFilePath && rootCA) {
-          rollbackFiles = this.replaceFile(
-            serverConfig.rootCACertificateFilePath,
-            rootCA,
-            rollbackFiles,
-          );
-        }
-
-        // Update the security context of the server without restarting it
-        this.networkConnection.updateTlsCertificates(serverId, tlsKey, tlsCertificateChain, rootCA);
-
-        // Update the map which stores sub CA certs and keys for websocket server securityProfile 3.
-        // This map is used when signing charging station certificates for use case A02 in OCPP 2.0.1 Part 2.
-        if (serverConfig.securityProfile === 3 && subCAKey) {
-          this.certificateAuthorityService.updateSecurityCertChainKeyMap(
-            serverId,
-            tlsCertificateChain,
-            subCAKey,
-          );
-        }
-
-        this.logger.info(`Updated TLS certificate for server ${serverId} successfully.`);
-      } catch (error) {
-        this.logger.error(`Failed to update certificate for server ${serverId}: `, error);
-
-        this.logger.info('Performing rollback...');
-        for (const { oldFilePath, newFilePath } of rollbackFiles) {
-          fs.renameSync(newFilePath, oldFilePath);
-          this.logger.info(`Rolled back ${newFilePath} to ${oldFilePath}`);
-        }
-
-        throw error;
       }
+      if (serverConfig.tlsKeyFilePath) {
+        await this.fileStorage.saveFile(serverConfig.tlsKeyFilePath, Buffer.from(leafKeyPem));
+      }
+      if (serverConfig.mtlsCertificateAuthorityKeyFilePath) {
+        await this.fileStorage.saveFile(
+          serverConfig.mtlsCertificateAuthorityKeyFilePath,
+          Buffer.from(subCAKeyPem),
+        );
+      }
+      if (rootCACertPem && serverConfig.rootCACertificateFilePath) {
+        await this.fileStorage.saveFile(
+          serverConfig.rootCACertificateFilePath,
+          Buffer.from(rootCACertPem),
+        );
+      }
+      this.logger.info(`Saved TLS certificate files for server ${serverConfig.id}`);
     }
-  }
-
-  private replaceFile(
-    targetFilePath: string,
-    newContent: string,
-    rollbackFiles: RollBackFile[],
-  ): RollBackFile[] {
-    // Back up old file
-    fs.renameSync(targetFilePath, targetFilePath.concat('.backup'));
-    rollbackFiles.push({
-      oldFilePath: targetFilePath,
-      newFilePath: targetFilePath.concat('.backup'),
-    });
-    // Write new content using target path
-    fs.writeFileSync(targetFilePath, newContent);
-    this.logger.debug(`Backed up and overwrote file ${targetFilePath}`);
-    return rollbackFiles;
   }
 
   /**
@@ -459,9 +419,7 @@ export class InstallCertificateHelperService {
       const derHex = cert.hex;
 
       // Compute SHA-256 hash
-      const hash = jsrsasign.KJUR.crypto.Util.sha256(derHex);
-
-      return hash;
+      return jsrsasign.KJUR.crypto.Util.sha256(derHex);
     } catch (error) {
       console.error('Error generating certificate hash:', error);
       throw new Error('Invalid PEM format or unsupported certificate');

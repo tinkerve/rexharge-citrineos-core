@@ -28,24 +28,41 @@ export class LocalStorage implements ConfigStore {
   }
 
   async saveFile(fileName: string, content: Buffer, filePath?: string): Promise<string> {
-    const relativePath = path.join(filePath ? filePath : this.defaultFilePath, fileName);
-    const absoluteFilePath = path.join(process.cwd(), relativePath);
+    const absoluteFilePath = path.isAbsolute(fileName)
+      ? fileName
+      : path.join(process.cwd(), filePath ?? this.defaultFilePath, fileName);
     this._logger.debug(`Saving file to ${absoluteFilePath}`);
     fs.writeFileSync(absoluteFilePath, content, 'utf-8');
-    return filePath ? relativePath : fileName;
+    return filePath ? path.join(filePath, fileName) : fileName;
   }
 
   async getFile(id: string, filePath?: string): Promise<string | undefined> {
-    const absoluteFilePath = path.join(
-      process.cwd(),
-      filePath ? filePath : this.defaultFilePath,
-      id,
-    );
+    const absoluteFilePath = path.isAbsolute(id)
+      ? id
+      : path.join(process.cwd(), filePath ?? this.defaultFilePath, id);
     this._logger.debug(`Getting file from ${absoluteFilePath}`);
     if (!fs.existsSync(absoluteFilePath)) {
       return;
     }
     return fs.readFileSync(absoluteFilePath, 'utf-8');
+  }
+
+  async exists(filePath: string): Promise<boolean> {
+    const absoluteFilePath = path.isAbsolute(filePath)
+      ? filePath
+      : path.join(process.cwd(), this.defaultFilePath, filePath);
+    return fs.existsSync(absoluteFilePath);
+  }
+
+  async createDirectory(dirPath: string, options?: { recursive?: boolean }): Promise<void> {
+    fs.mkdirSync(dirPath, options);
+  }
+
+  async deleteFile(
+    target: string,
+    options?: { recursive?: boolean; force?: boolean },
+  ): Promise<void> {
+    fs.rmSync(target, options);
   }
 
   async fetchConfig(): Promise<SystemConfig | null> {
