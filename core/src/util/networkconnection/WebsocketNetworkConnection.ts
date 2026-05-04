@@ -497,7 +497,11 @@ export class WebsocketNetworkConnection implements INetworkConnection {
           return;
         }
 
-        const registered = await this._router.registerConnection(tenantId, ocppConnectionName, ws.protocol);
+        const registered = await this._router.registerConnection(
+          tenantId,
+          ocppConnectionName,
+          ws.protocol,
+        );
         if (!registered) {
           connLogger.fatal('Failed to register websocket client', identifier);
           await this._cache.remove(identifier, CacheNamespace.Connections).catch((err) => {

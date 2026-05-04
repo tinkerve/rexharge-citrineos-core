@@ -21,6 +21,7 @@ import {
   AsHandler,
   AttributeEnum,
   AuthorizationStatusEnum,
+  CacheNamespace,
   CrudRepository,
   ErrorCode,
   EventGroup,
@@ -338,30 +339,71 @@ export class TransactionsModule extends AbstractModule {
     );
 
     if (response) {
-      // For DirectPayment tokens on Started events, include transactionLimit
-      // based on PaymentCtrlr.AuthorizationAmount from the device model.
+      // For DirectPayment tokens on Started events, include transactionLimit.
+      // C25: First check cache for QR web payment limits (maxCost/maxTime/maxEnergy from QR URL).
+      // Fall back to PaymentCtrlr.AuthorizationAmount from the device model if no QR limits found.
       if (
         transactionEvent.eventType === TransactionEventEnum.Started &&
         response.idTokenInfo?.status === AuthorizationStatusEnum.Accepted &&
         message.protocol === OCPPVersion.OCPP2_1 &&
         transactionEvent.idToken?.type === OCPP2_1.IdTokenEnumType.DirectPayment
       ) {
-        try {
-          const authAmountAttributes: VariableAttribute[] =
-            await this._deviceModelRepository.readAllByQuerystring(tenantId, {
-              tenantId,
-              ocppConnectionName,
-              component_name: 'PaymentCtrlr',
-              variable_name: 'AuthorizationAmount',
-              type: AttributeEnum.Actual,
-            });
+        const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
 
-          if (authAmountAttributes.length > 0 && authAmountAttributes[0].value) {
-            const authorizationAmount = parseFloat(authAmountAttributes[0].value);
-            if (!isNaN(authorizationAmount) && authorizationAmount > 0) {
-              const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
-              // Only set if not already set by another flow (e.g., C17 prepaid)
-              if (!ocpp21Response.transactionLimit) {
+        // C25.FR.03-06: Check cache for QR payment limits set by initiateWebPayment endpoint
+        if (!ocpp21Response.transactionLimit && transactionEvent.evse?.id != null) {
+          try {
+            const cacheKey = `webpayment:${tenantId}:${ocppConnectionName}:${transactionEvent.evse.id}`;
+            const cachedLimitsStr = await this._cache.get<string>(cacheKey, CacheNamespace.Other);
+            if (cachedLimitsStr) {
+              const qrLimits: { maxCost?: number; maxTime?: number; maxEnergy?: number } =
+                JSON.parse(cachedLimitsStr);
+              if (
+                qrLimits.maxCost != null ||
+                qrLimits.maxTime != null ||
+                qrLimits.maxEnergy != null
+              ) {
+                ocpp21Response.transactionLimit = {};
+                if (qrLimits.maxCost != null) {
+                  ocpp21Response.transactionLimit.maxCost = qrLimits.maxCost;
+                }
+                if (qrLimits.maxTime != null) {
+                  ocpp21Response.transactionLimit.maxTime = qrLimits.maxTime;
+                }
+                if (qrLimits.maxEnergy != null) {
+                  ocpp21Response.transactionLimit.maxEnergy = qrLimits.maxEnergy;
+                }
+                // Clear the session from cache — limits are consumed on first transaction start
+                await this._cache.remove(cacheKey, CacheNamespace.Other);
+                this._logger.info(
+                  `Set transactionLimit from QR payment session for station ${ocppConnectionName}, ` +
+                    `evseId=${transactionEvent.evse.id}, transaction ${transactionId}: ` +
+                    `maxCost=${qrLimits.maxCost}, maxTime=${qrLimits.maxTime}, ` +
+                    `maxEnergy=${qrLimits.maxEnergy}`,
+                );
+              }
+            }
+          } catch (error) {
+            this._logger.error('Failed to read QR payment limits from cache', error);
+          }
+        }
+
+        // Fall back to PaymentCtrlr.AuthorizationAmount if no QR limits were found
+        if (!ocpp21Response.transactionLimit) {
+          try {
+            const authAmountAttributes: VariableAttribute[] =
+              await this._deviceModelRepository.readAllByQuerystring(tenantId, {
+                tenantId,
+                ocppConnectionName,
+                component_name: 'PaymentCtrlr',
+                variable_name: 'AuthorizationAmount',
+                type: AttributeEnum.Actual,
+              });
+
+            if (authAmountAttributes.length > 0 && authAmountAttributes[0].value) {
+              const authorizationAmount = parseFloat(authAmountAttributes[0].value);
+              if (!isNaN(authorizationAmount) && authorizationAmount > 0) {
+                // Only set if not already set by another flow (e.g., C17 prepaid)
                 ocpp21Response.transactionLimit = {
                   maxCost: authorizationAmount,
                 };
@@ -371,12 +413,12 @@ export class TransactionsModule extends AbstractModule {
                 );
               }
             }
+          } catch (error) {
+            this._logger.error(
+              'Failed to read PaymentCtrlr.AuthorizationAmount from device model',
+              error,
+            );
           }
-        } catch (error) {
-          this._logger.error(
-            'Failed to read PaymentCtrlr.AuthorizationAmount from device model',
-            error,
-          );
         }
       }
 
