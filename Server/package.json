@@ -39,7 +39,7 @@
     "@citrineos/core": "1.9.2",
     "@fastify/cors": "10.0.1",
     "cross-env": "7.0.3",
-    "sqlite3": "5.1.6",
+    "sqlite3": "5.1.7",
     "ws": "8.17.1"
   },
   "optionalDependencies": {
