@@ -36,7 +36,7 @@ import type {
   IReservationRepository,
   ITariffRepository,
   ITransactionEventRepository,
-} from '@dal/interfaces/repositories.js';
+} from '../../../../dal/interfaces/repositories.js';
 import { TransactionsModule } from '../../src/module/module.js';
 
 vi.mock('@util/security/SignedMeterValuesUtil.js', () => ({
@@ -114,7 +114,6 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
   beforeEach(() => {
     transactionEventRepository = {
       createOrUpdateTransactionByTransactionEventAndStationId: vi.fn(),
-      deactivateReservation: vi.fn().mockResolvedValue(undefined),
     };
 
     const config = makeConfig();
@@ -186,7 +185,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
     });
 
     const payload: OCPP2_1.TransactionEventRequest = {
-      eventType: TransactionEventEnum.Updated,
+      eventType: OCPP2_1.TransactionEventEnumType.Updated,
       timestamp: new Date().toISOString(),
       triggerReason: OCPP2_1.TriggerReasonEnumType.MeterValuePeriodic,
       seqNo: 2,
@@ -220,7 +219,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
     });
 
     const payload: OCPP2_1.TransactionEventRequest = {
-      eventType: TransactionEventEnum.Updated,
+      eventType: OCPP2_1.TransactionEventEnumType.Updated,
       timestamp: new Date().toISOString(),
       triggerReason: OCPP2_1.TriggerReasonEnumType.MeterValuePeriodic,
       seqNo: 2,
@@ -254,7 +253,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
     });
 
     const payload: OCPP2_1.TransactionEventRequest = {
-      eventType: TransactionEventEnum.Started,
+      eventType: OCPP2_1.TransactionEventEnumType.Started,
       timestamp: new Date().toISOString(),
       triggerReason: OCPP2_1.TriggerReasonEnumType.Authorized,
       seqNo: 1,
@@ -263,7 +262,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
       },
       idToken: {
         idToken: 'token-001',
-        type: 'ISO14443',
+        type: OCPP2_1.IdTokenEnumType.ISO14443,
       },
     };
 
@@ -299,7 +298,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
       });
 
       const payload: OCPP2_1.TransactionEventRequest = {
-        eventType: TransactionEventEnum.Updated,
+        eventType: OCPP2_1.TransactionEventEnumType.Updated,
         timestamp: new Date().toISOString(),
         triggerReason: OCPP2_1.TriggerReasonEnumType.LimitSet,
         seqNo: 2,
@@ -344,7 +343,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
       });
 
       const payload: OCPP2_1.TransactionEventRequest = {
-        eventType: TransactionEventEnum.Updated,
+        eventType: OCPP2_1.TransactionEventEnumType.Updated,
         timestamp: new Date().toISOString(),
         triggerReason: OCPP2_1.TriggerReasonEnumType.LimitSet,
         seqNo: 2,
@@ -382,7 +381,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
       });
 
       const payload: OCPP2_1.TransactionEventRequest = {
-        eventType: TransactionEventEnum.Updated,
+        eventType: OCPP2_1.TransactionEventEnumType.Updated,
         timestamp: new Date().toISOString(),
         triggerReason: OCPP2_1.TriggerReasonEnumType.MeterValuePeriodic,
         seqNo: 2,
@@ -418,7 +417,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
       });
 
       const payload: OCPP2_1.TransactionEventRequest = {
-        eventType: TransactionEventEnum.Started,
+        eventType: OCPP2_1.TransactionEventEnumType.Started,
         timestamp: new Date().toISOString(),
         triggerReason: OCPP2_1.TriggerReasonEnumType.Authorized,
         seqNo: 1,
@@ -426,7 +425,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
           transactionId: 'txn-001',
           // No transactionLimit in request — DB limit differs, so E16 will set it in response
         },
-        idToken: { idToken: 'token-001', type: 'ISO14443' },
+        idToken: { idToken: 'token-001', type: OCPP2_1.IdTokenEnumType.ISO14443 },
       };
 
       await (module as any)._handleTransactionEvent(
@@ -459,12 +458,12 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
       });
 
       const payload: OCPP2_1.TransactionEventRequest = {
-        eventType: TransactionEventEnum.Started,
+        eventType: OCPP2_1.TransactionEventEnumType.Started,
         timestamp: new Date().toISOString(),
         triggerReason: OCPP2_1.TriggerReasonEnumType.Authorized,
         seqNo: 1,
         transactionInfo: { transactionId: 'txn-001' },
-        idToken: { idToken: 'token-001', type: 'ISO14443' },
+        idToken: { idToken: 'token-001', type: OCPP2_1.IdTokenEnumType.ISO14443 },
       };
 
       await (module as any)._handleTransactionEvent(
@@ -491,7 +490,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
 
       // No idToken — goes through the else branch
       const payload: OCPP2_1.TransactionEventRequest = {
-        eventType: TransactionEventEnum.Updated,
+        eventType: OCPP2_1.TransactionEventEnumType.Updated,
         timestamp: new Date().toISOString(),
         triggerReason: OCPP2_1.TriggerReasonEnumType.MeterValuePeriodic,
         seqNo: 2,
