@@ -23,7 +23,7 @@ describe('SequelizeChargingStationSequenceRepository', () => {
   let mockConfig: BootstrapConfig;
 
   const tenantId = 1;
-  const stationId = 'CP_TEST_001';
+  const ocppConnectionName = 'CP_TEST_001';
   const sequenceType = ChargingStationSequenceTypeEnum.getChargingProfiles;
 
   beforeEach(() => {
@@ -60,7 +60,11 @@ describe('SequelizeChargingStationSequenceRepository', () => {
       // Mock readOrCreateByQuery to return new sequence
       vi.spyOn(repository as any, 'readOrCreateByQuery').mockResolvedValue([mockSequence, true]);
 
-      const result = await repository.getNextSequenceValue(tenantId, stationId, sequenceType);
+      const result = await repository.getNextSequenceValue(
+        tenantId,
+        ocppConnectionName,
+        sequenceType,
+      );
 
       expect(result).toBe(1);
       expect(mockSequelize.transaction).toHaveBeenCalled();
@@ -78,7 +82,11 @@ describe('SequelizeChargingStationSequenceRepository', () => {
       // Mock readOrCreateByQuery to return existing sequence
       vi.spyOn(repository as any, 'readOrCreateByQuery').mockResolvedValue([mockSequence, false]);
 
-      const result = await repository.getNextSequenceValue(tenantId, stationId, sequenceType);
+      const result = await repository.getNextSequenceValue(
+        tenantId,
+        ocppConnectionName,
+        sequenceType,
+      );
 
       expect(mockIncrement).toHaveBeenCalledWith('value', { transaction: mockTransaction });
       expect(mockReload).toHaveBeenCalledWith({ transaction: mockTransaction });
@@ -95,7 +103,11 @@ describe('SequelizeChargingStationSequenceRepository', () => {
 
       vi.spyOn(repository as any, 'readOrCreateByQuery').mockResolvedValue([mockSequence, false]);
 
-      const result = await repository.getNextSequenceValue(tenantId, stationId, sequenceType);
+      const result = await repository.getNextSequenceValue(
+        tenantId,
+        ocppConnectionName,
+        sequenceType,
+      );
 
       expect(result).toBe(42);
       expect(typeof result).toBe('number');
@@ -110,7 +122,11 @@ describe('SequelizeChargingStationSequenceRepository', () => {
 
       vi.spyOn(repository as any, 'readOrCreateByQuery').mockResolvedValue([mockSequence, false]);
 
-      const result = await repository.getNextSequenceValue(tenantId, stationId, sequenceType);
+      const result = await repository.getNextSequenceValue(
+        tenantId,
+        ocppConnectionName,
+        sequenceType,
+      );
 
       expect(result).toBe(100);
       expect(typeof result).toBe('number');
@@ -125,7 +141,11 @@ describe('SequelizeChargingStationSequenceRepository', () => {
 
       vi.spyOn(repository as any, 'readOrCreateByQuery').mockResolvedValue([mockSequence, false]);
 
-      const result = await repository.getNextSequenceValue(tenantId, stationId, sequenceType);
+      const result = await repository.getNextSequenceValue(
+        tenantId,
+        ocppConnectionName,
+        sequenceType,
+      );
 
       expect(result).toBe(1); // SEQUENCE_START
     });
@@ -139,7 +159,11 @@ describe('SequelizeChargingStationSequenceRepository', () => {
 
       vi.spyOn(repository as any, 'readOrCreateByQuery').mockResolvedValue([mockSequence, false]);
 
-      const result = await repository.getNextSequenceValue(tenantId, stationId, sequenceType);
+      const result = await repository.getNextSequenceValue(
+        tenantId,
+        ocppConnectionName,
+        sequenceType,
+      );
 
       expect(result).toBe(1); // SEQUENCE_START
     });
@@ -153,7 +177,11 @@ describe('SequelizeChargingStationSequenceRepository', () => {
 
       vi.spyOn(repository as any, 'readOrCreateByQuery').mockResolvedValue([mockSequence, false]);
 
-      const result = await repository.getNextSequenceValue(tenantId, stationId, sequenceType);
+      const result = await repository.getNextSequenceValue(
+        tenantId,
+        ocppConnectionName,
+        sequenceType,
+      );
 
       expect(result).toBe(1); // SEQUENCE_START (fallback for NaN)
     });
@@ -167,12 +195,12 @@ describe('SequelizeChargingStationSequenceRepository', () => {
         .spyOn(repository as any, 'readOrCreateByQuery')
         .mockResolvedValue([mockSequence, true]);
 
-      await repository.getNextSequenceValue(tenantId, stationId, sequenceType);
+      await repository.getNextSequenceValue(tenantId, ocppConnectionName, sequenceType);
 
       expect(readOrCreateSpy).toHaveBeenCalledWith(tenantId, {
         where: {
           tenantId: tenantId,
-          stationId: stationId,
+          ocppConnectionName: ocppConnectionName,
           type: sequenceType,
         },
         defaults: {

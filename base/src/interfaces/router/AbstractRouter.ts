@@ -126,7 +126,7 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
         }
 
         await this.sendCall(
-          message.context.stationId,
+          message.context.ocppConnectionName,
           message.context.tenantId,
           message.protocol,
           message.action,
@@ -167,7 +167,7 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
 
           await this.sendCallError(
             message.context.correlationId,
-            message.context.stationId,
+            message.context.ocppConnectionName,
             message.context.tenantId,
             message.protocol,
             message.action,
@@ -177,7 +177,7 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
         } else {
           await this.sendCallResult(
             message.context.correlationId,
-            message.context.stationId,
+            message.context.ocppConnectionName,
             message.context.tenantId,
             message.protocol,
             message.action,
@@ -278,13 +278,13 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
 
   abstract registerConnection(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     protocol: string,
   ): Promise<boolean>;
-  abstract deregisterConnection(tenantId: number, stationId: string): Promise<boolean>;
+  abstract deregisterConnection(tenantId: number, ocppConnectionName: string): Promise<boolean>;
 
   abstract sendCall(
-    stationId: string,
+    ocppConnectionName: string,
     tenantId: number,
     protocol: OCPPVersionType,
     action: CallAction,
@@ -294,7 +294,7 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
   ): Promise<IMessageConfirmation>;
   abstract sendCallResult(
     correlationId: string,
-    stationId: string,
+    ocppConnectionName: string,
     tenantId: number,
     protocol: OCPPVersionType,
     action: CallAction,
@@ -303,7 +303,7 @@ export abstract class AbstractMessageRouter implements IMessageRouter {
   ): Promise<IMessageConfirmation>;
   abstract sendCallError(
     correlationId: string,
-    stationId: string,
+    ocppConnectionName: string,
     tenantId: number,
     protocol: OCPPVersionType,
     action: CallAction,

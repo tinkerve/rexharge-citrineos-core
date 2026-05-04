@@ -40,15 +40,15 @@ export class ChargingSchedule extends Model implements ChargingScheduleDto {
 
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationId_tenantId_id',
+    unique: 'stationName_tenantId_id',
   })
   declare id: number;
 
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_tenantId_id',
+    unique: 'stationName_tenantId_id',
   })
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @Column(DataType.STRING)
   declare chargingRateUnit: ChargingRateUnitEnumType;
@@ -103,7 +103,7 @@ export class ChargingSchedule extends Model implements ChargingScheduleDto {
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
-    unique: 'stationId_tenantId_id',
+    unique: 'stationName_tenantId_id',
   })
   declare tenantId: number;
 

@@ -25,9 +25,9 @@ export class LocalListVersion extends Model {
 
   @Column({
     type: DataType.STRING,
-    unique: 'stationId_tenantId',
+    unique: 'stationName_tenantId',
   })
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @Column(DataType.INTEGER)
   declare versionNumber: number;
@@ -45,7 +45,7 @@ export class LocalListVersion extends Model {
     allowNull: false,
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
-    unique: 'stationId_tenantId',
+    unique: 'stationName_tenantId',
   })
   declare tenantId: number;
 

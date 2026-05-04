@@ -5,13 +5,13 @@
 import { QuerySchema } from '@citrineos/base';
 
 export interface ConnectionDeleteQuerystring {
-  stationId: string;
+  ocppConnectionName: string;
   tenantId: number;
 }
 
 export const ConnectionDeleteQuerySchema = QuerySchema('ConnectionDeleteQuerySchema', [
   {
-    key: 'stationId',
+    key: 'ocppConnectionName',
     type: 'string',
     required: true,
   },

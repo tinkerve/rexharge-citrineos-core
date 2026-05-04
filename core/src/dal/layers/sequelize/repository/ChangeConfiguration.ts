@@ -27,7 +27,7 @@ export class SequelizeChangeConfigurationRepository
       const [savedConfig, created] = await this.readOrCreateByQuery(tenantId, {
         where: {
           tenantId: tenantId,
-          stationId: configuration.stationId,
+          ocppConnectionName: configuration.ocppConnectionName,
           key: configuration.key,
         },
         defaults: {

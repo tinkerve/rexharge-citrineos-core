@@ -33,8 +33,8 @@ export class SequelizeSubscriptionRepository
     return super.create(tenantId, Subscription.build({ ...rawSubscription }));
   }
 
-  readAllByStationId(tenantId: number, stationId: string): Promise<Subscription[]> {
-    return super.readAllByQuery(tenantId, { where: { stationId: stationId } });
+  readAllByStationId(tenantId: number, ocppConnectionName: string): Promise<Subscription[]> {
+    return super.readAllByQuery(tenantId, { where: { ocppConnectionName: ocppConnectionName } });
   }
 
   deleteByKey(tenantId: number, key: string): Promise<Subscription | undefined> {

@@ -22,7 +22,8 @@ import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
-import type { IEVDriverModuleApi } from '../interface.js';
+import type { IEVDriverModuleApi, InitiateWebPaymentRequest } from '../interface.js';
+import { InitiateWebPaymentRequestSchema } from '../interface.js';
 import { EVDriverModule } from '../module.js';
 
 const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
@@ -45,7 +46,9 @@ export class EVDriverOcpp2Api
     logger?: Logger<ILogObj>,
   ) {
     super(evDriverModule, server, version, logger);
-    this._registerInitiateWebPaymentRoute();
+    if (version === OCPPVersion.OCPP2_1) {
+      this._registerInitiateWebPaymentRoute();
+    }
   }
 
   //TODO: 2.1 needs extended code for this request
@@ -108,7 +111,7 @@ export class EVDriverOcpp2Api
               component_name: 'SmartChargingCtrlr',
               variable_name: 'Enabled',
               tenantId,
-              stationId: i,
+              ocppConnectionName: i,
             });
 
           if (smartChargingEnabled.length > 0 && smartChargingEnabled[0].value === 'false') {
@@ -204,7 +207,7 @@ export class EVDriverOcpp2Api
           this._module.reservationRepository.readOnlyOneByQuery(tenantId, {
             where: {
               id: request.reservationId,
-              stationId: identifier,
+              ocppConnectionName: identifier,
               tenantId,
             },
           }),
@@ -469,33 +472,11 @@ export class EVDriverOcpp2Api
       routePath,
       {
         schema: {
-          body: {
-            type: 'object',
-            required: ['identifier', 'evseId', 'totp'],
-            properties: {
-              identifier: { type: 'string' },
-              evseId: { type: 'integer', minimum: 0 },
-              totp: { type: 'string' },
-              maxCost: { type: 'number' },
-              maxTime: { type: 'integer', minimum: 0 },
-              maxEnergy: { type: 'number', minimum: 0 },
-              timeout: { type: 'integer', minimum: 1 },
-              tenantId: { type: 'integer' },
-            },
-          },
+          body: InitiateWebPaymentRequestSchema,
         },
       },
       async (request, reply) => {
-        const body = request.body as {
-          identifier: string;
-          evseId: number;
-          totp: string;
-          maxCost?: number;
-          maxTime?: number;
-          maxEnergy?: number;
-          timeout?: number;
-          tenantId?: number;
-        };
+        const body = request.body as InitiateWebPaymentRequest;
 
         const { identifier, evseId, totp, maxCost, maxTime, maxEnergy } = body;
         const tenantId = body.tenantId ?? DEFAULT_TENANT_ID;
@@ -508,7 +489,7 @@ export class EVDriverOcpp2Api
             tenantId,
             {
               tenantId,
-              stationId: identifier,
+              ocppConnectionName: identifier,
               component_name: 'WebPaymentsCtrlr',
               variable_name: 'SharedSecret',
               type: AttributeEnum.Actual,
@@ -517,7 +498,7 @@ export class EVDriverOcpp2Api
           sharedSecret = sharedSecretAttrs[0]?.value ?? undefined;
         } catch (error) {
           this._logger.error(
-            `C25: Failed to read WebPaymentsCtrlr.SharedSecret for station ${identifier}`,
+            `Failed to read WebPaymentsCtrlr.SharedSecret for station ${identifier}`,
             error,
           );
           return reply
@@ -527,7 +508,7 @@ export class EVDriverOcpp2Api
 
         if (!sharedSecret) {
           this._logger.warn(
-            `C25: WebPaymentsCtrlr.SharedSecret not configured for station ${identifier}`,
+            `WebPaymentsCtrlr.SharedSecret not configured for station ${identifier}`,
           );
           return reply.code(503).send({ error: 'Web payment not configured for this station.' });
         }
@@ -535,7 +516,7 @@ export class EVDriverOcpp2Api
         // Validate TOTP (C25.FR.07: invalid TOTP must not proceed)
         if (!TotpUtil.validate(sharedSecret, totp)) {
           this._logger.warn(
-            `C25: TOTP validation failed for station ${identifier}, evseId=${evseId}. ` +
+            `TOTP validation failed for station ${identifier}, evseId=${evseId}. ` +
               'QR code may be expired or fraudulent.',
           );
           return reply
@@ -545,7 +526,7 @@ export class EVDriverOcpp2Api
 
         // Cache the QR transaction limits keyed by stationId:evseId (C25.FR.03-06, C25.FR.56-58)
         // These are read by the TransactionEvent handler to set transactionLimit in the response.
-        const cacheKey = `webpayment:${identifier}:${evseId}`;
+        const cacheKey = `webpayment:${tenantId}:${identifier}:${evseId}`;
         const limits = { maxCost, maxTime, maxEnergy };
         await this._module.cache.set(
           cacheKey,
@@ -564,13 +545,13 @@ export class EVDriverOcpp2Api
             { evseId, timeout: lockTimeout } as OCPP2_1.NotifyWebPaymentStartedRequest,
           );
           this._logger.info(
-            `C25: NotifyWebPaymentStarted sent to station ${identifier}, ` +
+            `NotifyWebPaymentStarted sent to station ${identifier}, ` +
               `evseId=${evseId}, timeout=${lockTimeout}s`,
           );
         } catch (error) {
           // Non-fatal: the EVSE notification is optional per C25.FR.21 ("MAY send")
           this._logger.warn(
-            `C25: NotifyWebPaymentStarted to station ${identifier} failed (non-fatal): ${error}`,
+            `NotifyWebPaymentStarted to station ${identifier} failed (non-fatal): ${error}`,
           );
         }
 
@@ -584,7 +565,7 @@ export class EVDriverOcpp2Api
       },
     );
 
-    this._logger.info(`C25: Registered web payment initiation endpoint at POST ${routePath}`);
+    this._logger.info(`Registered web payment initiation endpoint at POST ${routePath}`);
   }
 
   /**

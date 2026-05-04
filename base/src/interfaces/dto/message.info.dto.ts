@@ -11,7 +11,7 @@ import { MessageContentSchema } from './types/message.info.js';
 
 export const MessageInfoSchema = BaseSchema.extend({
   databaseId: z.number().int(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   id: z.number().int(),
   priority: MessagePriorityEnumSchema,
   state: MessageStateEnumSchema.nullable().optional(),

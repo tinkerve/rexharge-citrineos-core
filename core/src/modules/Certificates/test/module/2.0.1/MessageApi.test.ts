@@ -24,7 +24,7 @@ vi.mock('../../../../../dal/index.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../../dal/index.js')>();
 
   class MockDeleteCertificateAttempt {
-    stationId?: string;
+    ocppConnectionName?: string;
     hashAlgorithm?: string;
     issuerNameHash?: string;
     issuerKeyHash?: string;
@@ -260,7 +260,7 @@ describe('CertificatesOcpp201Api', () => {
 
       expect(mockDeleteCertificateRepository.readOnlyOneByQuery).toHaveBeenCalledWith(tenantId, {
         where: {
-          stationId: MOCK_CHARGING_STATION_ID,
+          ocppConnectionName: MOCK_CHARGING_STATION_ID,
           hashAlgorithm: mockDeleteCertificateRequest.certificateHashData.hashAlgorithm,
           issuerNameHash: mockDeleteCertificateRequest.certificateHashData.issuerNameHash,
           issuerKeyHash: mockDeleteCertificateRequest.certificateHashData.issuerKeyHash,
@@ -397,7 +397,7 @@ describe('CertificatesOcpp201Api', () => {
       const savedAttempt = createdDeleteCertificateAttemptInstances[0];
 
       expect(savedAttempt).toBeDefined();
-      expect(savedAttempt.stationId).toBe(MOCK_CHARGING_STATION_ID);
+      expect(savedAttempt.ocppConnectionName).toBe(MOCK_CHARGING_STATION_ID);
       expect(savedAttempt.hashAlgorithm).toBe(
         mockDeleteCertificateRequest.certificateHashData.hashAlgorithm,
       );

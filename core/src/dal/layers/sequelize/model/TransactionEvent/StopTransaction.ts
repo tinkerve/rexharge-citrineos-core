@@ -24,7 +24,7 @@ export class StopTransaction extends Model implements StopTransactionDto {
   static readonly MODEL_NAME: string = OCPP1_6_Namespace.StopTransaction;
 
   @Column(DataType.STRING)
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @ForeignKey(() => Transaction)
   @Column({

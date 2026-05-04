@@ -17,20 +17,25 @@ export class SequelizeChargingStationSecurityInfoRepository
     super(config, ChargingStationSecurityInfo.MODEL_NAME, logger, sequelizeInstance);
   }
 
-  async readChargingStationPublicKeyFileId(tenantId: number, stationId: string): Promise<string> {
-    const existingInfo = await this.readOnlyOneByQuery(tenantId, { where: { stationId } });
+  async readChargingStationPublicKeyFileId(
+    tenantId: number,
+    ocppConnectionName: string,
+  ): Promise<string> {
+    const existingInfo = await this.readOnlyOneByQuery(tenantId, {
+      where: { ocppConnectionName: ocppConnectionName },
+    });
     return existingInfo ? existingInfo.publicKeyFileId : '';
   }
 
   async readOrCreateChargingStationInfo(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     publicKeyFileId: string,
   ): Promise<void> {
     await this.readOrCreateByQuery(tenantId, {
       where: {
         tenantId,
-        stationId,
+        ocppConnectionName: ocppConnectionName,
       },
       defaults: {
         publicKeyFileId,

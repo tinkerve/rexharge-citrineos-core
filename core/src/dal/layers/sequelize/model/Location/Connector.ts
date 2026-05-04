@@ -46,17 +46,17 @@ export class Connector extends Model implements ConnectorDto {
 
   @ForeignKey(() => ChargingStation)
   @Column({
-    unique: 'stationPkId_connectorId',
+    unique: 'stationId_connectorId',
     allowNull: true,
     type: DataType.INTEGER,
   })
-  declare stationPkId?: number;
+  declare stationId?: number;
 
   @Column({
     allowNull: false,
     type: DataType.STRING,
   })
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @ForeignKey(() => Evse)
   @Column({
@@ -67,7 +67,7 @@ export class Connector extends Model implements ConnectorDto {
   declare evseId: number;
 
   @Column({
-    unique: 'stationPkId_connectorId',
+    unique: 'stationId_connectorId',
     allowNull: false,
     type: DataType.INTEGER,
   })
@@ -131,7 +131,7 @@ export class Connector extends Model implements ConnectorDto {
   @Column(DataType.STRING)
   declare termsAndConditionsUrl?: string | null;
 
-  @BelongsTo(() => ChargingStation, 'stationPkId')
+  @BelongsTo(() => ChargingStation, 'stationId')
   declare chargingStation?: ChargingStationDto;
 
   @BelongsTo(() => Evse, 'evseId')
@@ -180,14 +180,14 @@ export class Connector extends Model implements ConnectorDto {
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationPkId(instance: Connector): Promise<void> {
-    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+  static async resolveStationId(instance: Connector): Promise<void> {
+    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
       const station = await ChargingStation.findOne({
-        where: { id: instance.stationId, tenantId: instance.tenantId },
-        attributes: ['pkId'],
+        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
+        attributes: ['id'],
       });
       if (station) {
-        instance.stationPkId = station.pkId;
+        instance.stationId = station.id;
       }
     }
   }

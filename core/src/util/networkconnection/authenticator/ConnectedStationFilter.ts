@@ -26,10 +26,10 @@ export class ConnectedStationFilter extends AuthenticatorFilter {
 
   protected async filter(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     _request: IncomingMessage,
   ): Promise<void> {
-    const identifier = createIdentifier(tenantId, stationId);
+    const identifier = createIdentifier(tenantId, ocppConnectionName);
     const isAlreadyConnected = notNull(
       await this._cache.get(identifier, CacheNamespace.Connections),
     );

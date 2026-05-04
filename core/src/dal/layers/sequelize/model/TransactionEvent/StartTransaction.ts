@@ -22,7 +22,7 @@ export class StartTransaction extends Model implements StartTransactionDto {
   static readonly MODEL_NAME: string = OCPP1_6_Namespace.StartTransaction;
 
   @Column(DataType.STRING)
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @Column(DataType.INTEGER)
   declare meterStart: number; // in Wh

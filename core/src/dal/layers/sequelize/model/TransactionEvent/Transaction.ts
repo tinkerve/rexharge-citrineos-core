@@ -61,17 +61,17 @@ export class Transaction extends Model implements TransactionDto {
   @ForeignKey(() => ChargingStation)
   @Column({
     type: DataType.INTEGER,
-    unique: 'stationPkId_transactionId',
+    unique: 'stationId_transactionId',
     allowNull: true,
   })
-  declare stationPkId?: number;
+  declare stationId?: number;
 
   @Column({
     type: DataType.STRING,
   })
-  stationId!: string;
+  ocppConnectionName!: string;
 
-  @BelongsTo(() => ChargingStation, 'stationPkId')
+  @BelongsTo(() => ChargingStation, 'stationId')
   station!: ChargingStationDto;
 
   @ForeignKey(() => Evse)
@@ -104,7 +104,7 @@ export class Transaction extends Model implements TransactionDto {
 
   @Column({
     type: DataType.STRING,
-    unique: 'stationPkId_transactionId',
+    unique: 'stationId_transactionId',
   })
   declare transactionId: string;
 
@@ -185,14 +185,14 @@ export class Transaction extends Model implements TransactionDto {
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationPkId(instance: Transaction): Promise<void> {
-    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+  static async resolveStationId(instance: Transaction): Promise<void> {
+    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
       const station = await ChargingStation.findOne({
-        where: { id: instance.stationId, tenantId: instance.tenantId },
-        attributes: ['pkId'],
+        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
+        attributes: ['id'],
       });
       if (station) {
-        instance.stationPkId = station.pkId;
+        instance.stationId = station.id;
       }
     }
   }
