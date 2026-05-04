@@ -364,7 +364,7 @@ export class TransactionsModule extends AbstractModule {
               maxSoC: dbTransactionLimit.maxSoC,
             };
             this._logger.info(
-              `Including transactionLimit in response for station ${stationId}, ` +
+              `Including transactionLimit in response for station ${ocppConnectionName}, ` +
                 `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
             );
           }
@@ -465,10 +465,10 @@ export class TransactionsModule extends AbstractModule {
               tenantId,
               { transactionLimit: ocpp21Response.transactionLimit } as Partial<Transaction>,
               transactionId,
-              stationId,
+              ocppConnectionName,
             );
             this._logger.debug(
-              `Persisted transactionLimit to DB for station ${stationId}, ` +
+              `Persisted transactionLimit to DB for station ${ocppConnectionName}, ` +
                 `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
             );
           } catch (error) {
@@ -525,7 +525,7 @@ export class TransactionsModule extends AbstractModule {
               maxSoC: dbTransactionLimit.maxSoC,
             };
             this._logger.info(
-              `Including transactionLimit in response for station ${stationId}, ` +
+              `Including transactionLimit in response for station ${ocppConnectionName}, ` +
                 `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
             );
           }
@@ -682,10 +682,10 @@ export class TransactionsModule extends AbstractModule {
               tenantId,
               { transactionLimit: ocpp21Response.transactionLimit } as Partial<Transaction>,
               transactionId,
-              stationId,
+              ocppConnectionName,
             );
             this._logger.debug(
-              `Persisted transactionLimit to DB for station ${stationId}, ` +
+              `Persisted transactionLimit to DB for station ${ocppConnectionName}, ` +
                 `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
             );
           } catch (error) {
@@ -903,7 +903,7 @@ export class TransactionsModule extends AbstractModule {
         const existingTransaction =
           await this._transactionEventRepository.readTransactionByStationIdAndTransactionId(
             tenantId,
-            stationId,
+            ocppConnectionName,
             request.transactionId,
           );
         const existingCustomData = existingTransaction?.customData ?? {};
