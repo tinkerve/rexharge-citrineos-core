@@ -18,7 +18,7 @@ import { BaseSchema } from './types/base.dto.js';
 export const TransactionSchema = BaseSchema.extend({
   id: z.number().int().optional(),
   transactionId: z.string(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   isActive: z.boolean(),
   locationId: z.number().int().optional(),
   location: LocationSchema.optional(),

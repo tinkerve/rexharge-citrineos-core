@@ -7,7 +7,7 @@ import { BaseSchema } from './types/base.dto.js';
 
 export const SubscriptionSchema = BaseSchema.extend({
   id: z.number().int().optional(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   onConnect: z.boolean().default(false),
   onClose: z.boolean().default(false),
   onMessage: z.boolean().default(false),

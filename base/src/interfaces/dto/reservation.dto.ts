@@ -9,7 +9,7 @@ import { BaseSchema } from './types/base.dto.js';
 export const ReservationSchema = BaseSchema.extend({
   databaseId: z.number().int(),
   id: z.number().int(),
-  stationId: z.string(),
+  ocppConnectionName: z.string(),
   expiryDateTime: z.iso.datetime(),
   connectorType: z.string().nullable().optional(),
   reserveStatus: z.string().nullable().optional(),

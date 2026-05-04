@@ -30,15 +30,15 @@ export class InstallCertificateAttempt extends Model {
 
   @ForeignKey(() => ChargingStation)
   @Column(DataType.INTEGER)
-  declare stationPkId?: number;
+  declare stationId?: number;
 
   @Column({
     type: DataType.STRING(36),
     allowNull: false,
   })
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
-  @BelongsTo(() => ChargingStation, 'stationPkId')
+  @BelongsTo(() => ChargingStation, 'stationId')
   declare station?: ChargingStationDto;
 
   @Column({
@@ -76,14 +76,14 @@ export class InstallCertificateAttempt extends Model {
   declare tenant?: TenantDto;
 
   @BeforeCreate
-  static async resolveStationPkId(instance: InstallCertificateAttempt): Promise<void> {
-    if (instance.stationPkId == null && instance.stationId && instance.tenantId != null) {
+  static async resolveStationId(instance: InstallCertificateAttempt): Promise<void> {
+    if (instance.stationId == null && instance.ocppConnectionName && instance.tenantId != null) {
       const station = await ChargingStation.findOne({
-        where: { id: instance.stationId, tenantId: instance.tenantId },
-        attributes: ['pkId'],
+        where: { ocppConnectionName: instance.ocppConnectionName, tenantId: instance.tenantId },
+        attributes: ['id'],
       });
       if (station) {
-        instance.stationPkId = station.pkId;
+        instance.stationId = station.id;
       }
     }
   }

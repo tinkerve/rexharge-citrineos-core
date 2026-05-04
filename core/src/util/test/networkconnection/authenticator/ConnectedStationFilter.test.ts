@@ -25,22 +25,32 @@ describe('ConnectedStationFilter', () => {
   });
 
   it('should not reject when station is not connected', async () => {
-    const stationId = faker.string.uuid().toString();
-    const identifier = createIdentifier(DEFAULT_TENANT_ID, stationId);
+    const ocppConnectionName = faker.string.uuid().toString();
+    const identifier = createIdentifier(DEFAULT_TENANT_ID, ocppConnectionName);
     givenStationIsNotConnected();
 
-    await filter.authenticate(DEFAULT_TENANT_ID, stationId, aRequest(), anAuthenticationOptions());
+    await filter.authenticate(
+      DEFAULT_TENANT_ID,
+      ocppConnectionName,
+      aRequest(),
+      anAuthenticationOptions(),
+    );
 
     expect(cache.get).toHaveBeenCalledWith(identifier, CacheNamespace.Connections);
   });
 
   it('should reject when station is already connected', async () => {
-    const stationId = faker.string.uuid().toString();
-    const identifier = createIdentifier(DEFAULT_TENANT_ID, stationId);
+    const ocppConnectionName = faker.string.uuid().toString();
+    const identifier = createIdentifier(DEFAULT_TENANT_ID, ocppConnectionName);
     givenStationIsConnected();
 
     await expect(
-      filter.authenticate(DEFAULT_TENANT_ID, stationId, aRequest(), anAuthenticationOptions()),
+      filter.authenticate(
+        DEFAULT_TENANT_ID,
+        ocppConnectionName,
+        aRequest(),
+        anAuthenticationOptions(),
+      ),
     ).rejects.toThrow(`New connection attempted for already connected identifier ${identifier}`);
 
     expect(cache.get).toHaveBeenCalledWith(identifier, CacheNamespace.Connections);

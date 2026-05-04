@@ -20,11 +20,11 @@ describe('LocalAuthListService', () => {
   let localAuthListService: LocalAuthListService;
 
   const tenantId = DEFAULT_TENANT_ID;
-  const stationId = 'station-1';
+  const ocppConnectionName = 'station-1';
   const correlationId = 'test-correlation-id';
   const initialVersionNumber = 2;
   const baseMockLocalListVersion = vi.mocked<LocalListVersion>({
-    stationId: stationId,
+    ocppConnectionName: ocppConnectionName,
     versionNumber: initialVersionNumber,
   } as unknown as LocalListVersion);
   const baseMockVariableCharacteristics = vi.mocked<VariableCharacteristics>({
@@ -66,7 +66,7 @@ describe('LocalAuthListService', () => {
 
     const mockSendLocalList = vi.mocked<SendLocalList>({
       correlationId: expectedCorrelationId,
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       updateType: expectedUpdateType,
       versionNumber: newVersionNumber,
       localAuthorizationList: [],
@@ -88,7 +88,7 @@ describe('LocalAuthListService', () => {
     const result =
       await localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest,
       );
@@ -96,7 +96,7 @@ describe('LocalAuthListService', () => {
     expect(result).toEqual(mockSendLocalList);
     expect(mockLocalAuthListRepository.createSendLocalListFromRequestData).toHaveBeenCalledWith(
       DEFAULT_TENANT_ID,
-      stationId,
+      ocppConnectionName,
       expectedCorrelationId,
       expectedUpdateType,
       newVersionNumber,
@@ -113,7 +113,7 @@ describe('LocalAuthListService', () => {
     await expect(
       localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest_0,
       ),
@@ -127,7 +127,7 @@ describe('LocalAuthListService', () => {
     await expect(
       localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest_negative,
       ),
@@ -145,12 +145,12 @@ describe('LocalAuthListService', () => {
     await expect(
       localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest,
       ),
     ).rejects.toThrow(
-      `Current LocalListVersion for ${stationId} is 2, cannot send LocalListVersion 1 (version number must be higher)`,
+      `Current LocalListVersion for ${ocppConnectionName} is 2, cannot send LocalListVersion 1 (version number must be higher)`,
     );
   });
 
@@ -175,7 +175,7 @@ describe('LocalAuthListService', () => {
 
     const mockSendLocalList = vi.mocked<SendLocalList>({
       correlationId: correlationId,
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       updateType: expectedUpdateType,
       versionNumber: newVersionNumber,
       localAuthorizationList: [],
@@ -188,7 +188,7 @@ describe('LocalAuthListService', () => {
     await expect(
       localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest,
       ),
@@ -216,7 +216,7 @@ describe('LocalAuthListService', () => {
 
     const mockSendLocalList = vi.mocked<SendLocalList>({
       correlationId: correlationId,
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       updateType: expectedUpdateType,
       versionNumber: newVersionNumber,
       localAuthorizationList: [
@@ -246,7 +246,7 @@ describe('LocalAuthListService', () => {
     await expect(
       localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest,
       ),
@@ -266,7 +266,7 @@ describe('LocalAuthListService', () => {
 
     const mockSendLocalList = vi.mocked<SendLocalList>({
       correlationId: correlationId,
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       updateType: expectedUpdateType,
       versionNumber: newVersionNumber,
     } as unknown as SendLocalList);
@@ -281,7 +281,7 @@ describe('LocalAuthListService', () => {
     await expect(
       localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest,
       ),
@@ -299,7 +299,7 @@ describe('LocalAuthListService', () => {
 
     const mockSendLocalList = vi.mocked<SendLocalList>({
       correlationId: correlationId,
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       updateType: expectedUpdateType,
       versionNumber: newVersionNumber,
     } as unknown as SendLocalList);
@@ -314,7 +314,7 @@ describe('LocalAuthListService', () => {
     await expect(
       localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest,
       ),
@@ -342,7 +342,7 @@ describe('LocalAuthListService', () => {
 
     const mockSendLocalList = vi.mocked<SendLocalList>({
       correlationId: correlationId,
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       updateType: expectedUpdateType,
       versionNumber: newVersionNumber,
       localAuthorizationList: [
@@ -361,7 +361,7 @@ describe('LocalAuthListService', () => {
       maxLimit: 10,
     });
     const mockVariableAttribute = vi.mocked<VariableAttribute>({
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       dataType: OCPP2_0_1.DataEnumType.integer,
       value: '1', // Max 1 item per message
     } as unknown as VariableAttribute);
@@ -377,7 +377,7 @@ describe('LocalAuthListService', () => {
     await expect(
       localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest,
       ),
@@ -407,7 +407,7 @@ describe('LocalAuthListService', () => {
 
     const mockSendLocalList = vi.mocked<SendLocalList>({
       correlationId: correlationId,
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       updateType: expectedUpdateType,
       versionNumber: newVersionNumber,
       localAuthorizationList: [
@@ -426,7 +426,7 @@ describe('LocalAuthListService', () => {
       maxLimit: 10,
     });
     const mockVariableAttribute = vi.mocked<VariableAttribute>({
-      stationId: stationId,
+      ocppConnectionName: ocppConnectionName,
       dataType: OCPP2_0_1.DataEnumType.integer,
       value: '3', // Max 1 item per message
     } as unknown as VariableAttribute);
@@ -442,7 +442,7 @@ describe('LocalAuthListService', () => {
     const result =
       await localAuthListService.persistSendLocalListForStationIdAndCorrelationIdAndSendLocalListRequest(
         tenantId,
-        stationId,
+        ocppConnectionName,
         correlationId,
         sendLocalListRequest,
       );

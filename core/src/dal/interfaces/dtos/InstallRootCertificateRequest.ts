@@ -6,7 +6,7 @@ import { OCPP2_0_1 } from '@citrineos/base';
 
 export class InstallRootCertificateRequest {
   // Fields for InstallCertificate message request
-  stationId: string;
+  ocppConnectionName: string;
   certificateType: OCPP2_0_1.InstallCertificateUseEnumType;
   tenantId: number;
   callbackUrl?: string;
@@ -15,13 +15,13 @@ export class InstallRootCertificateRequest {
   fileId?: string;
 
   constructor(
-    stationId: string,
+    ocppConnectionName: string,
     tenantId: number,
     certificateType: OCPP2_0_1.InstallCertificateUseEnumType,
     callbackUrl?: string,
     fileId?: string,
   ) {
-    this.stationId = stationId;
+    this.ocppConnectionName = ocppConnectionName;
     this.tenantId = tenantId;
     this.certificateType = certificateType;
     this.callbackUrl = callbackUrl;

@@ -6,7 +6,7 @@ import { QuerySchema } from '@citrineos/base';
 
 export const CreateSubscriptionSchema = QuerySchema('CreateSubscriptionSchema', [
   {
-    key: 'stationId',
+    key: 'ocppConnectionName',
     type: 'string',
     required: true,
   },

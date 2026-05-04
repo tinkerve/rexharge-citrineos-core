@@ -104,7 +104,7 @@ export class SequelizeBootRepository extends SequelizeRepository<Boot> implement
   private async manageSetVariables(
     tenantId: number,
     setVariableIds: number[],
-    stationId: string,
+    ocppConnectionName: string,
     bootConfigId: string,
   ): Promise<VariableAttribute[]> {
     const managedSetVariables: VariableAttribute[] = [];
@@ -114,7 +114,7 @@ export class SequelizeBootRepository extends SequelizeRepository<Boot> implement
       { bootConfigId: null },
       {
         where: {
-          stationId,
+          ocppConnectionName: ocppConnectionName,
         },
       },
     );

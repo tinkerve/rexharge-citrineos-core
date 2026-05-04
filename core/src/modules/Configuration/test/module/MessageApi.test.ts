@@ -54,7 +54,7 @@ describe('ConfigurationOcpp2Api', () => {
   });
 
   describe('setNetworkProfile', () => {
-    it('should pass individual stationId string to SetNetworkProfile.build for a single identifier', async () => {
+    it('should pass individual ocppConnectionName string to SetNetworkProfile.build for a single identifier', async () => {
       const extraQueries = { websocketServerConfigId: MOCK_WEBSOCKET_SERVER_CONFIG_ID };
 
       await ConfigurationOcpp2Api.prototype.setNetworkProfile.call(
@@ -69,7 +69,7 @@ describe('ConfigurationOcpp2Api', () => {
       expect(SetNetworkProfile.build).toHaveBeenCalledTimes(1);
       expect(SetNetworkProfile.build).toHaveBeenCalledWith(
         expect.objectContaining({
-          stationId: MOCK_STATION_ID_1,
+          ocppConnectionName: MOCK_STATION_ID_1,
           tenantId: MOCK_TENANT_ID,
           correlationId: MOCK_CORRELATION_ID,
           configurationSlot: 1,
@@ -93,10 +93,10 @@ describe('ConfigurationOcpp2Api', () => {
 
       expect(SetNetworkProfile.build).toHaveBeenCalledTimes(2);
       expect(SetNetworkProfile.build).toHaveBeenCalledWith(
-        expect.objectContaining({ stationId: MOCK_STATION_ID_1 }),
+        expect.objectContaining({ ocppConnectionName: MOCK_STATION_ID_1 }),
       );
       expect(SetNetworkProfile.build).toHaveBeenCalledWith(
-        expect.objectContaining({ stationId: MOCK_STATION_ID_2 }),
+        expect.objectContaining({ ocppConnectionName: MOCK_STATION_ID_2 }),
       );
       expect(mockSave).toHaveBeenCalledTimes(2);
     });

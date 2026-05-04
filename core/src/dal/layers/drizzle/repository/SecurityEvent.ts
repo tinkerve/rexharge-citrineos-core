@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ISecurityEventRepository } from '@/dal/index.js';
 import type { BootstrapConfig, SecurityEventDto } from '@citrineos/base';
 import { OCPP2_0_1 } from '@citrineos/base';
 import { and, between, eq, gte, lte } from 'drizzle-orm';
@@ -15,7 +16,6 @@ import {
 } from '../schema/SecurityEvent.js';
 import { type Explicit } from '../types.js';
 import { DrizzleRepository } from './Base.js';
-import type { ISecurityEventRepository } from '@/dal/index.js';
 
 // ─── Mapper ──────────────────────────────────────────────────────────────────
 // Maps a Drizzle entity (DB row, validated by SecurityEventEntitySchema) to the
@@ -28,7 +28,7 @@ import type { ISecurityEventRepository } from '@/dal/index.js';
 export function toSecurityEventDto(entity: SecurityEventEntity): SecurityEventDto {
   const dto: Explicit<SecurityEventDto> = {
     id: entity.id,
-    stationId: entity.stationId,
+    ocppConnectionName: entity.ocppConnectionName,
     type: entity.type ?? '',
     // Drizzle returns timestamp as JS Date (mode: 'date'); DTO contract is ISO string.
     timestamp: entity.timestamp.toISOString(),
@@ -67,12 +67,12 @@ export class DrizzleSecurityEventRepository
   async createByStationId(
     tenantId: number,
     value: OCPP2_0_1.SecurityEventNotificationRequest,
-    stationId: string,
+    ocppConnectionName: string,
   ): Promise<SecurityEventDto> {
     // Delegates to base.insert() which handles tenantId injection and event emission.
     // OCPP delivers timestamp as ISO string; Postgres expects a Date for timestamptz.
     return this.insert(tenantId, {
-      stationId,
+      ocppConnectionName,
       type: value.type,
       timestamp: new Date(value.timestamp),
       techInfo: value.techInfo ?? null,
@@ -81,13 +81,13 @@ export class DrizzleSecurityEventRepository
 
   async readByStationIdAndTimestamps(
     tenantId: number,
-    stationId: string,
+    ocppConnectionName: string,
     from?: Date,
     to?: Date,
   ): Promise<SecurityEventDto[]> {
     const table = this.getTable(tenantId);
 
-    const conditions = [eq(table.stationId, stationId)];
+    const conditions = [eq(table.ocppConnectionName, ocppConnectionName)];
 
     if (!this.useTenantSchema) {
       conditions.push(eq(table.tenantId, tenantId));

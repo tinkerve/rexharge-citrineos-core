@@ -22,7 +22,7 @@ export class Subscription extends Model implements SubscriptionDto {
 
   @Index
   @Column(DataType.STRING)
-  declare stationId: string;
+  declare ocppConnectionName: string;
 
   @Column({
     type: DataType.BOOLEAN,
