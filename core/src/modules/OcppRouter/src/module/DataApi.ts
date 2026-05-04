@@ -51,12 +51,11 @@ import { Subscription } from '@dal/layers/sequelize/model/Subscription/index.js'
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import type { IAdminApi } from './interface.js';
 
 /**
  * Admin API for the OcppRouter.
  */
-export class AdminApi extends AbstractModuleApi<IMessageRouter> implements IAdminApi {
+export class AdminApi extends AbstractModuleApi<IMessageRouter> {
   private _networkConnection: INetworkConnection;
   private _subscriptionRepository: ISubscriptionRepository;
   private _serverNetworkProfileRepository: IServerNetworkProfileRepository;
