@@ -266,6 +266,18 @@ export interface ILocationRepository extends CrudRepository<Location> {
     chargingStation: ChargingStation,
   ): Promise<ChargingStation>;
   createOrUpdateConnector(tenantId: number, connector: Connector): Promise<Connector | undefined>;
+  /**
+   * Commissions a default evse + evseTypeConnector record for an OCPP 1.6 connector.
+   * Used in ad-hoc/`allowUnknownChargingStations` flows where the charge point arrives
+   * uncommissioned (OCPP 1.6 has no native EVSE concept). Conservative default:
+   * one connector → one evse. Returns the FK ids the caller should stamp on the
+   * Connector record being upserted.
+   */
+  commissionEvseForOcpp16Connector(
+    tenantId: number,
+    ocppConnectionName: string,
+    connectorId: number,
+  ): Promise<{ evseId: number; evseTypeConnectorId: number }>;
   updateAllConnectorsByQuery(
     tenantId: number,
     value: Partial<Connector>,

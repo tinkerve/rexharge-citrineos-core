@@ -9,6 +9,7 @@ import { Sequelize } from 'sequelize-typescript';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { type ILocationRepository } from '../../../interfaces/repositories.js';
+import { EvseType } from '../model/DeviceModel/EvseType.js';
 import { ChargingStation } from '../model/Location/ChargingStation.js';
 import { Connector } from '../model/Location/Connector.js';
 import { Evse } from '../model/Location/Evse.js';
@@ -341,6 +342,32 @@ export class SequelizeLocationRepository
     query: object,
   ): Promise<Connector[]> {
     return await this.connector.updateAllByQuery(tenantId, value, query);
+  }
+
+  async commissionEvseForOcpp16Connector(
+    tenantId: number,
+    ocppConnectionName: string,
+    connectorId: number,
+  ): Promise<{ evseId: number; evseTypeConnectorId: number }> {
+    return await this.s.transaction(async (sequelizeTransaction) => {
+      // OCPP 1.6 has no native EVSE concept. Conservative default: each connector
+      // maps to its own (Evse, EvseType) pair using the 1.6 connectorId as the
+      // OCPP 2.0.1 evse id. EvseType.connectorId stays null because the EVSE
+      // is implicit (single-connector hardware abstraction). The Evse's
+      // stationId FK is auto-resolved from ocppConnectionName by the
+      // BeforeCreate hook on the Evse model.
+      const [evseType] = await EvseType.findOrCreate({
+        where: { tenantId, id: connectorId, connectorId: null },
+        defaults: { tenantId, id: connectorId, connectorId: null },
+        transaction: sequelizeTransaction,
+      });
+      const [evse] = await Evse.findOrCreate({
+        where: { tenantId, ocppConnectionName, evseTypeId: connectorId },
+        defaults: { tenantId, ocppConnectionName, evseTypeId: connectorId },
+        transaction: sequelizeTransaction,
+      });
+      return { evseId: evse.id, evseTypeConnectorId: evseType.databaseId };
+    });
   }
 
   async updateChargingStationTimestamp(
