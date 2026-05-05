@@ -293,6 +293,7 @@ export class TransactionsModule extends AbstractModule {
     this._logger.debug('Transaction event received:', message, props);
     const tenantId: number = message.context.tenantId;
     const ocppConnectionName: string = message.context.ocppConnectionName;
+    const isOcpp21 = message.protocol === OCPPVersion.OCPP2_1;
 
     const transactionEvent = message.payload;
     const transactionId = transactionEvent.transactionInfo.transactionId;
@@ -351,42 +352,19 @@ export class TransactionsModule extends AbstractModule {
 
     if (response) {
       // Include transactionLimit in TransactionEventResponse when setting/changing a limit.
-      if (message.protocol === OCPPVersion.OCPP2_1 && transaction) {
+      if (isOcpp21 && transaction) {
         const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
         const stationTransactionLimit = (
           message.payload as unknown as OCPP2_1.TransactionEventRequest
         ).transactionInfo?.transactionLimit;
-        const dbTransactionLimit = transaction.transactionLimit;
 
-        if (dbTransactionLimit) {
-          // If station didn't report a limit, or reported a different one, include it in response.
-          const limitsMatch =
-            stationTransactionLimit &&
-            stationTransactionLimit.maxCost === dbTransactionLimit.maxCost &&
-            stationTransactionLimit.maxEnergy === dbTransactionLimit.maxEnergy &&
-            stationTransactionLimit.maxTime === dbTransactionLimit.maxTime &&
-            stationTransactionLimit.maxSoC === dbTransactionLimit.maxSoC;
-
-          if (!limitsMatch) {
-            ocpp21Response.transactionLimit = {};
-            if (dbTransactionLimit.maxCost !== undefined) {
-              ocpp21Response.transactionLimit.maxCost = dbTransactionLimit.maxCost;
-            }
-            if (dbTransactionLimit.maxEnergy !== undefined) {
-              ocpp21Response.transactionLimit.maxEnergy = dbTransactionLimit.maxEnergy;
-            }
-            if (dbTransactionLimit.maxTime !== undefined) {
-              ocpp21Response.transactionLimit.maxTime = dbTransactionLimit.maxTime;
-            }
-            if (dbTransactionLimit.maxSoC !== undefined) {
-              ocpp21Response.transactionLimit.maxSoC = dbTransactionLimit.maxSoC;
-            }
-            this._logger.info(
-              `Including transactionLimit in response for station ${ocppConnectionName}, ` +
-                `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
-            );
-          }
-        }
+        this.syncTransactionLimitToResponse(
+          ocpp21Response,
+          transaction,
+          stationTransactionLimit,
+          ocppConnectionName,
+          transactionId,
+        );
       }
 
       // For DirectPayment tokens on Started events, include transactionLimit.
@@ -395,7 +373,7 @@ export class TransactionsModule extends AbstractModule {
       if (
         transactionEvent.eventType === TransactionEventEnum.Started &&
         response.idTokenInfo?.status === AuthorizationStatusEnum.Accepted &&
-        message.protocol === OCPPVersion.OCPP2_1 &&
+        isOcpp21 &&
         transactionEvent.idToken?.type === OCPP2_1.IdTokenEnumType.DirectPayment
       ) {
         const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
@@ -475,27 +453,14 @@ export class TransactionsModule extends AbstractModule {
       // E16.FR.02: Persist the CSMS-set transactionLimit to the DB so that subsequent
       // TransactionEventRequests can have the limit echoed back via the E16 sync logic.
       // This covers limits set by C17 (prepaid), C25 (QR web payment), and E16 itself.
-      if (message.protocol === OCPPVersion.OCPP2_1 && transaction) {
+      if (isOcpp21 && transaction) {
         const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
-        if (ocpp21Response.transactionLimit) {
-          try {
-            await this._transactionEventRepository.updateTransactionByStationIdAndTransactionId(
-              tenantId,
-              { transactionLimit: ocpp21Response.transactionLimit } as Partial<Transaction>,
-              transactionId,
-              ocppConnectionName,
-            );
-            this._logger.debug(
-              `Persisted transactionLimit to DB for station ${ocppConnectionName}, ` +
-                `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
-            );
-          } catch (error) {
-            this._logger.error(
-              `Failed to persist transactionLimit for transaction ${transactionId}`,
-              error,
-            );
-          }
-        }
+        await this.persistTransactionLimitToDb(
+          tenantId,
+          ocpp21Response,
+          transactionId,
+          ocppConnectionName,
+        );
       }
 
       const messageConfirmation = await this.sendCallResultWithMessage(message, response);
@@ -519,42 +484,19 @@ export class TransactionsModule extends AbstractModule {
       };
 
       // E16.FR.02: Include transactionLimit in TransactionEventResponse when setting/changing a limit.
-      if (message.protocol === OCPPVersion.OCPP2_1 && transaction) {
+      if (isOcpp21 && transaction) {
         const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
         const stationTransactionLimit = (
           message.payload as unknown as OCPP2_1.TransactionEventRequest
         ).transactionInfo?.transactionLimit;
-        const dbTransactionLimit = transaction.transactionLimit;
 
-        if (dbTransactionLimit) {
-          // If station didn't report a limit, or reported a different one, include it in response.
-          const limitsMatch =
-            stationTransactionLimit &&
-            stationTransactionLimit.maxCost === dbTransactionLimit.maxCost &&
-            stationTransactionLimit.maxEnergy === dbTransactionLimit.maxEnergy &&
-            stationTransactionLimit.maxTime === dbTransactionLimit.maxTime &&
-            stationTransactionLimit.maxSoC === dbTransactionLimit.maxSoC;
-
-          if (!limitsMatch) {
-            ocpp21Response.transactionLimit = {};
-            if (dbTransactionLimit.maxCost !== undefined) {
-              ocpp21Response.transactionLimit.maxCost = dbTransactionLimit.maxCost;
-            }
-            if (dbTransactionLimit.maxEnergy !== undefined) {
-              ocpp21Response.transactionLimit.maxEnergy = dbTransactionLimit.maxEnergy;
-            }
-            if (dbTransactionLimit.maxTime !== undefined) {
-              ocpp21Response.transactionLimit.maxTime = dbTransactionLimit.maxTime;
-            }
-            if (dbTransactionLimit.maxSoC !== undefined) {
-              ocpp21Response.transactionLimit.maxSoC = dbTransactionLimit.maxSoC;
-            }
-            this._logger.info(
-              `Including transactionLimit in response for station ${ocppConnectionName}, ` +
-                `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
-            );
-          }
-        }
+        this.syncTransactionLimitToResponse(
+          ocpp21Response,
+          transaction,
+          stationTransactionLimit,
+          ocppConnectionName,
+          transactionId,
+        );
       }
 
       if (message.payload.eventType === TransactionEventEnum.Updated) {
@@ -575,7 +517,7 @@ export class TransactionsModule extends AbstractModule {
         // C23: Increasing authorization amount
         // When CS sends TransactionEventRequest(Updated) with triggerReason=LimitSet (OCPP 2.1),
         // it indicates the authorization amount has been increased and transactionLimit.maxCost updated.
-        if (message.protocol === OCPPVersion.OCPP2_1 && transaction && transaction.isActive) {
+        if (isOcpp21 && transaction && transaction.isActive) {
           const ocpp21Payload = message.payload as unknown as OCPP2_1.TransactionEventRequest;
           if (
             ocpp21Payload.triggerReason === OCPP2_1.TriggerReasonEnumType.LimitSet &&
@@ -633,7 +575,7 @@ export class TransactionsModule extends AbstractModule {
         // When CS sends TransactionEventRequest(Updated) with triggerReason=TxResumed,
         // it indicates the transaction has resumed after a power loss or reboot.
         // CSMS should re-send any applicable TxProfile charging profiles for this transaction.
-        if (message.protocol === OCPPVersion.OCPP2_1 && transaction && transaction.isActive) {
+        if (isOcpp21 && transaction && transaction.isActive) {
           const ocpp21Payload = message.payload as unknown as OCPP2_1.TransactionEventRequest;
           if (ocpp21Payload.triggerReason === OCPP2_1.TriggerReasonEnumType.TxResumed) {
             this._logger.info(
@@ -775,27 +717,14 @@ export class TransactionsModule extends AbstractModule {
 
       // E16.FR.02: Persist the CSMS-set transactionLimit to the DB so that subsequent
       // TransactionEventRequests can have the limit echoed back via the E16 sync logic.
-      if (message.protocol === OCPPVersion.OCPP2_1 && transaction) {
+      if (isOcpp21 && transaction) {
         const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
-        if (ocpp21Response.transactionLimit) {
-          try {
-            await this._transactionEventRepository.updateTransactionByStationIdAndTransactionId(
-              tenantId,
-              { transactionLimit: ocpp21Response.transactionLimit } as Partial<Transaction>,
-              transactionId,
-              ocppConnectionName,
-            );
-            this._logger.debug(
-              `Persisted transactionLimit to DB for station ${ocppConnectionName}, ` +
-                `transaction ${transactionId}: ${JSON.stringify(ocpp21Response.transactionLimit)}`,
-            );
-          } catch (error) {
-            this._logger.error(
-              `Failed to persist transactionLimit for transaction ${transactionId}`,
-              error,
-            );
-          }
-        }
+        await this.persistTransactionLimitToDb(
+          tenantId,
+          ocpp21Response,
+          transactionId,
+          ocppConnectionName,
+        );
       }
 
       const messageConfirmation = await this.sendCallResultWithMessage(message, response);
@@ -1450,5 +1379,87 @@ export class TransactionsModule extends AbstractModule {
       ocppConnectionName,
       request.connectorId,
     );
+  }
+
+  /**
+   * Helper method to sync transactionLimit between DB and station for OCPP 2.1.
+   * Adds transactionLimit to response if DB limit differs from station's reported limit.
+   */
+  private syncTransactionLimitToResponse(
+    response: OCPP2_1.TransactionEventResponse,
+    transaction: Transaction,
+    stationTransactionLimit: OCPP2_1.TransactionLimitType | null | undefined,
+    ocppConnectionName: string,
+    transactionId: string,
+  ): void {
+    const dbTransactionLimit = transaction.transactionLimit;
+    if (!dbTransactionLimit) {
+      return;
+    }
+
+    // Check if station's limit matches DB limit
+    const limitsMatch =
+      stationTransactionLimit &&
+      stationTransactionLimit.maxCost === dbTransactionLimit.maxCost &&
+      stationTransactionLimit.maxEnergy === dbTransactionLimit.maxEnergy &&
+      stationTransactionLimit.maxTime === dbTransactionLimit.maxTime &&
+      stationTransactionLimit.maxSoC === dbTransactionLimit.maxSoC;
+
+    if (limitsMatch) {
+      return; // No need to include in response
+    }
+
+    // Build response transactionLimit with only defined fields
+    response.transactionLimit = {};
+    if (dbTransactionLimit.maxCost !== undefined) {
+      response.transactionLimit.maxCost = dbTransactionLimit.maxCost;
+    }
+    if (dbTransactionLimit.maxEnergy !== undefined) {
+      response.transactionLimit.maxEnergy = dbTransactionLimit.maxEnergy;
+    }
+    if (dbTransactionLimit.maxTime !== undefined) {
+      response.transactionLimit.maxTime = dbTransactionLimit.maxTime;
+    }
+    if (dbTransactionLimit.maxSoC !== undefined) {
+      response.transactionLimit.maxSoC = dbTransactionLimit.maxSoC;
+    }
+
+    this._logger.info(
+      `Including transactionLimit in response for station ${ocppConnectionName}, ` +
+        `transaction ${transactionId}: ${JSON.stringify(response.transactionLimit)}`,
+    );
+  }
+
+  /**
+   * Helper method to persist transactionLimit from response to DB for OCPP 2.1.
+   * This ensures subsequent requests can sync the limit via E16 logic.
+   */
+  private async persistTransactionLimitToDb(
+    tenantId: number,
+    response: OCPP2_1.TransactionEventResponse,
+    transactionId: string,
+    ocppConnectionName: string,
+  ): Promise<void> {
+    if (!response.transactionLimit) {
+      return;
+    }
+
+    try {
+      await this._transactionEventRepository.updateTransactionByStationIdAndTransactionId(
+        tenantId,
+        { transactionLimit: response.transactionLimit } as Partial<Transaction>,
+        transactionId,
+        ocppConnectionName,
+      );
+      this._logger.debug(
+        `Persisted transactionLimit to DB for station ${ocppConnectionName}, ` +
+          `transaction ${transactionId}: ${JSON.stringify(response.transactionLimit)}`,
+      );
+    } catch (error) {
+      this._logger.error(
+        `Failed to persist transactionLimit for transaction ${transactionId}`,
+        error,
+      );
+    }
   }
 }
