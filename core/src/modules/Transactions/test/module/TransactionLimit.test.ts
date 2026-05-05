@@ -163,6 +163,10 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
       {
         authorize: vi.fn().mockResolvedValue(AuthorizationStatusEnum.Accepted),
       } as unknown as IAuthorizer,
+      undefined, // authorizers
+      {
+        readAllByQuery: vi.fn().mockResolvedValue([]),
+      } as unknown as any, // chargingProfileRepository
     );
 
     sendCallResultSpy = vi

@@ -187,6 +187,10 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
         readOnlyOneByQuery: vi.fn().mockResolvedValue(null),
       } as unknown as IOCPPMessageRepository,
       mockRealTimeAuthorizer,
+      /* authorizers */ undefined,
+      /* chargingProfileRepository */ {
+        readAllByQuery: vi.fn().mockResolvedValue([]),
+      } as unknown as any,
     );
 
     vi.spyOn(module, 'sendCallResultWithMessage').mockResolvedValue({ success: true });
