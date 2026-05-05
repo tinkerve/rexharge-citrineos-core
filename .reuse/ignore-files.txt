@@ -6,7 +6,7 @@
 .prettierignore
 .prettierrc
 apps/Server/.sequelizerc
-OCPP_201_Logo_packages/core_and_advanced_security.png
+OCPP_201_Logo_core_and_advanced_security.png
 README.md
 apps/Server/rbac-rules.json
 apps/Server/entrypoint.sh
@@ -16,6 +16,7 @@ renovate.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
 
+apps/Server/tsconfig.migrations.json
 apps/Server/src/assets/logo.png
 
 # CI/CD files
