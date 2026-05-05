@@ -34,12 +34,14 @@ import { fileURLToPath } from 'url';
 import WebSocket from 'ws';
 import { Client } from 'pg';
 import { aSecurityEventNotificationRequest } from '../providers/SecurityEvent.js';
-import { createLocalConfig } from '../../../../../Server/src/config/envs/local.js';
+import { createLocalConfig } from '../../../../../../apps/Server/src/config/envs/local.js';
 
 // ─── Paths (resolved relative to this file) ───────────────────────────────────
 
-const MONOREPO_ROOT = fileURLToPath(new URL('../../../../../', import.meta.url));
-const SERVER_DIST = fileURLToPath(new URL('../../../../../Server/dist/index.js', import.meta.url));
+const MONOREPO_ROOT = fileURLToPath(new URL('../../../../../../', import.meta.url));
+const SERVER_DIST = fileURLToPath(
+  new URL('../../../../../../apps/Server/dist/index.js', import.meta.url),
+);
 
 // ─── Ports used by the server under test ─────────────────────────────────────
 
