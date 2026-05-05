@@ -40,6 +40,7 @@ import {
   ConfigurationOcpp16Api,
   ConfigurationOcpp2Api,
   ConnectedStationFilter,
+  DefaultDrizzleInstance,
   EVDriverDataApi,
   EVDriverModule,
   EVDriverOcpp16Api,
@@ -64,7 +65,6 @@ import {
   ReportingModule,
   ReportingOcpp16Api,
   ReportingOcpp2Api,
-  DefaultDrizzleInstance,
   RepositoryStore,
   sequelize,
   Sequelize,
@@ -225,6 +225,7 @@ export class CitrineOSServer {
     if (this._isShuttingDown) return;
     this._isShuttingDown = true;
     this._logger.info('Shutdown initiated');
+    this._healthCheckService?.shutdown();
 
     const forceExit = setTimeout(() => {
       console.log('Shutdown timed out, forcing exit');
