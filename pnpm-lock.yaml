@@ -63,6 +63,9 @@ importers:
         specifier: ^6.0.6
         version: 6.0.6
     devDependencies:
+      '@eslint/js':
+        specifier: 9.16.0
+        version: 9.16.0
       '@types/jsrsasign':
         specifier: ^10.5.15
         version: 10.5.15
@@ -72,6 +75,18 @@ importers:
       '@types/pg':
         specifier: 8.20.0
         version: 8.20.0
+      '@vitest/coverage-v8':
+        specifier: 3.2.4
+        version: 3.2.4(vitest@3.2.4(@types/debug@4.1.13)(@types/node@25.6.0)(tsx@4.21.0)(yaml@2.8.4))
+      eslint:
+        specifier: 9.16.0
+        version: 9.16.0
+      eslint-config-prettier:
+        specifier: 9.1.0
+        version: 9.1.0(eslint@9.16.0)
+      eslint-plugin-prettier:
+        specifier: 5.2.3
+        version: 5.2.3(@types/eslint@9.6.1)(eslint-config-prettier@9.1.0(eslint@9.16.0))(eslint@9.16.0)(prettier@3.2.5)
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -96,6 +111,12 @@ importers:
       typescript:
         specifier: ^5.8.2
         version: 5.8.2
+      typescript-eslint:
+        specifier: 8.17.0
+        version: 8.17.0(eslint@9.16.0)(typescript@5.8.2)
+      vitest:
+        specifier: 3.2.4
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@25.6.0)(tsx@4.21.0)(yaml@2.8.4)
 
   apps/Server:
     dependencies:
