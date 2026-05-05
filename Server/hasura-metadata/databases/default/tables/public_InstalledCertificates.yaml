@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
+# SPDX-FileCopyrightText: 2026 Contributors to the CitrineOS Project
 #
 # SPDX-License-Identifier: Apache-2.0
 table:
@@ -10,7 +10,7 @@ object_relationships:
       foreign_key_constraint_on: certificateId
   - name: ChargingStation
     using:
-      foreign_key_constraint_on: stationPkId
+      foreign_key_constraint_on: stationId
   - name: Tenant
     using:
       foreign_key_constraint_on: tenantId

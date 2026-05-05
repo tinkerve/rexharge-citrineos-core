@@ -236,6 +236,11 @@ export default {
       'VariableMonitorings_stationName_tenantId_id',
     );
 
+    await renameIndex(
+      'set_network_profiles_stationPkId_correlationId',
+      'set_network_profiles_stationId_correlationId',
+    );
+
     await renameIndex('variable_attributes_stationPkId', 'variable_attributes_stationId');
     await renameIndex('variable_attributes_stationPkId_type', 'variable_attributes_stationId_type');
     await renameIndex(
@@ -524,6 +529,11 @@ export default {
         'VariableMonitorings',
         'VariableMonitorings_stationName_tenantId_id',
         'VariableMonitorings_stationId_tenantId_id',
+      );
+
+      await renameIndex(
+        'set_network_profiles_stationId_correlationId',
+        'set_network_profiles_stationPkId_correlationId',
       );
 
       await renameIndex('variable_attributes_stationId', 'variable_attributes_stationPkId');

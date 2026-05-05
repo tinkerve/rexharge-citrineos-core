@@ -1,14 +1,24 @@
-# SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
+# SPDX-FileCopyrightText: 2026 Contributors to the CitrineOS Project
 #
 # SPDX-License-Identifier: Apache-2.0
 table:
   name: Certificates
   schema: public
 object_relationships:
+  - name: Certificate
+    using:
+      foreign_key_constraint_on: signedBy
   - name: Tenant
     using:
       foreign_key_constraint_on: tenantId
 array_relationships:
+  - name: Certificates
+    using:
+      foreign_key_constraint_on:
+        column: signedBy
+        table:
+          name: Certificates
+          schema: public
   - name: InstallCertificateAttempts
     using:
       foreign_key_constraint_on:
