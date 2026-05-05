@@ -39,6 +39,7 @@ import {
 import { sequelize } from '@dal/index.js';
 import type {
   IAuthorizationRepository,
+  IChargingProfileRepository,
   IDeviceModelRepository,
   ILocationRepository,
   IOCPPMessageRepository,
@@ -48,9 +49,14 @@ import type {
 } from '@dal/interfaces/repositories.js';
 import { SequelizeOCPPMessageRepository } from '@dal/layers/sequelize/index.js';
 import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
+import { OCPP2_0_1_Mapper } from '@dal/index.js';
 import { Authorization } from '@dal/layers/sequelize/model/Authorization/index.js';
 import { Component, VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import { Tariff } from '@dal/layers/sequelize/model/Tariff/Tariffs.js';
+import {
+  ChargingProfile,
+  ChargingSchedule,
+} from '@dal/layers/sequelize/model/ChargingProfile/index.js';
 import {
   StartTransaction,
   Transaction,
@@ -80,6 +86,7 @@ export class TransactionsModule extends AbstractModule {
   protected _tariffRepository: ITariffRepository;
   protected _reservationRepository: IReservationRepository;
   protected _ocppMessageRepository: IOCPPMessageRepository;
+  protected _chargingProfileRepository: IChargingProfileRepository;
 
   protected _transactionService: TransactionService;
   protected _statusNotificationService: StatusNotificationService;
@@ -179,6 +186,7 @@ export class TransactionsModule extends AbstractModule {
     ocppMessageRepository?: IOCPPMessageRepository,
     realTimeAuthorizer?: IAuthorizer,
     authorizers?: IAuthorizer[],
+    chargingProfileRepository?: IChargingProfileRepository,
   ) {
     super(config, cache, handler, sender, EventGroup.Transactions, logger, ocppValidator);
 
@@ -205,6 +213,9 @@ export class TransactionsModule extends AbstractModule {
       reservationRepository || new sequelize.SequelizeReservationRepository(config, logger);
     this._ocppMessageRepository =
       ocppMessageRepository || new SequelizeOCPPMessageRepository(config, this._logger);
+    this._chargingProfileRepository =
+      chargingProfileRepository ||
+      new sequelize.SequelizeChargingProfileRepository(config, this._logger);
 
     this._authorizers = authorizers || [];
     this._realTimeAuthorizer =
@@ -617,6 +628,82 @@ export class TransactionsModule extends AbstractModule {
           );
           // TODO: checks if there is updated tariff information available and set it in the PersonalMessage field.
         }
+
+        // E17 - Transaction resumption after power loss
+        // When CS sends TransactionEventRequest(Updated) with triggerReason=TxResumed,
+        // it indicates the transaction has resumed after a power loss or reboot.
+        // CSMS should re-send any applicable TxProfile charging profiles for this transaction.
+        if (message.protocol === OCPPVersion.OCPP2_1 && transaction && transaction.isActive) {
+          const ocpp21Payload = message.payload as unknown as OCPP2_1.TransactionEventRequest;
+          if (ocpp21Payload.triggerReason === OCPP2_1.TriggerReasonEnumType.TxResumed) {
+            this._logger.info(
+              `Transaction ${transactionId} resumed after power loss on station ${ocppConnectionName}. ` +
+                `Checking for TxProfile charging profiles to re-send.`,
+            );
+
+            try {
+              // Query active TxProfile charging profiles associated with this transaction
+              const txProfiles = await this._chargingProfileRepository.readAllByQuery(tenantId, {
+                where: {
+                  tenantId,
+                  ocppConnectionName,
+                  chargingProfilePurpose: OCPP2_1.ChargingProfilePurposeEnumType.TxProfile,
+                  transactionDatabaseId: transaction.id,
+                  isActive: true,
+                },
+                include: [{ model: ChargingSchedule, as: 'chargingSchedule' }],
+              });
+
+              if (txProfiles.length > 0) {
+                this._logger.info(
+                  `Found ${txProfiles.length} active TxProfile(s) to re-send for ` +
+                    `transaction ${transactionId} on station ${ocppConnectionName}.`,
+                );
+
+                for (const profile of txProfiles) {
+                  try {
+                    const chargingProfileType =
+                      OCPP2_0_1_Mapper.ChargingProfileMapper.toChargingProfileType(
+                        profile,
+                        transactionId,
+                      );
+                    await this.sendCall(
+                      ocppConnectionName,
+                      tenantId,
+                      OCPPVersion.OCPP2_1,
+                      OCPP_CallAction.SetChargingProfile,
+                      {
+                        evseId: profile.evseId ?? transaction.evseId,
+                        chargingProfile: chargingProfileType,
+                      } as OCPP2_request_types.SetChargingProfileRequest,
+                    );
+                    this._logger.info(
+                      `Re-sent TxProfile id=${profile.id} for transaction ${transactionId} ` +
+                        `on station ${ocppConnectionName}.`,
+                    );
+                  } catch (sendError) {
+                    this._logger.error(
+                      `Failed to re-send TxProfile id=${profile.id} for ` +
+                        `transaction ${transactionId} on station ${ocppConnectionName}`,
+                      sendError,
+                    );
+                  }
+                }
+              } else {
+                this._logger.debug(
+                  `No active TxProfile charging profiles found for ` +
+                    `transaction ${transactionId} on station ${ocppConnectionName}.`,
+                );
+              }
+            } catch (error) {
+              this._logger.error(
+                `Failed to query TxProfile charging profiles for ` +
+                  `transaction ${transactionId} on station ${ocppConnectionName}`,
+                error,
+              );
+            }
+          }
+        }
       }
 
       if (message.payload.eventType === TransactionEventEnum.Ended && transaction.totalKwh) {
@@ -655,7 +742,7 @@ export class TransactionsModule extends AbstractModule {
           if (settlementByCSMS) {
             const totalCost = response.totalCost ?? transaction.totalCost;
             this._logger.info(
-              `C21.FR.05: SettlementByCSMS is true for station ${ocppConnectionName}, ` +
+              `SettlementByCSMS is true for station ${ocppConnectionName}, ` +
                 `transaction ${transaction.transactionId}. ` +
                 `CSMS should settle totalCost=${totalCost} with PSP. ` +
                 `This requires external PSP integration.`,
