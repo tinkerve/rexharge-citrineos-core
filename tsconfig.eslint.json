@@ -1,17 +1,15 @@
 {
   "exclude": ["./node_modules", "**/__tests__/*", "./dist", "./**/dist", "./**/**/dist"],
   "include": [
-    "base/**/*.ts",
-    "base/**/*.json",
-    "core/**/*.ts",
-    "core/**/*.json",
-    "Server/**/*.ts",
-    "Server/**/*.json",
-    "./db.sync.ts",
-    "./db.force-sync.ts",
-    "drizzle.config.ts",
+    "packages/base/**/*.ts",
+    "packages/base/**/*.json",
+    "packages/core/**/*.ts",
+    "packages/core/**/*.json",
+    "apps/Server/**/*.ts",
+    "apps/Server/**/*.json",
+    "apps/*.ts",
     "vitest.config.ts",
-    "migrations/**/*.ts",
+    "apps/Server/migrations/**/*.ts",
     "seeders/**/*.ts"
   ],
   "compilerOptions": {
