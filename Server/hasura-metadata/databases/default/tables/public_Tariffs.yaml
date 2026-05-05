@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
+# SPDX-FileCopyrightText: 2026 Contributors to the CitrineOS Project
 #
 # SPDX-License-Identifier: Apache-2.0
 table:
@@ -9,6 +9,13 @@ object_relationships:
     using:
       foreign_key_constraint_on: tenantId
 array_relationships:
+  - name: Authorizations
+    using:
+      foreign_key_constraint_on:
+        column: tariffId
+        table:
+          name: Authorizations
+          schema: public
   - name: Connectors
     using:
       foreign_key_constraint_on:
