@@ -75,6 +75,8 @@ describe('StatusNotificationService', () => {
       addStatusNotificationToChargingStation: vi.fn(),
       readChargingStationByStationId: vi.fn(),
       createOrUpdateConnector: vi.fn(),
+      commissionEvseForOcpp16Connector: vi.fn(),
+      updateAllConnectorsByQuery: vi.fn(),
     } as unknown as Mocked<ILocationRepository>;
 
     const mockConnection: IWebsocketConnection = {
@@ -197,8 +199,12 @@ describe('StatusNotificationService', () => {
   });
 
   describe('Test process OCPP 1.6 StatusNotification', () => {
-    it('should save StatusNotification and connector when Charging Station exists', async () => {
-      locationRepository.readChargingStationByStationId.mockResolvedValue(aChargingStation());
+    it('should save StatusNotification and connector when Charging Station exists with a matching evse', async () => {
+      locationRepository.readChargingStationByStationId.mockResolvedValue(
+        aChargingStation((cs) => {
+          cs.evses = [aEvse()];
+        }),
+      );
       vi.spyOn(StatusNotification, 'build').mockImplementation(() => {
         return aStatusNotification();
       });
@@ -223,6 +229,124 @@ describe('StatusNotificationService', () => {
       );
 
       expect(locationRepository.addStatusNotificationToChargingStation).not.toHaveBeenCalled();
+      expect(locationRepository.createOrUpdateConnector).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Test process OCPP 1.6 StatusNotification sets FK fields on Connector record (#160)', () => {
+    it('should stamp evseId on the Connector record when matching evse exists', async () => {
+      // Regression for citrineos/citrineos#160 — Connector model declares evseId
+      // as allowNull:false, so the upsert must include the FK or it crashes with
+      // "notNull Violation: Connector.evseId cannot be null".
+      locationRepository.readChargingStationByStationId.mockResolvedValue(
+        aChargingStation((cs) => {
+          cs.evses = [aEvse()];
+        }),
+      );
+      vi.spyOn(StatusNotification, 'build').mockImplementation(() => aStatusNotification());
+
+      await statusNotificationService.processOcpp16StatusNotification(
+        DEFAULT_TENANT_ID,
+        MOCK_STATION_ID,
+        aOcpp16StatusNotificationRequest((req) => {
+          req.connectorId = MOCK_CONNECTOR_ID;
+        }),
+      );
+
+      expect(locationRepository.createOrUpdateConnector).toHaveBeenCalledWith(
+        DEFAULT_TENANT_ID,
+        expect.objectContaining({ evseId: MOCK_EVSE_ID }),
+      );
+    });
+
+    it('should stamp evseTypeConnectorId on the Connector record when matching evse exists', async () => {
+      // Connector model also requires evseTypeConnectorId (FK to EvseType, allowNull:false).
+      locationRepository.readChargingStationByStationId.mockResolvedValue(
+        aChargingStation((cs) => {
+          cs.evses = [aEvse()];
+        }),
+      );
+      vi.spyOn(StatusNotification, 'build').mockImplementation(() => aStatusNotification());
+
+      await statusNotificationService.processOcpp16StatusNotification(
+        DEFAULT_TENANT_ID,
+        MOCK_STATION_ID,
+        aOcpp16StatusNotificationRequest((req) => {
+          req.connectorId = MOCK_CONNECTOR_ID;
+        }),
+      );
+
+      expect(locationRepository.createOrUpdateConnector).toHaveBeenCalledWith(
+        DEFAULT_TENANT_ID,
+        expect.objectContaining({ evseTypeConnectorId: MOCK_CONNECTOR_ID }),
+      );
+    });
+
+    it('should auto-commission an evse and stamp its FKs onto the Connector when allowUnknownChargingStations is true and no matching evse exists', async () => {
+      // Reporter's repro (clean DB + 1.6 charger): the station exists from BootNotification
+      // but no EVSE/Connector records exist. With ad-hoc mode enabled, the handler should
+      // commission a new evse on demand (1 connector → 1 evse for OCPP 1.6) instead of
+      // crashing with an FK violation.
+      locationRepository.readChargingStationByStationId.mockResolvedValue(
+        aChargingStation((cs) => {
+          cs.evses = [];
+        }),
+      );
+      const newEvseId = 99;
+      const newEvseTypeConnectorId = 1;
+      locationRepository.commissionEvseForOcpp16Connector.mockResolvedValue({
+        evseId: newEvseId,
+        evseTypeConnectorId: newEvseTypeConnectorId,
+      });
+      vi.spyOn(StatusNotification, 'build').mockImplementation(() => aStatusNotification());
+
+      await statusNotificationService.processOcpp16StatusNotification(
+        DEFAULT_TENANT_ID,
+        MOCK_STATION_ID,
+        aOcpp16StatusNotificationRequest((req) => {
+          req.connectorId = 7;
+        }),
+      );
+
+      expect(locationRepository.commissionEvseForOcpp16Connector).toHaveBeenCalledWith(
+        DEFAULT_TENANT_ID,
+        MOCK_STATION_ID,
+        7,
+      );
+      expect(locationRepository.createOrUpdateConnector).toHaveBeenCalledWith(
+        DEFAULT_TENANT_ID,
+        expect.objectContaining({
+          evseId: newEvseId,
+          evseTypeConnectorId: newEvseTypeConnectorId,
+          connectorId: 7,
+        }),
+      );
+    });
+
+    it('should throw and not upsert connector when allowUnknownChargingStations is false and no connector exists', async () => {
+      locationRepository.readChargingStationByStationId.mockResolvedValue(
+        aChargingStation((cs) => {
+          cs.evses = [];
+        }),
+      );
+      const strictConnection: IWebsocketConnection = {
+        id: 'test-server',
+        protocol: 'ocpp1.6',
+        allowUnknownChargingStations: false,
+      };
+      cache.get = vi.fn().mockResolvedValue(JSON.stringify(strictConnection));
+      vi.spyOn(StatusNotification, 'build').mockImplementation(() => aStatusNotification());
+
+      await expect(
+        statusNotificationService.processOcpp16StatusNotification(
+          DEFAULT_TENANT_ID,
+          MOCK_STATION_ID,
+          aOcpp16StatusNotificationRequest((req) => {
+            req.connectorId = 9;
+          }),
+        ),
+      ).rejects.toThrow(/does not exist and allowUnknownChargingStations is false/);
+
       expect(locationRepository.createOrUpdateConnector).not.toHaveBeenCalled();
     });
   });
@@ -253,12 +377,18 @@ describe('StatusNotificationService', () => {
       expect(locationRepository.addStatusNotificationToChargingStation).toHaveBeenCalled();
     });
 
-    it('should not set evseId when no matching evse is found for the connector', async () => {
+    it('should not set evseId on StatusNotification record when no matching evse is found, then auto-commission for the Connector record', async () => {
+      // The StatusNotification record itself is saved without evseId (audit trail),
+      // and the Connector record gets FKs from a freshly-commissioned evse.
       locationRepository.readChargingStationByStationId.mockResolvedValue(
         aChargingStation((cs) => {
           cs.evses = [aEvse()];
         }),
       );
+      locationRepository.commissionEvseForOcpp16Connector.mockResolvedValue({
+        evseId: 50,
+        evseTypeConnectorId: 1,
+      });
 
       const buildSpy = vi.spyOn(StatusNotification, 'build').mockImplementation((input: any) => {
         expect(input.evseId).toBeUndefined();
@@ -274,6 +404,16 @@ describe('StatusNotificationService', () => {
       );
 
       expect(buildSpy).toHaveBeenCalled();
+      expect(locationRepository.addStatusNotificationToChargingStation).toHaveBeenCalled();
+      expect(locationRepository.commissionEvseForOcpp16Connector).toHaveBeenCalledWith(
+        DEFAULT_TENANT_ID,
+        MOCK_STATION_ID,
+        404,
+      );
+      expect(locationRepository.createOrUpdateConnector).toHaveBeenCalledWith(
+        DEFAULT_TENANT_ID,
+        expect.objectContaining({ evseId: 50, evseTypeConnectorId: 1, connectorId: 404 }),
+      );
     });
   });
 });

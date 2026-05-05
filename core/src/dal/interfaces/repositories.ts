@@ -5,38 +5,35 @@
 import type {
   BootConfig,
   CallAction,
+  ChargingLimitSourceEnumType,
+  ChargingProfilePurposeEnumType,
+  ChargingStateEnumType,
   ChargingStationSequenceTypeEnumType,
   CrudRepository,
   MeterValueDto,
   OCPP1_6,
-  OCPPVersion,
-  ChargingLimitSourceEnumType,
-  ChargingProfilePurposeEnumType,
   OCPP2_common_types,
   OCPP2_request_types,
   OCPPMessageDto,
+  OCPPVersion,
   RegistrationStatusEnumType,
+  SecurityEventDto,
   UpdateEnumType,
-  ChargingStateEnumType,
 } from '@citrineos/base';
 import type {
   ChargingProfileInput,
   CompositeScheduleInput,
 } from '../layers/sequelize/mapper/2.0.1/ChargingProfileMapper.js';
 import type { Authorization } from '../layers/sequelize/model/Authorization/Authorization.js';
+import type { LocalListVersion } from '../layers/sequelize/model/Authorization/LocalListVersion.js';
+import type { SendLocalList } from '../layers/sequelize/model/Authorization/SendLocalList.js';
 import type { Boot } from '../layers/sequelize/model/Boot.js';
 import type { Certificate } from '../layers/sequelize/model/Certificate/Certificate.js';
-import type { ChargingStation } from '../layers/sequelize/model/Location/ChargingStation.js';
-import type { Component } from '../layers/sequelize/model/DeviceModel/Component.js';
-import type { Variable } from '../layers/sequelize/model/DeviceModel/Variable.js';
 import type {
-  EventData,
-  VariableMonitoring,
-} from '../layers/sequelize/model/VariableMonitoring/index.js';
-import type { Location } from '../layers/sequelize/model/Location/Location.js';
-import type { SecurityEvent } from '../layers/sequelize/model/SecurityEvent.js';
-import type { Transaction } from '../layers/sequelize/model/TransactionEvent/index.js';
-import type { VariableAttribute } from '../layers/sequelize/model/DeviceModel/VariableAttribute.js';
+  DeleteCertificateAttempt,
+  InstallCertificateAttempt,
+  InstalledCertificate,
+} from '../layers/sequelize/model/Certificate/index.js';
 import type { ChangeConfiguration } from '../layers/sequelize/model/ChangeConfiguration.js';
 import type {
   ChargingNeeds,
@@ -45,33 +42,36 @@ import type {
 } from '../layers/sequelize/model/ChargingProfile/index.js';
 import type { ChargingStationSecurityInfo } from '../layers/sequelize/model/ChargingStationSecurityInfo.js';
 import type { ChargingStationSequence } from '../layers/sequelize/model/ChargingStationSequence/ChargingStationSequence.js';
+import type { Component } from '../layers/sequelize/model/DeviceModel/Component.js';
+import type { EvseType } from '../layers/sequelize/model/DeviceModel/EvseType.js';
+import type { Variable } from '../layers/sequelize/model/DeviceModel/Variable.js';
+import type { VariableAttribute } from '../layers/sequelize/model/DeviceModel/VariableAttribute.js';
+import type { VariableCharacteristics } from '../layers/sequelize/model/DeviceModel/VariableCharacteristics.js';
+import type { ChargingStation } from '../layers/sequelize/model/Location/ChargingStation.js';
 import type { Connector } from '../layers/sequelize/model/Location/Connector.js';
 import type { Evse } from '../layers/sequelize/model/Location/Evse.js';
-import type {
-  DeleteCertificateAttempt,
-  InstallCertificateAttempt,
-  InstalledCertificate,
-} from '../layers/sequelize/model/Certificate/index.js';
-import type { EvseType } from '../layers/sequelize/model/DeviceModel/EvseType.js';
-import type { LocalListVersion } from '../layers/sequelize/model/Authorization/LocalListVersion.js';
-import type { SendLocalList } from '../layers/sequelize/model/Authorization/SendLocalList.js';
-import type { MessageInfo } from '../layers/sequelize/model/MessageInfo/MessageInfo.js';
-import type {
-  MeterValue,
-  StopTransaction,
-} from '../layers/sequelize/model/TransactionEvent/index.js';
-import type { OCPPMessage } from '../layers/sequelize/model/OCPPMessage.js';
-import type { Reservation } from '../layers/sequelize/model/Reservation.js';
+import type { Location } from '../layers/sequelize/model/Location/Location.js';
 import type { ServerNetworkProfile } from '../layers/sequelize/model/Location/ServerNetworkProfile.js';
 import type { StatusNotification } from '../layers/sequelize/model/Location/StatusNotification.js';
+import type { MessageInfo } from '../layers/sequelize/model/MessageInfo/MessageInfo.js';
+import type { OCPPMessage } from '../layers/sequelize/model/OCPPMessage.js';
+import type { Reservation } from '../layers/sequelize/model/Reservation.js';
 import type { Subscription } from '../layers/sequelize/model/Subscription/Subscription.js';
 import type { Tariff } from '../layers/sequelize/model/Tariff/Tariffs.js';
 import type { Tenant } from '../layers/sequelize/model/Tenant.js';
+import type {
+  MeterValue,
+  StopTransaction,
+  Transaction,
+} from '../layers/sequelize/model/TransactionEvent/index.js';
 import type { TransactionEvent } from '../layers/sequelize/model/TransactionEvent/TransactionEvent.js';
-import type { VariableCharacteristics } from '../layers/sequelize/model/DeviceModel/VariableCharacteristics.js';
-import type { VariableAttributeQuerystring } from './queries/VariableAttribute.js';
+import type {
+  EventData,
+  VariableMonitoring,
+} from '../layers/sequelize/model/VariableMonitoring/index.js';
 import type { AuthorizationQuerystring } from './queries/Authorization.js';
 import type { TariffQueryString } from './queries/Tariff.js';
+import type { VariableAttributeQuerystring } from './queries/VariableAttribute.js';
 
 export interface IAuthorizationRepository extends CrudRepository<Authorization> {
   readAllByQuerystring: (
@@ -266,6 +266,18 @@ export interface ILocationRepository extends CrudRepository<Location> {
     chargingStation: ChargingStation,
   ): Promise<ChargingStation>;
   createOrUpdateConnector(tenantId: number, connector: Connector): Promise<Connector | undefined>;
+  /**
+   * Commissions a default evse + evseTypeConnector record for an OCPP 1.6 connector.
+   * Used in ad-hoc/`allowUnknownChargingStations` flows where the charge point arrives
+   * uncommissioned (OCPP 1.6 has no native EVSE concept). Conservative default:
+   * one connector → one evse. Returns the FK ids the caller should stamp on the
+   * Connector record being upserted.
+   */
+  commissionEvseForOcpp16Connector(
+    tenantId: number,
+    ocppConnectionName: string,
+    connectorId: number,
+  ): Promise<{ evseId: number; evseTypeConnectorId: number }>;
   updateAllConnectorsByQuery(
     tenantId: number,
     value: Partial<Connector>,
@@ -278,19 +290,19 @@ export interface ILocationRepository extends CrudRepository<Location> {
   ): Promise<void>;
 }
 
-export interface ISecurityEventRepository extends CrudRepository<SecurityEvent> {
+export interface ISecurityEventRepository {
   createByStationId: (
     tenantId: number,
     value: OCPP2_request_types.SecurityEventNotificationRequest,
     ocppConnectionName: string,
-  ) => Promise<SecurityEvent>;
+  ) => Promise<SecurityEventDto>;
   readByStationIdAndTimestamps: (
     tenantId: number,
     ocppConnectionName: string,
     from?: Date,
     to?: Date,
-  ) => Promise<SecurityEvent[]>;
-  deleteByKey: (tenantId: number, key: string) => Promise<SecurityEvent | undefined>;
+  ) => Promise<SecurityEventDto[]>;
+  deleteByKey: (tenantId: number, key: string) => Promise<SecurityEventDto | undefined>;
 }
 
 export interface ISubscriptionRepository extends CrudRepository<Subscription> {

@@ -20,6 +20,4 @@ else
 fi
 
 echo "Starting application..."
-# The start-docker-cloud script in Server/package.json will be used, but without the migration part.
-exec npm run start-docker-cloud --prefix ./Server
-
+exec node ./dist/index.js

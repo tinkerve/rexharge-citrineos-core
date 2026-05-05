@@ -40,6 +40,7 @@ import {
   ConfigurationOcpp16Api,
   ConfigurationOcpp2Api,
   ConnectedStationFilter,
+  DefaultDrizzleInstance,
   EVDriverDataApi,
   EVDriverModule,
   EVDriverOcpp16Api,
@@ -224,6 +225,7 @@ export class CitrineOSServer {
     if (this._isShuttingDown) return;
     this._isShuttingDown = true;
     this._logger.info('Shutdown initiated');
+    this._healthCheckService?.shutdown();
 
     const forceExit = setTimeout(() => {
       console.log('Shutdown timed out, forcing exit');
@@ -370,6 +372,9 @@ export class CitrineOSServer {
 
   protected async initDb() {
     await sequelize.DefaultSequelizeInstance.initializeSequelize();
+    if (process.env.CITRINEOS_USE_DRIZZLE_SECURITY_EVENT === 'true') {
+      await DefaultDrizzleInstance.initialize();
+    }
   }
 
   protected initCache(cache?: ICache): ICache {

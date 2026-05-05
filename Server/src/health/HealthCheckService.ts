@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { ICache } from '@citrineos/base';
+import type { Sequelize } from '@citrineos/core';
 import { RabbitMQConnectionManager, WebsocketNetworkConnection } from '@citrineos/core';
-import type { Sequelize } from 'sequelize-typescript';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 
@@ -13,6 +13,7 @@ type CheckResult = { status: 'pass' | 'fail'; error?: string };
 export type HealthCheckResult = { status: 'pass' | 'fail'; checks: Record<string, CheckResult> };
 
 export class HealthCheckService {
+  private _isShuttingDown: boolean = false;
   private _notReadyAt: number | null = null;
   private readonly _notReadyThresholdMs: number;
   private readonly _logger: Logger<ILogObj>;
@@ -31,7 +32,53 @@ export class HealthCheckService {
       : new Logger<ILogObj>({ name: 'HealthCheckService' });
   }
 
+  shutdown() {
+    this._isShuttingDown = true;
+  }
+
   async checkReadiness(): Promise<HealthCheckResult> {
+    let checks: Record<string, CheckResult> = {};
+    let pass = true;
+    if (this._isShuttingDown) {
+      checks['shutdown'] = { status: 'fail', error: 'shutting down' };
+      pass = false;
+    } else {
+      ({ checks, pass } = await this._checkConnections());
+    }
+
+    if (!pass) {
+      this._notReadyAt ??= Date.now();
+    } else {
+      this._notReadyAt = null;
+    }
+
+    return { status: pass ? 'pass' : 'fail', checks };
+  }
+
+  checkLiveness(): HealthCheckResult {
+    if (this._notReadyAt !== null) {
+      const durationMs = Date.now() - this._notReadyAt;
+      if (durationMs > this._notReadyThresholdMs) {
+        const durationSec = Math.round(durationMs / 1000);
+        const thresholdSec = this._notReadyThresholdMs / 1000;
+        return {
+          status: 'fail',
+          checks: {
+            readiness: {
+              status: 'fail',
+              error: `Not ready for ${durationSec}s (threshold: ${thresholdSec}s)`,
+            },
+          },
+        };
+      }
+    }
+    return { status: 'pass', checks: {} };
+  }
+
+  private async _checkConnections(): Promise<{
+    checks: Record<string, CheckResult>;
+    pass: boolean;
+  }> {
     const checks: Record<string, CheckResult> = {};
     let pass = true;
 
@@ -61,33 +108,7 @@ export class HealthCheckService {
     checks['database'] = await this._checkDatabase();
     if (checks['database'].status === 'fail') pass = false;
 
-    if (!pass) {
-      this._notReadyAt ??= Date.now();
-    } else {
-      this._notReadyAt = null;
-    }
-
-    return { status: pass ? 'pass' : 'fail', checks };
-  }
-
-  checkLiveness(): HealthCheckResult {
-    if (this._notReadyAt !== null) {
-      const durationMs = Date.now() - this._notReadyAt;
-      if (durationMs > this._notReadyThresholdMs) {
-        const durationSec = Math.round(durationMs / 1000);
-        const thresholdSec = this._notReadyThresholdMs / 1000;
-        return {
-          status: 'fail',
-          checks: {
-            readiness: {
-              status: 'fail',
-              error: `Not ready for ${durationSec}s (threshold: ${thresholdSec}s)`,
-            },
-          },
-        };
-      }
-    }
-    return { status: 'pass', checks: {} };
+    return { checks, pass };
   }
 
   private async _checkCache(): Promise<CheckResult> {

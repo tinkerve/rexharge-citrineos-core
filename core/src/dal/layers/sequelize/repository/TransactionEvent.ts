@@ -8,7 +8,6 @@ import {
   MeterValueUtils,
   OCPP1_6,
   OCPP2_0_1,
-  OCPP2_1,
 } from '@citrineos/base';
 import type { WhereOptions } from 'sequelize';
 import { Op } from 'sequelize';
@@ -728,7 +727,7 @@ export class SequelizeTransactionEventRepository
         isActive: true,
         transactionId: transactionId.toString(),
         authorizationId: authorization ? authorization.id : null,
-        meterStart: request.meterStart,
+        meterStart: request.meterStart / 1000, // Convert Wh to kWh
         startTime: request.timestamp,
       });
 

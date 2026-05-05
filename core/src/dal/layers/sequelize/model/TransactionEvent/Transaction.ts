@@ -138,6 +138,9 @@ export class Transaction extends Model implements TransactionDto {
   @Column(DataType.JSONB)
   declare transactionLimit?: TransactionLimit | null;
 
+  /**
+   * The starting meter value in kWh at the beginning of the transaction, if available. This is derived from StartTransaction in OCPP 1.6 or the first 'Transaction.Begin' or 'Sample.Periodic' meter value.
+   */
   @Column(DataType.DECIMAL)
   declare meterStart?: number | null;
 

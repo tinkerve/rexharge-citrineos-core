@@ -23,7 +23,8 @@
     "fi": "npm run fresh && npm run install-all",
     "sync-db": "ts-node ./db.sync.ts",
     "force-sync-db": "ts-node ./db.force-sync.ts",
-    "test": "vitest run",
+    "test": "vitest run --exclude='**/*.e2e.test.ts'",
+    "test:e2e": "npm run build && vitest run --include='**/test/e2e/*.e2e.test.ts'",
     "coverage": "vitest run --coverage",
     "prepare": "husky",
     "migrate": "npx sequelize-cli db:migrate --debug && echo migration completed successfully"
@@ -45,7 +46,7 @@
     "madge": "8.0.0",
     "openapi-types": "12.1.3",
     "@types/pg": "8.20.0",
-    "tsc-alias": "1.8.16",
+    "tsc-alias": "1.8.17",
     "testcontainers": "11.13.0",
     "typescript": "5.8.2"
   },
@@ -59,12 +60,12 @@
     "ajv-formats": "3.0.1",
     "asn1js": "3.0.10",
     "bufferutil": "4.1.0",
-    "jsrsasign": "11.1.1",
+    "jsrsasign": "11.1.3",
     "jwks-rsa": "4.0.1",
     "pkijs": "3.3.3",
     "pvutils": "1.1.5",
     "redis": "4.7.1",
-    "sequelize-cli": "6.6.2",
+    "sequelize-cli": "6.6.5",
     "sequelize-typescript": "2.1.6",
     "tsconfig-paths": "4.2.0",
     "utf-8-validate": "6.0.6"
