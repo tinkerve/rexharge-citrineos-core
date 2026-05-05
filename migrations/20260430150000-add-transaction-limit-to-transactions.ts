@@ -5,7 +5,7 @@
 import { DataType } from 'sequelize-typescript';
 import type { QueryInterface } from 'sequelize';
 
-module.exports = {
+export default {
   up: async (queryInterface: QueryInterface) => {
     await queryInterface.addColumn('Transactions', 'transactionLimit', {
       type: DataType.JSONB,
