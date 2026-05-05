@@ -14,6 +14,7 @@ import { StopTransactionSchema } from './stop.transaction.dto.js';
 import { TariffSchema } from './tariff.dto.js';
 import { TransactionEventSchema } from './transaction.event.dto.js';
 import { BaseSchema } from './types/base.dto.js';
+import { TransactionLimitSchema } from './types/transaction.type.js';
 
 export const TransactionSchema = BaseSchema.extend({
   id: z.number().int().optional(),
@@ -44,6 +45,7 @@ export const TransactionSchema = BaseSchema.extend({
   totalCost: z.number().optional(), // DECIMAL
   startTime: z.iso.datetime().optional(),
   endTime: z.iso.datetime().optional(),
+  transactionLimit: TransactionLimitSchema.optional().nullable(),
   customData: z.any().nullable().optional(),
 });
 

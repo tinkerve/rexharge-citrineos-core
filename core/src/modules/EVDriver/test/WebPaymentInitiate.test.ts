@@ -14,7 +14,7 @@
  */
 
 import Fastify from 'fastify';
-import { afterEach, beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AttributeEnum,
   CacheNamespace,
