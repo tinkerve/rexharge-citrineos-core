@@ -38,7 +38,7 @@ import { aSecurityEventNotificationRequest } from '../providers/SecurityEvent.js
 
 // ─── Paths (resolved relative to this file) ───────────────────────────────────
 
-const MONOREPO_ROOT = fileURLToPath(new URL('../../../../../../', import.meta.url));
+const SERVER_ROOT = fileURLToPath(new URL('../../../../../../apps/Server/', import.meta.url));
 const SERVER_DIST = fileURLToPath(
   new URL('../../../../../../apps/Server/dist/index.js', import.meta.url),
 );
@@ -101,9 +101,17 @@ async function waitForHealth(timeoutMs = 45_000): Promise<void> {
 }
 
 async function killServer(proc: ChildProcess): Promise<void> {
+  if (proc.exitCode !== null || proc.signalCode !== null) return;
+  const exited = new Promise<void>((resolve) => proc.once('exit', () => resolve()));
   proc.kill('SIGTERM');
-  // Wait for the OS to release the ports before the next scenario starts.
-  await new Promise((r) => setTimeout(r, 2_000));
+  const timeout = new Promise<void>((resolve) =>
+    setTimeout(() => {
+      if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
+      resolve();
+    }, 10_000),
+  );
+  await Promise.race([exited, timeout]);
+  await exited; // ensure we don't return until the OS has reaped the process
 }
 
 // ─── OCPP WebSocket helpers ───────────────────────────────────────────────────
@@ -177,7 +185,7 @@ beforeAll(async () => {
   // so the same vars we use to start the server point migrations at test PG.
   // This also runs 20250430110000-create-default-tenant which seeds Tenant id=1.
   execSync('pnpm run migrate', {
-    cwd: MONOREPO_ROOT,
+    cwd: SERVER_ROOT,
     env: buildTestEnv(),
     stdio: 'inherit',
   });
@@ -197,7 +205,7 @@ beforeAll(async () => {
   const now = new Date().toISOString();
   for (const stationId of ['E2E-CP-SEQUELIZE', 'E2E-CP-DRIZZLE']) {
     await seedClient.query(
-      `INSERT INTO "ChargingStations" (id, "isOnline", "createdAt", "updatedAt", "tenantId")
+      `INSERT INTO "ChargingStations" ("ocppConnectionName", "isOnline", "createdAt", "updatedAt", "tenantId")
        VALUES ($1, false, $2, $3, 1)
        ON CONFLICT DO NOTHING`,
       [stationId, now, now],
@@ -246,7 +254,7 @@ describe.each([
   afterAll(async () => {
     await db?.end();
     if (server) await killServer(server);
-  });
+  }, 30_000);
 
   it('returns a CallResult and persists the SecurityEvent record', async () => {
     const msgId = crypto.randomUUID();
@@ -259,21 +267,22 @@ describe.each([
       // OCPP 2.0.1 Result: [3, uniqueId, payload]
       const response = await sendCall(ws, msgId, 'SecurityEventNotification', payload);
 
+      console.log(`[${label}] OCPP response:`, response);
       expect(response[0]).toBe(3);
       expect(response[1]).toBe(msgId);
       expect(response[2]).toEqual({});
 
-      const { rows } = await db.query<{ stationId: string; type: string }>(
-        `SELECT "stationId", "type"
+      const { rows } = await db.query<{ ocppConnectionName: string; type: string }>(
+        `SELECT "ocppConnectionName", "type"
            FROM "SecurityEvents"
-          WHERE "stationId" = $1
+          WHERE "ocppConnectionName" = $1
           ORDER BY id DESC
           LIMIT 1`,
         [stationId],
       );
 
       expect(rows).toHaveLength(1);
-      expect(rows[0].stationId).toBe(stationId);
+      expect(rows[0].ocppConnectionName).toBe(stationId);
       expect(rows[0].type).toBe(payload.type);
     } finally {
       ws.close();
