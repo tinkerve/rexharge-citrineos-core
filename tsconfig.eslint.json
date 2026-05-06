@@ -9,7 +9,7 @@
     "apps/Server/**/*.json",
     "apps/*.ts",
     "vitest.config.ts",
-    "migrations/**/*.ts",
+    "apps/Server/migrations/**/*.ts",
     "seeders/**/*.ts"
   ],
   "compilerOptions": {

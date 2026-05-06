@@ -15,8 +15,8 @@
  * It runs twice — once with the default Sequelize repository and once with
  * CITRINEOS_USE_DRIZZLE_SECURITY_EVENT=true — confirming both write the same record.
  *
- * Prerequisites: run `npm run test:e2e` (which builds first) rather than
- * `npm test`, since the server child process needs Server/dist/index.js to be
+ * Prerequisites: run `pnpm run test:e2e` (which builds first) rather than
+ * `pnpm test`, since the server child process needs Server/dist/index.js to be
  * current and sequelize-cli needs dist/migrations/*.
  *
  * Why no manual Tenant seed?
@@ -24,17 +24,17 @@
  *   automatically, so we rely on the real migration path here.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
 import { execSync, spawn, type ChildProcess } from 'child_process';
 import { mkdtempSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { fileURLToPath } from 'url';
-import WebSocket from 'ws';
 import { Client } from 'pg';
-import { aSecurityEventNotificationRequest } from '../providers/SecurityEvent.js';
+import { GenericContainer, Wait, type StartedTestContainer } from 'testcontainers';
+import { fileURLToPath } from 'url';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import WebSocket from 'ws';
 import { createLocalConfig } from '../../../../../../apps/Server/src/config/envs/local.js';
+import { aSecurityEventNotificationRequest } from '../providers/SecurityEvent.js';
 
 // ─── Paths (resolved relative to this file) ───────────────────────────────────
 
@@ -176,7 +176,7 @@ beforeAll(async () => {
   // sequelize.bridge.config.ts reads BOOTSTRAP_CITRINEOS_DATABASE_* env vars,
   // so the same vars we use to start the server point migrations at test PG.
   // This also runs 20250430110000-create-default-tenant which seeds Tenant id=1.
-  execSync('npm run migrate', {
+  execSync('pnpm run migrate', {
     cwd: MONOREPO_ROOT,
     env: buildTestEnv(),
     stdio: 'inherit',
