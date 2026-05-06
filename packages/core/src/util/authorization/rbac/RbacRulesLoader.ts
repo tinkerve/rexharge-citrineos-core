@@ -33,7 +33,7 @@ export class RbacRulesLoader {
    * @param filePath Path to the JSON rules file
    */
   private loadRules(filePath: string): void {
-    const absoluteFilePath = path.join(process.cwd(), filePath);
+    const absoluteFilePath = path.resolve(process.cwd(), filePath);
     try {
       if (!fs.existsSync(absoluteFilePath)) {
         this._logger.warn(`Rules file not found at ${absoluteFilePath}, using empty rules`);
