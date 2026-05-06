@@ -351,6 +351,63 @@ export class TransactionsModule extends AbstractModule {
     );
 
     if (response) {
+      // F07: Remote start with fixed cost, energy, SoC or time
+      // When TransactionEvent(Started) arrives with remoteStartId, check cache for stored transactionLimit
+      if (
+        transactionEvent.eventType === TransactionEventEnum.Started &&
+        transactionEvent.transactionInfo.remoteStartId &&
+        isOcpp21
+      ) {
+        const ocpp21Response = response as OCPP2_1.TransactionEventResponse;
+        const remoteStartId = transactionEvent.transactionInfo.remoteStartId;
+
+        try {
+          const cacheKey = `remotestart:${tenantId}:${ocppConnectionName}:${remoteStartId}`;
+          const cachedLimitStr = await this._cache.get<string>(cacheKey, CacheNamespace.Other);
+
+          if (cachedLimitStr) {
+            const remoteStartLimit: OCPP2_1.TransactionLimitType = JSON.parse(cachedLimitStr);
+
+            // F07.FR.02: Set transactionLimit in response
+            if (
+              remoteStartLimit.maxCost != null ||
+              remoteStartLimit.maxEnergy != null ||
+              remoteStartLimit.maxTime != null ||
+              remoteStartLimit.maxSoC != null
+            ) {
+              ocpp21Response.transactionLimit = {};
+              if (remoteStartLimit.maxCost != null) {
+                ocpp21Response.transactionLimit.maxCost = remoteStartLimit.maxCost;
+              }
+              if (remoteStartLimit.maxEnergy != null) {
+                ocpp21Response.transactionLimit.maxEnergy = remoteStartLimit.maxEnergy;
+              }
+              if (remoteStartLimit.maxTime != null) {
+                ocpp21Response.transactionLimit.maxTime = remoteStartLimit.maxTime;
+              }
+              if (remoteStartLimit.maxSoC != null) {
+                ocpp21Response.transactionLimit.maxSoC = remoteStartLimit.maxSoC;
+              }
+
+              // Clear the cache entry - limit is consumed on first transaction start
+              await this._cache.remove(cacheKey, CacheNamespace.Other);
+
+              this._logger.info(
+                `Set transactionLimit from RequestStartTransaction for station ${ocppConnectionName}, ` +
+                  `remoteStartId=${remoteStartId}, transaction ${transactionId}: ` +
+                  `maxCost=${remoteStartLimit.maxCost}, maxEnergy=${remoteStartLimit.maxEnergy}, ` +
+                  `maxTime=${remoteStartLimit.maxTime}, maxSoC=${remoteStartLimit.maxSoC}`,
+              );
+            }
+          }
+        } catch (error) {
+          this._logger.error(
+            `Failed to read remote start transaction limit from cache for remoteStartId ${remoteStartId}`,
+            error,
+          );
+        }
+      }
+
       // Include transactionLimit in TransactionEventResponse when setting/changing a limit.
       if (isOcpp21 && transaction) {
         const ocpp21Response = response as OCPP2_1.TransactionEventResponse;

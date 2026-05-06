@@ -69,6 +69,36 @@ export class EVDriverOcpp2Api
     for (const i of identifier) {
       let payloadMessage: string | undefined;
 
+      // F07: Store transactionLimit in cache for remote start with fixed cost, energy, SoC or time
+      // The limit will be retrieved when TransactionEvent(Started) arrives with matching remoteStartId
+      if (this._ocppVersion === OCPPVersion.OCPP2_1 && request.customData?.transactionLimit) {
+        try {
+          const transactionLimit = request.customData
+            .transactionLimit as OCPP2_1.TransactionLimitType;
+          const cacheKey = `remotestart:${tenantId}:${i}:${request.remoteStartId}`;
+          const cacheTTL = 300; // 5 minutes - should be enough for transaction to start
+
+          await this._module.cache.set(
+            cacheKey,
+            JSON.stringify(transactionLimit),
+            CacheNamespace.Other,
+            cacheTTL,
+          );
+
+          this._logger.info(
+            `Stored transactionLimit for RequestStartTransaction on station ${i}, ` +
+              `remoteStartId=${request.remoteStartId}: ` +
+              `maxCost=${transactionLimit.maxCost}, maxEnergy=${transactionLimit.maxEnergy}, ` +
+              `maxTime=${transactionLimit.maxTime}, maxSoC=${transactionLimit.maxSoC}`,
+          );
+        } catch (error) {
+          this._logger.error(
+            `Failed to store transactionLimit for remoteStartId ${request.remoteStartId}`,
+            error,
+          );
+        }
+      }
+
       // If a Charging Profile is provided, do additional validations
       if (request.chargingProfile) {
         const chargingProfile = { ...request.chargingProfile };
