@@ -90,7 +90,7 @@ async function waitForHealth(timeoutMs = 45_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(`http://localhost:${HTTP_PORT}/health`);
+      const res = await fetch(`http://localhost:${HTTP_PORT}/health/ready`);
       if (res.ok) return;
     } catch {
       // server not up yet
@@ -231,9 +231,13 @@ describe.each([
   const stationId = `E2E-CP-${label.toUpperCase()}`;
 
   beforeAll(async () => {
+    console.log(
+      `Starting server for scenario "${label}" with ports PG:${pgPort} RMQ:${rabbitPort}...`,
+    );
     server = spawnServer(extraEnv);
 
-    // Surface server stderr so failures are debuggable without digging into logs.
+    // Surface server output so failures are debuggable without digging into logs.
+    server.stdout?.on('data', (c: Buffer) => process.stdout.write(`[server:${label}] ${c}`));
     server.stderr?.on('data', (chunk: Buffer) => {
       process.stderr.write(`[server:${label}] ${chunk}`);
     });
