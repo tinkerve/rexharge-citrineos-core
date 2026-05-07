@@ -70,7 +70,6 @@ import { CostCalculator } from './CostCalculator.js';
 import { CostNotifier } from './CostNotifier.js';
 import { StatusNotificationService } from './StatusNotificationService.js';
 import { TransactionService } from './TransactionService.js';
-import { TriggerReasonEnumType } from '@citrineos/base/dist/src/ocpp/model/2.1/index.js';
 
 /**
  * Component that handles transaction related messages.
@@ -661,8 +660,8 @@ export class TransactionsModule extends AbstractModule {
       if (
         isOcpp21 &&
         transactionEvent.eventType === TransactionEventEnum.Ended &&
-        (transactionEvent.triggerReason === TriggerReasonEnumType.StopAuthorized ||
-          transactionEvent.triggerReason === TriggerReasonEnumType.EVConnectTimeout) &&
+        (transactionEvent.triggerReason === OCPP2_1.TriggerReasonEnumType.StopAuthorized ||
+          transactionEvent.triggerReason === OCPP2_1.TriggerReasonEnumType.EVConnectTimeout) &&
         (!transaction.totalKwh || transaction.totalKwh <= 0)
       ) {
         const tariffEnabled: VariableAttribute[] =
