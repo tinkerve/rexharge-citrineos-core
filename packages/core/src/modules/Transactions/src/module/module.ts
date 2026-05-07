@@ -53,10 +53,7 @@ import { OCPP2_0_1_Mapper } from '@dal/index.js';
 import { Authorization } from '@dal/layers/sequelize/model/Authorization/index.js';
 import { Component, VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import { Tariff } from '@dal/layers/sequelize/model/Tariff/Tariffs.js';
-import {
-  ChargingProfile,
-  ChargingSchedule,
-} from '@dal/layers/sequelize/model/ChargingProfile/index.js';
+import { ChargingSchedule } from '@dal/layers/sequelize/model/ChargingProfile/index.js';
 import {
   StartTransaction,
   Transaction,
@@ -674,7 +671,7 @@ export class TransactionsModule extends AbstractModule {
             type: AttributeEnum.Actual,
           });
         // C20.FR.03
-        if (tariffEnabled.length == 0 || !Boolean(tariffEnabled[0].value)) {
+        if (tariffEnabled.length == 0 || !tariffEnabled[0].value) {
           this._logger.info(`Central cost calculation is used for transaction ${transactionId}`);
           response.totalCost = 0;
         }
