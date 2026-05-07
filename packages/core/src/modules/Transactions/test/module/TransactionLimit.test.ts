@@ -2,9 +2,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
 import type {
   BootstrapConfig,
   CrudRepository,
@@ -26,8 +23,10 @@ import {
   OCPP2_1,
   OCPP_CallAction,
   OCPPVersion,
-  TransactionEventEnum,
 } from '@citrineos/base';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   IAuthorizationRepository,
   IDeviceModelRepository,

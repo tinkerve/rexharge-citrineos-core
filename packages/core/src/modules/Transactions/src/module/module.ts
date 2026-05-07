@@ -36,7 +36,7 @@ import {
   TariffSetStatusEnum,
   TransactionEventEnum,
 } from '@citrineos/base';
-import { sequelize } from '@dal/index.js';
+import { OCPP2_0_1_Mapper, sequelize } from '@dal/index.js';
 import type {
   IAuthorizationRepository,
   IChargingProfileRepository,
@@ -49,14 +49,10 @@ import type {
 } from '@dal/interfaces/repositories.js';
 import { SequelizeOCPPMessageRepository } from '@dal/layers/sequelize/index.js';
 import * as OCPP1_6_Mapper from '@dal/layers/sequelize/mapper/1.6/index.js';
-import { OCPP2_0_1_Mapper } from '@dal/index.js';
 import { Authorization } from '@dal/layers/sequelize/model/Authorization/index.js';
+import { ChargingSchedule } from '@dal/layers/sequelize/model/ChargingProfile/index.js';
 import { Component, VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/index.js';
 import { Tariff } from '@dal/layers/sequelize/model/Tariff/Tariffs.js';
-import {
-  ChargingProfile,
-  ChargingSchedule,
-} from '@dal/layers/sequelize/model/ChargingProfile/index.js';
 import {
   StartTransaction,
   Transaction,
