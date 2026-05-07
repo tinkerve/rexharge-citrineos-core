@@ -6,25 +6,31 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@dal/*": ["./core/src/dal/*"],
-      "@modules/*": ["./core/src/modules/*"],
-      "@util/*": ["./core/src/util/*"],
-      "@ocpp/*": ["./base/src/ocpp/*"],
-      "@config/*": ["./base/src/config/*"],
-      "@interfaces/*": ["./base/src/interfaces/*"],
-      "@base-util/*": ["./base/src/util/*"]
+      "@dal/*": ["./packages/core/src/dal/*"],
+      "@modules/*": ["./packages/core/src/modules/*"],
+      "@util/*": ["./packages/core/src/util/*"],
+      "@ocpp/*": ["./packages/base/src/ocpp/*"],
+      "@config/*": ["./packages/base/src/config/*"],
+      "@interfaces/*": ["./packages/base/src/interfaces/*"],
+      "@base-util/*": ["./packages/base/src/util/*"]
     }
   },
-  "exclude": ["./dist/**/*", "**/node_modules/**", "**/vitest.config.ts", "**/test/**"],
+  "exclude": [
+    "./dist/**/*",
+    "**/node_modules/**",
+    "**/vitest.config.ts",
+    "**/test/**",
+    "./migrations/**"
+  ],
   "references": [
     {
-      "path": "./base"
+      "path": "./packages/base"
     },
     {
-      "path": "./core"
+      "path": "./packages/core"
     },
     {
-      "path": "./Server"
+      "path": "./apps/Server"
     }
   ]
 }
