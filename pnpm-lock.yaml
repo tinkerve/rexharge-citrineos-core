@@ -143,7 +143,7 @@ importers:
         version: 4.9.2
       ws:
         specifier: 8.17.1
-        version: 8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+        version: 8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.6)
     devDependencies:
       '@fastify/type-provider-json-schema-to-ts':
         specifier: 4.0.1
@@ -171,8 +171,8 @@ importers:
         specifier: 4.0.8
         version: 4.0.8
       utf-8-validate:
-        specifier: 6.0.3
-        version: 6.0.3
+        specifier: 6.0.6
+        version: 6.0.6
 
   packages/base:
     dependencies:
@@ -5170,10 +5170,6 @@ packages:
 
   url-parse@1.5.10:
     resolution: {integrity: sha512-WypcfiRhfeUP9vvF0j6rw0J3hrWrw6iZv3+22h6iRMJ/8z1Tj6XfLP4DsUix5MhMPnXpiHDoKyoZ/bdCkwBCiQ==}
-
-  utf-8-validate@6.0.3:
-    resolution: {integrity: sha512-uIuGf9TWQ/y+0Lp+KGZCMuJWc3N9BHA+l/UmHd/oUHwJJDeysyTRxNQVkbzsIWfGFbRe3OcgML/i0mvVRPOyDA==}
-    engines: {node: '>=6.14.2'}
 
   utf-8-validate@6.0.6:
     resolution: {integrity: sha512-q3l3P9UtEEiAHcsgsqTgf9PPjctrDWoIXW3NpOHFdRDbLvu4DLIcxHangJ4RLrWkBcKjmcs/6NkerI8T/rE4LA==}
@@ -10815,11 +10811,6 @@ snapshots:
       querystringify: 2.2.0
       requires-port: 1.0.0
 
-  utf-8-validate@6.0.3:
-    dependencies:
-      node-gyp-build: 4.8.4
-    optional: true
-
   utf-8-validate@6.0.6:
     dependencies:
       node-gyp-build: 4.8.4
@@ -11035,10 +11026,10 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.3):
+  ws@8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.6):
     optionalDependencies:
       bufferutil: 4.0.8
-      utf-8-validate: 6.0.3
+      utf-8-validate: 6.0.6
 
   ws@8.17.1(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     optionalDependencies:
