@@ -2,18 +2,7 @@
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "./dist",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "@dal/*": ["./packages/core/src/dal/*"],
-      "@modules/*": ["./packages/core/src/modules/*"],
-      "@util/*": ["./packages/core/src/util/*"],
-      "@ocpp/*": ["./packages/base/src/ocpp/*"],
-      "@config/*": ["./packages/base/src/config/*"],
-      "@interfaces/*": ["./packages/base/src/interfaces/*"],
-      "@base-util/*": ["./packages/base/src/util/*"]
-    }
+    "outDir": "./dist"
   },
   "exclude": [
     "./dist/**/*",

@@ -4,7 +4,6 @@
     "rootDir": ".",
     "outDir": "./dist",
     "composite": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@dal/*": ["./src/dal/*"],

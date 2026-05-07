@@ -13,8 +13,6 @@
  * so we can control TOTP outcomes without needing a real shared secret.
  */
 
-import Fastify from 'fastify';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AttributeEnum,
   CacheNamespace,
@@ -22,6 +20,8 @@ import {
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
+import Fastify from 'fastify';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TotpUtil } from '../../../util';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -108,7 +108,7 @@ async function buildServer(mockModule: ReturnType<typeof defaultMockModule>) {
           },
         );
         sharedSecret = sharedSecretAttrs[0]?.value ?? undefined;
-      } catch (error) {
+      } catch {
         return reply
           .code(503)
           .send({ error: 'Failed to read station configuration. Please try again.' });

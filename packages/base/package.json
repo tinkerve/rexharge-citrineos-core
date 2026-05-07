@@ -37,7 +37,7 @@
     "json-schema-to-zod": "1.1.1",
     "lint-staged": "15.4.3",
     "prettier": "3.2.5",
-    "typescript": "5.8.2",
+    "typescript": "^6.0.0",
     "typescript-eslint": "8.17.0",
     "vitest": "3.2.4"
   },
@@ -47,7 +47,7 @@
     "fastify": ">=5.0.0"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.750.0",
+    "@aws-sdk/client-s3": "3.1045.0",
     "@types/big.js": "6.2.2",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
