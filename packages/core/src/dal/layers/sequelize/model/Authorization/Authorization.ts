@@ -9,6 +9,7 @@ import type {
   AuthorizationWhitelistEnumType,
   IdTokenEnumType,
   RealTimeAuthLastAttempt,
+  TariffDto,
   TenantDto,
   TenantPartnerDto,
   TransactionDto,
@@ -102,6 +103,9 @@ export class Authorization extends Model implements AuthorizationDto {
 
   @BelongsTo(() => Authorization, { foreignKey: 'groupAuthorizationId', as: 'groupAuthorization' })
   declare groupAuthorization?: Authorization;
+
+  @BelongsTo(() => Tariff, { foreignKey: 'tariffId', as: 'tariff' })
+  declare tariff?: TariffDto | null;
 
   @Default(false)
   @Column(DataType.BOOLEAN)
