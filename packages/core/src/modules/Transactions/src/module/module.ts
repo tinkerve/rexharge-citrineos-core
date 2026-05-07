@@ -70,6 +70,7 @@ import { CostCalculator } from './CostCalculator.js';
 import { CostNotifier } from './CostNotifier.js';
 import { StatusNotificationService } from './StatusNotificationService.js';
 import { TransactionService } from './TransactionService.js';
+import { TriggerReasonEnumType } from '@citrineos/base/dist/src/ocpp/model/2.1/index.js';
 
 /**
  * Component that handles transaction related messages.
@@ -654,6 +655,30 @@ export class TransactionsModule extends AbstractModule {
           transaction.connectorId,
           transaction.totalKwh,
         );
+      }
+
+      // OCPP 2.1 C20 Cancel transaction after start of transaction before costs has been incurred
+      if (
+        isOcpp21 &&
+        transactionEvent.eventType === TransactionEventEnum.Ended &&
+        (transactionEvent.triggerReason === TriggerReasonEnumType.StopAuthorized ||
+          transactionEvent.triggerReason === TriggerReasonEnumType.EVConnectTimeout) &&
+        (!transaction.totalKwh || transaction.totalKwh <= 0)
+      ) {
+        const tariffEnabled: VariableAttribute[] =
+          await this._deviceModelRepository.readAllByQuerystring(tenantId, {
+            tenantId,
+            ocppConnectionName: message.context.ocppConnectionName,
+            component_name: 'TariffCostCtrlr',
+            variable_name: 'Enabled',
+            variable_instance: 'Tariff',
+            type: AttributeEnum.Actual,
+          });
+        // C20.FR.03
+        if (tariffEnabled.length == 0 || !Boolean(tariffEnabled[0].value)) {
+          this._logger.info(`Central cost calculation is used for transaction ${transactionId}`);
+          response.totalCost = 0;
+        }
       }
 
       // Store total cost in db
