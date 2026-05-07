@@ -20,7 +20,7 @@ jobs:
         image:
           - name: citrineos-server
             context: ./
-            dockerfile: ./Server/deploy.Dockerfile
+            dockerfile: ./apps/Server/deploy.Dockerfile
             config: ''
 
     steps:
