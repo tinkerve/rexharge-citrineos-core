@@ -88,8 +88,6 @@ services:
       - 8443:8443
       - 8444:8444
       - 9229:9229
-      - 8092:8092
-      - 10000-10500:10000-10500 # for dynamic websocket servers
     healthcheck:
       test:
         [
