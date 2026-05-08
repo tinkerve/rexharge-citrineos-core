@@ -149,8 +149,8 @@ describe('I09 - Local Cost Calculation - Get Tariffs', () => {
   let mockTransactionFindAll: any;
 
   beforeEach(async () => {
-    // Import mocked modules
-    const { Connector } = await import('@dal/layers/sequelize/model/Location/Connector.js');
+    // Import mocked modules - need to get sequelize from @dal/index.js
+    const { sequelize } = await import('@dal/index.js');
     const { Authorization } = await import(
       '@dal/layers/sequelize/model/Authorization/Authorization.js'
     );
@@ -158,7 +158,8 @@ describe('I09 - Local Cost Calculation - Get Tariffs', () => {
       '@dal/layers/sequelize/model/TransactionEvent/Transaction.js'
     );
 
-    mockConnectorFindAll = vi.mocked(Connector.findAll);
+    // Mock the sequelize.Connector.findAll which is what the handler actually uses
+    mockConnectorFindAll = vi.mocked(sequelize.Connector.findAll);
     mockAuthorizationFindAll = vi.mocked(Authorization.findAll);
     mockTransactionFindAll = vi.mocked(Transaction.findAll);
 
