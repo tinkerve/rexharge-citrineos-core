@@ -82,11 +82,11 @@ importers:
         specifier: 9.16.0
         version: 9.16.0
       eslint-config-prettier:
-        specifier: 9.1.0
-        version: 9.1.0(eslint@9.16.0)
+        specifier: 9.1.2
+        version: 9.1.2(eslint@9.16.0)
       eslint-plugin-prettier:
         specifier: 5.2.3
-        version: 5.2.3(@types/eslint@9.6.1)(eslint-config-prettier@9.1.0(eslint@9.16.0))(eslint@9.16.0)(prettier@3.2.5)
+        version: 5.2.3(@types/eslint@9.6.1)(eslint-config-prettier@9.1.2(eslint@9.16.0))(eslint@9.16.0)(prettier@3.2.5)
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -241,11 +241,11 @@ importers:
         specifier: 9.16.0
         version: 9.16.0
       eslint-config-prettier:
-        specifier: 9.1.0
-        version: 9.1.0(eslint@9.16.0)
+        specifier: 9.1.2
+        version: 9.1.2(eslint@9.16.0)
       eslint-plugin-prettier:
         specifier: 5.2.3
-        version: 5.2.3(@types/eslint@9.6.1)(eslint-config-prettier@9.1.0(eslint@9.16.0))(eslint@9.16.0)(prettier@3.2.5)
+        version: 5.2.3(@types/eslint@9.6.1)(eslint-config-prettier@9.1.2(eslint@9.16.0))(eslint@9.16.0)(prettier@3.2.5)
       husky:
         specifier: 9.1.7
         version: 9.1.7
@@ -3091,8 +3091,8 @@ packages:
     engines: {node: '>=6.0'}
     hasBin: true
 
-  eslint-config-prettier@9.1.0:
-    resolution: {integrity: sha512-NSWl5BFQWEPi1j4TjVNItzYV7dZXZ+wP6I6ZhrBGpChQhZRUaElihE9uRRkcbRnNb76UMKDF3r+WTmNcGPKsqw==}
+  eslint-config-prettier@9.1.2:
+    resolution: {integrity: sha512-iI1f+D2ViGn+uvv5HuHVUamg8ll4tN+JRHGc6IJi4TP9Kl976C57fzPXgseXNs8v0iA8aSJpHsTWjDb9QJamGQ==}
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
@@ -8468,11 +8468,11 @@ snapshots:
     optionalDependencies:
       source-map: 0.6.1
 
-  eslint-config-prettier@9.1.0(eslint@9.16.0):
+  eslint-config-prettier@9.1.2(eslint@9.16.0):
     dependencies:
       eslint: 9.16.0
 
-  eslint-plugin-prettier@5.2.3(@types/eslint@9.6.1)(eslint-config-prettier@9.1.0(eslint@9.16.0))(eslint@9.16.0)(prettier@3.2.5):
+  eslint-plugin-prettier@5.2.3(@types/eslint@9.6.1)(eslint-config-prettier@9.1.2(eslint@9.16.0))(eslint@9.16.0)(prettier@3.2.5):
     dependencies:
       eslint: 9.16.0
       prettier: 3.2.5
@@ -8480,7 +8480,7 @@ snapshots:
       synckit: 0.9.3
     optionalDependencies:
       '@types/eslint': 9.6.1
-      eslint-config-prettier: 9.1.0(eslint@9.16.0)
+      eslint-config-prettier: 9.1.2(eslint@9.16.0)
 
   eslint-scope@7.2.2:
     dependencies:
