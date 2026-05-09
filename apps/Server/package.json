@@ -33,7 +33,7 @@
     "@fastify/type-provider-json-schema-to-ts": "4.0.1",
     "@types/amqplib": "0.10.1",
     "@types/ws": "8.5.4",
-    "nodemon": "3.1.7",
+    "nodemon": "3.1.14",
     "sequelize": "^6.37.0",
     "sequelize-typescript": "2.1.6",
     "ts-node": "10.9.1"
