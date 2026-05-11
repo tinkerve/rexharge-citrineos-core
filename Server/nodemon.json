@@ -1,6 +1,0 @@
-{
-  "watch": ["src", "../base", "../core"],
-  "ext": "ts,js",
-  "ignore": ["**/dist/**", "**/node_modules/**"],
-  "exec": "npm run build --prefix ../ && npm run migrate --prefix ../ && node --inspect=0.0.0.0:9229 ./dist/index.js"
-}
