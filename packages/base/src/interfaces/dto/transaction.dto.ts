@@ -20,6 +20,7 @@ export const TransactionSchema = BaseSchema.extend({
   id: z.number().int().optional(),
   transactionId: z.string(),
   ocppConnectionName: z.string(),
+  stationId: z.int(),
   isActive: z.boolean(),
   locationId: z.number().int().optional(),
   location: LocationSchema.optional(),

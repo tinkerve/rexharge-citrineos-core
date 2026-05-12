@@ -62,9 +62,8 @@ export class Transaction extends Model implements TransactionDto {
   @Column({
     type: DataType.INTEGER,
     unique: 'stationId_transactionId',
-    allowNull: true,
   })
-  declare stationId?: number;
+  declare stationId: number;
 
   @Column({
     type: DataType.STRING,
