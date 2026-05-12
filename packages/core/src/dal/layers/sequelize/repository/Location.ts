@@ -312,7 +312,7 @@ export class SequelizeLocationRepository
         {
           where: {
             tenantId,
-            ocppConnectioName: connector.ocppConnectionName,
+            ocppConnectionName: connector.ocppConnectionName,
             connectorId: connector.connectorId,
           },
           defaults: {
