@@ -34,7 +34,7 @@ export class LocalStorage implements ConfigStore {
     const absoluteFilePath = path.resolve(process.cwd(), relativePath);
     this._logger.debug(`Saving file to ${absoluteFilePath}`);
     fs.writeFileSync(absoluteFilePath, content, 'utf-8');
-    return filePath ? path.join(filePath, fileName) : fileName;
+    return filePath ? relativePath : fileName;
   }
 
   async getFile(id: string, filePath?: string): Promise<string | undefined> {

@@ -31,6 +31,7 @@ import type {
 } from './client/interface.js';
 import OCSPRequest = jsrsasign.KJUR.asn1.ocsp.OCSPRequest;
 import Request = jsrsasign.KJUR.asn1.ocsp.Request;
+import { LocalStorage } from '@/util/index.js';
 const cryptoEngine = new pkijs.CryptoEngine({
   crypto: new Crypto(),
 });
@@ -38,48 +39,35 @@ pkijs.setEngine('crypto', cryptoEngine as pkijs.ICryptoEngine);
 
 export class CertificateAuthorityService {
   private readonly _v2gClient: IV2GCertificateAuthorityClient;
-  private readonly _chargingStationClient: IChargingStationCertificateAuthorityClient;
+  private readonly _chargingStationClientPromise: Promise<IChargingStationCertificateAuthorityClient>;
   private readonly _logger: Logger<ILogObj>;
   private readonly _cache: ICache;
   private readonly _config: SystemConfig;
   private readonly _fileStorage: IFileStorage;
 
-  private constructor(
+  constructor(
     config: SystemConfig,
     cache: ICache,
-    fileStorage: IFileStorage,
-    chargingStationClient: IChargingStationCertificateAuthorityClient,
-    v2gClient: IV2GCertificateAuthorityClient,
-    logger?: Logger<ILogObj>,
-  ) {
-    this._config = config;
-    this._cache = cache;
-    this._fileStorage = fileStorage;
-    this._chargingStationClient = chargingStationClient;
-    this._v2gClient = v2gClient;
-    this._logger = logger
-      ? logger.getSubLogger({ name: this.constructor.name })
-      : new Logger<ILogObj>({ name: this.constructor.name });
-  }
-
-  static async create(
-    config: SystemConfig,
-    cache: ICache,
-    fileStorage: IFileStorage,
     logger?: Logger<ILogObj>,
     chargingStationClient?: IChargingStationCertificateAuthorityClient,
     v2gClient?: IV2GCertificateAuthorityClient,
-  ): Promise<CertificateAuthorityService> {
-    const csClient =
-      chargingStationClient ||
-      (await CertificateAuthorityService._instantiateChargingStationClient(
-        config,
-        fileStorage,
-        logger,
-      ));
-    const v2g =
+    fileStorage?: IFileStorage,
+  ) {
+    this._config = config;
+    this._cache = cache;
+    this._logger = logger
+      ? logger.getSubLogger({ name: this.constructor.name })
+      : new Logger<ILogObj>({ name: this.constructor.name });
+    this._fileStorage = fileStorage || new LocalStorage('', '', undefined, this._logger);
+    this._v2gClient =
       v2gClient || CertificateAuthorityService._instantiateV2GClient(config, cache, logger);
-    return new CertificateAuthorityService(config, cache, fileStorage, csClient, v2g, logger);
+    this._chargingStationClientPromise = chargingStationClient
+      ? Promise.resolve(chargingStationClient)
+      : CertificateAuthorityService._instantiateChargingStationClient(
+          config,
+          this._fileStorage,
+          logger,
+        );
   }
 
   /**
@@ -108,7 +96,7 @@ export class CertificateAuthorityService {
         return this._createCertificateChainWithoutRootCA(signedCert, caCerts);
       }
       case OCPP2_1.CertificateSigningUseEnumType.ChargingStationCertificate: {
-        return await this._chargingStationClient.getCertificateChain(csrString);
+        return await (await this._chargingStationClientPromise).getCertificateChain(csrString);
       }
       default: {
         throw new Error(`Unsupported certificate type: ${certificateType}`);
@@ -117,7 +105,7 @@ export class CertificateAuthorityService {
   }
 
   async signedSubCaCertificateByExternalCA(csrString: string): Promise<string> {
-    return await this._chargingStationClient.signCertificateByExternalCA(csrString);
+    return await (await this._chargingStationClientPromise).signCertificateByExternalCA(csrString);
   }
 
   async getSignedContractData(iso15118SchemaVersion: string, exiRequest: string): Promise<string> {
@@ -138,18 +126,18 @@ export class CertificateAuthorityService {
         }
       }
       case OCPP2_1.InstallCertificateUseEnumType.CSMSRootCertificate:
-        return await this._chargingStationClient.getRootCACertificate();
+        return await (await this._chargingStationClientPromise).getRootCACertificate();
       default:
         throw new Error(`Certificate type: ${certificateType} not implemented.`);
     }
   }
 
-  updateSecurityCertChainKeyMap(
+  async updateSecurityCertChainKeyMap(
     serverId: string,
     certificateChain: string,
     privateKey: string,
-  ): void {
-    this._chargingStationClient.updateCertificateChainKeyMap(
+  ): Promise<void> {
+    (await this._chargingStationClientPromise).updateCertificateChainKeyMap(
       serverId,
       certificateChain,
       privateKey,
