@@ -710,6 +710,30 @@ export class TransactionsModule extends AbstractModule {
         );
       }
 
+      // OCPP 2.1 C20 Cancel transaction after start of transaction before costs has been incurred
+      if (
+        isOcpp21 &&
+        transactionEvent.eventType === TransactionEventEnum.Ended &&
+        (transactionEvent.triggerReason === OCPP2_1.TriggerReasonEnumType.StopAuthorized ||
+          transactionEvent.triggerReason === OCPP2_1.TriggerReasonEnumType.EVConnectTimeout) &&
+        (!transaction.totalKwh || transaction.totalKwh <= 0)
+      ) {
+        const tariffEnabled: VariableAttribute[] =
+          await this._deviceModelRepository.readAllByQuerystring(tenantId, {
+            tenantId,
+            ocppConnectionName: message.context.ocppConnectionName,
+            component_name: 'TariffCostCtrlr',
+            variable_name: 'Enabled',
+            variable_instance: 'Tariff',
+            type: AttributeEnum.Actual,
+          });
+        // C20.FR.03
+        if (tariffEnabled.length == 0 || !tariffEnabled[0].value) {
+          this._logger.info(`Central cost calculation is used for transaction ${transactionId}`);
+          response.totalCost = 0;
+        }
+      }
+
       // Store total cost in db
       if (response.totalCost && transaction) {
         await this._transactionEventRepository.updateTransactionTotalCostById(

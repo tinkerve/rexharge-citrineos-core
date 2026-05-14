@@ -156,6 +156,7 @@ export const OCPP2_1_CALL_SCHEMA_RECORD: Record<string, object> = {
   [OCPP_CallAction.NotifyEvent]: OCPP2_1.NotifyEventRequestSchema,
   [OCPP_CallAction.NotifyMonitoringReport]: OCPP2_1.NotifyMonitoringReportRequestSchema,
   [OCPP_CallAction.NotifyReport]: OCPP2_1.NotifyReportRequestSchema,
+  [OCPP_CallAction.NotifySettlement]: OCPP2_1.NotifySettlementRequestSchema,
   [OCPP_CallAction.PublishFirmware]: OCPP2_1.PublishFirmwareRequestSchema,
   [OCPP_CallAction.PublishFirmwareStatusNotification]:
     OCPP2_1.PublishFirmwareStatusNotificationRequestSchema,
@@ -331,6 +332,7 @@ export const OCPP2_1_CALL_RESULT_SCHEMA_RECORD: Record<string, object> = {
   [OCPP_CallAction.NotifyEvent]: OCPP2_1.NotifyEventResponseSchema,
   [OCPP_CallAction.NotifyMonitoringReport]: OCPP2_1.NotifyMonitoringReportResponseSchema,
   [OCPP_CallAction.NotifyReport]: OCPP2_1.NotifyReportResponseSchema,
+  [OCPP_CallAction.NotifySettlement]: OCPP2_1.NotifySettlementResponseSchema,
   [OCPP_CallAction.PublishFirmware]: OCPP2_1.PublishFirmwareResponseSchema,
   [OCPP_CallAction.PublishFirmwareStatusNotification]:
     OCPP2_1.PublishFirmwareStatusNotificationResponseSchema,
