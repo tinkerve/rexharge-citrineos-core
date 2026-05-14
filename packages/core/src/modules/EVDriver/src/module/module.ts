@@ -212,8 +212,9 @@ export class EVDriverModule extends AbstractModule {
       ocppMessageRepository || new sequelize.SequelizeOCPPMessageRepository(config, logger);
     this._locationRepository =
       locationRepository || new sequelize.SequelizeLocationRepository(config, logger);
+
     this._certificateAuthorityService =
-      certificateAuthorityService || new CertificateAuthorityService(config, cache, this._logger);
+      certificateAuthorityService || new CertificateAuthorityService(config, cache, logger);
 
     this._localAuthListService = new LocalAuthListService(
       this._localAuthListRepository,

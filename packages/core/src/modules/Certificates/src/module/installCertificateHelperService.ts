@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
+import path from 'path';
 import {
   type CertificateDto,
   type CertificateUseEnumType,
@@ -380,25 +381,34 @@ export class InstallCertificateHelperService {
   ): Promise<void> {
     const tlsServers = websocketServersConfig.filter((c) => c.securityProfile >= 2);
     for (const serverConfig of tlsServers) {
+      // use path basename and dirname is to get rid of the default path in file storage
+      // this makes sure the path is consist with reloading
       if (serverConfig.tlsCertificateChainFilePath) {
         await this.fileStorage.saveFile(
-          serverConfig.tlsCertificateChainFilePath,
+          path.basename(serverConfig.tlsCertificateChainFilePath),
           Buffer.from(certificateChainPem),
+          path.dirname(serverConfig.tlsCertificateChainFilePath),
         );
       }
       if (serverConfig.tlsKeyFilePath) {
-        await this.fileStorage.saveFile(serverConfig.tlsKeyFilePath, Buffer.from(leafKeyPem));
+        await this.fileStorage.saveFile(
+          path.basename(serverConfig.tlsKeyFilePath),
+          Buffer.from(leafKeyPem),
+          path.dirname(serverConfig.tlsKeyFilePath),
+        );
       }
       if (serverConfig.mtlsCertificateAuthorityKeyFilePath) {
         await this.fileStorage.saveFile(
-          serverConfig.mtlsCertificateAuthorityKeyFilePath,
+          path.basename(serverConfig.mtlsCertificateAuthorityKeyFilePath),
           Buffer.from(subCAKeyPem),
+          path.dirname(serverConfig.mtlsCertificateAuthorityKeyFilePath),
         );
       }
       if (rootCACertPem && serverConfig.rootCACertificateFilePath) {
         await this.fileStorage.saveFile(
-          serverConfig.rootCACertificateFilePath,
+          path.basename(serverConfig.rootCACertificateFilePath),
           Buffer.from(rootCACertPem),
+          path.dirname(serverConfig.rootCACertificateFilePath),
         );
       }
       this.logger.info(`Saved TLS certificate files for server ${serverConfig.id}`);

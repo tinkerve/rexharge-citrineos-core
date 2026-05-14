@@ -92,7 +92,11 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       const _httpServer = await this._createAndStartWebsocketServer(websocketServerConfig);
       this._httpServersMap.set(websocketServerConfig.id, _httpServer);
       if (websocketServerConfig.securityProfile > 1) {
-        const certManager = new TlsCredentialManager(websocketServerConfig);
+        const certManager = new TlsCredentialManager(
+          websocketServerConfig,
+          this._fileStorage,
+          this._logger,
+        );
         this._certManagersMap.set(websocketServerConfig.id, certManager);
       }
     });
@@ -104,10 +108,10 @@ export class WebsocketNetworkConnection implements INetworkConnection {
    *
    * @param serverId websocketServerConfig.id
    */
-  public reloadTlsCertificates(serverId: string): void {
+  public async reloadTlsCertificates(serverId: string): Promise<void> {
     const certManager = this._certManagersMap.get(serverId);
     if (certManager) {
-      certManager.reload();
+      await certManager.reload();
     } else {
       this._logger.error(`No TLS Credential Manager found for server ${serverId}`);
       throw new Error(`No TLS Credential Manager found for server ${serverId}`);
@@ -783,8 +787,8 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     const serverOptions: https.ServerOptions = {
       SNICallback:
         config.securityProfile > 1
-          ? (serverName, cb) => {
-              const opts = this._certManagersMap.get(config.id)!.getServerOptions(config);
+          ? async (serverName, cb) => {
+              const opts = await this._certManagersMap.get(config.id)!.getServerOptions(config);
               const ctx = tls.createSecureContext(opts);
               cb(null, ctx);
             }
