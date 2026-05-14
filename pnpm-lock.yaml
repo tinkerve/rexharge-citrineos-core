@@ -155,8 +155,8 @@ importers:
         specifier: 8.5.4
         version: 8.5.4
       nodemon:
-        specifier: 3.1.7
-        version: 3.1.7
+        specifier: 3.1.14
+        version: 3.1.14
       sequelize:
         specifier: ^6.37.0
         version: 6.37.8(pg-hstore@2.3.4)(pg@8.11.3)(sqlite3@5.1.6(encoding@0.1.13))
@@ -4088,8 +4088,8 @@ packages:
     resolution: {integrity: sha512-Z+iLaBGVaSjbIzQ4pX6XV41HrooLsQ10ZWPUehGmuantvzWoDVBnmsdUcOIDM1t+yPor5pDhVlDESgOMEGxhHA==}
     engines: {node: '>=6.0.0'}
 
-  nodemon@3.1.7:
-    resolution: {integrity: sha512-hLj7fuMow6f0lbB0cD14Lz2xNjwsyruH251Pk4t/yIitCFJbmY1myuLlHm/q06aST4jg6EgAh74PIBBrRqpVAQ==}
+  nodemon@3.1.14:
+    resolution: {integrity: sha512-jakjZi93UtB3jHMWsXL68FXSAosbLfY0In5gtKq3niLSkrWznrVBzXFNOEMJUfc9+Ke7SHWoAZsiMkNP3vq6Jw==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -9514,12 +9514,12 @@ snapshots:
 
   nodemailer@6.10.1: {}
 
-  nodemon@3.1.7:
+  nodemon@3.1.14:
     dependencies:
       chokidar: 3.6.0
       debug: 4.4.3(supports-color@5.5.0)
       ignore-by-default: 1.0.1
-      minimatch: 3.1.5
+      minimatch: 10.2.5
       pstree.remy: 1.1.8
       semver: 7.8.0
       simple-update-notifier: 2.0.0
