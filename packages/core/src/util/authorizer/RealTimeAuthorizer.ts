@@ -136,7 +136,7 @@ export class RealTimeAuthorizer implements IAuthorizer {
         tenantPartnerId: authorization.tenantPartnerId!, // Required if authorization has RealTimeAuth
         idToken: authorization.idToken,
         idTokenType: authorization.idTokenType!,
-        locationId: chargingStation!.locationId!.toString(),
+        locationId: chargingStation?.locationId?.toString(),
         ocppConnectionName: context.ocppConnectionName,
         evseId: evseId,
         connectorId: connectorId,
