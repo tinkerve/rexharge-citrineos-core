@@ -817,6 +817,9 @@ export class CitrineOSServer {
       this._config,
       this._cache,
       this._logger,
+      undefined,
+      undefined,
+      this._fileStorage,
     );
   }
 

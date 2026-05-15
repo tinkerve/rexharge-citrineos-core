@@ -5,6 +5,7 @@
 import type { IChargingStationCertificateAuthorityClient } from './interface.js';
 import type { IFileStorage, SystemConfig } from '@citrineos/base';
 import * as acme from 'acme-client';
+import { LocalStorage } from '@/util/files/localStorage.js';
 import { Client } from 'acme-client';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -52,26 +53,42 @@ export class Acme implements IChargingStationCertificateAuthorityClient {
       ? logger.getSubLogger({ name: 'Acme' })
       : new Logger<ILogObj>({ name: 'Acme' });
 
+    // Collect all required file paths to check existence in configured file storage
+    const securityProfile3Servers = config.util.networkConnection.websocketServers.filter(
+      (s) => s.securityProfile === 3,
+    );
+    const requiredPaths = securityProfile3Servers.flatMap((s) => [
+      s.tlsCertificateChainFilePath as string,
+      s.mtlsCertificateAuthorityKeyFilePath as string,
+    ]);
+    const existResults = await Promise.all(requiredPaths.map((p) => fileStorage.exists(p)));
+    const allExistInFileStorage = existResults.every(Boolean);
+    if (allExistInFileStorage) {
+      log.debug('Loading certificate files from configured file storage');
+    } else {
+      log.debug(
+        'Not all certificate files found in configured file storage, falling back to direct path lookup',
+      );
+    }
+    const storage: IFileStorage = allExistInFileStorage ? fileStorage : new LocalStorage('', '');
+    const diskStorage = new LocalStorage('', '');
+
     const securityCertChainKeyMap = new Map<string, [string, string]>();
-    for (const server of config.util.networkConnection.websocketServers) {
-      if (server.securityProfile === 3) {
-        try {
-          const certChain = await fileStorage.getFile(server.tlsCertificateChainFilePath as string);
-          const mtlsKey = await fileStorage.getFile(
-            server.mtlsCertificateAuthorityKeyFilePath as string,
-          );
-          if (certChain === undefined || mtlsKey === undefined) {
-            throw new Error(`Certificate file not found for server ${server.id}`);
-          }
-          securityCertChainKeyMap.set(server.id, [certChain, mtlsKey]);
-        } catch (error) {
-          log.error(
-            'Unable to start Certificates module due to invalid security certificates for {}: {}',
-            server,
-            error,
-          );
-          throw error;
+    for (const server of securityProfile3Servers) {
+      try {
+        const certChain = await storage.getFile(server.tlsCertificateChainFilePath as string);
+        const mtlsKey = await storage.getFile(server.mtlsCertificateAuthorityKeyFilePath as string);
+        if (certChain === undefined || mtlsKey === undefined) {
+          throw new Error(`Certificate file not found for server ${server.id}`);
         }
+        securityCertChainKeyMap.set(server.id, [certChain, mtlsKey]);
+      } catch (error) {
+        log.error(
+          'Unable to start Certificates module due to invalid security certificates for {}: {}',
+          server,
+          error,
+        );
+        throw error;
       }
     }
 
@@ -81,9 +98,9 @@ export class Acme implements IChargingStationCertificateAuthorityClient {
         ? acme.directory.letsencrypt.production
         : acme.directory.letsencrypt.staging;
 
-    const accountKeyStr = await fileStorage.getFile(
-      config.util.certificateAuthority.chargingStationCA?.acme?.accountKeyFilePath as string,
-    );
+    const accountKeyFilePath = config.util.certificateAuthority.chargingStationCA?.acme
+      ?.accountKeyFilePath as string;
+    const accountKeyStr = await diskStorage.getFile(accountKeyFilePath);
     if (!accountKeyStr) {
       throw new Error('Account key file not found');
     }

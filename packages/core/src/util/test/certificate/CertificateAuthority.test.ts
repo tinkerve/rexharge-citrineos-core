@@ -55,10 +55,10 @@ describe('CertificateAuthorityService', () => {
     certificateAuthorityService = new CertificateAuthorityService(
       mockSystemConfig,
       new MemoryCache(),
-      undefined as unknown as IFileStorage,
       undefined,
       mockChargingStationClient,
       mockV2GClient,
+      undefined as unknown as IFileStorage,
     );
   });
 
