@@ -98,19 +98,19 @@ export class Acme implements IChargingStationCertificateAuthorityClient {
         ? acme.directory.letsencrypt.production
         : acme.directory.letsencrypt.staging;
 
-    const accountKeyFilePath = config.util.certificateAuthority.chargingStationCA?.acme
-      ?.accountKeyFilePath as string;
-    const accountKeyStr = await diskStorage.getFile(accountKeyFilePath);
-    if (!accountKeyStr) {
-      throw new Error('Account key file not found');
-    }
-
-    const resolvedClient =
-      client ||
-      new acme.Client({
+    let resolvedClient = client;
+    if (!resolvedClient) {
+      const accountKeyFilePath = config.util.certificateAuthority.chargingStationCA?.acme
+        ?.accountKeyFilePath as string;
+      const accountKeyStr = await diskStorage.getFile(accountKeyFilePath);
+      if (!accountKeyStr) {
+        throw new Error('Account key file not found');
+      }
+      resolvedClient = new acme.Client({
         directoryUrl,
         accountKey: accountKeyStr,
       });
+    }
 
     return new Acme(config, fileStorage, securityCertChainKeyMap, resolvedClient, logger);
   }

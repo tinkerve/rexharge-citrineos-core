@@ -35,7 +35,7 @@ describe('ACME', () => {
         .mockResolvedValueOnce(mockTlsCertificateChain)
         .mockResolvedValueOnce(mockMtlsCertificateAuthorityKey)
         .mockResolvedValueOnce(faker.lorem.word()),
-      exists: vi.fn().mockResolvedValue(false),
+      exists: vi.fn().mockResolvedValue(true),
       createDirectory: vi.fn().mockResolvedValue(undefined),
       deleteFile: vi.fn().mockResolvedValue(undefined),
     } as unknown as IFileStorage;
