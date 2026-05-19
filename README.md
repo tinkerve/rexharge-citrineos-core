@@ -11,7 +11,7 @@ CitrineOS is an open-source project aimed at providing a modular server runtime 
 charging infrastructure. This README will guide you through the process of installing and running CitrineOS.
 
 This is the main part of CitrineOS containing the actual charging station management logic, OCPP message routing and all
-await (await sequelize).sync(); // Use { force: true } for dropping and recreating tables
+related services.
 
 All other documentation and the issue tracking can be found in our main repository
 here: <https://github.com/citrineos/citrineos>.
@@ -20,6 +20,7 @@ here: <https://github.com/citrineos/citrineos>.
 
 - [Overview](#overview)
 - [Architecture Flow](#architecture-flow)
+- [Repository Structure](#repository-structure)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Starting the Server without Docker](#starting-the-server-without-docker)
@@ -51,7 +52,7 @@ The system features:
 - Configurable logical modules with decorators
   - `@AsHandler` to handle incoming OCPP messages (1.6 or 2.0.1)
   - `@AsMessageEndpoint` to expose functions allowing sending messages to charging stations
-  - `@AsDataEndpoint` to expose CRUD access to entities defined in `01_Data`
+  - `@AsDataEndpoint` to expose CRUD access to data entities
 - Utilities to connect and extend various message broker and cache mechanisms
   - Currently supported broker is **RabbitMQ**
   - Currently supported caches are **In Memory** and **Redis**
@@ -60,7 +61,7 @@ For more information on the project go to [citrineos.github.io](https://citrineo
 
 ## Architecture Flow
 
-Here’s a **flowchart-style overview** of CitrineOS architecture and message flow:
+Here's a **flowchart-style overview** of CitrineOS architecture and message flow:
 
 ```text
        ┌───────────────────┐
@@ -105,14 +106,29 @@ Here’s a **flowchart-style overview** of CitrineOS architecture and message fl
 2. **CitrineOS Server** receives and routes messages via **WebSocket** to the **OCPP Router**.
 3. The **Message Broker (RabbitMQ)** handles **inter-module communication**, enabling asynchronous processing between the OCPP Router and other server modules.
 4. Operational and configuration data are persisted in **PostgreSQL**.
-5. Files and assets are stored in **Amazon S3** or **Google Cloud Storage (GCS)** in supported environments. **MinIO** is used for **local development**, providing **S3-compatible storage only**. Local development does **not** support a GCS-compatible storage backend.
+5. Files and assets are stored in **Amazon S3** or **Google Cloud Storage (GCS)** in supported environments. **MinIO** is used for **local development**, providing **S3-compatible storage**. Local development does **not** support a GCS-compatible storage backend.
+
+## Repository Structure
+
+This repository is a **pnpm monorepo** with the following packages:
+
+```
+citrineos-core/
+├── apps/
+│   └── Server/          # OCPP server entrypoint, Docker setup, migrations
+├── packages/
+│   ├── base/            # Shared types, interfaces, and utilities (@citrineos/base)
+│   └── core/            # Core OCPP modules and logic (@citrineos/core)
+├── package.json         # Root workspace scripts
+└── pnpm-workspace.yaml  # pnpm workspace configuration
+```
 
 ### Prerequisites
 
 Before you begin, make sure you have the following installed on your system:
 
-- Node.js (v22.11 or higher): [Download Node.js](https://nodejs.org/)
-- npm (Node Package Manager): [Download npm](https://www.npmjs.com/get-npm)
+- Node.js (v24.4.1 or higher): [Download Node.js](https://nodejs.org/)
+- pnpm (Node Package Manager): [Download pnpm](https://pnpm.io/installation)
 - Docker (Optional). Version >= 20.10: [Download Docker](https://docs.docker.com/get-docker/)
 
 ### Installation
@@ -123,25 +139,28 @@ Before you begin, make sure you have the following installed on your system:
    git clone https://github.com/citrineos/citrineos-core
    ```
 
-1. Install project dependencies from root dir:
+1. Install project dependencies from the root directory:
 
    ```shell
-   npm run install-all
+   pnpm install
    ```
 
-1. Build project from root dir:
+1. Build the project from the root directory:
 
    ```shell
-   npm run build
+   pnpm run build
    ```
 
-1. The docker container should be initialized from `cd /Server` by running `docker-compose -f ./docker-compose.yml up -d` or
-   by using the IntelliJ `Server` Run Configuration which was created for this purpose.
+1. The Docker container should be initialized from `apps/Server` by running:
 
-1. Running `docker-compose.yml` will ensure that the container is configured to expose the `:9229` debugging
+   ```shell
+   cd apps/Server
+   docker-compose up -d
+   ```
+
+   Running `docker-compose.yml` will ensure that the container is configured to expose the `:9229` debugging
    port for the underlying NodeJS process. A variety of tools can be utilized to establish a debugger connection
-   with the exposed localhost 9229 port which is forwarded to the NodeJS service running within docker. The IntelliJ
-   `Attach Debugger` Run Configuration was made to attach to a debugging session.
+   with the exposed localhost 9229 port which is forwarded to the NodeJS service running within Docker.
 
 ### Database Sync vs. Migration
 
@@ -149,8 +168,8 @@ By default, CitrineOS uses migrations to manage database schema changes. This is
 
 For development purposes, you can also use `sync` to automatically synchronize your database schema with the models. There are two sync scripts available:
 
-- `npm run sync-db`: This will synchronize the database schema with the models without altering existing tables. This is useful for development when you want to quickly update the schema without losing data.
-- `npm run force-sync-db`: This will drop all tables and recreate them based on the models. This is useful when you want to start with a fresh database.
+- `pnpm run sync-db`: This will synchronize the database schema with the models without altering existing tables. This is useful for development when you want to quickly update the schema without losing data.
+- `pnpm run force-sync-db`: This will drop all tables and recreate them based on the models. This is useful when you want to start with a fresh database.
 
 **Disclaimer:** Using `sync` in a production environment is not recommended as it can lead to data loss. Always use migrations for production deployments.
 
@@ -182,15 +201,21 @@ We recommend running and developing the project with the `docker-compose` set-up
 Additional Run Configurations should be made for other IDEs (ex VSCode).
 
 To change necessary configuration for execution outside of `docker-compose`, please adjust the configuration file
-at `Server/src/config/envs/local.ts`. Make sure any changes to the local configuration do not make it into your PR.
+at `apps/Server/src/config/envs/local.ts`. Make sure any changes to the local configuration do not make it into your PR.
 
 ## Starting the Server
 
-To start the CitrineOS server, run the following command:
+To start the CitrineOS server, run the following command from the root directory:
 
 ```shell
-cd Server
-npm run start
+pnpm run start
+```
+
+Or from the `apps/Server` directory:
+
+```shell
+cd apps/Server
+pnpm run start
 ```
 
 This will launch the CitrineOS server with the specified configuration. The debugger will be available
@@ -198,22 +223,22 @@ on port 9229.
 
 ### Attaching Debugger
 
-Whether you run the application with Docker or locally with npm, you should be able to attach a debugger.
+Whether you run the application with Docker or locally with pnpm, you should be able to attach a debugger.
 With debugger attached you should be able to set breakpoints in the TS code right from your IDE and debug
 with ease.
 
 ## Attaching Debugger before execution using `--inspect-brk`
 
-You can modify `nodemon.json` exec command from:
+You can modify `apps/Server/nodemon.json` exec command from:
 
 ```shell
-npm run build --prefix ../ && node --inspect=0.0.0.0:9229 ./dist/index.js
+pnpm run build --prefix ../../ && pnpm run migrate && node --inspect=0.0.0.0:9229 ./dist/index.js
 ```
 
 to
 
 ```shell
-npm run build --prefix ../ && node --inspect-brk=0.0.0.0:9229 ./dist/index.js
+pnpm run build --prefix ../../ && pnpm run migrate && node --inspect-brk=0.0.0.0:9229 ./dist/index.js
 ```
 
 which will wait for the debugger to attach before proceeding with execution.
@@ -226,28 +251,29 @@ charging stations to point to the server's IP address and port as specified in t
 ## Testing with EVerest
 
 For testing charging stations using EVerest, see:
-[README](./Server/everest/README.md)
+[README](./apps/Server/everest/README.md)
 
 ## Running `clean` and `fresh`
 
-Our current module structure consists of multiple `npm` submodules that are loaded as dependencies
-running the application. This results in the need to rebuild modules that have any file changes. In
+Our current module structure consists of multiple `pnpm` submodules that are loaded as dependencies
+when running the application. This results in the need to rebuild modules that have any file changes. In
 some cases, in particular when switching between branches, especially when there are changes in the
-package.json, the already built `dist` as well as the already generated `package-lock.json` may
+`package.json`, the already built `dist` as well as the already generated `pnpm-lock.yaml` may
 become invalid.
 
-To alleviate the above, we created the `npm run fresh` and the `npm run clean` commands.
+To alleviate the above, we created the following commands (run from the root directory):
 
-`npm run fresh` - will delete all `node_modules`, `dist`, `tsbuildinfo`, `package-lock.json` and clear cache
-`npm run clean` - sub set of `npm run fresh` will only delete the build files `dist` and `tsbuildinfo`
+`pnpm run fresh` - deletes all `node_modules`, `dist`, `tsbuildinfo`, and `pnpm-lock.yaml`, then clears the pnpm cache
+`pnpm run clean` - subset of `pnpm run fresh`; only deletes build artifacts (`dist` and `tsbuildinfo`)
+`pnpm run fi` - convenience command that runs `fresh` followed by `pnpm install`
 
 ## Linting and Prettier
 
 Eslint and Prettier have been configured to help support syntactical consistency throughout the codebase.
 
-`npm run prettier` - will run prettier and format the files
-`npm run lint` - will run linter
-`npm run lint-fix` - will run prettier and linter -fix flag which will attempt to resolve any linting issues.
+`pnpm run prettier` - will run prettier and format the files
+`pnpm run lint` - will run linter
+`pnpm run lint-fix` - will run prettier and linter with the `-fix` flag, which will attempt to resolve any linting issues
 
 ## Information on Docker setup
 
@@ -258,57 +284,43 @@ Furthermore, [Visual Studio
 Code](https://code.visualstudio.com/docs/setup/linux) might be handy as
 a common integrated development environment.
 
-### ARM64 (Apple Silicon) Compatibility
-
-If you're running on Apple Silicon Macs (ARM64 architecture), use the ARM64-compatible docker-compose file:
+The Docker Compose file is located at `apps/Server/docker-compose.yml`. Start all services from that directory:
 
 ```shell
-cd Server
-docker-compose -f docker-compose.arm64.yml up -d
-```
-
-The `docker-compose.arm64.yml` file includes platform specifications (`platform: linux/amd64`) and compatible image versions for:
-
-- RabbitMQ (uses version 3.12-management for better emulation compatibility)
-- PostGIS/PostgreSQL
-- MinIO and MinIO client
-- Hasura GraphQL Engine
-
-**Note:** The ARM64 version runs these services through x86_64 emulation, which may have slightly reduced performance but provides full compatibility.
-
-For regular x86_64 systems, continue using the standard `docker-compose.yml`:
-
-```shell
-cd Server
+cd apps/Server
 docker-compose up -d
 ```
 
 Once Docker is running, the following services should be available:
 
-- **CitrineOS** (service name: citrineos) with ports
-  - `8080`: webserver http - [Swagger](http://localhost:8080/docs)
-  - `8081`: websocket server tcp connection without auth
-  - `8082`: websocket server tcp connection with basic http auth
+- **CitrineOS** (service name: citrine) with ports
+  - `8080`: webserver HTTP - [Swagger](http://localhost:8080/docs)
+  - `8081`: websocket server TCP connection without auth
+  - `8082`: websocket server TCP connection with basic HTTP auth
+  - `8083`: additional websocket server
+  - `8443` / `8444`: TLS websocket servers
+  - `8092`: additional HTTP port
+  - `9229`: Node.js debugger
+  - `10000–10500`: dynamic WebSocket server range
 - **RabbitMQ Broker** (service name: amqp-broker) with ports
-  - `5672`: amqp tcp connection
+  - `5672`: AMQP TCP connection
   - `15672`: RabbitMQ [management interface](http://localhost:15672)
 - **PostgreSQL** (service name: ocpp-db), PostgreSQL database for persistence
-  - `5432`: sql tcp connection
-- **Localstack** (service name: localstack) on port 4566 for mocking aws services
-  - `:4566`: unified AWS service endpoint
+  - `5432`: SQL TCP connection
+- **MinIO** (service name: minio) for S3-compatible local file storage
+  - `9000`: S3 API endpoint
+  - `9001`: MinIO [web console](http://localhost:9001)
+- **Hasura GraphQL Engine** (service name: graphql-engine)
+  - `8090`: [Hasura console](http://localhost:8090)
 
-These three services are defined in `docker-compose.yml` and they
-live inside the docker network `docker_default` with their respective
-ports. By default these ports are directly accessible by using
-`localhost:8080` for example.
-
-So, if you want to access the **amqp-broker** default management port via your
-localhost, you need to access `localhost:15672`.
+These services are defined in `apps/Server/docker-compose.yml` and they
+live inside the docker network with their respective ports. By default these ports are directly
+accessible using `localhost:8080` for example.
 
 # Bootstrap Configuration Environment Variables
 
 All environment variables use the `CITRINEOS_` prefix.
-Additional prefixes can be added by passing the --env-prefix argument to nodemon (see "start:instance1" in Server/package.json)
+Additional prefixes can be added by passing the `--env-prefix` argument to nodemon (see `start:instance1` in `apps/Server/package.json`).
 Here's the complete list of environment variables that are used in bootstrapping the application (this is not the full system configuration):
 
 ## Basic Bootstrap Configuration
@@ -364,7 +376,7 @@ As of release 1.8.0, the schema files used by CitrineOS are not the raw output o
 ## Data Transfer Messages
 
 It is possible to add custom JSON schemas to validate the data fields of DataTransfer messages, which are supported by all OCPP versions.
-In the Server/index.ts code, there is a function ajvInstance() that creates the AJV instance. Here, you could register DataTransfer schemas:
+In the `apps/Server/src/index.ts` code, there is a function `ajvInstance()` that creates the AJV instance. Here, you could register DataTransfer schemas:
 
 ```
 import { MyDataTransferRequestSchema } from './path'
@@ -387,11 +399,11 @@ CitrineOS's validation logic assumes that the data field is a string field with 
 The System Configuration defines websocket servers with certain properties, one of which is 'Allow Unknown Charging Stations', a boolean that permits charging stations which are not commissioned to connect to CitrineOS.
 This triggers an auto-commissioning flow which creates the station on its first connection, and creates evses and connectors for that station in response to StatusNotifications.
 This is not recommended for production, it is exclusively for testing and is enabled by the default configuration only on the websocket server at port 8081--which also has no security.
-Since not all information on the charger is necessarily avilable in the OCPP messages, commissioning may be wrong and will be incomplete. In 1.6 in particular, multi-evse stations will not commission properly because 1.6 does not have a concept of 'evses'. This will lead to improper behavior if a 1.6 station with multiple evses is auto-commissioned: CitrineOS will assume each new transaction is on the same evse and will automatically mark older transactions on that evse as inactive, leading to an inconsistent state with the charging station.
+Since not all information on the charger is necessarily available in the OCPP messages, commissioning may be wrong and will be incomplete. In 1.6 in particular, multi-evse stations will not commission properly because 1.6 does not have a concept of 'evses'. This will lead to improper behavior if a 1.6 station with multiple evses is auto-commissioned: CitrineOS will assume each new transaction is on the same evse and will automatically mark older transactions on that evse as inactive, leading to an inconsistent state with the charging station.
 
 ## Hasura Metadata
 
-In order for Hasura to track the existing Citrine tables and relationships, this repository comes with Hasura metadata already exported into the `hasura-metadata` folder.
+In order for Hasura to track the existing Citrine tables and relationships, this repository comes with Hasura metadata already exported into the `apps/Server/hasura-metadata` folder.
 Running the Docker container will automatically import this metadata and track all tables and relationships.
 
 Unfortunately, Hasura doesn't currently support importing metadata from a JSON (which is the format if you export your metadata from the Hasura UI or API).
@@ -428,7 +440,7 @@ hasura metadata export
 ```
 
 - Find the exported files in the `graphql-engine` container's files in the metadata filepath `<name of project i.e. citrine>/metadata` and pull that metadata backup onto your local machine
-- Copy the contents of the copied `metadata` folder into the `hasura-metadata` folder in this repository
+- Copy the contents of the copied `metadata` folder into the `apps/Server/hasura-metadata` folder in this repository
 
 ## Contributing
 

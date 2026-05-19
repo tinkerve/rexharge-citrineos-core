@@ -23,16 +23,6 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "verbatimModuleSyntax": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "@dal/*": ["./core/src/dal/*"],
-      "@modules/*": ["./core/src/modules/*"],
-      "@util/*": ["./core/src/util/*"],
-      "@ocpp/*": ["./base/src/ocpp/*"],
-      "@config/*": ["./base/src/config/*"],
-      "@interfaces/*": ["./base/src/interfaces/*"],
-      "@base-util/*": ["./base/src/util/*"]
-    }
+    "types": ["node"]
   }
 }
