@@ -7,8 +7,7 @@
   "scripts": {
     "install-all": "pnpm install",
     "copy-assets": "pnpm --filter @citrineos/server run copy-assets",
-    "build": "tsc --build --verbose && tsc-alias -p packages/core/tsconfig.json && tsc-alias -p packages/base/tsconfig.json && tsc -p apps/Server/tsconfig.migrations.json && pnpm --filter @citrineos/operator-ui run build",
-    "postbuild": "pnpm run copy-assets",
+    "build": "pnpm -r run build",
     "clear-cache": "pnpm store prune",
     "remove-dependencies": "rm -rf pnpm-lock.yaml node_modules **/node_modules **/**/node_modules",
     "fresh": "pnpm run clean && pnpm run remove-dependencies && pnpm run clear-cache",

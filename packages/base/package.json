@@ -9,6 +9,7 @@
     "dist"
   ],
   "scripts": {
+    "build": "tsc -b tsconfig.json && tsc-alias -p tsconfig.json",
     "prepublish": "pnpm exec eslint ./src",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

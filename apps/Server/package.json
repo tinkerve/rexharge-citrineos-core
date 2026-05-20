@@ -13,6 +13,7 @@
     "clean": "rm -rf dist/* tsconfig.tsbuildinfo",
     "fresh": "rm -rf node_modules pnpm-lock.yaml && pnpm run clean",
     "compile": "pnpm run clean && tsc -p tsconfig.json && tsc -p tsconfig.migrations.json",
+    "build": "tsc -b tsconfig.json && tsc -p tsconfig.migrations.json && pnpm run copy-assets",
     "copy-assets": "ts-node ./copy-assets.ts ./src/assets ./dist/assets",
     "start": "cross-env APP_NAME=all APP_ENV=local BOOTSTRAP_CITRINEOS_CONFIG_FILENAME=config.json BOOTSTRAP_CITRINEOS_FILE_ACCESS_TYPE=local BOOTSTRAP_CITRINEOS_FILE_ACCESS_LOCAL_DEFAULT_FILE_PATH=/data nodemon",
     "start:instance1": "cross-env APP_NAME=all APP_ENV=local BOOTSTRAP_INSTANCE1_CONFIG_FILENAME=config.json BOOTSTRAP_INSTANCE1_FILE_ACCESS_TYPE=local BOOTSTRAP_INSTANCE1_FILE_ACCESS_LOCAL_DEFAULT_FILE_PATH=/data nodemon --require dist/index.js --env-prefix=instance1_",
