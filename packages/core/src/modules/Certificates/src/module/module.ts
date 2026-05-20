@@ -33,6 +33,8 @@ import {
   DeleteCertificateStatusEnum,
   CertificateSigningUseEnum,
   AttributeEnum,
+  OCPPVersion,
+  OCPP2_1,
 } from '@citrineos/base';
 import type {
   ICertificateRepository,
@@ -286,6 +288,11 @@ export class CertificatesModule extends AbstractModule {
     const csrString: string = message.payload.csr.replace(/\n/g, '');
     const certificateType: CertificateSigningUseEnumType | undefined | null =
       message.payload.certificateType;
+    let requestId: number | undefined | null;
+    if (message.protocol === OCPPVersion.OCPP2_1) {
+      const payload21 = message.payload as OCPP2_1.SignCertificateRequest;
+      requestId = payload21.requestId;
+    }
 
     // Validate PEM format
     const validationResult = validatePEMEncodedCSR(message.payload.csr);
@@ -344,17 +351,24 @@ export class CertificatesModule extends AbstractModule {
       ocppConnectionName,
       certificateChainPem,
       certificateType as unknown as CertificateUseEnumType,
+      requestId,
     );
+
+    let certSignedRequest = {
+      certificateChain: certificateChainPem,
+      certificateType: certificateType,
+    } as OCPP2_request_types.CertificateSignedRequest;
+
+    if (message.protocol === OCPPVersion.OCPP2_1 && requestId != null) {
+      (certSignedRequest as OCPP2_1.CertificateSignedRequest).requestId = requestId;
+    }
 
     await this.sendCall(
       ocppConnectionName,
       tenantId,
       message.protocol,
       OCPP_CallAction.CertificateSigned,
-      {
-        certificateChain: certificateChainPem,
-        certificateType: certificateType,
-      } as OCPP2_request_types.CertificateSignedRequest,
+      certSignedRequest,
     );
   }
 
@@ -368,10 +382,29 @@ export class CertificatesModule extends AbstractModule {
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('CertificateSigned received:', message, props);
+    const tenantId = message.context.tenantId;
+    const ocppConnectionName = message.context.ocppConnectionName;
+
+    let requestId: number | undefined;
+    if (message.protocol === OCPPVersion.OCPP2_1) {
+      const originalRequest = await this._ocppMessageRepository.readOnlyOneByQuery(tenantId, {
+        where: {
+          ocppConnectionName,
+          correlationId: message.context.correlationId,
+          origin: MessageOrigin.ChargingStationManagementSystem,
+        },
+      });
+      if (originalRequest) {
+        const certSignedPayload = originalRequest.message[3] as OCPP2_1.CertificateSignedRequest;
+        requestId = certSignedPayload?.requestId ?? undefined;
+      }
+    }
+
     await this.installCertificateHelperService.finalizeInstalledCertificate(
-      message.context.tenantId,
-      message.context.ocppConnectionName,
+      tenantId,
+      ocppConnectionName,
       message.payload.status as unknown as InstallCertificateStatusEnumType,
+      requestId,
     );
     // TODO: If rejected, retry and/or send to callbackUrl if originally part of a triggered refresh
     // TODO: If accepted, revoke old certificate
@@ -530,6 +563,7 @@ export class CertificatesModule extends AbstractModule {
     if (
       !certificateType ||
       (certificateType !== CertificateSigningUseEnum.V2GCertificate &&
+        certificateType !== CertificateSigningUseEnum.V2G20Certificate &&
         certificateType !== CertificateSigningUseEnum.ChargingStationCertificate)
     ) {
       throw new Error(`Unsupported certificate type: ${certificateType}`);

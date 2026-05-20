@@ -79,6 +79,7 @@ export class InstallCertificateHelperService {
     ocppConnectionName: string,
     certificate: string,
     certificateType: CertificateUseEnumType,
+    requestId?: number | null,
   ) {
     const hash = this.getCertificateHash(certificate);
     const existingPendingInstallCertificateAttempt =
@@ -87,6 +88,7 @@ export class InstallCertificateHelperService {
           ocppConnectionName: ocppConnectionName,
           certificateType: certificateType,
           status: null,
+          ...(requestId != null ? { requestId } : {}),
         },
         include: [
           {
@@ -128,6 +130,9 @@ export class InstallCertificateHelperService {
       installCertificateAttempt.ocppConnectionName = ocppConnectionName;
       installCertificateAttempt.certificateType = certificateType;
       installCertificateAttempt.certificateId = existingCertificate!.id;
+      if (requestId != null) {
+        installCertificateAttempt.requestId = requestId;
+      }
       await installCertificateAttempt.save();
     }
   }
@@ -136,12 +141,14 @@ export class InstallCertificateHelperService {
     tenantId: number,
     ocppConnectionName: string,
     status: InstallCertificateStatusEnumType,
+    requestId?: number,
   ) {
     const existingPendingInstallCertificateAttempt =
       await this.installCertificateAttemptRepository.readOnlyOneByQuery(tenantId, {
         where: {
           ocppConnectionName: ocppConnectionName,
           status: null,
+          ...(requestId != null ? { requestId } : {}),
         },
       });
     // should always be true

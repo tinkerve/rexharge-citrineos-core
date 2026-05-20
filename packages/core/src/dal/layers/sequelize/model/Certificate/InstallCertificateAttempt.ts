@@ -59,6 +59,12 @@ export class InstallCertificateAttempt extends Model {
   declare certificate?: CertificateDto;
 
   @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+  })
+  declare requestId?: number | null;
+
+  @Column({
     type: DataType.STRING,
   })
   declare status?: InstallCertificateStatusEnumType | null;

@@ -90,6 +90,7 @@ vi.mock('../../../../dal/layers/sequelize/index.js', async (importOriginal) => {
     ocppConnectionName?: string;
     certificateType?: string;
     certificateId?: number;
+    requestId?: number;
     status?: string;
     save = vi.fn().mockResolvedValue(this);
 
@@ -258,6 +259,63 @@ describe('InstallCertificateHelperService', () => {
       expect(savedAttempt.save).toHaveBeenCalled();
     });
 
+    it('should include requestId when checking for existing pending attempt', async () => {
+      const mockExistingAttempt = { id: 1 } as any;
+      mockInstallCertificateAttemptReadOnlyOneByQuery.mockResolvedValue(mockExistingAttempt);
+
+      await service.prepareToInstallCertificate(
+        tenantId,
+        ocppConnectionName,
+        MOCK_CERTIFICATE,
+        MOCK_CERT_TYPE_V2G as any,
+        42,
+      );
+
+      expect(mockInstallCertificateAttemptReadOnlyOneByQuery).toHaveBeenCalledWith(tenantId, {
+        where: {
+          ocppConnectionName,
+          certificateType: MOCK_CERT_TYPE_V2G,
+          status: null,
+          requestId: 42,
+        },
+        include: [
+          {
+            model: Certificate,
+            where: { certificateFileHash: mockHash },
+          },
+        ],
+      });
+    });
+
+    it('should set requestId on new attempt when provided', async () => {
+      const mockCertDetails = {
+        serialNumber: 123456,
+        issuerName: 'Test Issuer',
+        organizationName: 'Test Org',
+        commonName: 'localhost',
+        countryName: 'US',
+        validBefore: new Date('2027-02-17'),
+        signatureAlgorithm: 'SHA256withECDSA' as any,
+      };
+
+      mockInstallCertificateAttemptReadOnlyOneByQuery.mockResolvedValue(undefined);
+      mockExtractCertificateDetails.mockReturnValue(mockCertDetails);
+      vi.spyOn(service, 'createNewCertificate').mockResolvedValue({ id: 100 } as any);
+
+      await service.prepareToInstallCertificate(
+        tenantId,
+        ocppConnectionName,
+        MOCK_CERTIFICATE,
+        MOCK_CERT_TYPE_V2G as any,
+        42,
+      );
+
+      const savedAttempt = createdInstallCertificateAttemptInstances[0];
+      expect(savedAttempt).toBeDefined();
+      expect(savedAttempt.requestId).toBe(42);
+      expect(savedAttempt.save).toHaveBeenCalled();
+    });
+
     it('should use existing certificate if found and create install attempt', async () => {
       vi.spyOn(service, 'createNewCertificate');
 
@@ -385,6 +443,32 @@ describe('InstallCertificateHelperService', () => {
       const savedInstalledCert = createdInstalledCertificateInstances[0];
       expect(savedInstalledCert).toBeDefined();
       expect(savedInstalledCert.save).toHaveBeenCalled();
+    });
+
+    it('should include requestId in lookup query when provided', async () => {
+      const mockAttemptSave = vi.fn().mockResolvedValue(true);
+      const mockAttempt = {
+        id: 1,
+        save: mockAttemptSave,
+      } as any;
+
+      mockInstallCertificateAttemptReadOnlyOneByQuery.mockResolvedValue(mockAttempt);
+      mockInstalledCertificateReadOnlyOneByQuery.mockResolvedValue(undefined);
+
+      await service.finalizeInstalledCertificate(
+        tenantId,
+        ocppConnectionName,
+        MOCK_STATUS_REJECTED as any,
+        42,
+      );
+
+      expect(mockInstallCertificateAttemptReadOnlyOneByQuery).toHaveBeenCalledWith(tenantId, {
+        where: {
+          ocppConnectionName,
+          status: null,
+          requestId: 42,
+        },
+      });
     });
 
     it('should log error and return if file retrieval fails', async () => {

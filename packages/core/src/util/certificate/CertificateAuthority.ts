@@ -74,7 +74,8 @@ export class CertificateAuthorityService {
     );
 
     switch (certificateType) {
-      case CertificateSigningUseEnum.V2GCertificate: {
+      case CertificateSigningUseEnum.V2GCertificate:
+      case CertificateSigningUseEnum.V2G20Certificate: {
         const signedCert = await this._v2gClient.getSignedCertificate(
           extractEncodedContentFromCSR(csrString),
         );
