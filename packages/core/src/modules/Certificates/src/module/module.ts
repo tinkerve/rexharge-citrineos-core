@@ -354,7 +354,7 @@ export class CertificatesModule extends AbstractModule {
       requestId,
     );
 
-    let certSignedRequest = {
+    const certSignedRequest = {
       certificateChain: certificateChainPem,
       certificateType: certificateType,
     } as OCPP2_request_types.CertificateSignedRequest;
