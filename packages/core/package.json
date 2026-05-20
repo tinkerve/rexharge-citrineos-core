@@ -1,6 +1,6 @@
 {
   "name": "@citrineos/core",
-  "version": "2.0.0-alpha1",
+  "version": "2.0.0-alpha2",
   "description": "The core module including data, util, and all functional modules.",
   "type": "module",
   "main": "dist/index.js",
@@ -34,7 +34,7 @@
     "class-transformer": "^0.5.1",
     "drizzle-orm": "^0.44.0",
     "drizzle-zod": "^0.8.3",
-    "zod": "^4.1.12",
+    "zod": "4.1.12",
     "fastify": "^5.1.0",
     "fastify-plugin": "^5.0.0",
     "jsonwebtoken": "^9.0.2",

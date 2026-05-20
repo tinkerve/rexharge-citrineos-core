@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
+#
+# SPDX-License-Identifier: Apache-2.0
+
+services:
+  citrine-ui:
+    build:
+      # Context is the monorepo root so the workspace lockfile and
+      # @citrineos/base source are available to pnpm install.
+      context: ../../
+      dockerfile: apps/operator-ui/Dockerfile
+    ports:
+      - 3000:3000

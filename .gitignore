@@ -138,6 +138,15 @@ web_modules/
 # Next.js build output
 .next
 out
+.vercel
+next-env.d.ts
+
+# Playwright
+playwright/.auth/
+playwright-report/
+test-results/
+reports/
+tests/e2e/.cache/
 
 # Nuxt.js build / generate output
 .nuxt
@@ -194,17 +203,11 @@ dist
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,node,git
 
-# Files produced by build
-lib/
-
 # Sqlite
 .sqlite
 
-# RabbitMQ
-/Server/data/rabbitmq
-
-# PostgreSQL
-/Server/data/postgresql
+# Server data
+/apps/Server/data
 
 # Created by https://www.toptal.com/developers/gitignore/api/intellij+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=intellij+all
@@ -298,8 +301,6 @@ fabric.properties
 #!.idea/runConfigurations // todo potentially comment back in when vscode and intellij configs are supported
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij+all
-
-data
 
 # Generated certificate backup files
 **/certificates/*.pem.backup

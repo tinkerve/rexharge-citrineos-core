@@ -44,7 +44,14 @@ export default tseslint.config(
   },
   // Ignore patterns
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/lib/**', 'eslint.config.js', 'coverage'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/lib/**',
+      'eslint.config.js',
+      'coverage',
+      'apps/operator-ui/**',
+    ],
   },
   // Disable ESLint rules that conflict with Prettier
   prettier,

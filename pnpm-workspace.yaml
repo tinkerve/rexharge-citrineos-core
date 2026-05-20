@@ -2,3 +2,4 @@ packages:
   - "packages/base"
   - "packages/core"
   - "apps/Server"
+  - "apps/operator-ui"
