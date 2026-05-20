@@ -149,4 +149,4 @@ apps/operator-ui/src/lib/utils/cn.ts
 apps/operator-ui/src/lib/utils/types.ts
 apps/operator-ui/tsconfig.json
 apps/operator-ui/.env.local
-apps/operator-ui/.env.test.example
+apps/operator-ui/.env.test
