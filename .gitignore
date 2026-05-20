@@ -6,15 +6,16 @@
 # $ git config --global mergetool.keepBackup false
 *.orig
 
-# Created by git when using merge tools for conflicts
-*.BACKUP.*
-*.BASE.*
-*.LOCAL.*
-*.REMOTE.*
-*_BACKUP_*.txt
-*_BASE_*.txt
-*_LOCAL_*.txt
-*_REMOTE_*.txt
+# Created by git when using merge tools for conflicts.
+# Patterns like *.BASE.* are intentionally narrowed (anchored to the
+# capitalized suffix forms vim/kdiff3 actually produce) because macOS's
+# case-insensitive git matched the unanchored *.BASE.* against ordinary
+# source files like get.base.report.modal.tsx, silently dropping them
+# from commits.
+*_BACKUP_*
+*_BASE_*
+*_LOCAL_*
+*_REMOTE_*
 
 ### macOS ###
 # General
