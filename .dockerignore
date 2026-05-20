@@ -1,9 +1,8 @@
 # Ignore node modules directories
 **/node_modules
 
-# Ignore distribution directories (lib for backwards compatibility)
+# Ignore distribution directories
 **/dist
-**/lib
 
 # Common ignore files
 .gitignore
@@ -20,10 +19,4 @@
 **/*.Dockerfile
 
 # Specific directories to ignore
-**/data
-
-# include sequelize bridge
-!Server/
-!Server/src/
-!Server/src/config/
-!Server/src/config/sequelize.bridge.config.ts
+**/Server/data

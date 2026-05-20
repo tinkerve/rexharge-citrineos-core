@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM:-linux/amd64} node:24.4.1-alpine AS builder
 
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat python3 py3-setuptools make g++
 RUN corepack enable
 
 WORKDIR /app
@@ -14,7 +14,7 @@ WORKDIR /app
 COPY . .
 
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @citrineos/operator-ui build
+RUN pnpm --filter "@citrineos/operator-ui..." build
 
 FROM node:24.4.1-alpine AS runner
 
