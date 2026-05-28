@@ -2,3 +2,12 @@ packages:
   - "packages/base"
   - "packages/core"
   - "apps/Server"
+  - "apps/operator-ui"
+
+catalog:
+  eslint: 9.16.0
+  "@eslint/js": 9.16.0
+  typescript-eslint: 8.17.0
+  eslint-config-prettier: 9.1.2
+  eslint-plugin-prettier: 5.2.3
+  prettier: 3.6.2

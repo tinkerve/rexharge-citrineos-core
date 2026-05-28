@@ -3,20 +3,20 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { BootstrapConfig } from '@citrineos/base';
 import { CrudRepository, OCPP2_0_1 } from '@citrineos/base';
-import { SequelizeRepository } from './Base.js';
-import { type IDeviceModelRepository } from '../../../interfaces/repositories.js';
-import { type VariableAttributeQuerystring } from '../../../interfaces/queries/VariableAttribute.js';
 import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
+import { type VariableAttributeQuerystring } from '../../../interfaces/queries/VariableAttribute.js';
+import { type IDeviceModelRepository } from '../../../interfaces/repositories.js';
 import { Component } from '../model/DeviceModel/Component.js';
+import { ComponentVariable } from '../model/DeviceModel/ComponentVariable.js';
 import { EvseType } from '../model/DeviceModel/EvseType.js';
 import { Variable } from '../model/DeviceModel/Variable.js';
 import { VariableAttribute } from '../model/DeviceModel/VariableAttribute.js';
 import { VariableCharacteristics } from '../model/DeviceModel/VariableCharacteristics.js';
 import { VariableStatus } from '../model/DeviceModel/VariableStatus.js';
-import { ComponentVariable } from '../model/DeviceModel/ComponentVariable.js';
-import { Sequelize } from 'sequelize-typescript';
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
+import { SequelizeRepository } from './Base.js';
 
 // TODO: Document this
 
@@ -557,7 +557,7 @@ export class SequelizeDeviceModelRepository
 
   private constructQuery(queryParams: VariableAttributeQuerystring): any {
     const evseInclude =
-      queryParams.component_evse_id ?? queryParams.component_evse_connectorId
+      (queryParams.component_evse_id ?? queryParams.component_evse_connectorId)
         ? {
             model: EvseType,
             where: {

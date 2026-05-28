@@ -36,11 +36,12 @@ services:
       retries: 5
 
   citrine:
+    image: citrineos-core-citrine:latest
     build:
       context: ../../
       dockerfile: ./apps/Server/deploy.Dockerfile
     volumes:
-      - ../../package-lock.json:/usr/local/apps/citrineos/package-lock-host.json
+      - ../../pnpm-lock.yaml:/usr/local/apps/citrineos/pnpm-lock.yaml
       - ../../package.json:/usr/local/apps/citrineos/package.json
       - ../../tsconfig.json:/usr/local/apps/citrineos/tsconfig.json
       - ../../tsconfig.build.json:/usr/local/apps/citrineos/tsconfig.build.json
@@ -89,14 +90,13 @@ services:
       - 8444:8444
       - 9229:9229
     healthcheck:
-      test:
-        [
+      test: [
           "CMD-SHELL",
           "node -e \"const net = require(\\\"net\\\"); const client =
-            net.createConnection(8080, \\\"127.0.0.1\\\", () => { client.end();
-            process.exit(0); }); client.on(\\\"error\\\", () =>
-            process.exit(1)); client.setTimeout(5000, () => { client.destroy();
-            process.exit(1); });\"",
+          net.createConnection(8080, \\\"127.0.0.1\\\", () => { client.end();
+          process.exit(0); }); client.on(\\\"error\\\", () =>
+          process.exit(1)); client.setTimeout(5000, () => { client.destroy();
+          process.exit(1); });\"",
         ]
       interval: 30s
       timeout: 10s
@@ -165,7 +165,8 @@ services:
       # HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
       ## uncomment next line to set an admin secret - warning, without configuration this will cause upstream services to fail
       # HASURA_GRAPHQL_ADMIN_SECRET: CitrineOS!
-      HASURA_GRAPHQL_METADATA_DEFAULTS: "{\"backend_configs\":{\"dataconnector\":{\"a\
+      HASURA_GRAPHQL_METADATA_DEFAULTS:
+        "{\"backend_configs\":{\"dataconnector\":{\"a\
         thena\":{\"uri\":\"http://data-connector-agent:8081/api/v1/athena\"},\"\
         mariadb\":{\"uri\":\"http://data-connector-agent:8081/api/v1/mariadb\"},\
         \"mysql8\":{\"uri\":\"http://data-connector-agent:8081/api/v1/mysql\"},\
