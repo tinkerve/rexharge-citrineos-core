@@ -70,7 +70,7 @@ function runNpmScriptToCompletion(scriptName: string): Promise<void> {
 // sibling .next-server.pid file; globalTeardown reads it and tears the
 // process tree down with taskkill /F /T (Windows) or process.kill (Unix).
 function spawnDetachedServer(): number {
-  const serverScript = resolve(REPO_ROOT, 'node_modules', '.bin', 'next');
+  const serverScript = require.resolve('next/dist/bin/next', { paths: [REPO_ROOT] });
   const proc = spawn(process.execPath, [serverScript, 'start'], {
     cwd: REPO_ROOT,
     detached: true,
