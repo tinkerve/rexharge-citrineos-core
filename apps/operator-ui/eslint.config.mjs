@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { FlatCompat } from '@eslint/eslintrc';
-import eslint from '@eslint/js';
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginReact from 'eslint-plugin-react';
 import tseslint from 'typescript-eslint';
+import { sharedConfigs } from '../../eslint.config.base.js';
 
 const compat = new FlatCompat();
 const nextConfigs = compat.extends('next/core-web-vitals').map((config) => {
@@ -15,19 +14,15 @@ const nextConfigs = compat.extends('next/core-web-vitals').map((config) => {
 });
 
 export default tseslint.config(
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...sharedConfigs,
   ...nextConfigs,
-  eslintPluginPrettierRecommended,
   {
     plugins: {
       react: eslintPluginReact,
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/no-empty-object-type': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'cypress/no-unnecessary-waiting': 'off',
     },
@@ -51,8 +46,7 @@ export default tseslint.config(
         },
         {
           selector: "CallExpression[callee.object.name='setTimeout']",
-          message:
-            'Sleep-based waits are forbidden. Use expect.poll or locator.waitFor.',
+          message: 'Sleep-based waits are forbidden. Use expect.poll or locator.waitFor.',
         },
       ],
       'no-restricted-imports': [

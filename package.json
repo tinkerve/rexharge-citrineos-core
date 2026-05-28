@@ -17,15 +17,14 @@
     "start": "pnpm --filter @citrineos/server run start",
     "start-docker": "pnpm --filter @citrineos/server run start-docker",
     "start-docker-cloud": "pnpm --filter @citrineos/server run start-docker-cloud",
-    "lint": "eslint .",
-    "lint-fix": "eslint . --fix",
+    "lint": "pnpm -r run lint",
+    "lint-fix": "pnpm -r run lint-fix",
     "prettier": "prettier --write .",
     "fi": "pnpm run fresh && pnpm run install-all",
     "sync-db": "ts-node ./db.sync.ts",
     "force-sync-db": "ts-node ./db.force-sync.ts",
     "test": "vitest run",
-    "coverage": "vitest run --coverage",
-    "prepare": "husky"
+    "coverage": "vitest run --coverage"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -44,21 +43,16 @@
       "react-is": "19.1.4"
     }
   },
-  "lint-staged": {
-    "**/*.{js,ts,jsx,tsx,json,md}": "prettier --write"
-  },
   "engines": {
     "node": ">=24.4.1"
   },
   "devDependencies": {
-    "husky": "^9.1.7",
-    "lint-staged": "^15.0.0",
-    "prettier": "3.6.2",
-    "eslint": "9.16.0",
-    "@eslint/js": "9.16.0",
-    "typescript-eslint": "8.17.0",
-    "eslint-config-prettier": "9.1.2",
-    "eslint-plugin-prettier": "5.2.3",
+    "prettier": "catalog:",
+    "eslint": "catalog:",
+    "@eslint/js": "catalog:",
+    "typescript-eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-prettier": "catalog:",
     "vitest": "3.2.4",
     "@vitest/coverage-v8": "3.2.4",
     "@types/jsrsasign": "^10.5.15",

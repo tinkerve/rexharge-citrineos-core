@@ -9,9 +9,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const withNextIntl = createNextIntlPlugin(
-  resolve(__dirname, 'src/lib/i18n/request.ts'),
-);
+const withNextIntl = createNextIntlPlugin(resolve(__dirname, 'src/lib/i18n/request.ts'));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

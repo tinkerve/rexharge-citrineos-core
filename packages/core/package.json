@@ -10,6 +10,8 @@
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json && tsc-alias -p tsconfig.json",
+    "lint": "eslint .",
+    "lint-fix": "eslint . --fix",
     "prepublish": "pnpm exec eslint",
     "test": "vitest run"
   },
@@ -59,6 +61,7 @@
     "ws": "^8.17.0"
   },
   "devDependencies": {
+    "@eslint/js": "catalog:",
     "@faker-js/faker": "^8.0.0",
     "@types/amqplib": "0.10.4",
     "@types/bcryptjs": "2.4.6",
@@ -67,9 +70,12 @@
     "@types/nodemailer": "6.4.23",
     "@types/ws": "^8.5.0",
     "drizzle-kit": "^0.31.0",
-    "eslint": "8.48.0",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-prettier": "catalog:",
     "testcontainers": "^11.0.0",
     "typescript": "^6.0.0",
+    "typescript-eslint": "catalog:",
     "vitest": "^2.0.0"
   }
 }
