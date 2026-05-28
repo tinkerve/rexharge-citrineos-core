@@ -5,8 +5,6 @@
 services:
   citrine-ui:
     build:
-      # Context is the monorepo root so the workspace lockfile and
-      # @citrineos/base source are available to pnpm install.
       context: ../../
       dockerfile: apps/operator-ui/Dockerfile
     ports:

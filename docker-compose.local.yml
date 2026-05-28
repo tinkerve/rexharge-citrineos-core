@@ -1,77 +1,27 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 #
 # SPDX-License-Identifier: Apache-2.0
+#
+# Combined docker-compose for running CitrineOS server + operator UI using
+# the latest published images from ghcr.io (built by the
+# push-release-tagged-server.yml and push-release-tagged-operator-ui.yml
+# GitHub Actions workflows).
 services:
-  amqp-broker:
-    image: rabbitmq:3-management
-    ports:
-      - 15672:15672
-      - 5672:5672
-    environment:
-      RABBITMQ_DEFAULT_USER: "guest"
-      RABBITMQ_DEFAULT_PASS: "guest"
-    volumes:
-      - ./data/rabbitmq:/var/lib/rabbitmq
-    healthcheck:
-      test: rabbitmq-diagnostics -q check_port_connectivity
-      interval: 10s
-      timeout: 10s
-      retries: 3
-
-  ocpp-db:
-    image: postgis/postgis:16-3.5
-    platform: linux/amd64
-    ports:
-      - 5432:5432
-    volumes:
-      - ./data/postgresql/pgdata:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: citrine
-      POSTGRES_USER: citrine
-      POSTGRES_PASSWORD: "citrine"
-    healthcheck:
-      test: "pg_isready --username=citrine"
-      interval: 5s
-      timeout: 10s
-      retries: 5
-
   citrine:
     build:
-      context: ../../
-      dockerfile: ./apps/Server/deploy.Dockerfile
-    volumes:
-      - ../../pnpm-lock.yaml:/usr/local/apps/citrineos/pnpm-lock.yaml
-      - ../../package.json:/usr/local/apps/citrineos/package.json
-      - ../../tsconfig.json:/usr/local/apps/citrineos/tsconfig.json
-      - ../../tsconfig.build.json:/usr/local/apps/citrineos/tsconfig.build.json
-      - ./:/usr/local/apps/citrineos/apps/Server
-      - ../../packages/base:/usr/local/apps/citrineos/packages/base
-      - ../../packages/core:/usr/local/apps/citrineos/packages/core
-      - /usr/local/apps/citrineos/node_modules
-      - /usr/local/apps/citrineos/apps/Server/node_modules
-      - /usr/local/apps/citrineos/packages/base/node_modules
-      - /usr/local/apps/citrineos/packages/core/node_modules
-      - /usr/local/apps/citrineos/dist/
-      - /usr/local/apps/citrineos/apps/Server/dist/
-      - /usr/local/apps/citrineos/packages/base/dist/
-      - /usr/local/apps/citrineos/packages/core/dist/
+      context: .
+      dockerfile: ./apps/server/deploy.Dockerfile
     environment:
       APP_NAME: "all"
       APP_ENV: "docker"
-      # Add AWS region (required by the SDK)
       AWS_REGION: us-east-1
-      # Skip authentication completely - use public access
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
-      # Database Strategy
       DB_STRATEGY: "migrate"
-      # Bootstrap Configuration Environment Variables
       BOOTSTRAP_CITRINEOS_DATABASE_HOST: "ocpp-db"
       BOOTSTRAP_CITRINEOS_CONFIG_FILENAME: "config.json"
-      # CITRINEOS_CONFIG_DIR: '/custom/config/path'  # Optional - uncomment if needed
       BOOTSTRAP_CITRINEOS_FILE_ACCESS_TYPE: "local"
       BOOTSTRAP_CITRINEOS_FILE_ACCESS_LOCAL_DEFAULT_FILE_PATH: "/data"
-      # No System Config file persistence respected, to avoid local conflicts across version updates - recommended to remove for production
       CONFIG_CITRINEOS_WIPE_FILE_ON_START: "true"
     depends_on:
       ocpp-db:
@@ -102,6 +52,51 @@ services:
       retries: 5
       start_period: 60s
 
+  citrine-ui:
+    build:
+      context: .
+      dockerfile: apps/operator-ui/Dockerfile
+    ports:
+      - 3000:3000
+    depends_on:
+      citrine:
+        condition: service_healthy
+      graphql-engine:
+        condition: service_healthy
+
+  amqp-broker:
+    image: rabbitmq:3-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+    volumes:
+      - ./apps/server/data/rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q check_port_connectivity
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  ocpp-db:
+    image: postgis/postgis:16-3.5
+    platform: linux/amd64
+    ports:
+      - 5432:5432
+    volumes:
+      - ./apps/server/data/postgresql/pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: citrine
+      POSTGRES_USER: citrine
+      POSTGRES_PASSWORD: "citrine"
+    healthcheck:
+      test: "pg_isready --username=citrine"
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
   minio:
     image: minio/minio
     container_name: minio
@@ -109,14 +104,12 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      # Use default credentials for simplicity
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-      # Enable public buckets
       MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
       MINIO_SERVER_URL: http://localhost:9000
     volumes:
-      - ./data/minio:/data
+      - ./apps/server/data/minio:/data
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
@@ -125,7 +118,6 @@ services:
       retries: 5
       start_period: 20s
 
-  # Initialize MinIO
   minio-init:
     image: minio/mc
     depends_on:
@@ -140,30 +132,19 @@ services:
   graphql-engine:
     image: hasura/graphql-engine:v2.40.3.cli-migrations-v3
     volumes:
-      - ./hasura-metadata:/hasura-metadata
+      - ./apps/server/hasura-metadata:/hasura-metadata
     ports:
       - 8090:8080
     restart: always
     depends_on:
       citrine:
-        # ensures hasura migrations will run only after citrine is healthy,
-        # meaning 01_Data/dist/layers/sequelize/util.js was executed and logged
-        # CitrineOS Logger:DefaultSequelizeInstance Database altered,
-        # which means the database is ready to be used by hasura
         condition: service_healthy
     environment:
-      ## postgres database to store Hasura metadata
       HASURA_GRAPHQL_DATABASE_URL: postgres://citrine:citrine@ocpp-db:5432/citrine
-      ## enable the console served by server
-      HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
-      ## enable debugging mode. It is recommended to disable this in production
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
       HASURA_GRAPHQL_DEV_MODE: "true"
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       HASURA_GRAPHQL_ENABLE_TELEMETRY: "false"
-      ## uncomment next line to run console offline (i.e load console assets from server instead of CDN)
-      # HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
-      ## uncomment next line to set an admin secret - warning, without configuration this will cause upstream services to fail
-      # HASURA_GRAPHQL_ADMIN_SECRET: CitrineOS!
       HASURA_GRAPHQL_METADATA_DEFAULTS:
         "{\"backend_configs\":{\"dataconnector\":{\"a\
         thena\":{\"uri\":\"http://data-connector-agent:8081/api/v1/athena\"},\"\

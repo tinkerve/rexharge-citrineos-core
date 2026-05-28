@@ -17,7 +17,6 @@
     "jsx": "preserve",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "verbatimModuleSyntax": true,
     "plugins": [
       {
         "name": "next"
