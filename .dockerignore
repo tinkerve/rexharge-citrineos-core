@@ -4,6 +4,11 @@
 # Ignore distribution directories
 **/dist
 
+# Ignore build caches/output that are regenerated inside the image
+# (operator-ui/.next can exceed 1.5GB and is the main build-context bloat)
+**/.next
+**/.turbo
+
 # Common ignore files
 .gitignore
 **/package-lock.json
@@ -20,3 +25,8 @@
 
 # Specific directories to ignore
 **/Server/data
+
+# VCS and CI/test artifacts (not needed in any image)
+.git
+**/playwright-report
+**/test-results

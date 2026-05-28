@@ -126,8 +126,18 @@ jobs:
         working-directory: apps/operator-ui
         run: pnpm exec playwright install-deps chromium
 
+      - name: Build CitrineOS Core image (with layer cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/Server/deploy.Dockerfile
+          load: true
+          tags: citrineos-core-citrine:latest
+          cache-from: type=gha,scope=citrine
+          cache-to: type=gha,mode=max,scope=citrine
+
       - name: Start backend stack (Hasura + CitrineOS Core)
-        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml up -d
+        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml up -d --no-build
 
       - name: Wait for backend healthy
         run: |
