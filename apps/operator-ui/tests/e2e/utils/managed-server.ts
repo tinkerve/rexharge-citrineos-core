@@ -70,15 +70,19 @@ function runNpmScriptToCompletion(scriptName: string): Promise<void> {
 // sibling .next-server.pid file; globalTeardown reads it and tears the
 // process tree down with taskkill /F /T (Windows) or process.kill (Unix).
 function spawnDetachedServer(): number {
-  const proc = spawn(npmCommand(), ['run', 'start'], {
+  const serverScript = resolve(REPO_ROOT, 'node_modules', '.bin', 'next');
+  const proc = spawn(process.execPath, [serverScript, 'start'], {
     cwd: REPO_ROOT,
     detached: true,
     stdio: 'ignore',
-    shell: process.platform === 'win32',
+    env: {
+      ...process.env,
+      NODE_ENV: 'production',
+    },
   });
   proc.unref();
   if (!proc.pid) {
-    throw new Error('Failed to spawn `npm run start` — no PID returned.');
+    throw new Error('Failed to spawn `next start` — no PID returned.');
   }
   return proc.pid;
 }
@@ -127,23 +131,52 @@ export async function stopManagedServer(): Promise<void> {
 // PID plus all descendants — necessary because `npm run start` spawns a
 // `node` child that is not reachable via process.kill(pid).
 function killProcessTree(pid: number): Promise<void> {
-  if (process.platform === 'win32') {
-    return new Promise((res) => {
+  return new Promise((resolve) => {
+    if (process.platform === 'win32') {
       const k = spawn('taskkill', ['/F', '/T', '/PID', String(pid)], {
         stdio: 'ignore',
       });
-      k.on('exit', () => res());
-      k.on('error', () => res());
-    });
-  }
-  try {
-    process.kill(-pid, 'SIGTERM');
-  } catch {
-    try {
-      process.kill(pid, 'SIGTERM');
-    } catch {
-      /* already dead */
+      k.on('exit', resolve);
+      k.on('error', resolve);
+      return;
     }
-  }
-  return Promise.resolve();
+
+    // Poll until the process is gone. SIGTERM first, SIGKILL after 10s.
+    const SIGKILL_AFTER_MS = 10_000;
+    const POLL_INTERVAL_MS = 200;
+    const start = Date.now();
+
+    const sendSignal = (sig: NodeJS.Signals) => {
+      try {
+        process.kill(-pid, sig); // negative = process group
+      } catch {
+        try {
+          process.kill(pid, sig); // fallback: just the pid
+        } catch {
+          /* already dead */
+        }
+      }
+    };
+
+    sendSignal('SIGTERM');
+
+    const poll = setInterval(() => {
+      let alive = true;
+      try {
+        process.kill(pid, 0); // signal 0 = existence check
+      } catch {
+        alive = false;
+      }
+
+      if (!alive) {
+        clearInterval(poll);
+        resolve();
+        return;
+      }
+
+      if (Date.now() - start > SIGKILL_AFTER_MS) {
+        sendSignal('SIGKILL');
+      }
+    }, POLL_INTERVAL_MS);
+  });
 }
