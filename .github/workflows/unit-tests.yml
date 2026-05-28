@@ -97,12 +97,6 @@ jobs:
           node-version: "24.4.1"
           cache: 'pnpm'
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Install dependencies
         run: pnpm install
 
@@ -126,18 +120,11 @@ jobs:
         working-directory: apps/operator-ui
         run: pnpm exec playwright install-deps chromium
 
-      - name: Build CitrineOS Core image (with layer cache)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/Server/deploy.Dockerfile
-          load: true
-          tags: citrineos-core-citrine:latest
-          cache-from: type=gha,scope=citrine
-          cache-to: type=gha,mode=max,scope=citrine
-
       - name: Start backend stack (Hasura + CitrineOS Core)
-        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml up -d --no-build
+        # Build with the default docker driver (builds straight into the daemon's
+        # image store) — no tarball export/import or cache round-trip, which is
+        # what made the build-push-action approach ~3min slower than the build itself.
+        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml up -d --build
 
       - name: Wait for backend healthy
         run: |
