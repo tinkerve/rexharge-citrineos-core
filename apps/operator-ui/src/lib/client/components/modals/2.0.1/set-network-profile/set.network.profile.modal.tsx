@@ -139,7 +139,7 @@ export const SetNetworkProfileModal = ({ station }: SetNetworkProfileModalProps)
     query: serverNetworkProfileQuery,
   } = useSelect({
     resource: ResourceType.SERVER_NETWORK_PROFILES,
-    optionLabel: 'host',
+    optionLabel: (item: any) => `${item.host}:${item.port}`,
     optionValue: 'id',
     meta: {
       gqlQuery: SERVER_NETWORK_PROFILE_LIST_QUERY,
