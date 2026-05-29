@@ -4,11 +4,7 @@
 'use client';
 
 import type { OCPPMessageDto } from '@citrineos/base';
-import {
-  MessageOrigin,
-  OCPP_CallAction,
-  OCPPMessageProps,
-} from '@citrineos/base';
+import { MessageOrigin, OCPP_CallAction, OCPPMessageProps } from '@citrineos/base';
 import { Button } from '@lib/client/components/ui/button';
 import { Label } from '@lib/client/components/ui/label';
 import { Switch } from '@lib/client/components/ui/switch';
@@ -29,12 +25,7 @@ import { OCPPMessageClass } from '@lib/cls/ocpp.message.dto';
 import { GET_OCPP_MESSAGES_LIST_FOR_STATION } from '@lib/queries/ocpp.messages';
 import { ResourceType } from '@lib/utils/access.types';
 import { getPlainToInstanceOptions } from '@lib/utils/tables';
-import {
-  type LogicalFilter,
-  useInvalidate,
-  useList,
-  useTranslate,
-} from '@refinedev/core';
+import { type LogicalFilter, useInvalidate, useList, useTranslate } from '@refinedev/core';
 import { Copy, Download, Link, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CollapsibleOCPPMessageViewer } from './collapsible.ocpp.message.viewer';
@@ -60,12 +51,7 @@ export interface OCPPMessagesProps {
 }
 
 const actionOptions = [
-  ...Array.from(
-    new Set([
-      ...Object.values(OCPP_CallAction),
-      ...Object.values(OCPP_CallAction),
-    ]),
-  ),
+  ...Array.from(new Set([...Object.values(OCPP_CallAction), ...Object.values(OCPP_CallAction)])),
 ];
 
 const allOption = 'all';
@@ -235,26 +221,19 @@ export const OCPPMessages: React.FC<OCPPMessagesProps> = ({
     (record: OCPPMessageDto) => {
       // Find and select the row with the same correlationId but different origin
       const relatedMessageIndex = messages.findIndex(
-        (msg) =>
-          msg.correlationId === record.correlationId &&
-          msg.origin !== record.origin,
+        (msg) => msg.correlationId === record.correlationId && msg.origin !== record.origin,
       );
       if (relatedMessageIndex !== -1) {
         // Scroll to the related message
-        const element = document.getElementById(
-          `table-row-${relatedMessageIndex}`,
-        );
-        if (element)
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const element = document.getElementById(`table-row-${relatedMessageIndex}`);
+        if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     },
     [messages],
   );
 
   const getRowClassName = (record: OCPPMessageDto) =>
-    record.origin === MessageOrigin.ChargingStation
-      ? 'bg-secondary/25'
-      : 'bg-success/25';
+    record.origin === MessageOrigin.ChargingStation ? 'bg-secondary/25' : 'bg-success/25';
 
   return (
     <>
@@ -270,21 +249,13 @@ export const OCPPMessages: React.FC<OCPPMessagesProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={handleRefresh}
-                title={translate(
-                  'ChargingStations.refreshMessages',
-                  'Refresh Messages',
-                )}
+                title={translate('ChargingStations.refreshMessages', 'Refresh Messages')}
               >
                 <RefreshCw className={buttonIconSize} />
               </Button>
             )}
-            <Switch
-              checked={liveLogEnabled}
-              onCheckedChange={setLiveLogEnabled}
-            />
-            <Label className="font-medium">
-              {translate('ChargingStations.liveLog')}
-            </Label>
+            <Switch checked={liveLogEnabled} onCheckedChange={setLiveLogEnabled} />
+            <Label className="font-medium">{translate('ChargingStations.liveLog')}</Label>
           </div>
         </div>
         <div className="grid grid-cols-5 gap-2 w-full">
@@ -300,10 +271,7 @@ export const OCPPMessages: React.FC<OCPPMessagesProps> = ({
             placeholder="Select Actions"
             searchPlaceholder="Search Actions"
           />
-          <Select
-            value={selectedOrigin ?? ''}
-            onValueChange={setSelectedOrigin}
-          >
+          <Select value={selectedOrigin ?? ''} onValueChange={setSelectedOrigin}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Filter Origins" />
             </SelectTrigger>
@@ -408,8 +376,7 @@ export const OCPPMessages: React.FC<OCPPMessagesProps> = ({
               cell={({ row }: CellContext<OCPPMessageDto, unknown>) => {
                 return (
                   <span>
-                    {row.original.action ?? 'Unknown Action'} -{' '}
-                    {row.original.origin}
+                    {row.original.action ?? 'Unknown Action'} - {row.original.origin}
                   </span>
                 );
               }}
