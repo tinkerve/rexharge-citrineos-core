@@ -3,7 +3,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 # Use a specific base image with platform support
-FROM --platform=${BUILDPLATFORM:-linux/amd64} node:24.16.0 AS build
+FROM --platform=${BUILDPLATFORM:-linux/amd64} node:24.4.1 AS build
 
 RUN corepack enable
 
@@ -15,7 +15,7 @@ RUN pnpm --filter "@citrineos/server..." build
 
 # The final stage, which copies built files and prepares the run environment
 # Using a slim image to reduce the final image size
-FROM node:24.16.0-slim
+FROM node:24.4.1-slim
 
 RUN corepack enable
 
