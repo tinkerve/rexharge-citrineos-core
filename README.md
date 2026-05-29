@@ -127,7 +127,7 @@ citrineos-core/
 
 Before you begin, make sure you have the following installed on your system:
 
-- Node.js (v24.4.1 or higher): [Download Node.js](https://nodejs.org/)
+- Node.js (v24.16.0 or higher): [Download Node.js](https://nodejs.org/)
 - pnpm (Node Package Manager): [Download pnpm](https://pnpm.io/installation)
 - Docker (Optional). Version >= 20.10: [Download Docker](https://docs.docker.com/get-docker/)
 
