@@ -69,9 +69,7 @@ export function Combobox<T>({
   const showManualEntry =
     allowManualEntry &&
     trimmedInput !== '' &&
-    !options.some(
-      (o) => o.label.toLowerCase() === trimmedInput.toLowerCase(),
-    );
+    !options.some((o) => o.label.toLowerCase() === trimmedInput.toLowerCase());
 
   return (
     <Popover

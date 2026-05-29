@@ -46,8 +46,7 @@ export interface GetVariablesModalProps {
 const requiredIdOrName = (label: string) =>
   z.custom<number | string>(
     (val) =>
-      (typeof val === 'number' && val > 0) ||
-      (typeof val === 'string' && val.trim().length > 0),
+      (typeof val === 'number' && val > 0) || (typeof val === 'string' && val.trim().length > 0),
     `${label} is required`,
   );
 
@@ -131,8 +130,7 @@ export const GetVariablesModal = ({ station }: GetVariablesModalProps) => {
   const variableSelects = fields.map((field, index) => {
     const componentId = form.watch(`getVariableData.${index}.componentId`);
 
-    const numericComponentId =
-      typeof componentId === 'number' && componentId > 0 ? componentId : 0;
+    const numericComponentId = typeof componentId === 'number' && componentId > 0 ? componentId : 0;
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const { options, onSearch, query } = useSelect({
@@ -166,8 +164,7 @@ export const GetVariablesModal = ({ station }: GetVariablesModalProps) => {
       const componentName =
         typeof item.componentId === 'string'
           ? item.componentId
-          : (componentOptions.find((c) => c.value === item.componentId) as any)
-          ?.label || '';
+          : (componentOptions.find((c) => c.value === item.componentId) as any)?.label || '';
 
       const data: any = {
         component: {
