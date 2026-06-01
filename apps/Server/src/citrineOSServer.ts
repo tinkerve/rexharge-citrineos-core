@@ -129,6 +129,7 @@ export class CitrineOSServer {
    * Constructor for the class.
    *
    * @param {EventGroup} appName - app type
+   * @param {BootstrapConfig} bootstrapConfig
    * @param {SystemConfig} systemConfig - config
    * @param {FastifyInstance} server - optional Fastify server instance
    * @param {Ajv} ajv - optional Ajv JSON schema validator instance
@@ -468,6 +469,7 @@ export class CitrineOSServer {
       this._cache,
       this._authenticator,
       this._router,
+      this._fileStorage,
       this._logger,
       this._repositoryStore.locationRepository.doesChargingStationExistByStationId.bind(
         this._repositoryStore.locationRepository,
@@ -815,6 +817,9 @@ export class CitrineOSServer {
       this._config,
       this._cache,
       this._logger,
+      undefined,
+      undefined,
+      this._fileStorage,
     );
   }
 

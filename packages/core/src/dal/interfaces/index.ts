@@ -32,8 +32,6 @@ export { TariffQuerySchema } from './queries/Tariff.js';
 export type { TariffQueryString } from './queries/Tariff.js';
 export { CreateTenantQuerySchema, TenantQuerySchema } from './queries/Tenant.js';
 export type { TenantQueryString } from './queries/Tenant.js';
-export { TlsCertificateSchema, UpdateTlsCertificateQuerySchema } from './queries/TlsCertificate.js';
-export type { UpdateTlsCertificateQueryString } from './queries/TlsCertificate.js';
 export { TlsReloadQuerySchema } from './queries/TlsReload.js';
 export type { TlsReloadQueryString } from './queries/TlsReload.js';
 export { TransactionEventQuerySchema } from './queries/TransactionEvent.js';
@@ -69,5 +67,4 @@ export { default as TariffSchema } from './projections/schemas/TariffSchema.json
 export { GenerateCertificateChainRequest } from './dtos/GenerateCertificateChainRequest.js';
 export { InstallRootCertificateRequest } from './dtos/InstallRootCertificateRequest.js';
 export { RegenerateExistingCertificate } from './dtos/RegenerateExistingCertificate.js';
-export { TlsCertificatesRequest } from './dtos/TlsCertificatesRequest.js';
 export { UploadExistingCertificate } from './dtos/UploadExistingCertificate.js';

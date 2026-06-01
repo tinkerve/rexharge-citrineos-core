@@ -1,7 +1,12 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { CertificateSigningUseEnumType, ICache, SystemConfig } from '@citrineos/base';
+import type {
+  CertificateSigningUseEnumType,
+  ICache,
+  IFileStorage,
+  SystemConfig,
+} from '@citrineos/base';
 import { CertificateSigningUseEnum, OCPP2_1 } from '@citrineos/base';
 import { Crypto } from '@peculiar/webcrypto';
 import jsrsasign, { KJUR, X509 } from 'jsrsasign';
@@ -26,7 +31,7 @@ import type {
 } from './client/interface.js';
 import OCSPRequest = jsrsasign.KJUR.asn1.ocsp.OCSPRequest;
 import Request = jsrsasign.KJUR.asn1.ocsp.Request;
-
+import { LocalStorage } from '@/util/index.js';
 const cryptoEngine = new pkijs.CryptoEngine({
   crypto: new Crypto(),
 });
@@ -34,10 +39,11 @@ pkijs.setEngine('crypto', cryptoEngine as pkijs.ICryptoEngine);
 
 export class CertificateAuthorityService {
   private readonly _v2gClient: IV2GCertificateAuthorityClient;
-  private readonly _chargingStationClient: IChargingStationCertificateAuthorityClient;
+  private readonly _chargingStationClientPromise: Promise<IChargingStationCertificateAuthorityClient>;
   private readonly _logger: Logger<ILogObj>;
   private readonly _cache: ICache;
   private readonly _config: SystemConfig;
+  private readonly _fileStorage: IFileStorage;
 
   constructor(
     config: SystemConfig,
@@ -45,15 +51,23 @@ export class CertificateAuthorityService {
     logger?: Logger<ILogObj>,
     chargingStationClient?: IChargingStationCertificateAuthorityClient,
     v2gClient?: IV2GCertificateAuthorityClient,
+    fileStorage?: IFileStorage,
   ) {
     this._config = config;
     this._cache = cache;
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
-
-    this._chargingStationClient = chargingStationClient || this._instantiateChargingStationClient();
-    this._v2gClient = v2gClient || this._instantiateV2GClient();
+    this._fileStorage = fileStorage || new LocalStorage('', '', undefined, this._logger);
+    this._v2gClient =
+      v2gClient || CertificateAuthorityService._instantiateV2GClient(config, cache, logger);
+    this._chargingStationClientPromise = chargingStationClient
+      ? Promise.resolve(chargingStationClient)
+      : CertificateAuthorityService._instantiateChargingStationClient(
+          config,
+          this._fileStorage,
+          logger,
+        );
   }
 
   /**
@@ -82,7 +96,7 @@ export class CertificateAuthorityService {
         return this._createCertificateChainWithoutRootCA(signedCert, caCerts);
       }
       case OCPP2_1.CertificateSigningUseEnumType.ChargingStationCertificate: {
-        return await this._chargingStationClient.getCertificateChain(csrString);
+        return await (await this._chargingStationClientPromise).getCertificateChain(csrString);
       }
       default: {
         throw new Error(`Unsupported certificate type: ${certificateType}`);
@@ -91,7 +105,7 @@ export class CertificateAuthorityService {
   }
 
   async signedSubCaCertificateByExternalCA(csrString: string): Promise<string> {
-    return await this._chargingStationClient.signCertificateByExternalCA(csrString);
+    return await (await this._chargingStationClientPromise).signCertificateByExternalCA(csrString);
   }
 
   async getSignedContractData(iso15118SchemaVersion: string, exiRequest: string): Promise<string> {
@@ -112,14 +126,18 @@ export class CertificateAuthorityService {
         }
       }
       case OCPP2_1.InstallCertificateUseEnumType.CSMSRootCertificate:
-        return await this._chargingStationClient.getRootCACertificate();
+        return await (await this._chargingStationClientPromise).getRootCACertificate();
       default:
         throw new Error(`Certificate type: ${certificateType} not implemented.`);
     }
   }
 
-  updateSecurityCertChainKeyMap(serverId: string, certificateChain: string, privateKey: string) {
-    this._chargingStationClient.updateCertificateChainKeyMap(
+  async updateSecurityCertChainKeyMap(
+    serverId: string,
+    certificateChain: string,
+    privateKey: string,
+  ): Promise<void> {
+    (await this._chargingStationClientPromise).updateCertificateChainKeyMap(
       serverId,
       certificateChain,
       privateKey,
@@ -275,27 +293,31 @@ export class CertificateAuthorityService {
     return certificateChain;
   }
 
-  private _instantiateV2GClient(): IV2GCertificateAuthorityClient {
-    switch (this._config.util.certificateAuthority.v2gCA.name) {
-      case 'hubject': {
-        return new Hubject(this._config, this._cache, this._logger);
-      }
-      default: {
-        throw new Error(`Unsupported V2G CA: ${this._config.util.certificateAuthority.v2gCA.name}`);
-      }
+  private static _instantiateV2GClient(
+    config: SystemConfig,
+    cache: ICache,
+    logger?: Logger<ILogObj>,
+  ): IV2GCertificateAuthorityClient {
+    switch (config.util.certificateAuthority.v2gCA.name) {
+      case 'hubject':
+        return new Hubject(config, cache, logger);
+      default:
+        throw new Error(`Unsupported V2G CA: ${config.util.certificateAuthority.v2gCA.name}`);
     }
   }
 
-  private _instantiateChargingStationClient(): IChargingStationCertificateAuthorityClient {
-    switch (this._config.util.certificateAuthority.chargingStationCA.name) {
-      case 'acme': {
-        return new Acme(this._config, this._logger);
-      }
-      default: {
+  private static async _instantiateChargingStationClient(
+    config: SystemConfig,
+    fileStorage: IFileStorage,
+    logger?: Logger<ILogObj>,
+  ): Promise<IChargingStationCertificateAuthorityClient> {
+    switch (config.util.certificateAuthority.chargingStationCA.name) {
+      case 'acme':
+        return Acme.create(config, fileStorage, logger);
+      default:
         throw new Error(
-          `Unsupported Charging Station CA: ${this._config.util.certificateAuthority.chargingStationCA.name}`,
+          `Unsupported Charging Station CA: ${config.util.certificateAuthority.chargingStationCA.name}`,
         );
-      }
     }
   }
 }

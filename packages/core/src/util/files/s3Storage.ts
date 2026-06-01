@@ -90,6 +90,21 @@ export class S3Storage implements ConfigStore {
     return await S3Storage.streamToString(Body as Readable);
   }
 
+  async exists(_path: string): Promise<boolean> {
+    throw new Error('exists is not implemented for S3 storage');
+  }
+
+  async createDirectory(_path: string, _options?: { recursive?: boolean }): Promise<void> {
+    throw new Error('createDirectory is not implemented for S3 storage');
+  }
+
+  async deleteFile(
+    _path: string,
+    _options?: { recursive?: boolean; force?: boolean },
+  ): Promise<void> {
+    throw new Error('deleteFile is not implemented for S3 storage');
+  }
+
   async fetchConfig(): Promise<SystemConfig | null> {
     try {
       const configString = await this.getFile(this.configFileName, this.configBucketName);
