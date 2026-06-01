@@ -3,22 +3,24 @@
 // SPDX-License-Identifier: Apache-2.0
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { type ChargingStationDto, OCPP2_0_1 } from '@citrineos/base';
+import { type ChargingStationDto, OCPP2_0_1, type ServerNetworkProfileDto } from '@citrineos/base';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { FormButtonVariants } from '@lib/client/components/buttons/form.button';
 import { Form } from '@lib/client/components/form';
 import {
   CheckboxFormField,
   ComboboxFormField,
-  FormField,
   formCheckboxStyle,
+  FormField,
   formLabelStyle,
   formLabelWrapperStyle,
   SelectFormField,
 } from '@lib/client/components/form/field';
 import { Checkbox } from '@lib/client/components/ui/checkbox';
+import { Field, FieldLabel } from '@lib/client/components/ui/field';
 import { Input } from '@lib/client/components/ui/input';
 import { Textarea } from '@lib/client/components/ui/textarea';
+import { useTenantId } from '@lib/client/hooks/useTenantId';
 import { ChargingStationClass } from '@lib/cls/charging.station.dto';
 import { SERVER_NETWORK_PROFILE_LIST_QUERY } from '@lib/queries/server.network.profiles';
 import { ResourceType } from '@lib/utils/access.types';
@@ -28,11 +30,9 @@ import { closeModal } from '@lib/utils/store/modal.slice';
 import { useSelect } from '@refinedev/core';
 import { useForm } from '@refinedev/react-hook-form';
 import { plainToInstance } from 'class-transformer';
+import { useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import z from 'zod';
-import { Field, FieldLabel } from '@lib/client/components/ui/field';
-import { FormButtonVariants } from '@lib/client/components/buttons/form.button';
-import { useTenantId } from '@lib/client/hooks/useTenantId';
 
 export interface SetNetworkProfileModalProps {
   station: any;
@@ -137,7 +137,7 @@ export const SetNetworkProfileModal = ({ station }: SetNetworkProfileModalProps)
     options: serverNetworkProfileOptions,
     onSearch: serverNetworkProfileOnSearch,
     query: serverNetworkProfileQuery,
-  } = useSelect({
+  } = useSelect<ServerNetworkProfileDto>({
     resource: ResourceType.SERVER_NETWORK_PROFILES,
     optionLabel: (item: any) => `${item.host}:${item.port}`,
     optionValue: 'id',
