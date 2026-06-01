@@ -43,8 +43,15 @@ export interface GetVariablesModalProps {
   station: any;
 }
 
+const requiredIdOrName = (label: string) =>
+  z.custom<number | string>(
+    (val) =>
+      (typeof val === 'number' && val > 0) || (typeof val === 'string' && val.trim().length > 0),
+    `${label} is required`,
+  );
+
 const GetVariableDataSchema = z.object({
-  componentId: z.coerce.number<number>().min(1, 'Component is required'),
+  componentId: requiredIdOrName('Component'),
   variableId: z.string().optional(),
   componentInstance: z.string().max(50).optional(),
   variableInstance: z.string().max(50).optional(),
@@ -123,6 +130,8 @@ export const GetVariablesModal = ({ station }: GetVariablesModalProps) => {
   const variableSelects = fields.map((field, index) => {
     const componentId = form.watch(`getVariableData.${index}.componentId`);
 
+    const numericComponentId = typeof componentId === 'number' && componentId > 0 ? componentId : 0;
+
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const { options, onSearch, query } = useSelect({
       resource: ResourceType.VARIABLES,
@@ -130,15 +139,15 @@ export const GetVariablesModal = ({ station }: GetVariablesModalProps) => {
       optionValue: 'name',
       meta: {
         gqlQuery: VARIABLE_LIST_BY_COMPONENT_QUERY,
-        gqlVariables: componentId
-          ? { componentId, offset: 0, limit: 100, mutability: '' }
+        gqlVariables: numericComponentId
+          ? { componentId: numericComponentId, offset: 0, limit: 100, mutability: '' }
           : undefined,
       },
       pagination: { mode: 'off' },
-      queryOptions: { enabled: !!componentId && componentId > 0 },
+      queryOptions: { enabled: numericComponentId > 0 },
     });
 
-    if (componentId > 0 && options.length > 0 && variableOptionsMap[index] !== options) {
+    if (numericComponentId > 0 && options.length > 0 && variableOptionsMap[index] !== options) {
       setVariableOptionsMap((prev) => ({ ...prev, [index]: options }));
     }
 
@@ -152,8 +161,10 @@ export const GetVariablesModal = ({ station }: GetVariablesModalProps) => {
     }
 
     const getVariableData = values.getVariableData.map((item) => {
-      const component = componentOptions.find((c) => c.value === item.componentId);
-      const componentName = (component as any)?.label || '';
+      const componentName =
+        typeof item.componentId === 'string'
+          ? item.componentId
+          : (componentOptions.find((c) => c.value === item.componentId) as any)?.label || '';
 
       const data: any = {
         component: {
@@ -247,6 +258,7 @@ export const GetVariablesModal = ({ station }: GetVariablesModalProps) => {
                 searchPlaceholder="Search Components"
                 isLoading={componentQuery.isLoading}
                 required
+                allowManualEntry
               />
 
               <ComboboxFormField
@@ -260,6 +272,7 @@ export const GetVariablesModal = ({ station }: GetVariablesModalProps) => {
                 isLoading={variableLoading}
                 required
                 disabled={!componentId || componentId === 0}
+                allowManualEntry
               />
 
               <FormField

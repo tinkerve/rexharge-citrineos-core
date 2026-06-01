@@ -28,6 +28,7 @@ export interface ComboboxProps<T> {
   isLoading?: boolean;
   skipValue?: boolean;
   disabled?: boolean;
+  allowManualEntry?: boolean;
 }
 
 export function Combobox<T>({
@@ -41,8 +42,10 @@ export function Combobox<T>({
   isLoading = false,
   skipValue = false,
   disabled = false,
+  allowManualEntry = false,
 }: ComboboxProps<T>) {
   const [open, setOpen] = useState<boolean>(false);
+  const [inputValue, setInputValue] = useState('');
   const [selectedOption, setSelectedOption] = useState<{ label: string; value: T } | undefined>(
     undefined,
   );
@@ -50,14 +53,32 @@ export function Combobox<T>({
   useEffect(() => {
     if (value) {
       const matchingOption = options.find((option) => option.value === value);
-      setSelectedOption(matchingOption ? { ...matchingOption } : undefined);
+      if (matchingOption) {
+        setSelectedOption({ ...matchingOption });
+      } else if (allowManualEntry && typeof value === 'string') {
+        setSelectedOption({ label: value, value });
+      } else {
+        setSelectedOption(undefined);
+      }
     } else {
       setSelectedOption(undefined);
     }
-  }, [value, options]);
+  }, [value, options, allowManualEntry]);
+
+  const trimmedInput = inputValue.trim();
+  const showManualEntry =
+    allowManualEntry &&
+    trimmedInput !== '' &&
+    !options.some((o) => o.label.toLowerCase() === trimmedInput.toLowerCase());
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) setInputValue('');
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -74,10 +95,34 @@ export function Combobox<T>({
         <Command shouldFilter={!onSearch}>
           <CommandInput
             placeholder={searchPlaceholder ?? 'Search'}
-            onValueChange={(val: string) => onSearch?.(val)}
+            onValueChange={(val) => {
+              setInputValue(val);
+              onSearch?.(val);
+            }}
           />
           <CommandList>
             <CommandEmpty>{isLoading ? 'Loading...' : emptyMessage}</CommandEmpty>
+            {showManualEntry && (
+              <CommandGroup>
+                <CommandItem
+                  value={`__manual__${trimmedInput}`}
+                  onSelect={() => {
+                    const manualOption = {
+                      label: trimmedInput,
+                      value: trimmedInput as unknown as T,
+                    };
+                    if (!skipValue) {
+                      setSelectedOption(manualOption);
+                    }
+                    onSelect?.(trimmedInput as unknown as T, trimmedInput);
+                    setOpen(false);
+                    setInputValue('');
+                  }}
+                >
+                  Use &quot;{trimmedInput}&quot;
+                </CommandItem>
+              </CommandGroup>
+            )}
             <CommandGroup>
               {options.map((option, index) => (
                 <CommandItem
@@ -89,6 +134,7 @@ export function Combobox<T>({
                     }
                     onSelect?.(option.value, option.label);
                     setOpen(false);
+                    setInputValue('');
                   }}
                 >
                   <CheckIcon
