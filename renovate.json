@@ -4,10 +4,42 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "labels": ["dependencies"],
-  "prConcurrentLimit": 5,
-  "prHourlyLimit": 2,
+  "prConcurrentLimit": 3,
+  "prHourlyLimit": 1,
   "dependencyDashboard": true,
   "branchPrefix": "renovate/",
   "baseBranchPatterns": ["next"],
-  "commitMessagePrefix": "📦 chore(deps): "
+  "commitMessagePrefix": "📦 chore(deps): ",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "prPriority": 10
+  },
+  "packageRules": [
+    {
+      "description": "Group all non-major dev dependency updates into one weekly PR",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "dev dependencies (non-major)",
+      "schedule": ["on monday"]
+    },
+    {
+      "description": "Group all non-major prod dependency patch updates",
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "production dependencies (patch)",
+      "schedule": ["on monday"]
+    },
+    {
+      "description": "Require manual merge approval for major updates",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Automerge passing patch updates for devDeps",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    }
+  ]
 }
