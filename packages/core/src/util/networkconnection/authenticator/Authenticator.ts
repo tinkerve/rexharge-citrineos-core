@@ -10,6 +10,7 @@ import { UnknownStationFilter } from './UnknownStationFilter.js';
 import { BasicAuthenticationFilter } from './BasicAuthenticationFilter.js';
 import { ConnectedStationFilter } from './ConnectedStationFilter.js';
 import { NetworkProfileFilter } from './NetworkProfileFilter.js';
+import { getClientIdFromUrl } from '../WebsocketNetworkConnection.js';
 
 export class Authenticator implements IAuthenticator {
   protected _logger: Logger<ILogObj>;
@@ -39,7 +40,7 @@ export class Authenticator implements IAuthenticator {
     tenantId: number,
     options: AuthenticationOptions,
   ): Promise<{ identifier: string }> {
-    const identifier = this._getClientIdFromUrl(request.url as string);
+    const identifier = getClientIdFromUrl(request.url as string);
     this._logger.debug(`Starting authentication for identifier: ${identifier}`);
 
     await this._unknownStationFilter.authenticate(tenantId, identifier, request, options);
@@ -49,9 +50,5 @@ export class Authenticator implements IAuthenticator {
 
     this._logger.debug(`Authentication successful for identifier: ${identifier}`);
     return { identifier };
-  }
-
-  private _getClientIdFromUrl(url: string): string {
-    return url.split('/').pop() as string;
   }
 }

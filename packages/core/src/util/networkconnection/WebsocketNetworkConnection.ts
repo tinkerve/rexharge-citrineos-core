@@ -2,6 +2,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 /* eslint-disable */
+
+/**
+ * Extracts the charging station identifier (ocppConnectionName) from a WebSocket upgrade URL.
+ */
+export function getClientIdFromUrl(url: string): string {
+  return url.split('?')[0].split('/').pop() as string;
+}
+
 import type {
   IAuthenticator,
   ICache,
@@ -406,7 +414,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       // Pause the WebSocket event emitter until broker is established
       ws.pause();
 
-      const ocppConnectionName = this._getClientIdFromUrl(req.url as string);
+      const ocppConnectionName = getClientIdFromUrl(req.url as string);
       // Prefer tenant resolved during upgrade; fallback to server-configured tenant.
       const tenantId = (req as any).__resolvedTenantId ?? websocketServerConfig.tenantId;
 
@@ -728,17 +736,6 @@ export class WebsocketNetworkConnection implements INetworkConnection {
         ws.close(1011, 'Failed to update cache expiration');
       });
   }
-  /**
-   *
-   * @param url Http upgrade request url used by charger
-   * @returns Charger identifier
-   */
-  private _getClientIdFromUrl(url: string): string {
-    // Remove query string first
-    const pathOnly = url.split('?')[0];
-    return pathOnly.split('/').pop() as string;
-  }
-
   /**
    * Extract tenant id from the incoming upgrade request.
    * Supported sources (in order): query `tenant`/`tenantId`, header `x-tenant-id`,
