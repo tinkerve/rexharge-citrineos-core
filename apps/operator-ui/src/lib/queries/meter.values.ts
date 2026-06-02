@@ -79,7 +79,9 @@ export const GET_METER_VALUES_FOR_TRANSACTION = gql`
       createdAt
       updatedAt
     }
-    MeterValues_aggregate(where: { transactionDatabaseId: { _eq: $transactionDatabaseId }, _and: [$where] }) {
+    MeterValues_aggregate(
+      where: { transactionDatabaseId: { _eq: $transactionDatabaseId }, _and: [$where] }
+    ) {
       aggregate {
         count
       }

@@ -23,7 +23,11 @@ import React, { useMemo, useState } from 'react';
 import type { ExpandedState } from '@tanstack/react-table';
 import { useTenantId } from '@lib/client/hooks/useTenantId';
 
-export const TransactionEventsList = ({ transactionDatabaseId, ocppTransactionId, ocppConnectionName }: any) => {
+export const TransactionEventsList = ({
+  transactionDatabaseId,
+  ocppTransactionId,
+  ocppConnectionName,
+}: any) => {
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const tenantId = useTenantId();
@@ -161,7 +165,9 @@ export const TransactionEventsList = ({ transactionDatabaseId, ocppTransactionId
             <div className="border-t bg-muted/20 p-4">
               <MeterValuesList
                 transactionEventId={record.id != null && record.id > 0 ? record.id : undefined}
-                transactionDatabaseId={record.id != null && record.id < 0 ? transactionDatabaseId : undefined}
+                transactionDatabaseId={
+                  record.id != null && record.id < 0 ? transactionDatabaseId : undefined
+                }
                 meterValueTimestamps={(record as any)._meterValueTimestamps}
               />
             </div>

@@ -20,7 +20,11 @@ import { useMemo, useState } from 'react';
 
 const VALID_CONTEXTS = new Set(['Transaction.Begin', 'Sample.Periodic', 'Transaction.End']);
 
-export const MeterValuesList = ({ transactionEventId, transactionDatabaseId, meterValueTimestamps }: any) => {
+export const MeterValuesList = ({
+  transactionEventId,
+  transactionDatabaseId,
+  meterValueTimestamps,
+}: any) => {
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const columns = useMemo(() => getMeterValueColumns(), []);
 
@@ -53,9 +57,7 @@ export const MeterValuesList = ({ transactionEventId, transactionDatabaseId, met
               select: (data: any) => ({
                 ...data,
                 data: (data.data ?? []).filter((mv: any) =>
-                  (mv.sampledValue as any[])?.some((sv: any) =>
-                    VALID_CONTEXTS.has(sv.context),
-                  ),
+                  (mv.sampledValue as any[])?.some((sv: any) => VALID_CONTEXTS.has(sv.context)),
                 ),
               }),
             }
