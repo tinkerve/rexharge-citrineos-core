@@ -4,9 +4,8 @@
 
 # Build context is the monorepo root.
 
-FROM --platform=${BUILDPLATFORM:-linux/amd64} node:24.16.0-alpine AS builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} node:24.16.0 AS builder
 
-RUN apk add --no-cache libc6-compat python3 py3-setuptools make g++
 RUN corepack enable
 
 WORKDIR /app
