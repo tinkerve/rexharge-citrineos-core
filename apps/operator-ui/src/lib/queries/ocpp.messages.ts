@@ -39,7 +39,8 @@ export const GET_OCPP_MESSAGES_LIST_FOR_STATION = gql`
 
 export const GET_OCPP_MESSAGES_FOR_TRANSACTION_LIST_QUERY = gql`
   query OCPPMessageList(
-    $transactionDatabaseId: Int!
+    $ocppTransactionId: Int
+    $ocppConnectionName: String
     $offset: Int!
     $limit: Int!
     $order_by: [OCPPMessages_order_by!]
@@ -51,7 +52,8 @@ export const GET_OCPP_MESSAGES_FOR_TRANSACTION_LIST_QUERY = gql`
       order_by: $order_by
       where: {
         _and: [
-          { message: { _contains: [{ transactionId: $transactionDatabaseId }] } }
+          { message: { _contains: [{ transactionId: $ocppTransactionId }] } }
+          { ocppConnectionName: { _eq: $ocppConnectionName } }
           {
             _or: [
               {
@@ -91,7 +93,8 @@ export const GET_OCPP_MESSAGES_FOR_TRANSACTION_LIST_QUERY = gql`
     OCPPMessages_aggregate(
       where: {
         _and: [
-          { message: { _contains: [{ transactionId: $transactionDatabaseId }] } }
+          { message: { _contains: [{ transactionId: $ocppTransactionId }] } }
+          { ocppConnectionName: { _eq: $ocppConnectionName } }
           {
             _or: [
               {

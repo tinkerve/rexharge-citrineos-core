@@ -9,6 +9,7 @@ import { getMeterValueColumns } from '@lib/client/pages/transactions/detail/mete
 import { SampledValuesListView } from '@lib/client/pages/transactions/detail/meter-values/sampled.values.list';
 import { TransactionEventClass } from '@lib/cls/transaction.event.dto';
 import {
+  GET_METER_VALUES_FOR_TRANSACTION,
   GET_METER_VALUES_FOR_TRANSACTION_EVENT,
   METER_VALUE_LIST_QUERY,
 } from '@lib/queries/meter.values';
@@ -17,7 +18,9 @@ import { getPlainToInstanceOptions } from '@lib/utils/tables';
 import type { ExpandedState } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 
-export const MeterValuesList = ({ transactionEventId }: any) => {
+const VALID_CONTEXTS = new Set(['Transaction.Begin', 'Sample.Periodic', 'Transaction.End']);
+
+export const MeterValuesList = ({ transactionEventId, transactionDatabaseId, meterValueTimestamps }: any) => {
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const columns = useMemo(() => getMeterValueColumns(), []);
 
@@ -31,10 +34,32 @@ export const MeterValuesList = ({ transactionEventId }: any) => {
         meta: {
           gqlQuery: transactionEventId
             ? GET_METER_VALUES_FOR_TRANSACTION_EVENT
-            : METER_VALUE_LIST_QUERY,
-          gqlVariables: transactionEventId ? { transactionEventId } : undefined,
+            : transactionDatabaseId
+              ? GET_METER_VALUES_FOR_TRANSACTION
+              : METER_VALUE_LIST_QUERY,
+          gqlVariables: transactionEventId
+            ? { transactionEventId }
+            : transactionDatabaseId
+              ? {
+                  transactionDatabaseId,
+                  ...(meterValueTimestamps?.length
+                    ? { where: { timestamp: { _in: meterValueTimestamps } } }
+                    : {}),
+                }
+              : undefined,
         },
-        queryOptions: getPlainToInstanceOptions(TransactionEventClass),
+        queryOptions: transactionDatabaseId
+          ? {
+              select: (data: any) => ({
+                ...data,
+                data: (data.data ?? []).filter((mv: any) =>
+                  (mv.sampledValue as any[])?.some((sv: any) =>
+                    VALID_CONTEXTS.has(sv.context),
+                  ),
+                ),
+              }),
+            }
+          : getPlainToInstanceOptions(TransactionEventClass),
       }}
       expandable={{
         expandedRowKeys: expanded,
