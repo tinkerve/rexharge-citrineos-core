@@ -39,7 +39,7 @@
     ],
     "overrides": {
       "@tanstack/react-query": "5.90.5",
-      "zod": "4.1.12",
+      "zod": "catalog:",
       "react-is": "19.1.4"
     }
   },

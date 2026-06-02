@@ -1,0 +1,63 @@
+{
+  "name": "@citrineos/demo",
+  "version": "3.0.0-alpha3",
+  "description": "Runs CitrineOS CORE and OCPI",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -rf dist/* tsconfig.tsbuildinfo",
+    "fresh": "rm -rf node_modules pnpm-lock.yaml && pnpm run clean",
+    "build": "tsc -b tsconfig.json && tsc -p tsconfig.migrations.json && pnpm run copy-assets",
+    "copy-assets": "tsx ./copy-assets.ts ./src/assets ./dist/assets",
+    "migrate": "pnpm exec sequelize-cli db:migrate --debug && echo migration completed successfully",
+    "init-db": "pnpm run migrate",
+    "seed-db": "pnpm exec sequelize-cli db:seed:all --debug",
+    "seed-undo": "pnpm exec sequelize-cli db:seed:undo:all --debug",
+    "start": "cross-env APP_NAME=all APP_ENV=local nodemon",
+    "start-docker-compose": "docker compose -f docker-compose.yml up --force-recreate",
+    "start-docker": "nodemon",
+    "start-docker-cloud": "cross-env OCPI_ENV=docker pnpm run init-db && node --inspect=0.0.0.0:9229 dist/index.js",
+    "start-everest": "cd ./everest && EVEREST_IMAGE_TAG=0.0.16 EVEREST_TARGET_URL=ws://host.docker.internal:8081/cp001 docker-compose up",
+    "start-everest-windows": "cd ./everest && set EVEREST_IMAGE_TAG=0.0.16&& set EVEREST_TARGET_URL=ws://host.docker.internal:8081/cp001&& docker compose up -d"
+  },
+  "keywords": [
+    "ocpp",
+    "ocpp_v201"
+  ],
+  "author": "S44",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/amqplib": "0.10.8",
+    "@types/bcrypt": "5.0.2",
+    "@types/uuid": "9.0.1",
+    "nodemon": "2.0.22",
+    "ts-node": "10.9.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.0"
+  },
+  "dependencies": {
+    "@citrineos/base": "workspace:*",
+    "@citrineos/core": "workspace:*",
+    "@citrineos/ocpi-base": "workspace:*",
+    "@directus/extensions": "~1.0.2",
+    "@fastify/type-provider-json-schema-to-ts": "4.0.1",
+    "cross-env": "7.0.3",
+    "fastify": "catalog:",
+    "sequelize": "^6.37.7",
+    "sqlite3": "5.1.6",
+    "tslog": "4.9.2",
+    "uuid": "9.0.0"
+  },
+  "engines": {
+    "node": ">=24.16.0"
+  },
+  "optionalDependencies": {
+    "bufferutil": "4.1.0",
+    "utf-8-validate": "6.0.3"
+  }
+}

@@ -8,7 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { makeApiClient, type ApiClient } from './api-client';
 
 // EVerest fixture using the citrineos-core docker-compose prototype
-// (`npm run start-everest` from citrineos-core/Server). The fixture brings
+// (`pnpm run start-everest` from citrineos-core/apps/ocpp-server). The fixture brings
 // the simulator up, waits for the simulator's OCPP BootNotification to
 // register the well-known station id `cp001` in citrineos-core's DB
 // (visible via Hasura), and tears the stack down on dispose.

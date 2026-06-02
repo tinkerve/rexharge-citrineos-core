@@ -39,7 +39,7 @@ jobs:
               - 'packages/core/**'
               - 'packages/base/**'
             server:
-              - 'apps/Server/**'
+              - 'apps/ocpp-server/**'
               - 'packages/**'
             operator-ui:
               - 'apps/operator-ui/**'
@@ -63,7 +63,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.16.0"
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
@@ -95,7 +95,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.16.0"
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
@@ -124,7 +124,7 @@ jobs:
         # Build with the default docker driver (builds straight into the daemon's
         # image store) — no tarball export/import or cache round-trip, which is
         # what made the build-push-action approach ~3min slower than the build itself.
-        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml up -d --build
+        run: docker compose -f ${{ github.workspace }}/apps/ocpp-server/docker-compose.yml up -d --build
 
       - name: Wait for backend healthy
         run: |
@@ -168,4 +168,4 @@ jobs:
 
       - name: Tear down backend stack
         if: always()
-        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml down -v
+        run: docker compose -f ${{ github.workspace }}/apps/ocpp-server/docker-compose.yml down -v

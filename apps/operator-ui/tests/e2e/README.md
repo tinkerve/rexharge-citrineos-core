@@ -10,7 +10,7 @@ End-to-end tests for `citrineos-operator-ui` against a real Hasura + CitrineOS C
 
 ## Prerequisites
 
-1. Backend stack running. From `citrineos-core/Server`:
+1. Backend stack running. From `citrineos-core/apps/ocpp-server`:
    ```bash
    docker compose up -d
    ```
@@ -70,7 +70,7 @@ npx tsx tests/e2e/scripts/capture-schema.ts
 Review the diff before committing — the script overwrites the JSON in place.
 
 `@everest` tagged tests need the EVerest manager image
-(`citrineos-core/Server/everest`) and run on the `everest-serial` project.
+(`citrineos-core/apps/ocpp-server/everest`) and run on the `everest-serial` project.
 They are skipped automatically when the image is not running.
 
 ## Folder layout

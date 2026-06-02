@@ -115,7 +115,7 @@ This repository is a **pnpm monorepo** with the following packages:
 ```
 citrineos-core/
 ├── apps/
-│   └── Server/          # OCPP server entrypoint, Docker setup, migrations
+│   └── ocpp-server/          # OCPP server entrypoint, Docker setup, migrations
 ├── packages/
 │   ├── base/            # Shared types, interfaces, and utilities (@citrineos/base)
 │   └── core/            # Core OCPP modules and logic (@citrineos/core)
@@ -151,10 +151,10 @@ Before you begin, make sure you have the following installed on your system:
    pnpm run build
    ```
 
-1. The Docker container should be initialized from `apps/Server` by running:
+1. The Docker container should be initialized from `apps/ocpp-server` by running:
 
    ```shell
-   cd apps/Server
+   cd apps/ocpp-server
    docker-compose up -d
    ```
 
@@ -201,7 +201,7 @@ We recommend running and developing the project with the `docker-compose` set-up
 Additional Run Configurations should be made for other IDEs (ex VSCode).
 
 To change necessary configuration for execution outside of `docker-compose`, please adjust the configuration file
-at `apps/Server/src/config/envs/local.ts`. Make sure any changes to the local configuration do not make it into your PR.
+at `apps/ocpp-server/src/config/envs/local.ts`. Make sure any changes to the local configuration do not make it into your PR.
 
 ## Starting the Server
 
@@ -211,10 +211,10 @@ To start the CitrineOS server, run the following command from the root directory
 pnpm run start
 ```
 
-Or from the `apps/Server` directory:
+Or from the `apps/ocpp-server` directory:
 
 ```shell
-cd apps/Server
+cd apps/ocpp-server
 pnpm run start
 ```
 
@@ -229,7 +229,7 @@ with ease.
 
 ## Attaching Debugger before execution using `--inspect-brk`
 
-You can modify `apps/Server/nodemon.json` exec command from:
+You can modify `apps/ocpp-server/nodemon.json` exec command from:
 
 ```shell
 pnpm run build --prefix ../../ && pnpm run migrate && node --inspect=0.0.0.0:9229 ./dist/index.js
@@ -251,7 +251,7 @@ charging stations to point to the server's IP address and port as specified in t
 ## Testing with EVerest
 
 For testing charging stations using EVerest, see:
-[README](./apps/Server/everest/README.md)
+[README](./apps/ocpp-server/everest/README.md)
 
 ## Running `clean` and `fresh`
 
@@ -284,10 +284,10 @@ Furthermore, [Visual Studio
 Code](https://code.visualstudio.com/docs/setup/linux) might be handy as
 a common integrated development environment.
 
-The Docker Compose file is located at `apps/Server/docker-compose.yml`. Start all services from that directory:
+The Docker Compose file is located at `apps/ocpp-server/docker-compose.yml`. Start all services from that directory:
 
 ```shell
-cd apps/Server
+cd apps/ocpp-server
 docker-compose up -d
 ```
 
@@ -313,14 +313,14 @@ Once Docker is running, the following services should be available:
 - **Hasura GraphQL Engine** (service name: graphql-engine)
   - `8090`: [Hasura console](http://localhost:8090)
 
-These services are defined in `apps/Server/docker-compose.yml` and they
+These services are defined in `apps/ocpp-server/docker-compose.yml` and they
 live inside the docker network with their respective ports. By default these ports are directly
 accessible using `localhost:8080` for example.
 
 # Bootstrap Configuration Environment Variables
 
 All environment variables use the `CITRINEOS_` prefix.
-Additional prefixes can be added by passing the `--env-prefix` argument to nodemon (see `start:instance1` in `apps/Server/package.json`).
+Additional prefixes can be added by passing the `--env-prefix` argument to nodemon (see `start:instance1` in `apps/ocpp-server/package.json`).
 Here's the complete list of environment variables that are used in bootstrapping the application (this is not the full system configuration):
 
 ## Basic Bootstrap Configuration
@@ -376,7 +376,7 @@ As of release 1.8.0, the schema files used by CitrineOS are not the raw output o
 ## Data Transfer Messages
 
 It is possible to add custom JSON schemas to validate the data fields of DataTransfer messages, which are supported by all OCPP versions.
-In the `apps/Server/src/index.ts` code, there is a function `ajvInstance()` that creates the AJV instance. Here, you could register DataTransfer schemas:
+In the `apps/ocpp-server/src/index.ts` code, there is a function `ajvInstance()` that creates the AJV instance. Here, you could register DataTransfer schemas:
 
 ```
 import { MyDataTransferRequestSchema } from './path'
@@ -403,7 +403,7 @@ Since not all information on the charger is necessarily available in the OCPP me
 
 ## Hasura Metadata
 
-In order for Hasura to track the existing Citrine tables and relationships, this repository comes with Hasura metadata already exported into the `apps/Server/hasura-metadata` folder.
+In order for Hasura to track the existing Citrine tables and relationships, this repository comes with Hasura metadata already exported into the `apps/ocpp-server/hasura-metadata` folder.
 Running the Docker container will automatically import this metadata and track all tables and relationships.
 
 Unfortunately, Hasura doesn't currently support importing metadata from a JSON (which is the format if you export your metadata from the Hasura UI or API).
@@ -440,7 +440,7 @@ hasura metadata export
 ```
 
 - Find the exported files in the `graphql-engine` container's files in the metadata filepath `<name of project i.e. citrine>/metadata` and pull that metadata backup onto your local machine
-- Copy the contents of the copied `metadata` folder into the `apps/Server/hasura-metadata` folder in this repository
+- Copy the contents of the copied `metadata` folder into the `apps/ocpp-server/hasura-metadata` folder in this repository
 
 ## Contributing
 

@@ -349,7 +349,7 @@ Authorizations → Add Authorization
 Now that the backend configuration is complete, start the EVerest simulator:
 
 ```bash
-cd citrineos-core/Server
+cd citrineos-core/apps/ocpp-server
 npm run start-everest
 ```
 
