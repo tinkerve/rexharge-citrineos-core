@@ -127,8 +127,12 @@ export class OverviewPage {
 
   async toggleTheme(): Promise<void> {
     await this.expandSidebar();
-    const lightVisible = await this.themeToggleLightLabel.isVisible().catch(() => false);
-    const target = lightVisible ? this.themeToggleLightLabel : this.themeToggleDarkLabel;
+    const lightVisible = await this.themeToggleLightLabel
+      .isVisible()
+      .catch(() => false);
+    const target = lightVisible
+      ? this.themeToggleLightLabel
+      : this.themeToggleDarkLabel;
     await target.click();
   }
 

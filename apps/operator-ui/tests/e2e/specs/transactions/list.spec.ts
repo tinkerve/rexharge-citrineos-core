@@ -15,7 +15,9 @@ import { shortId } from '../../utils/random';
 test.use({ storageState: 'playwright/.auth/admin.json' });
 
 test.describe('transactions › list', () => {
-  test('E2E-090: Transactions list renders with heading + search', async ({ page }) => {
+  test('E2E-090: Transactions list renders with heading + search', async ({
+    page,
+  }) => {
     const list = new TransactionsListPage(page);
     await list.goto();
     await expect(list.heading).toBeVisible();
@@ -30,22 +32,29 @@ test.describe('transactions › list', () => {
   }) => {
     // Decoy on a different station so the filter has something to exclude.
     const decoyStation = await seedStation(apiClient, seededLocation.id, {
-      id: `e2e-${shortId()}-decoy-cp`,
+      ocppConnectionName: `e2e-${shortId()}-decoy-cp`,
     });
-    const decoyTxn = await seedTransaction(apiClient, decoyStation.id);
+    const decoyTxn = await seedTransaction(
+      apiClient,
+      decoyStation.ocppConnectionName,
+    );
 
     try {
       const list = new TransactionsListPage(page);
       await list.goto();
-      await list.searchInput.fill(seededTransaction.stationId);
+      await list.searchInput.fill(seededTransaction.ocppConnectionName);
 
-      await expect(list.rowByStationId(seededTransaction.stationId)).toBeVisible({
-        timeout: 15_000,
-      });
-      await expect(list.rowByStationId(decoyStation.id)).toHaveCount(0);
+      await expect(
+        list.rowByStationId(seededTransaction.ocppConnectionName),
+      ).toBeVisible({ timeout: 15_000 });
+      await expect(
+        list.rowByStationId(decoyStation.ocppConnectionName),
+      ).toHaveCount(0);
     } finally {
-      await deleteTransaction(apiClient, decoyTxn.transactionId).catch(() => undefined);
-      await deleteStation(apiClient, decoyStation.pkId).catch(() => undefined);
+      await deleteTransaction(apiClient, decoyTxn.transactionId).catch(
+        () => undefined,
+      );
+      await deleteStation(apiClient, decoyStation.id).catch(() => undefined);
     }
   });
 
@@ -56,19 +65,26 @@ test.describe('transactions › list', () => {
   }) => {
     // Decoy on the same station — a station-level filter would surface
     // both rows; a transactionId-level filter must isolate to one.
-    const decoyTxn = await seedTransaction(apiClient, seededTransaction.stationId);
+    const decoyTxn = await seedTransaction(
+      apiClient,
+      seededTransaction.ocppConnectionName,
+    );
 
     try {
       const list = new TransactionsListPage(page);
       await list.goto();
       await list.searchInput.fill(seededTransaction.transactionId);
 
-      await expect(list.rowByTransactionId(seededTransaction.transactionId)).toBeVisible({
-        timeout: 15_000,
-      });
-      await expect(list.rowByTransactionId(decoyTxn.transactionId)).toHaveCount(0);
+      await expect(
+        list.rowByTransactionId(seededTransaction.transactionId),
+      ).toBeVisible({ timeout: 15_000 });
+      await expect(list.rowByTransactionId(decoyTxn.transactionId)).toHaveCount(
+        0,
+      );
     } finally {
-      await deleteTransaction(apiClient, decoyTxn.transactionId).catch(() => undefined);
+      await deleteTransaction(apiClient, decoyTxn.transactionId).catch(
+        () => undefined,
+      );
     }
   });
 });

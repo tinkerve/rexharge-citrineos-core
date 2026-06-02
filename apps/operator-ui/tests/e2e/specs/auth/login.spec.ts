@@ -18,7 +18,10 @@ test.describe('auth › login', () => {
     const overview = new OverviewPage(page);
 
     await login.goto();
-    await login.login(readEnv('E2E_ADMIN_EMAIL'), readEnv('E2E_ADMIN_PASSWORD'));
+    await login.login(
+      readEnv('E2E_ADMIN_EMAIL'),
+      readEnv('E2E_ADMIN_PASSWORD'),
+    );
 
     await page.waitForURL(OverviewPage.urlGlob, {
       timeout: 30_000,
@@ -33,7 +36,9 @@ test.describe('auth › login', () => {
     ).toBe(true);
   });
 
-  test('E2E-002: login rejects invalid credentials and stays on /login', async ({ page }) => {
+  test('E2E-002: login rejects invalid credentials and stays on /login', async ({
+    page,
+  }) => {
     const login = new LoginPage(page);
 
     await login.goto();
@@ -47,7 +52,9 @@ test.describe('auth › login', () => {
     await expect(login.emailInput).toHaveValue(readEnv('E2E_ADMIN_EMAIL'));
   });
 
-  test('E2E-003: login validates required fields client-side', async ({ page }) => {
+  test('E2E-003: login validates required fields client-side', async ({
+    page,
+  }) => {
     const login = new LoginPage(page);
 
     await login.goto();

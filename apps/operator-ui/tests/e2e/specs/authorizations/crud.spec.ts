@@ -46,7 +46,9 @@ test.describe('authorizations › CRUD', () => {
       { idToken },
     );
     if (Authorizations[0]) {
-      await deleteAuthorization(apiClient, Authorizations[0].id).catch(() => undefined);
+      await deleteAuthorization(apiClient, Authorizations[0].id).catch(
+        () => undefined,
+      );
     }
   });
 

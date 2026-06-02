@@ -57,12 +57,14 @@ test.describe('overview › dashboard', () => {
     await overview.goto();
 
     await expect(overview.kpiActiveTransactionsHeading).toBeVisible();
-    await expect(page.getByText(seededTransaction.transactionId, { exact: false })).toBeVisible({
-      timeout: 30_000,
-    });
+    await expect(
+      page.getByText(seededTransaction.transactionId, { exact: false }),
+    ).toBeVisible({ timeout: 30_000 });
   });
 
-  test('E2E-014: KPI headings render even with no fixture-seeded data', async ({ page }) => {
+  test('E2E-014: KPI headings render even with no fixture-seeded data', async ({
+    page,
+  }) => {
     const overview = new OverviewPage(page);
     await overview.goto();
 

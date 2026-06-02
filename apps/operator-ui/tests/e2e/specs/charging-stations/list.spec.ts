@@ -18,21 +18,28 @@ test.describe('charging-stations › list', () => {
     await expect(list.addStationButton).toBeVisible();
   });
 
-  test('E2E-041: Search by station id filters the list', async ({ page, seededStation }) => {
+  test('E2E-041: Search by station id filters the list', async ({
+    page,
+    seededStation,
+  }) => {
     const list = new ChargingStationsListPage(page);
     await list.goto();
-    await list.searchInput.fill(seededStation.id);
-    await expect(list.rowById(seededStation.id)).toBeVisible({
+    await list.searchInput.fill(seededStation.ocppConnectionName);
+    await expect(list.rowById(seededStation.ocppConnectionName)).toBeVisible({
       timeout: 15_000,
     });
   });
 
-  test('E2E-042: Search returns no-results when no station matches', async ({ page }) => {
+  test('E2E-042: Search returns no-results when no station matches', async ({
+    page,
+  }) => {
     const list = new ChargingStationsListPage(page);
     await list.goto();
     await list.searchInput.fill('e2e-nonexistent-cp-XXXXXXXX');
     await expect(list.noResultsMessage).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('row').filter({ hasText: 'e2e-' })).toHaveCount(0);
+    await expect(page.getByRole('row').filter({ hasText: 'e2e-' })).toHaveCount(
+      0,
+    );
   });
 
   test('E2E-045: Online indicator visible on @everest cp001 row @everest', async ({
@@ -41,7 +48,7 @@ test.describe('charging-stations › list', () => {
   }) => {
     const list = new ChargingStationsListPage(page);
     await list.goto();
-    const row = list.rowById(everestStation.stationId);
+    const row = list.rowById(everestStation.ocppConnectionName);
     await expect(row).toBeVisible({ timeout: 30_000 });
     // The row contains a status indicator (text or color); we accept
     // either as evidence the indicator rendered.

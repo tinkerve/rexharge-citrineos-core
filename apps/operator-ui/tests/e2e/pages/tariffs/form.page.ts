@@ -32,13 +32,21 @@ export class TariffFormPage {
     });
     // Form labels: "Currency (3-letter code)", "Price per kWh",
     // "Price per min", "Price per session", "Tax Rate (%)".
-    this.currencyInput = this.fieldGroup('Currency (3-letter code)').getByRole('textbox').first();
-    this.pricePerKwhInput = this.fieldGroup('Price per kWh').getByRole('spinbutton').first();
-    this.pricePerMinInput = this.fieldGroup('Price per min').getByRole('spinbutton').first();
+    this.currencyInput = this.fieldGroup('Currency (3-letter code)')
+      .getByRole('textbox')
+      .first();
+    this.pricePerKwhInput = this.fieldGroup('Price per kWh')
+      .getByRole('spinbutton')
+      .first();
+    this.pricePerMinInput = this.fieldGroup('Price per min')
+      .getByRole('spinbutton')
+      .first();
     this.pricePerSessionInput = this.fieldGroup('Price per session')
       .getByRole('spinbutton')
       .first();
-    this.taxRateInput = this.fieldGroup('Tax Rate (%)').getByRole('spinbutton').first();
+    this.taxRateInput = this.fieldGroup('Tax Rate (%)')
+      .getByRole('spinbutton')
+      .first();
     this.submitButton = page.getByRole('button', { name: /^(save|submit)/i });
   }
 

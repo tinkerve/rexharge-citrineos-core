@@ -5,6 +5,20 @@
 import type { ApiClient } from './api-client';
 import { shortId } from '../utils/random';
 
+// Schema reference for seeds + lookups:
+//   ChargingStations.id                 — int auto-inc PK
+//   ChargingStations.ocppConnectionName — string identifier (the OCPP name
+//                                         the charger uses when it connects)
+//   Child tables (Transactions, Connectors, Evses, StatusNotifications,
+//   LatestStatusNotifications, OCPPMessages, …):
+//     stationId          — int FK to ChargingStations.id
+//     ocppConnectionName — string identifier (populated by a BEFORE INSERT/
+//                          UPDATE trigger `populate_station_id` when the row
+//                          is written with `stationId` null, so seeds may
+//                          set `ocppConnectionName` alone and the trigger
+//                          fills in the int FK from tenant + connection
+//                          name).
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -15,15 +29,16 @@ export interface SeededLocation {
 }
 
 export interface SeededStation {
-  readonly id: string;
-  readonly pkId: number;
+  readonly id: number;
+  readonly ocppConnectionName: string;
   readonly locationId: number;
 }
 
 export interface SeededTransaction {
   readonly transactionId: string;
-  readonly stationId: string;
-  readonly pkId: number;
+  readonly id: number;
+  readonly stationId: number;
+  readonly ocppConnectionName: string;
 }
 
 // Minimal authorization for OCPP RemoteStart command flows.
@@ -68,7 +83,10 @@ export async function seedLocation(
   };
 }
 
-export async function deleteLocation(api: ApiClient, id: number): Promise<void> {
+export async function deleteLocation(
+  api: ApiClient,
+  id: number,
+): Promise<void> {
   await api.gql(
     `mutation DeleteLocation($id: bigint!) {
        delete_Locations_by_pk(id: $id) { id }
@@ -80,19 +98,23 @@ export async function deleteLocation(api: ApiClient, id: number): Promise<void> 
 export async function seedStation(
   api: ApiClient,
   locationId: number,
-  overrides: Partial<{ id: string; isOnline: boolean; protocol: string }> = {},
+  overrides: Partial<{
+    ocppConnectionName: string;
+    isOnline: boolean;
+    protocol: string;
+  }> = {},
 ): Promise<SeededStation> {
-  const id = overrides.id ?? `${shortId()}-cp`;
+  const ocppConnectionName = overrides.ocppConnectionName ?? `${shortId()}-cp`;
   const now = nowIso();
   const data = await api.gql<{
-    insert_ChargingStations_one: { id: string; pkId: number };
+    insert_ChargingStations_one: { id: number; ocppConnectionName: string };
   }>(
     `mutation SeedStation($obj: ChargingStations_insert_input!) {
-       insert_ChargingStations_one(object: $obj) { id pkId }
+       insert_ChargingStations_one(object: $obj) { id ocppConnectionName }
      }`,
     {
       obj: {
-        id,
+        ocppConnectionName,
         locationId,
         isOnline: overrides.isOnline ?? true,
         protocol: overrides.protocol ?? 'ocpp2.0.1',
@@ -101,21 +123,25 @@ export async function seedStation(
       },
     },
   );
-  return { id, pkId: data.insert_ChargingStations_one.pkId, locationId };
+  return {
+    id: data.insert_ChargingStations_one.id,
+    ocppConnectionName: data.insert_ChargingStations_one.ocppConnectionName,
+    locationId,
+  };
 }
 
-export async function deleteStation(api: ApiClient, pkId: number): Promise<void> {
+export async function deleteStation(api: ApiClient, id: number): Promise<void> {
   await api.gql(
-    `mutation DeleteStation($pkId: Int!) {
-       delete_ChargingStations_by_pk(pkId: $pkId) { pkId }
+    `mutation DeleteStation($id: Int!) {
+       delete_ChargingStations_by_pk(id: $id) { id }
      }`,
-    { pkId },
+    { id },
   );
 }
 
 export async function seedTransaction(
   api: ApiClient,
-  stationId: string,
+  ocppConnectionName: string,
   overrides: Partial<{
     transactionId: string;
     isActive: boolean;
@@ -124,16 +150,22 @@ export async function seedTransaction(
 ): Promise<SeededTransaction> {
   const transactionId = overrides.transactionId ?? `${shortId()}-tx`;
   const now = nowIso();
+  // The Transactions table's int `stationId` FK is populated by the
+  // populate_station_id trigger from `ocppConnectionName` + tenant.
   const data = await api.gql<{
-    insert_Transactions_one: { id: number; transactionId: string };
+    insert_Transactions_one: {
+      id: number;
+      stationId: number;
+      transactionId: string;
+    };
   }>(
     `mutation SeedTransaction($obj: Transactions_insert_input!) {
-       insert_Transactions_one(object: $obj) { id transactionId }
+       insert_Transactions_one(object: $obj) { id stationId transactionId }
      }`,
     {
       obj: {
         transactionId,
-        stationId,
+        ocppConnectionName,
         isActive: overrides.isActive ?? true,
         totalKwh: overrides.totalKwh ?? 0,
         createdAt: now,
@@ -143,8 +175,9 @@ export async function seedTransaction(
   );
   return {
     transactionId,
-    stationId,
-    pkId: data.insert_Transactions_one.id,
+    id: data.insert_Transactions_one.id,
+    stationId: data.insert_Transactions_one.stationId,
+    ocppConnectionName,
   };
 }
 
@@ -165,7 +198,11 @@ export async function seedMeterValues(
     const energyKwh = i * 0.5; // 0, 0.5, 1.0, 1.5, ...
     const powerKw = 7.2;
     const context =
-      i === 0 ? 'Transaction.Begin' : i === count - 1 ? 'Transaction.End' : 'Sample.Periodic';
+      i === 0
+        ? 'Transaction.Begin'
+        : i === count - 1
+          ? 'Transaction.End'
+          : 'Sample.Periodic';
     return {
       transactionDatabaseId,
       timestamp: ts,
@@ -207,7 +244,10 @@ export async function deleteMeterValuesForTransaction(
   );
 }
 
-export async function deleteTransaction(api: ApiClient, transactionId: string): Promise<void> {
+export async function deleteTransaction(
+  api: ApiClient,
+  transactionId: string,
+): Promise<void> {
   await api.gql(
     `mutation DeleteTransaction($transactionId: String!) {
        delete_Transactions(where: { transactionId: { _eq: $transactionId } }) { affected_rows }
@@ -216,10 +256,10 @@ export async function deleteTransaction(api: ApiClient, transactionId: string): 
   );
 }
 
-// Authorization seed helpers. The default token shape mimics an ISO14443
-// RFID card and is marked Accepted so RemoteStart / RemoteStop can
-// reference it. Tests that need a Blocked or expired authorization pass
-// overrides explicitly.
+// Authorization seed helpers. The default token type is `Central` (the
+// semantically correct type for CSMS-issued tokens — see citrineos-core's
+// validator: ISO14443 enforces 8/14-hex format, Central accepts the
+// readable identifier shape these tests produce).
 export async function seedAuthorization(
   api: ApiClient,
   overrides: Partial<{
@@ -229,7 +269,7 @@ export async function seedAuthorization(
   }> = {},
 ): Promise<SeededAuthorization> {
   const idToken = overrides.idToken ?? `${shortId().toUpperCase()}-RFID`;
-  const idTokenType = overrides.idTokenType ?? 'ISO14443';
+  const idTokenType = overrides.idTokenType ?? 'Central';
   const status = overrides.status ?? 'Accepted';
   const now = nowIso();
   const data = await api.gql<{
@@ -261,7 +301,10 @@ export async function seedAuthorization(
   };
 }
 
-export async function deleteAuthorization(api: ApiClient, id: number): Promise<void> {
+export async function deleteAuthorization(
+  api: ApiClient,
+  id: number,
+): Promise<void> {
   await api.gql(
     `mutation DeleteAuthorization($id: Int!) {
        delete_Authorizations_by_pk(id: $id) { id }
@@ -273,12 +316,16 @@ export async function deleteAuthorization(api: ApiClient, id: number): Promise<v
 export async function purgeAllE2eRows(api: ApiClient): Promise<void> {
   // Stale-row purge for accumulated test data. Used by globalSetup and
   // globalTeardown. Order respects FK constraints AND a CitrineOS Core
-  // Postgres trigger on ChargingStations that fails the delete unless
+  // Postgres trigger on child tables that fails the delete unless
   // StatusNotifications referencing the station are cleared first.
+  //
+  // The `e2e-` prefix marker is on `ocppConnectionName` (a string column).
+  // `stationId` is the int FK and is not _like-matchable, so all the cleanup
+  // filters target `ocppConnectionName` instead.
   await api
     .gql(
       `mutation PurgeStatusNotifications {
-         delete_StatusNotifications(where: { stationId: { _like: "e2e-%" } }) { affected_rows }
+         delete_StatusNotifications(where: { ocppConnectionName: { _like: "e2e-%" } }) { affected_rows }
        }`,
     )
     .catch(() => undefined);
@@ -286,7 +333,7 @@ export async function purgeAllE2eRows(api: ApiClient): Promise<void> {
   await api
     .gql(
       `mutation PurgeLatestStatusNotifications {
-         delete_LatestStatusNotifications(where: { stationId: { _like: "e2e-%" } }) { affected_rows }
+         delete_LatestStatusNotifications(where: { ocppConnectionName: { _like: "e2e-%" } }) { affected_rows }
        }`,
     )
     .catch(() => undefined);
@@ -305,14 +352,14 @@ export async function purgeAllE2eRows(api: ApiClient): Promise<void> {
     .catch(() => undefined);
 
   await api
-    .gql<{ ChargingStations: { pkId: number }[] }>(
+    .gql<{ ChargingStations: { id: number }[] }>(
       `query StaleStations {
-         ChargingStations(where: { id: { _like: "e2e-%" } }) { pkId }
+         ChargingStations(where: { ocppConnectionName: { _like: "e2e-%" } }) { id }
        }`,
     )
     .then(async ({ ChargingStations }) => {
       for (const s of ChargingStations) {
-        await deleteStation(api, s.pkId).catch(() => undefined);
+        await deleteStation(api, s.id).catch(() => undefined);
       }
     })
     .catch(() => undefined);

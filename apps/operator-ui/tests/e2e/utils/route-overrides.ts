@@ -21,7 +21,9 @@ async function fulfillJson(
 export async function forceHasura401(page: Page): Promise<void> {
   await page.route(HASURA_GLOB, (route) =>
     fulfillJson(route, 401, {
-      errors: [{ message: 'Unauthorized', extensions: { code: 'unauthorized' } }],
+      errors: [
+        { message: 'Unauthorized', extensions: { code: 'unauthorized' } },
+      ],
     }),
   );
 }

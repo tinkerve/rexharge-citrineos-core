@@ -19,7 +19,10 @@ function npmCommand(): string {
   return process.platform === 'win32' ? 'npm.cmd' : 'npm';
 }
 
-async function isServerResponding(baseUrl: string, timeoutMs = 2_000): Promise<boolean> {
+async function isServerResponding(
+  baseUrl: string,
+  timeoutMs = 2_000,
+): Promise<boolean> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -33,13 +36,18 @@ async function isServerResponding(baseUrl: string, timeoutMs = 2_000): Promise<b
   }
 }
 
-async function waitForServerReady(baseUrl: string, totalTimeoutMs: number): Promise<void> {
+async function waitForServerReady(
+  baseUrl: string,
+  totalTimeoutMs: number,
+): Promise<void> {
   const deadline = Date.now() + totalTimeoutMs;
   while (Date.now() < deadline) {
     if (await isServerResponding(baseUrl, 3_000)) return;
     await new Promise((r) => setTimeout(r, 2_000));
   }
-  throw new Error(`Managed server did not respond on ${baseUrl} within ${totalTimeoutMs}ms`);
+  throw new Error(
+    `Managed server did not respond on ${baseUrl} within ${totalTimeoutMs}ms`,
+  );
 }
 
 function runNpmScriptToCompletion(scriptName: string): Promise<void> {
@@ -55,12 +63,15 @@ function runNpmScriptToCompletion(scriptName: string): Promise<void> {
         ...process.env,
         // Match the dev script's heap budget so the build doesn't OOM on
         // first-pass codegen.
-        NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=4096`.trim(),
+        NODE_OPTIONS:
+          `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=4096`.trim(),
       },
     });
     proc.on('error', rej);
     proc.on('exit', (code) =>
-      code === 0 ? res() : rej(new Error(`npm run ${scriptName} exited with code ${code}`)),
+      code === 0
+        ? res()
+        : rej(new Error(`npm run ${scriptName} exited with code ${code}`)),
     );
   });
 }
@@ -70,19 +81,15 @@ function runNpmScriptToCompletion(scriptName: string): Promise<void> {
 // sibling .next-server.pid file; globalTeardown reads it and tears the
 // process tree down with taskkill /F /T (Windows) or process.kill (Unix).
 function spawnDetachedServer(): number {
-  const serverScript = require.resolve('next/dist/bin/next', { paths: [REPO_ROOT] });
-  const proc = spawn(process.execPath, [serverScript, 'start'], {
+  const proc = spawn(npmCommand(), ['run', 'start'], {
     cwd: REPO_ROOT,
     detached: true,
     stdio: 'ignore',
-    env: {
-      ...process.env,
-      NODE_ENV: 'production',
-    },
+    shell: process.platform === 'win32',
   });
   proc.unref();
   if (!proc.pid) {
-    throw new Error('Failed to spawn `next start` — no PID returned.');
+    throw new Error('Failed to spawn `npm run start` — no PID returned.');
   }
   return proc.pid;
 }
@@ -96,13 +103,17 @@ export async function ensureManagedServer(baseUrl: string): Promise<void> {
     console.info('[e2e:managed-server] reusing existing server at', baseUrl);
     return;
   }
-  console.info('[e2e:managed-server] no server responding — building production bundle...');
+  console.info(
+    '[e2e:managed-server] no server responding — building production bundle...',
+  );
   await runNpmScriptToCompletion('build');
   console.info('[e2e:managed-server] starting next start...');
   const pid = spawnDetachedServer();
   writeFileSync(PID_FILE, String(pid), 'utf8');
   await waitForServerReady(baseUrl, 120_000);
-  console.info(`[e2e:managed-server] production server ready (pid ${pid}) at ${baseUrl}`);
+  console.info(
+    `[e2e:managed-server] production server ready (pid ${pid}) at ${baseUrl}`,
+  );
 }
 
 // Public: stop the managed server if globalSetup spawned one. No-op if
@@ -131,52 +142,23 @@ export async function stopManagedServer(): Promise<void> {
 // PID plus all descendants — necessary because `npm run start` spawns a
 // `node` child that is not reachable via process.kill(pid).
 function killProcessTree(pid: number): Promise<void> {
-  return new Promise((resolve) => {
-    if (process.platform === 'win32') {
+  if (process.platform === 'win32') {
+    return new Promise((res) => {
       const k = spawn('taskkill', ['/F', '/T', '/PID', String(pid)], {
         stdio: 'ignore',
       });
-      k.on('exit', resolve);
-      k.on('error', resolve);
-      return;
+      k.on('exit', () => res());
+      k.on('error', () => res());
+    });
+  }
+  try {
+    process.kill(-pid, 'SIGTERM');
+  } catch {
+    try {
+      process.kill(pid, 'SIGTERM');
+    } catch {
+      /* already dead */
     }
-
-    // Poll until the process is gone. SIGTERM first, SIGKILL after 10s.
-    const SIGKILL_AFTER_MS = 10_000;
-    const POLL_INTERVAL_MS = 200;
-    const start = Date.now();
-
-    const sendSignal = (sig: NodeJS.Signals) => {
-      try {
-        process.kill(-pid, sig); // negative = process group
-      } catch {
-        try {
-          process.kill(pid, sig); // fallback: just the pid
-        } catch {
-          /* already dead */
-        }
-      }
-    };
-
-    sendSignal('SIGTERM');
-
-    const poll = setInterval(() => {
-      let alive = true;
-      try {
-        process.kill(pid, 0); // signal 0 = existence check
-      } catch {
-        alive = false;
-      }
-
-      if (!alive) {
-        clearInterval(poll);
-        resolve();
-        return;
-      }
-
-      if (Date.now() - start > SIGKILL_AFTER_MS) {
-        sendSignal('SIGKILL');
-      }
-    }, POLL_INTERVAL_MS);
-  });
+  }
+  return Promise.resolve();
 }

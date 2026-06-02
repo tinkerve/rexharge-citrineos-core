@@ -14,7 +14,9 @@ export class ChargingStationsListPage {
   readonly noResultsMessage: Locator;
 
   constructor(private readonly page: Page) {
-    this.heading = page.getByRole('heading', { name: /charging stations/i }).first();
+    this.heading = page
+      .getByRole('heading', { name: /charging stations/i })
+      .first();
     this.searchInput = page.getByRole('textbox', {
       name: /search charging stations/i,
     });

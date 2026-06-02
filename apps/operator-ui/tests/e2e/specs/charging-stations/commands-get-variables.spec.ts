@@ -14,7 +14,7 @@ test.describe('charging-stations › GetVariables command', () => {
     everestStation,
   }) => {
     const detail = new ChargingStationDetailPage(page);
-    await detail.goto(everestStation.pkId);
+    await detail.goto(everestStation.id);
 
     await detail.commandBar.openViaOtherCommands(/get variables/i);
     const modal = new ModalHarness(page, /get variables/i);
@@ -26,13 +26,18 @@ test.describe('charging-stations › GetVariables command', () => {
     await expect(
       modal.dialog.getByRole('group').filter({ hasText: /component #1/i }),
     ).toBeVisible();
-    await expect(modal.dialog.getByRole('group').filter({ hasText: /variable #1/i })).toBeVisible();
+    await expect(
+      modal.dialog.getByRole('group').filter({ hasText: /variable #1/i }),
+    ).toBeVisible();
     await modal.cancel();
   });
 
-  test('E2E-080: GetVariables validation when no rows present', async ({ page, seededStation }) => {
+  test('E2E-080: GetVariables validation when no rows present', async ({
+    page,
+    seededStation,
+  }) => {
     const detail = new ChargingStationDetailPage(page);
-    await detail.goto(seededStation.pkId);
+    await detail.goto(seededStation.id);
 
     await detail.commandBar.openViaOtherCommands(/get variables/i);
     const modal = new ModalHarness(page, /get variables/i);

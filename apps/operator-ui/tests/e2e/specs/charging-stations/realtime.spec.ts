@@ -20,14 +20,14 @@ test.describe('charging-stations › realtime status @everest', () => {
     // EVerest to flip Available → Charging, which is not feasible without
     // staging an active OCPP transaction.
     const detail = new ChargingStationDetailPage(page);
-    await detail.goto(everestStation.pkId);
+    await detail.goto(everestStation.id);
     await expect(detail.commandBar.resetButton).toBeVisible({
       timeout: 30_000,
     });
     // Status indicator presence — text or colored dot. Re-uses the
     // pattern from list.spec.ts E2E-045.
-    await expect(page.getByText(/(online|offline|unknown)/i).first()).toBeVisible({
-      timeout: 30_000,
-    });
+    await expect(
+      page.getByText(/(online|offline|unknown)/i).first(),
+    ).toBeVisible({ timeout: 30_000 });
   });
 });

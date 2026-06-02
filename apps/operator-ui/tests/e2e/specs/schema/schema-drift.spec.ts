@@ -26,8 +26,16 @@ test.describe('schema › drift guard', () => {
   test('E2E-SCHEMA-DRIFT-001: validateSchemaDrift rejects a deliberate operation rename', async ({
     apiClient,
   }) => {
-    const snapshotPath = resolve(__dirname, '..', '..', 'data', 'schema-snapshot.json');
-    const baseline = JSON.parse(readFileSync(snapshotPath, 'utf-8')) as SchemaSnapshot;
+    const snapshotPath = resolve(
+      __dirname,
+      '..',
+      '..',
+      'data',
+      'schema-snapshot.json',
+    );
+    const baseline = JSON.parse(
+      readFileSync(snapshotPath, 'utf-8'),
+    ) as SchemaSnapshot;
 
     const current = await captureHasuraIntrospection(apiClient);
 
@@ -36,7 +44,9 @@ test.describe('schema › drift guard', () => {
     expect(liveReport.valid, JSON.stringify(liveReport, null, 2)).toBe(true);
 
     // (b) deliberate in-memory mutation: drop a tracked operation.
-    const trackedOp = baseline.operations.find((op) => op.startsWith('ChargingStations'));
+    const trackedOp = baseline.operations.find((op) =>
+      op.startsWith('ChargingStations'),
+    );
     expect(trackedOp).toBeDefined();
     const mutatedBaseline: SchemaSnapshot = {
       ...baseline,
@@ -52,8 +62,16 @@ test.describe('schema › drift guard', () => {
   test('E2E-SCHEMA-DRIFT-002: validateSchemaDrift detects a missing tracked column', async ({
     apiClient,
   }) => {
-    const snapshotPath = resolve(__dirname, '..', '..', 'data', 'schema-snapshot.json');
-    const baseline = JSON.parse(readFileSync(snapshotPath, 'utf-8')) as SchemaSnapshot;
+    const snapshotPath = resolve(
+      __dirname,
+      '..',
+      '..',
+      'data',
+      'schema-snapshot.json',
+    );
+    const baseline = JSON.parse(
+      readFileSync(snapshotPath, 'utf-8'),
+    ) as SchemaSnapshot;
 
     const current = await captureHasuraIntrospection(apiClient);
 
@@ -72,7 +90,8 @@ test.describe('schema › drift guard', () => {
     expect(report.valid).toBe(false);
     expect(
       report.missingColumns.some(
-        (c) => c.type === 'ChargingStations' && c.column === '__pretend_added_col__',
+        (c) =>
+          c.type === 'ChargingStations' && c.column === '__pretend_added_col__',
       ),
     ).toBe(true);
   });

@@ -30,9 +30,15 @@ export class AuthorizationFormPage {
     this.heading = page.getByRole('heading', {
       name: /(create|edit) authorization/i,
     });
-    this.idTokenInput = this.fieldGroup('ID Token').getByRole('textbox').first();
-    this.idTokenTypeCombobox = this.fieldGroup('ID Token Type').getByRole('combobox').first();
-    this.statusCombobox = this.fieldGroup('Status').getByRole('combobox').first();
+    this.idTokenInput = this.fieldGroup('ID Token')
+      .getByRole('textbox')
+      .first();
+    this.idTokenTypeCombobox = this.fieldGroup('ID Token Type')
+      .getByRole('combobox')
+      .first();
+    this.statusCombobox = this.fieldGroup('Status')
+      .getByRole('combobox')
+      .first();
     this.submitButton = page.getByRole('button', { name: /^(save|submit)/i });
   }
 

@@ -16,7 +16,10 @@ test.describe('tariffs › CRUD', () => {
     await expect(list.addButton).toBeVisible();
   });
 
-  test('E2E-111: Create tariff via UI surfaces success toast', async ({ page, apiClient }) => {
+  test('E2E-111: Create tariff via UI surfaces success toast', async ({
+    page,
+    apiClient,
+  }) => {
     const form = new TariffFormPage(page);
     await form.gotoNew();
     await form.fill({
@@ -69,7 +72,9 @@ test.describe('tariffs › CRUD', () => {
       await page.waitForURL(/\/tariffs$/, { timeout: 30_000 });
       const list = new TariffsListPage(page);
       await expect(list.heading).toBeVisible();
-      await expect(page.getByRole('row').filter({ hasText: String(created.id) })).toHaveCount(0);
+      await expect(
+        page.getByRole('row').filter({ hasText: String(created.id) }),
+      ).toHaveCount(0);
     } finally {
       await apiClient
         .gql(

@@ -10,7 +10,11 @@ const REQUIRED_KEYS = [
   'E2E_ADMIN_PASSWORD',
 ] as const;
 
-const OPTIONAL_KEYS = ['E2E_TENANT_ID', 'E2E_AUTH_PROVIDER', 'HASURA_ADMIN_SECRET'] as const;
+const OPTIONAL_KEYS = [
+  'E2E_TENANT_ID',
+  'E2E_AUTH_PROVIDER',
+  'HASURA_ADMIN_SECRET',
+] as const;
 
 export type RequiredEnvKey = (typeof REQUIRED_KEYS)[number];
 export type OptionalEnvKey = (typeof OPTIONAL_KEYS)[number];
