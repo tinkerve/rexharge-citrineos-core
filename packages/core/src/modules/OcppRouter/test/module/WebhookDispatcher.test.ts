@@ -799,7 +799,9 @@ describe('WebhookDispatcher', () => {
       const callbackUrl = 'http://localhost:3000/callback';
       cache.get.mockResolvedValueOnce(callbackUrl);
 
-      await webhookDispatcher.dispatchCallbackUrl(CORRELATION_ID, STATION_ID, { status: 'Accepted' });
+      await webhookDispatcher.dispatchCallbackUrl(CORRELATION_ID, STATION_ID, {
+        status: 'Accepted',
+      });
 
       expect(fetch).toHaveBeenCalledWith(callbackUrl, {
         method: 'POST',
@@ -815,7 +817,9 @@ describe('WebhookDispatcher', () => {
     it('should not call fetch when no callback URL is cached', async () => {
       cache.get.mockResolvedValueOnce(null);
 
-      await webhookDispatcher.dispatchCallbackUrl(CORRELATION_ID, STATION_ID, { status: 'Accepted' });
+      await webhookDispatcher.dispatchCallbackUrl(CORRELATION_ID, STATION_ID, {
+        status: 'Accepted',
+      });
 
       expect(fetch).not.toHaveBeenCalled();
     });
