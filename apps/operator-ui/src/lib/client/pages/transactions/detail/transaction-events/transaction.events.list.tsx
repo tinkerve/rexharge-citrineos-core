@@ -23,7 +23,11 @@ import React, { useMemo, useState } from 'react';
 import type { ExpandedState } from '@tanstack/react-table';
 import { useTenantId } from '@lib/client/hooks/useTenantId';
 
-export const TransactionEventsList = ({ transactionDatabaseId }: any) => {
+export const TransactionEventsList = ({
+  transactionDatabaseId,
+  ocppTransactionId,
+  ocppConnectionName,
+}: any) => {
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const tenantId = useTenantId();
@@ -50,7 +54,7 @@ export const TransactionEventsList = ({ transactionDatabaseId }: any) => {
     sorters: [{ field: 'timestamp', order: 'desc' }],
     meta: {
       gqlQuery: GET_OCPP_MESSAGES_FOR_TRANSACTION_LIST_QUERY,
-      gqlVariables: { transactionDatabaseId },
+      gqlVariables: { ocppTransactionId, ocppConnectionName },
     },
     queryOptions: getPlainToInstanceOptions(OCPPMessageClass),
     pagination: { pageSize: 1000 },
@@ -58,25 +62,48 @@ export const TransactionEventsList = ({ transactionDatabaseId }: any) => {
 
   const merged = useMemo<TransactionEventDto[]>(() => {
     const events = eventsData?.data || [];
-    const messages = messagesData?.data || [];
+    const messages = (messagesData?.data || []) as any[];
 
-    const messageRows: TransactionEventDto[] = messages.map((m: any) => ({
-      id: -m.id,
-      ocppConnectionName: String(m.ocppConnectionName ?? ''),
-      evseId: m.message?.connectorId ?? null,
-      transactionDatabaseId: transactionDatabaseId,
-      eventType: 'OCPPMessage' as TransactionEventDto['eventType'],
-      meterValues: [],
-      timestamp: String(m.timestamp),
-      triggerReason: m.action as TransactionEventDto['triggerReason'],
-      seqNo: -1 as TransactionEventDto['seqNo'],
-      offline: false as TransactionEventDto['offline'],
-      numberOfPhasesUsed: 0 as TransactionEventDto['numberOfPhasesUsed'],
-      cableMaxCurrent: 0 as TransactionEventDto['cableMaxCurrent'],
-      reservationId: 0 as TransactionEventDto['reservationId'],
-      tenantId,
-    }));
-    return [...events, ...messageRows];
+    const sortedMessages = [...messages].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+
+    const messageRows: TransactionEventDto[] = sortedMessages.map((m, index) => {
+      const payload = m.message?.[3];
+      const triggerReason: string = m.action === 'StopTransaction' ? (payload?.reason ?? '') : '';
+
+      const innerMeterValues: any[] =
+        m.action === 'MeterValues'
+          ? (payload?.meterValue ?? [])
+          : m.action === 'StopTransaction'
+            ? (payload?.transactionData ?? [])
+            : [];
+
+      const meterValueTimestamps: string[] = innerMeterValues
+        .map((mv: any) => mv.timestamp)
+        .filter(Boolean);
+
+      return {
+        id: -m.id,
+        ocppConnectionName: String(m.ocppConnectionName ?? ''),
+        evseId: payload?.connectorId ?? null,
+        transactionDatabaseId: transactionDatabaseId,
+        eventType: m.action as TransactionEventDto['eventType'],
+        meterValues: innerMeterValues,
+        timestamp: String(m.timestamp),
+        triggerReason: triggerReason as TransactionEventDto['triggerReason'],
+        seqNo: (index + 1) as TransactionEventDto['seqNo'],
+        offline: false as TransactionEventDto['offline'],
+        numberOfPhasesUsed: 0 as TransactionEventDto['numberOfPhasesUsed'],
+        cableMaxCurrent: 0 as TransactionEventDto['cableMaxCurrent'],
+        reservationId: 0 as TransactionEventDto['reservationId'],
+        tenantId,
+        _meterValueTimestamps: meterValueTimestamps,
+      } as any;
+    });
+    return [...events, ...messageRows].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
   }, [eventsData?.data, messagesData?.data, transactionDatabaseId, tenantId]);
 
   const columns = [
@@ -87,7 +114,8 @@ export const TransactionEventsList = ({ transactionDatabaseId }: any) => {
       accessorKey={TransactionEventProps.meterValue}
       header=""
       cell={({ row }) =>
-        row.original.eventType! in TransactionEventEnum ? (
+        row.original.eventType! in TransactionEventEnum ||
+        (row.original.meterValues as any[])?.length > 0 ? (
           <div
             className="flex items-center justify-end cursor-pointer hover:text-primary"
             onClick={(e) => {
@@ -135,7 +163,13 @@ export const TransactionEventsList = ({ transactionDatabaseId }: any) => {
           },
           expandedRowRender: (record: TransactionEventDto) => (
             <div className="border-t bg-muted/20 p-4">
-              <MeterValuesList transactionEventId={record.id} />
+              <MeterValuesList
+                transactionEventId={record.id != null && record.id > 0 ? record.id : undefined}
+                transactionDatabaseId={
+                  record.id != null && record.id < 0 ? transactionDatabaseId : undefined
+                }
+                meterValueTimestamps={(record as any)._meterValueTimestamps}
+              />
             </div>
           ),
           expandedRowClassName: 'bg-muted/10',
