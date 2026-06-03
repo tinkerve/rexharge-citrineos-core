@@ -154,7 +154,6 @@ export abstract class AbstractModule implements IModule {
           );
         }
 
-        await this.handleMessageApiCallback(message as IMessage<OcppResponse>);
         await this._cache.set(
           message.context.correlationId,
           JSON.stringify(message.payload),
@@ -217,30 +216,6 @@ export abstract class AbstractModule implements IModule {
    * @param message The {@link IMessage} to handle. Can contain either a {@link OcppRequest} or a {@link OcppResponse} as payload.
    * @param props The {@link HandlerProperties} for this {@link IMessage} containing implementation specific metadata. Metadata is not used in the base implementation.
    */
-
-  async handleMessageApiCallback(message: IMessage<OcppResponse>): Promise<void> {
-    const url: string | null = await this._cache.get(
-      message.context.correlationId,
-      AbstractModule.CALLBACK_URL_CACHE_PREFIX + message.context.ocppConnectionName,
-    );
-    if (url) {
-      this._logger.debug(
-        `Sending call result to callback URL: ${url} for correlationId: ${message.context.correlationId}`,
-      );
-      try {
-        await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(message.payload),
-        });
-      } catch (error) {
-        // TODO: Ideally the error log is also stored in the database in a failed invocations table to ensure these are visible outside of a log file.
-        this._logger.error('Failed sending call result: ', error);
-      }
-    }
-  }
 
   /**
    * Calls shutdown on the handler and sender.
