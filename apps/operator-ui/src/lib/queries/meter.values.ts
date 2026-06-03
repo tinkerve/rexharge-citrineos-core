@@ -63,12 +63,13 @@ export const GET_METER_VALUES_FOR_TRANSACTION = gql`
     $offset: Int!
     $limit: Int!
     $order_by: [MeterValues_order_by!]
+    $where: MeterValues_bool_exp! = {}
   ) {
     MeterValues(
       offset: $offset
       limit: $limit
       order_by: $order_by
-      where: { transactionDatabaseId: { _eq: $transactionDatabaseId } }
+      where: { transactionDatabaseId: { _eq: $transactionDatabaseId }, _and: [$where] }
     ) {
       id
       transactionDatabaseId
@@ -78,7 +79,9 @@ export const GET_METER_VALUES_FOR_TRANSACTION = gql`
       createdAt
       updatedAt
     }
-    MeterValues_aggregate(where: { transactionDatabaseId: { _eq: $transactionDatabaseId } }) {
+    MeterValues_aggregate(
+      where: { transactionDatabaseId: { _eq: $transactionDatabaseId }, _and: [$where] }
+    ) {
       aggregate {
         count
       }

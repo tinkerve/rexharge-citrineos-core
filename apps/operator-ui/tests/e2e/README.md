@@ -10,14 +10,15 @@ End-to-end tests for `citrineos-operator-ui` against a real Hasura + CitrineOS C
 
 ## Prerequisites
 
-1. Backend stack running. From `citrineos-core/apps/ocpp-server`:
+1. Backend stack running. From the `citrineos-core` repository root (full stack incl. UI), or from
+   `citrineos-core/apps/ocpp-server` (backend only):
    ```bash
    docker compose up -d
    ```
    Healthchecks: Hasura `:8090/healthz`, Citrine `:8080/health`, UI `:3000/login`.
-2. UI server running. From this repo:
+2. UI server running. From `apps/operator-ui`:
    ```bash
-   npm run dev
+   pnpm run dev
    ```
    If nothing is listening on `:3000`, `globalSetup` will build a production
    bundle and start `next start` for the lifetime of the suite (see
@@ -28,19 +29,19 @@ End-to-end tests for `citrineos-operator-ui` against a real Hasura + CitrineOS C
 
 ```bash
 # Full suite
-npm run test:e2e
+pnpm run test:e2e
 
 # A single spec
 npx playwright test specs/auth/login.spec.ts
 
 # UI mode
-npm run test:e2e:ui
+pnpm run test:e2e:ui
 
 # Step through with the inspector
-npm run test:e2e:debug
+pnpm run test:e2e:debug
 
 # Open the HTML report from the last run
-npm run test:e2e:report
+pnpm run test:e2e:report
 ```
 
 ## What's covered
@@ -82,6 +83,7 @@ tests/e2e/
 ├── fixtures/       apiClient, seeded-data, everest, index (test.extend barrel)
 ├── specs/          Test specs mirroring the app routes
 ├── utils/          env, wait, random, route-overrides, storage, schema-drift, managed-server
+├── scripts/        capture-schema.ts (regenerates the schema-drift baseline)
 ├── data/           schema-snapshot.json
 ├── TESTIDS.md      data-testid registry (reserved for future src-side additions)
 └── README.md       this file

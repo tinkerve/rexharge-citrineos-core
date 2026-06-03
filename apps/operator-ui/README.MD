@@ -29,6 +29,9 @@ OCPP message handling, persistence layer, and GraphQL APIs.
 > The Operator UI **does not run standalone**.  
 > A running instance of **CitrineOS Core** (including Hasura GraphQL Engine) is required.
 
+This app is one workspace member of the `citrineos-core` pnpm monorepo. For repository-wide setup and for running the
+full stack (server + UI + Hasura) together, see the [root README](../../README.md).
+
 ---
 
 ## Table of Contents
@@ -38,8 +41,8 @@ OCPP message handling, persistence layer, and GraphQL APIs.
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
   - [Running with Docker](#running-with-docker-recommended)
-  - [Running with NPM (Local Development)](#running-with-npm-local-development)
-- [Working with a Local `citrineos-core`](#working-with-a-local-citrineos-core)
+  - [Running with pnpm (Local Development)](#running-with-pnpm-local-development)
+- [Working with `@citrineos/base`](#working-with-citrineosbase)
 - [Build & Development Workflow](#build--development-workflow)
 - [Running the Application](#running-the-application)
 - [Bringing a Charging Station Online (End-to-End)](#bringing-a-charging-station-online-end-to-end)
@@ -103,11 +106,11 @@ The UI consumes:
 
 Before starting, ensure the following tools and services are installed and running.
 
-- **Node.js** (v24 or higher recommended)  
+- **Node.js** (v24.16.0 or higher)  
   [Link](https://nodejs.org)
 
-- **npm**  
-  Installed automatically with Node.js
+- **pnpm**  
+  [Link](https://pnpm.io/installation) — the workspace's package manager
 
 - **Docker & Docker Compose** (recommended)  
   [Link](https://www.docker.com/products/docker-desktop/)
@@ -143,72 +146,51 @@ This will:
 - Build the Operator UI container
 - Start the UI connected to the configured Hasura and Core service
 
-### Running with NPM (Local Development)
+### Running with pnpm (Local Development)
 
-For local development without Docker:
-
-```bash
-npm install
-npm run dev
-```
-
-This starts the development server with hot reload.
-
-### Working with a Local `citrineos-core`
-
-When developing Operator UI against a **local build of citrineos-core** (for example, a release candidate or feature branch),
-you can link the core package using `npm link`.
-
-### Step-by-step
-
-1. Build CitrineOS Core first:
+The Operator UI lives inside the `citrineos-core` **pnpm workspace** (under `apps/operator-ui`). Install all
+workspace dependencies once from the repository root, then start the dev server:
 
 ```bash
-cd citrineos-core
-npm run build
+# from the repository root
+pnpm install
+
+# then, from apps/operator-ui
+pnpm run dev
 ```
 
-2. Link the base package:
+This starts the development server (Next.js + Refine) with hot reload.
+
+### Working with `@citrineos/base`
+
+The Operator UI depends on `@citrineos/base` via a `workspace:*` dependency, so pnpm resolves it from the local
+`packages/base` automatically — no `npm link` step is required. Just build the workspace packages so the compiled
+output is available:
 
 ```bash
-cd 00_Base
-npm link
+# from the repository root
+pnpm run build
 ```
-
-3. Link it inside Operator UI:
-
-```bash
-cd citrineos-operator-ui
-npm link @citrineos/base@X.X.X
-```
-
-> ⚠️ **Note:**
-> Running `npm run fresh` or `npm run fi` will remove this link and you will need to re-link.
 
 ## Build & Development Workflow
 
-The Operator UI uses **npm workspaces** for local development convenience.
+The Operator UI is a member of the `citrineos-core` **pnpm workspace**.
 
 ### Typical Workflow
 
-1. Build CitrineOS Core:
+1. Install and build the workspace from the repository root:
 
 ```bash
-cd citrineos-core
-npm run build
+# from the repository root
+pnpm install
+pnpm run build
 ```
 
-2. Install Operator UI dependencies:
+2. Start the dev server:
 
 ```bash
-cd citrineos-operator-ui
-npm install
-```
-
-3. Start development server:
-
-```bash
-npm run dev
+# from apps/operator-ui
+pnpm run dev
 ```
 
 ## Running the Application
@@ -216,7 +198,7 @@ npm run dev
 ### Development Mode
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 - Runs the app with hot reload
@@ -225,11 +207,11 @@ npm run dev
 ### Production Build
 
 ```bash
-npm run build
-npm run preview
+pnpm run build
+pnpm run start
 ```
 
-- Production preview URL: http://localhost:3000
+- Production URL: http://localhost:3000
 
 ## Bringing a Charging Station Online (End-to-End)
 
@@ -350,7 +332,7 @@ Now that the backend configuration is complete, start the EVerest simulator:
 
 ```bash
 cd citrineos-core/apps/ocpp-server
-npm run start-everest
+pnpm run start-everest
 ```
 
 This will:

@@ -165,7 +165,13 @@ export const TransactionDetailTabsCard = ({ transaction }: { transaction: Transa
                 accessType: TransactionAccessType.EVENTS,
               }}
             >
-              <TransactionEventsList transactionDatabaseId={transaction.id} />
+              <TransactionEventsList
+                transactionDatabaseId={transaction.id}
+                ocppTransactionId={
+                  transaction.transactionId ? Number(transaction.transactionId) : undefined
+                }
+                ocppConnectionName={transaction.ocppConnectionName}
+              />
             </CanAccess>
           </TabsContent>
 
