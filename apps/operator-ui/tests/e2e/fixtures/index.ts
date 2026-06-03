@@ -18,11 +18,7 @@ import {
   type SeededStation,
   type SeededTransaction,
 } from './seeded-data';
-import {
-  startEverest,
-  ensureEverestOnline,
-  type EverestHandle,
-} from './everest';
+import { startEverest, ensureEverestOnline, type EverestHandle } from './everest';
 
 interface E2EFixtures {
   apiClient: ApiClient;
@@ -57,22 +53,15 @@ export const test = base.extend<E2EFixtures, E2EWorkerFixtures>({
   },
 
   seededTransaction: async ({ apiClient, seededStation }, use) => {
-    const transaction = await seedTransaction(
-      apiClient,
-      seededStation.ocppConnectionName,
-    );
+    const transaction = await seedTransaction(apiClient, seededStation.ocppConnectionName);
     await use(transaction);
-    await deleteTransaction(apiClient, transaction.transactionId).catch(
-      () => undefined,
-    );
+    await deleteTransaction(apiClient, transaction.transactionId).catch(() => undefined);
   },
 
   seededAuthorization: async ({ apiClient }, use) => {
     const authorization = await seedAuthorization(apiClient);
     await use(authorization);
-    await deleteAuthorization(apiClient, authorization.id).catch(
-      () => undefined,
-    );
+    await deleteAuthorization(apiClient, authorization.id).catch(() => undefined);
   },
 
   // EVerest is expensive: docker-compose up of multiple containers, then a

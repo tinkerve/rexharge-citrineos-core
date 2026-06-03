@@ -34,10 +34,7 @@ export class CommandBar {
   }
 
   async clickByName(buttonNamePattern: RegExp): Promise<void> {
-    await this.page
-      .getByRole('button', { name: buttonNamePattern })
-      .first()
-      .click();
+    await this.page.getByRole('button', { name: buttonNamePattern }).first().click();
   }
 
   // Opens the OtherCommandsModal, then selects a sub-command from its

@@ -27,10 +27,7 @@ export class ModalHarness {
   ) {
     this.dialog = page.getByRole('dialog');
     this.title = this.dialog.getByRole('heading').filter({
-      hasText:
-        titlePattern instanceof RegExp
-          ? titlePattern
-          : new RegExp(titlePattern, 'i'),
+      hasText: titlePattern instanceof RegExp ? titlePattern : new RegExp(titlePattern, 'i'),
     });
     this.closeButton = this.dialog.getByRole('button', { name: /^close$/i });
     this.cancelButton = this.dialog.getByRole('button', { name: /^cancel$/i });
@@ -49,18 +46,12 @@ export class ModalHarness {
   }
 
   async fill(label: RegExp | string, value: string): Promise<void> {
-    const target = this.dialog.getByLabel(
-      label instanceof RegExp ? label : new RegExp(label, 'i'),
-    );
+    const target = this.dialog.getByLabel(label instanceof RegExp ? label : new RegExp(label, 'i'));
     await target.fill(value);
   }
 
-  async select(
-    label: RegExp | string,
-    optionName: RegExp | string,
-  ): Promise<void> {
-    const labelPattern =
-      label instanceof RegExp ? label : new RegExp(label, 'i');
+  async select(label: RegExp | string, optionName: RegExp | string): Promise<void> {
+    const labelPattern = label instanceof RegExp ? label : new RegExp(label, 'i');
     // shadcn FormField wraps each control in a [role="group"] containing
     // both the visible label text and the combobox. The combobox itself
     // takes its accessible name from the current value, not the label, so
@@ -73,10 +64,7 @@ export class ModalHarness {
     await trigger.click();
     await this.page
       .getByRole('option', {
-        name:
-          optionName instanceof RegExp
-            ? optionName
-            : new RegExp(optionName, 'i'),
+        name: optionName instanceof RegExp ? optionName : new RegExp(optionName, 'i'),
       })
       .click();
   }
@@ -121,14 +109,9 @@ export class ModalHarness {
 
   validationError(fieldLabel: RegExp | string): Locator {
     return this.dialog
-      .locator(
-        '[role="alert"], [aria-live="polite"], [data-slot="form-message"]',
-      )
+      .locator('[role="alert"], [aria-live="polite"], [data-slot="form-message"]')
       .filter({
-        hasText:
-          fieldLabel instanceof RegExp
-            ? fieldLabel
-            : new RegExp(fieldLabel, 'i'),
+        hasText: fieldLabel instanceof RegExp ? fieldLabel : new RegExp(fieldLabel, 'i'),
       });
   }
 }

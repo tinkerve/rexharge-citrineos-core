@@ -19,9 +19,7 @@ test.describe('charging-stations › DataTransfer command', () => {
     await detail.commandBar.openViaOtherCommands(/data transfer/i);
     const modal = new ModalHarness(page, /data transfer/i);
     await modal.expectOpen();
-    const vendorInput = modal.dialog
-      .getByRole('textbox', { name: /vendor/i })
-      .first();
+    const vendorInput = modal.dialog.getByRole('textbox', { name: /vendor/i }).first();
     await vendorInput.fill('e2e-vendor');
     await modal.submitAndWaitForToast();
   });

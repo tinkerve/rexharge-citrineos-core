@@ -26,16 +26,11 @@ test.describe('charging-stations › GetVariables command', () => {
     await expect(
       modal.dialog.getByRole('group').filter({ hasText: /component #1/i }),
     ).toBeVisible();
-    await expect(
-      modal.dialog.getByRole('group').filter({ hasText: /variable #1/i }),
-    ).toBeVisible();
+    await expect(modal.dialog.getByRole('group').filter({ hasText: /variable #1/i })).toBeVisible();
     await modal.cancel();
   });
 
-  test('E2E-080: GetVariables validation when no rows present', async ({
-    page,
-    seededStation,
-  }) => {
+  test('E2E-080: GetVariables validation when no rows present', async ({ page, seededStation }) => {
     const detail = new ChargingStationDetailPage(page);
     await detail.goto(seededStation.id);
 

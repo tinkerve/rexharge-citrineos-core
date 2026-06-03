@@ -34,18 +34,10 @@ export class PartnerFormPage {
     this.heading = page.getByRole('heading', {
       name: /(create|edit) partner/i,
     });
-    this.countryCodeInput = this.fieldGroup('Country Code')
-      .getByRole('textbox')
-      .first();
-    this.partyIdInput = this.fieldGroup('Party ID')
-      .getByRole('textbox')
-      .first();
-    this.versionsUrlInput = this.fieldGroup('Versions URL')
-      .getByRole('textbox')
-      .first();
-    this.clientTokenInput = this.fieldGroup('Client Token')
-      .getByRole('textbox')
-      .first();
+    this.countryCodeInput = this.fieldGroup('Country Code').getByRole('textbox').first();
+    this.partyIdInput = this.fieldGroup('Party ID').getByRole('textbox').first();
+    this.versionsUrlInput = this.fieldGroup('Versions URL').getByRole('textbox').first();
+    this.clientTokenInput = this.fieldGroup('Client Token').getByRole('textbox').first();
     this.submitButton = page.getByRole('button', { name: /^(save|submit)/i });
   }
 

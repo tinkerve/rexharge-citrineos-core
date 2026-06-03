@@ -36,12 +36,8 @@ export class ChargingStationFormPage {
       name: /(create|edit) charging\s*station/i,
     });
     this.nameInput = this.fieldGroup('Name').getByRole('textbox').first();
-    this.locationCombobox = this.fieldGroup('Location')
-      .getByRole('combobox')
-      .first();
-    this.floorLevelInput = this.fieldGroup('Floor Level')
-      .getByRole('textbox')
-      .first();
+    this.locationCombobox = this.fieldGroup('Location').getByRole('combobox').first();
+    this.floorLevelInput = this.fieldGroup('Floor Level').getByRole('textbox').first();
     this.submitButton = page.getByRole('button', { name: /^(save|submit)/i });
   }
 

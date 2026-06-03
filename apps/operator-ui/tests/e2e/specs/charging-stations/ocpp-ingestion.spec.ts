@@ -30,9 +30,9 @@ test.describe('charging-stations › OCPP ingestion @everest', () => {
     // a busy run — the snapshot here is dominated by the newest messages — so
     // their specific ingestion is confirmed via the read-only API below rather
     // than by scrolling/filtering the table.)
-    await expect(
-      page.getByRole('cell', { name: /Heartbeat/i }).first(),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('cell', { name: /Heartbeat/i }).first()).toBeVisible({
+      timeout: 30_000,
+    });
 
     // Confirm both registration messages were ingested into Hasura. The
     // fixture's online guard already waits for a fresh StatusNotification, so

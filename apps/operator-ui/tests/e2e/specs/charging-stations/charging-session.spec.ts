@@ -64,10 +64,7 @@ async function pollActiveTransaction(
 
 // Live sessions create MeterValues + TransactionEvents that FK the transaction
 // by its DB id; delete them before the Transaction row. Best-effort cleanup.
-async function purgeTransaction(
-  apiClient: ApiClient,
-  id: number,
-): Promise<void> {
+async function purgeTransaction(apiClient: ApiClient, id: number): Promise<void> {
   await apiClient
     .gql(
       `mutation PurgeLiveTxn($id: Int!) {
@@ -106,10 +103,7 @@ test.describe('charging-stations › live charging session @everest', () => {
 
       // The operator authorizes the session via the RemoteStart modal.
       await detail.commandBar.remoteStartButton.click();
-      const startModal = new ModalHarness(
-        page,
-        /(remote start|start transaction)/i,
-      );
+      const startModal = new ModalHarness(page, /(remote start|start transaction)/i);
       await startModal.expectOpen();
 
       // The form's comboboxes expose no accessible name (the placeholder is a
@@ -121,9 +115,7 @@ test.describe('charging-stations › live charging session @everest', () => {
         .filter({ hasText: /authorization/i })
         .getByRole('combobox')
         .click();
-      await page
-        .getByPlaceholder(/search authorization/i)
-        .fill(EVEREST_AUTH_TOKEN);
+      await page.getByPlaceholder(/search authorization/i).fill(EVEREST_AUTH_TOKEN);
       await page.getByRole('option', { name: EVEREST_AUTH_TOKEN }).click();
 
       // The EVSE is mandatory for a 2.0.1 RemoteStart (libocpp rejects a
@@ -139,15 +131,8 @@ test.describe('charging-stations › live charging session @everest', () => {
 
       // A live transaction starts — proof the RemoteStart → Authorize →
       // TransactionEvent(Started) round-trip reached the database.
-      live = await pollActiveTransaction(
-        apiClient,
-        everestStation.ocppConnectionName,
-        45_000,
-      );
-      expect(
-        live,
-        'a live transaction should start on the EVerest station',
-      ).toBeTruthy();
+      live = await pollActiveTransaction(apiClient, everestStation.ocppConnectionName, 45_000);
+      expect(live, 'a live transaction should start on the EVerest station').toBeTruthy();
 
       // MeterValues flow during the session — the live energy readings every
       // other meter test seeds by hand.
@@ -179,10 +164,7 @@ test.describe('charging-stations › live charging session @everest', () => {
       });
       await detail.commandBar.remoteStopButton.click();
 
-      const stopModal = new ModalHarness(
-        page,
-        /(remote stop|stop transaction)/i,
-      );
+      const stopModal = new ModalHarness(page, /(remote stop|stop transaction)/i);
       await stopModal.expectOpen();
       await stopModal.dialog.getByRole('combobox').first().click();
       await page.getByRole('option', { name: live!.transactionId }).click();

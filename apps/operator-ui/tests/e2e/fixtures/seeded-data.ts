@@ -83,10 +83,7 @@ export async function seedLocation(
   };
 }
 
-export async function deleteLocation(
-  api: ApiClient,
-  id: number,
-): Promise<void> {
+export async function deleteLocation(api: ApiClient, id: number): Promise<void> {
   await api.gql(
     `mutation DeleteLocation($id: bigint!) {
        delete_Locations_by_pk(id: $id) { id }
@@ -198,11 +195,7 @@ export async function seedMeterValues(
     const energyKwh = i * 0.5; // 0, 0.5, 1.0, 1.5, ...
     const powerKw = 7.2;
     const context =
-      i === 0
-        ? 'Transaction.Begin'
-        : i === count - 1
-          ? 'Transaction.End'
-          : 'Sample.Periodic';
+      i === 0 ? 'Transaction.Begin' : i === count - 1 ? 'Transaction.End' : 'Sample.Periodic';
     return {
       transactionDatabaseId,
       timestamp: ts,
@@ -244,10 +237,7 @@ export async function deleteMeterValuesForTransaction(
   );
 }
 
-export async function deleteTransaction(
-  api: ApiClient,
-  transactionId: string,
-): Promise<void> {
+export async function deleteTransaction(api: ApiClient, transactionId: string): Promise<void> {
   await api.gql(
     `mutation DeleteTransaction($transactionId: String!) {
        delete_Transactions(where: { transactionId: { _eq: $transactionId } }) { affected_rows }
@@ -301,10 +291,7 @@ export async function seedAuthorization(
   };
 }
 
-export async function deleteAuthorization(
-  api: ApiClient,
-  id: number,
-): Promise<void> {
+export async function deleteAuthorization(api: ApiClient, id: number): Promise<void> {
   await api.gql(
     `mutation DeleteAuthorization($id: Int!) {
        delete_Authorizations_by_pk(id: $id) { id }

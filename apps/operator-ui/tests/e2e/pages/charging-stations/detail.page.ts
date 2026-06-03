@@ -74,9 +74,9 @@ export class ChargingStationDetailPage {
   // the EVSE Type ID column (left-most), which is unique per station.
   async openEvsesTab(): Promise<void> {
     await this.tabs.evses.click();
-    await expect(
-      this.page.getByRole('button', { name: /add new evse/i }),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(this.page.getByRole('button', { name: /add new evse/i })).toBeVisible({
+      timeout: 30_000,
+    });
   }
 
   evseRowByTypeId(evseTypeId: number | string): Locator {

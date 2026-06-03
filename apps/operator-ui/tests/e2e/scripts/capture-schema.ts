@@ -26,11 +26,7 @@ async function main(): Promise<void> {
   const apiClient = await makeApiClient();
   try {
     const snapshot = await captureHasuraIntrospection(apiClient);
-    writeFileSync(
-      OUTPUT_PATH,
-      JSON.stringify(snapshot, null, 2) + '\n',
-      'utf8',
-    );
+    writeFileSync(OUTPUT_PATH, JSON.stringify(snapshot, null, 2) + '\n', 'utf8');
     console.info(
       `[capture-schema] wrote ${snapshot.operations.length} operations + ${Object.keys(snapshot.columnsByType).length} tables to ${OUTPUT_PATH}`,
     );

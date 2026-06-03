@@ -39,9 +39,7 @@ test.describe('charging-stations › CRUD', () => {
       { name },
     );
     if (ChargingStations[0]) {
-      await deleteStation(apiClient, ChargingStations[0].id).catch(
-        () => undefined,
-      );
+      await deleteStation(apiClient, ChargingStations[0].id).catch(() => undefined);
     }
   });
 

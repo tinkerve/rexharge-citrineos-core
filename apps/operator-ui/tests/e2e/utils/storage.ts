@@ -17,11 +17,7 @@ export async function clearWelcomeFlag(page: Page): Promise<void> {
   }, FIRST_LOGIN_KEY_PREFIX);
 }
 
-export async function setWelcomeFlag(
-  page: Page,
-  userId: string,
-  value: boolean,
-): Promise<void> {
+export async function setWelcomeFlag(page: Page, userId: string, value: boolean): Promise<void> {
   await page.evaluate(
     ([prefix, id, v]) => {
       localStorage.setItem(`${prefix}${id}`, String(v));

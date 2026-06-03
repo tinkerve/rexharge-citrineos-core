@@ -50,23 +50,15 @@ export class LocationFormPage {
     // Required-field labels render as "Label *" so we drop end-anchors and
     // use word-boundary patterns where ambiguity could arise.
     this.nameInput = this.fieldGroup('Name').getByRole('textbox').first();
-    this.countryCombobox = this.fieldGroup('Country')
-      .getByRole('combobox')
-      .first();
-    this.addressInput = this.fieldGroup('Street Address')
-      .getByRole('textbox')
-      .first();
+    this.countryCombobox = this.fieldGroup('Country').getByRole('combobox').first();
+    this.addressInput = this.fieldGroup('Street Address').getByRole('textbox').first();
     this.cityInput = this.fieldGroup('City').getByRole('textbox').first();
     // ZIP Code label is US-specific; CA uses "Postal Code". Test specs
     // pass the country-specific label via fieldGroup directly when needed.
-    this.postalCodeInput = this.fieldGroup('Postal Code')
-      .getByRole('textbox')
-      .first();
+    this.postalCodeInput = this.fieldGroup('Postal Code').getByRole('textbox').first();
     this.latitudeInput = page.locator('input#latitude');
     this.longitudeInput = page.locator('input#longitude');
-    this.timeZoneInput = this.fieldGroup('Time Zone')
-      .getByRole('textbox')
-      .first();
+    this.timeZoneInput = this.fieldGroup('Time Zone').getByRole('textbox').first();
     this.submitButton = page.getByRole('button', { name: /^(save|submit)/i });
   }
 
@@ -166,9 +158,7 @@ export class LocationFormPage {
 
   async cancel(): Promise<void> {
     // Header chevron button calls router.back(); fall through if absent.
-    const back = this.page
-      .getByRole('button', { name: /(back|cancel)/i })
-      .first();
+    const back = this.page.getByRole('button', { name: /(back|cancel)/i }).first();
     if (await back.isVisible().catch(() => false)) {
       await back.click();
     }

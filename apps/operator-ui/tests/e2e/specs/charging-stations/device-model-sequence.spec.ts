@@ -142,10 +142,11 @@ test.describe('charging-stations › device model sequence @everest', () => {
     // (value-type dependent). Either is a real station round-trip — assert a
     // toast surfaces rather than asserting only success.
     await setVars.submitButton.click();
-    await expect(
-      page.getByRole('region', { name: /notifications/i }),
-    ).toContainText(/success|accepted|failed|error|rejected|invalid|denied/i, {
-      timeout: 30_000,
-    });
+    await expect(page.getByRole('region', { name: /notifications/i })).toContainText(
+      /success|accepted|failed|error|rejected|invalid|denied/i,
+      {
+        timeout: 30_000,
+      },
+    );
   });
 });

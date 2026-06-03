@@ -33,11 +33,9 @@ test.describe('charging-stations › cp001 navigation surface @everest', () => {
 
     await test.step('1. Operator finds cp001 in /charging-stations list', async () => {
       await list.goto();
-      await expect(list.rowById(everestStation.ocppConnectionName)).toBeVisible(
-        {
-          timeout: 30_000,
-        },
-      );
+      await expect(list.rowById(everestStation.ocppConnectionName)).toBeVisible({
+        timeout: 30_000,
+      });
     });
 
     await test.step('2. Operator opens cp001 detail page', async () => {
@@ -54,11 +52,9 @@ test.describe('charging-stations › cp001 navigation surface @everest', () => {
       await detail.openMessagesTab();
       // The Messages tab should switch active state. If a panel renders,
       // we verify the Messages tab's selected state via aria-selected.
-      await expect(detail.tabs.messages).toHaveAttribute(
-        'aria-selected',
-        'true',
-        { timeout: 15_000 },
-      );
+      await expect(detail.tabs.messages).toHaveAttribute('aria-selected', 'true', {
+        timeout: 15_000,
+      });
     });
 
     await test.step('5. Operator confirms cp001 shows Online status', async () => {

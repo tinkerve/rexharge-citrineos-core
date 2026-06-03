@@ -30,10 +30,7 @@ test.describe('locations › CRUD', () => {
     await expect(list.addButton).toBeVisible();
   });
 
-  test('E2E-021: Create location via UI redirects to detail', async ({
-    page,
-    apiClient,
-  }) => {
+  test('E2E-021: Create location via UI redirects to detail', async ({ page, apiClient }) => {
     const name = `e2e-${shortId()}-loc`;
     const form = new LocationFormPage(page);
     await form.gotoNew();
@@ -99,10 +96,7 @@ test.describe('locations › CRUD', () => {
     await expect(form.heading).toBeVisible();
   });
 
-  test('E2E-025: Search by name filters the list', async ({
-    page,
-    seededLocation,
-  }) => {
+  test('E2E-025: Search by name filters the list', async ({ page, seededLocation }) => {
     const list = new LocationsListPage(page);
     await list.goto();
     await list.searchInput.fill(seededLocation.name);

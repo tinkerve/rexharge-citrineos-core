@@ -28,12 +28,7 @@
 export interface ModalSpec {
   readonly name: string;
   readonly versions: ReadonlyArray<'1.6' | '2.0.1' | 'shared' | 'admin'>;
-  readonly category:
-    | 'shared'
-    | 'ocpp1.6'
-    | 'ocpp2.0.1'
-    | 'admin'
-    | 'toggle-status';
+  readonly category: 'shared' | 'ocpp1.6' | 'ocpp2.0.1' | 'admin' | 'toggle-status';
   readonly priority: 'P0' | 'P1' | 'P2';
   readonly bespokeScenarios: ReadonlyArray<string>;
   readonly parametricOnly: boolean;

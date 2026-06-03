@@ -11,9 +11,7 @@ export class TransactionsListPage {
   readonly searchInput: Locator;
 
   constructor(private readonly page: Page) {
-    this.heading = page
-      .getByRole('heading', { name: /^transactions$/i })
-      .first();
+    this.heading = page.getByRole('heading', { name: /^transactions$/i }).first();
     this.searchInput = page.getByRole('textbox', {
       name: /search transactions/i,
     });

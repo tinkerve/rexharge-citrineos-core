@@ -60,16 +60,7 @@ function defaultCorePath(): string {
   // differs.
   return (
     process.env.CITRINE_CORE_PATH ??
-    resolve(
-      __dirname,
-      '..',
-      '..',
-      '..',
-      '..',
-      'citrineos-core',
-      'apps',
-      'Server',
-    )
+    resolve(__dirname, '..', '..', '..', '..', 'citrineos-core', 'apps', 'Server')
   );
 }
 
@@ -124,9 +115,7 @@ async function awaitStationOnline(
 // Wait for `isOnline` to return true so the next test runs against a live
 // station instead of a rebooting one. Returns immediately when the station
 // is already connected (the common case), so undisrupted tests pay nothing.
-export async function ensureEverestOnline(
-  timeoutMs = RECONNECT_TIMEOUT_MS,
-): Promise<void> {
+export async function ensureEverestOnline(timeoutMs = RECONNECT_TIMEOUT_MS): Promise<void> {
   const api = await makeApiClient();
   try {
     const deadline = Date.now() + timeoutMs;
@@ -167,10 +156,7 @@ const EVEREST_COMPOSE_ENV: Record<string, string> = {
   EVEREST_IMAGE_TAG: '2025.6.1-dt-esdp',
 };
 
-function runEverestCompose(
-  everestDir: string,
-  args: ReadonlyArray<string>,
-): Promise<void> {
+function runEverestCompose(everestDir: string, args: ReadonlyArray<string>): Promise<void> {
   return new Promise((resolvePromise, rejectPromise) => {
     const proc = spawn(
       process.platform === 'win32' ? 'docker.exe' : 'docker',
@@ -323,10 +309,7 @@ async function ensureEverestAuthorization(api: ApiClient): Promise<string> {
   return idToken;
 }
 
-async function ensureEverestEvseAndConnector(
-  api: ApiClient,
-  stationId: number,
-): Promise<void> {
+async function ensureEverestEvseAndConnector(api: ApiClient, stationId: number): Promise<void> {
   const now = new Date().toISOString();
   // Insert an EVSE if missing.
   await api
@@ -391,25 +374,14 @@ function mosquittoPub(topic: string, message: string): Promise<void> {
   return new Promise((res, rej) => {
     const proc = spawn(
       process.platform === 'win32' ? 'docker.exe' : 'docker',
-      [
-        'exec',
-        EVEREST_MQTT_CONTAINER,
-        'mosquitto_pub',
-        '-t',
-        topic,
-        '-m',
-        message,
-      ],
+      ['exec', EVEREST_MQTT_CONTAINER, 'mosquitto_pub', '-t', topic, '-m', message],
       { stdio: ['ignore', 'pipe', 'pipe'], shell: false },
     );
     let stderr = '';
     proc.stderr?.on('data', (c: Buffer) => (stderr += c.toString()));
     proc.on('exit', (code) => {
       if (code === 0) res();
-      else
-        rej(
-          new Error(`mosquitto_pub ${topic} failed (code ${code}): ${stderr}`),
-        );
+      else rej(new Error(`mosquitto_pub ${topic} failed (code ${code}): ${stderr}`));
     });
     proc.on('error', rej);
   });
@@ -428,10 +400,7 @@ export async function simulatePlugIn(): Promise<void> {
   await delay(2_000);
   await mosquittoPub(enableTopic, 'true');
   await delay(1_000);
-  await mosquittoPub(
-    `${CARSIM_CMD_PREFIX}/execute_charging_session`,
-    PLUGIN_CHARGE_COMMAND,
-  );
+  await mosquittoPub(`${CARSIM_CMD_PREFIX}/execute_charging_session`, PLUGIN_CHARGE_COMMAND);
 }
 
 // Unplugs the simulated vehicle (CP state → A), ending any session in progress.
@@ -441,9 +410,7 @@ export async function simulateUnplug(): Promise<void> {
   await mosquittoPub(`${CARSIM_CMD_PREFIX}/modify_charging_session`, 'unplug');
 }
 
-export async function startEverest(
-  options: EverestStartOptions = {},
-): Promise<EverestHandle> {
+export async function startEverest(options: EverestStartOptions = {}): Promise<EverestHandle> {
   const cwd = options.citrineCoreServerPath ?? defaultCorePath();
   const everestDir = resolve(cwd, 'everest');
   const bootTimeoutMs = options.bootTimeoutMs ?? DEFAULT_BOOT_TIMEOUT_MS;
@@ -454,11 +421,7 @@ export async function startEverest(
   const api = await makeApiClient();
   let id: number;
   try {
-    id = await awaitStationOnline(
-      api,
-      EVEREST_OCPP_CONNECTION_NAME,
-      bootTimeoutMs,
-    );
+    id = await awaitStationOnline(api, EVEREST_OCPP_CONNECTION_NAME, bootTimeoutMs);
     await ensureEverestEvseAndConnector(api, id);
     await ensureEverestAuthorization(api);
   } finally {

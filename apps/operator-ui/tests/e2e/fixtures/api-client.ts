@@ -2,10 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  request as playwrightRequest,
-  type APIRequestContext,
-} from '@playwright/test';
+import { request as playwrightRequest, type APIRequestContext } from '@playwright/test';
 import { readEnv } from '../utils/env';
 
 export interface ApiClient {
@@ -74,9 +71,7 @@ function extractOperationName(query: string): string | undefined {
   return match?.[1];
 }
 
-export async function makeApiClient(
-  options: MakeApiClientOptions = {},
-): Promise<ApiClient> {
+export async function makeApiClient(options: MakeApiClientOptions = {}): Promise<ApiClient> {
   const hasuraUrl = options.hasuraUrl ?? readEnv('HASURA_URL');
   const tenantId = options.tenantId ?? readEnv('E2E_TENANT_ID', '1');
   const adminSecret = options.adminSecret ?? readEnv('HASURA_ADMIN_SECRET');
@@ -89,9 +84,7 @@ export async function makeApiClient(
   if (adminSecret) headers['x-hasura-admin-secret'] = adminSecret;
 
   const request = await playwrightRequest.newContext({
-    ...(options.storageStatePath
-      ? { storageState: options.storageStatePath }
-      : {}),
+    ...(options.storageStatePath ? { storageState: options.storageStatePath } : {}),
   });
   return new GraphQLClient(request, hasuraUrl, headers);
 }

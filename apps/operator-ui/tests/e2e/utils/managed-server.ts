@@ -19,10 +19,7 @@ function npmCommand(): string {
   return process.platform === 'win32' ? 'npm.cmd' : 'npm';
 }
 
-async function isServerResponding(
-  baseUrl: string,
-  timeoutMs = 2_000,
-): Promise<boolean> {
+async function isServerResponding(baseUrl: string, timeoutMs = 2_000): Promise<boolean> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -36,18 +33,13 @@ async function isServerResponding(
   }
 }
 
-async function waitForServerReady(
-  baseUrl: string,
-  totalTimeoutMs: number,
-): Promise<void> {
+async function waitForServerReady(baseUrl: string, totalTimeoutMs: number): Promise<void> {
   const deadline = Date.now() + totalTimeoutMs;
   while (Date.now() < deadline) {
     if (await isServerResponding(baseUrl, 3_000)) return;
     await new Promise((r) => setTimeout(r, 2_000));
   }
-  throw new Error(
-    `Managed server did not respond on ${baseUrl} within ${totalTimeoutMs}ms`,
-  );
+  throw new Error(`Managed server did not respond on ${baseUrl} within ${totalTimeoutMs}ms`);
 }
 
 function runNpmScriptToCompletion(scriptName: string): Promise<void> {
@@ -63,15 +55,12 @@ function runNpmScriptToCompletion(scriptName: string): Promise<void> {
         ...process.env,
         // Match the dev script's heap budget so the build doesn't OOM on
         // first-pass codegen.
-        NODE_OPTIONS:
-          `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=4096`.trim(),
+        NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=4096`.trim(),
       },
     });
     proc.on('error', rej);
     proc.on('exit', (code) =>
-      code === 0
-        ? res()
-        : rej(new Error(`npm run ${scriptName} exited with code ${code}`)),
+      code === 0 ? res() : rej(new Error(`npm run ${scriptName} exited with code ${code}`)),
     );
   });
 }
@@ -103,17 +92,13 @@ export async function ensureManagedServer(baseUrl: string): Promise<void> {
     console.info('[e2e:managed-server] reusing existing server at', baseUrl);
     return;
   }
-  console.info(
-    '[e2e:managed-server] no server responding — building production bundle...',
-  );
+  console.info('[e2e:managed-server] no server responding — building production bundle...');
   await runNpmScriptToCompletion('build');
   console.info('[e2e:managed-server] starting next start...');
   const pid = spawnDetachedServer();
   writeFileSync(PID_FILE, String(pid), 'utf8');
   await waitForServerReady(baseUrl, 120_000);
-  console.info(
-    `[e2e:managed-server] production server ready (pid ${pid}) at ${baseUrl}`,
-  );
+  console.info(`[e2e:managed-server] production server ready (pid ${pid}) at ${baseUrl}`);
 }
 
 // Public: stop the managed server if globalSetup spawned one. No-op if

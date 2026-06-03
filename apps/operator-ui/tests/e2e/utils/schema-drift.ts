@@ -74,20 +74,12 @@ const TRACKED_TABLES: ReadonlyArray<string> = [
   'TenantPartners',
 ];
 
-export async function captureHasuraIntrospection(
-  api: ApiClient,
-): Promise<SchemaSnapshot> {
-  const data = await api.gql<{ __schema: IntrospectionSchema }>(
-    INTROSPECTION_QUERY,
-  );
+export async function captureHasuraIntrospection(api: ApiClient): Promise<SchemaSnapshot> {
+  const data = await api.gql<{ __schema: IntrospectionSchema }>(INTROSPECTION_QUERY);
   const schema = data.__schema;
 
-  const queryType = schema.types.find(
-    (t) => t.name === (schema.queryType?.name ?? ''),
-  );
-  const mutationType = schema.types.find(
-    (t) => t.name === (schema.mutationType?.name ?? ''),
-  );
+  const queryType = schema.types.find((t) => t.name === (schema.queryType?.name ?? ''));
+  const mutationType = schema.types.find((t) => t.name === (schema.mutationType?.name ?? ''));
   const operationNames = new Set<string>();
   for (const f of queryType?.fields ?? []) operationNames.add(f.name);
   for (const f of mutationType?.fields ?? []) operationNames.add(f.name);
@@ -110,9 +102,7 @@ export function validateSchemaDrift(
   baseline: SchemaSnapshot,
 ): SchemaDriftReport {
   const currentOps = new Set(current.operations);
-  const missingOperations = baseline.operations.filter(
-    (op) => !currentOps.has(op),
-  );
+  const missingOperations = baseline.operations.filter((op) => !currentOps.has(op));
 
   const missingColumns: { type: string; column: string }[] = [];
   for (const [type, baselineCols] of Object.entries(baseline.columnsByType)) {
@@ -136,9 +126,7 @@ export function formatDriftMessage(report: SchemaDriftReport): string {
   }
   if (report.missingColumns.length > 0) {
     lines.push(
-      `Missing columns: ${report.missingColumns
-        .map((m) => `${m.type}.${m.column}`)
-        .join(', ')}`,
+      `Missing columns: ${report.missingColumns.map((m) => `${m.type}.${m.column}`).join(', ')}`,
     );
   }
   return lines.join('\n');

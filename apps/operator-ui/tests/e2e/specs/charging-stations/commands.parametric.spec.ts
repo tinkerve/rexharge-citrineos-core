@@ -13,10 +13,7 @@ import {
   seedStation,
   seedTransaction,
 } from '../../fixtures/seeded-data';
-import {
-  OCPP_MODAL_SPECS,
-  OCPP_MODAL_COUNT,
-} from '../../utils/ocpp-modal-specs';
+import { OCPP_MODAL_SPECS, OCPP_MODAL_COUNT } from '../../utils/ocpp-modal-specs';
 
 // Parametric harness: one open-and-close smoke test per dispatchable OCPP
 // modal. Bespoke command specs cover the deeper happy / sad / offline paths;
@@ -40,19 +37,14 @@ test.use({ storageState: 'playwright/.auth/admin.json' });
 
 function stationProtocolFor(versions: ReadonlyArray<string>): string {
   const is16Only =
-    versions.includes('1.6') &&
-    !versions.includes('2.0.1') &&
-    !versions.includes('shared');
+    versions.includes('1.6') && !versions.includes('2.0.1') && !versions.includes('shared');
   return is16Only ? 'ocpp1.6' : 'ocpp2.0.1';
 }
 
 function needsActiveTransaction(name: string): boolean {
   // StopTransaction renders only when hasActiveTransactions === true; the
   // toggle-transaction admin modal likewise requires a transaction to act on.
-  return (
-    name === 'RemoteStopTransactionModal' ||
-    name === 'ToggleTransactionActiveModal'
-  );
+  return name === 'RemoteStopTransactionModal' || name === 'ToggleTransactionActiveModal';
 }
 
 test.describe('charging-stations › parametric modal harness (smoke)', () => {
@@ -61,10 +53,7 @@ test.describe('charging-stations › parametric modal harness (smoke)', () => {
   });
 
   for (const spec of OCPP_MODAL_SPECS) {
-    test(`E2E-MOD-PARAM-001: ${spec.name} opens and closes`, async ({
-      page,
-      apiClient,
-    }) => {
+    test(`E2E-MOD-PARAM-001: ${spec.name} opens and closes`, async ({ page, apiClient }) => {
       if (!spec.dispatchable) {
         test.skip(
           true,
@@ -80,11 +69,9 @@ test.describe('charging-stations › parametric modal harness (smoke)', () => {
       });
       let seededTxnId: string | undefined;
       if (needsActiveTransaction(spec.name)) {
-        const txn = await seedTransaction(
-          apiClient,
-          station.ocppConnectionName,
-          { isActive: true },
-        );
+        const txn = await seedTransaction(apiClient, station.ocppConnectionName, {
+          isActive: true,
+        });
         seededTxnId = txn.transactionId;
       }
 
@@ -105,9 +92,7 @@ test.describe('charging-stations › parametric modal harness (smoke)', () => {
         ) {
           await primary.first().click();
         }
-        let opened = await modal.title
-          .isVisible({ timeout: 5_000 })
-          .catch(() => false);
+        let opened = await modal.title.isVisible({ timeout: 5_000 }).catch(() => false);
 
         // Strategy 2: OtherCommandsModal dispatcher. Matching the modal's own
         // heading guarantees the dispatcher's "Other Commands" dialog is never
@@ -116,9 +101,7 @@ test.describe('charging-stations › parametric modal harness (smoke)', () => {
           await detail.commandBar
             .openViaOtherCommands(spec.openButtonNamePattern)
             .catch(() => undefined);
-          opened = await modal.title
-            .isVisible({ timeout: 5_000 })
-            .catch(() => false);
+          opened = await modal.title.isVisible({ timeout: 5_000 }).catch(() => false);
         }
 
         if (!opened) {
@@ -150,9 +133,7 @@ test.describe('charging-stations › parametric modal harness (smoke)', () => {
         await expect(modal.title).toBeHidden({ timeout: 10_000 });
       } finally {
         if (seededTxnId) {
-          await deleteTransaction(apiClient, seededTxnId).catch(
-            () => undefined,
-          );
+          await deleteTransaction(apiClient, seededTxnId).catch(() => undefined);
         }
         await deleteStation(apiClient, station.id).catch(() => undefined);
         await deleteLocation(apiClient, location.id).catch(() => undefined);

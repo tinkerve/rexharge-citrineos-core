@@ -9,9 +9,7 @@ import { LoginPage } from '../../pages/login.page';
 test.use({ storageState: 'playwright/.auth/admin.json' });
 
 test.describe('auth › logout', () => {
-  test('E2E-004: authenticated admin signs out and lands on /login', async ({
-    page,
-  }) => {
+  test('E2E-004: authenticated admin signs out and lands on /login', async ({ page }) => {
     const overview = new OverviewPage(page);
     const login = new LoginPage(page);
 

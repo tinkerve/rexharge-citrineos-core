@@ -15,9 +15,9 @@ test.describe('charging-stations › detail tabs', () => {
     const detail = new ChargingStationDetailPage(page);
     await detail.goto(seededStation.id);
     await detail.openEvsesTab();
-    await expect(
-      page.getByRole('button', { name: /add new evse/i }),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: /add new evse/i })).toBeVisible({
+      timeout: 30_000,
+    });
   });
 
   test('E2E-052: OCPP Messages tab populated for @everest cp001 @everest', async ({
@@ -27,24 +27,17 @@ test.describe('charging-stations › detail tabs', () => {
     const detail = new ChargingStationDetailPage(page);
     await detail.goto(everestStation.id);
     await detail.openMessagesTab();
-    await expect(detail.tabs.messages).toHaveAttribute(
-      'aria-selected',
-      'true',
-      { timeout: 15_000 },
-    );
+    await expect(detail.tabs.messages).toHaveAttribute('aria-selected', 'true', {
+      timeout: 15_000,
+    });
   });
 
-  test('E2E-053: Configuration tab is reachable', async ({
-    page,
-    seededStation,
-  }) => {
+  test('E2E-053: Configuration tab is reachable', async ({ page, seededStation }) => {
     const detail = new ChargingStationDetailPage(page);
     await detail.goto(seededStation.id);
     await detail.tabs.configuration.click();
-    await expect(detail.tabs.configuration).toHaveAttribute(
-      'aria-selected',
-      'true',
-      { timeout: 15_000 },
-    );
+    await expect(detail.tabs.configuration).toHaveAttribute('aria-selected', 'true', {
+      timeout: 15_000,
+    });
   });
 });

@@ -25,9 +25,7 @@ test.describe('charging-stations › SetVariables command', () => {
     await expect(
       modal.dialog.getByRole('group').filter({ hasText: /component #1/i }),
     ).toBeVisible();
-    await expect(
-      modal.dialog.getByRole('group').filter({ hasText: /variable #1/i }),
-    ).toBeVisible();
+    await expect(modal.dialog.getByRole('group').filter({ hasText: /variable #1/i })).toBeVisible();
     await modal.cancel();
   });
 

@@ -26,8 +26,8 @@ test.describe('charging-stations › realtime status @everest', () => {
     });
     // Status indicator presence — text or colored dot. Re-uses the
     // pattern from list.spec.ts E2E-045.
-    await expect(
-      page.getByText(/(online|offline|unknown)/i).first(),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/(online|offline|unknown)/i).first()).toBeVisible({
+      timeout: 30_000,
+    });
   });
 });

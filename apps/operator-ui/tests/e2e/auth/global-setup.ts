@@ -21,12 +21,7 @@ import { waitForBackendHealthy } from '../utils/wait';
 
 dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env.test') });
 
-const SCHEMA_SNAPSHOT_PATH = resolve(
-  __dirname,
-  '..',
-  'data',
-  'schema-snapshot.json',
-);
+const SCHEMA_SNAPSHOT_PATH = resolve(__dirname, '..', 'data', 'schema-snapshot.json');
 
 export default async function globalSetup(): Promise<void> {
   assertRequiredEnv();
@@ -72,17 +67,14 @@ export default async function globalSetup(): Promise<void> {
     await purgeAllE2eRows(apiClient);
     console.info('[e2e:globalSetup] e2e rows purged.');
 
-    const baseline = JSON.parse(
-      readFileSync(SCHEMA_SNAPSHOT_PATH, 'utf-8'),
-    ) as SchemaSnapshot;
+    const baseline = JSON.parse(readFileSync(SCHEMA_SNAPSHOT_PATH, 'utf-8')) as SchemaSnapshot;
     const current = await captureHasuraIntrospection(apiClient);
     const report = validateSchemaDrift(current, baseline);
     if (!report.valid) {
       const message = formatDriftMessage(report);
       console.error('[e2e:globalSetup] schema drift detected:\n' + message);
       throw new Error(
-        'Schema drift — operations or columns the UI depends on are missing.\n' +
-          message,
+        'Schema drift — operations or columns the UI depends on are missing.\n' + message,
       );
     }
     console.info('[e2e:globalSetup] schema snapshot in sync.');

@@ -3,10 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { test, expect } from '../../fixtures';
-import {
-  seedMeterValues,
-  deleteMeterValuesForTransaction,
-} from '../../fixtures/seeded-data';
+import { seedMeterValues, deleteMeterValuesForTransaction } from '../../fixtures/seeded-data';
 
 test.use({ storageState: 'playwright/.auth/admin.json' });
 
@@ -40,15 +37,10 @@ test.describe('transactions › detail charts', () => {
 
       // An empty chart mounts the surface but skips the line path; asserting
       // the path's `d` attribute proves data points actually plotted.
-      const dataPath = surface
-        .locator('path.recharts-curve, path.recharts-line-curve')
-        .first();
+      const dataPath = surface.locator('path.recharts-curve, path.recharts-line-curve').first();
       await expect(dataPath).toHaveAttribute('d', /M.+/, { timeout: 15_000 });
     } finally {
-      await deleteMeterValuesForTransaction(
-        apiClient,
-        seededTransaction.id,
-      ).catch(() => undefined);
+      await deleteMeterValuesForTransaction(apiClient, seededTransaction.id).catch(() => undefined);
     }
   });
 
@@ -62,14 +54,11 @@ test.describe('transactions › detail charts', () => {
       await page.goto(`/transactions/${seededTransaction.id}?tab=meterValues`, {
         waitUntil: 'domcontentloaded',
       });
-      await expect(
-        page.getByRole('heading', { name: /energy over time/i }).first(),
-      ).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole('heading', { name: /energy over time/i }).first()).toBeVisible({
+        timeout: 30_000,
+      });
     } finally {
-      await deleteMeterValuesForTransaction(
-        apiClient,
-        seededTransaction.id,
-      ).catch(() => undefined);
+      await deleteMeterValuesForTransaction(apiClient, seededTransaction.id).catch(() => undefined);
     }
   });
 });

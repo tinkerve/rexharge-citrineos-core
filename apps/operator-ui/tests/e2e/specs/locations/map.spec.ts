@@ -14,10 +14,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('locations › map', () => {
-  test('E2E-029: Detail page mounts for an existing location', async ({
-    page,
-    seededLocation,
-  }) => {
+  test('E2E-029: Detail page mounts for an existing location', async ({ page, seededLocation }) => {
     // The detail card embeds a Leaflet map but the `.leaflet-container`
     // div is conditionally rendered based on coordinates and tile-load
     // state. The seedLocation fixture inserts {0,0} coordinates which can

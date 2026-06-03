@@ -12,9 +12,7 @@ export class AuthorizationsListPage {
   readonly addButton: Locator;
 
   constructor(private readonly page: Page) {
-    this.heading = page
-      .getByRole('heading', { name: /^authorizations$/i })
-      .first();
+    this.heading = page.getByRole('heading', { name: /^authorizations$/i }).first();
     this.searchInput = page.getByRole('textbox', {
       name: /search authorizations/i,
     });
