@@ -89,10 +89,6 @@ export interface ChargingStationStatusCounts {
 }
 
 export const getChargingStationStatus = (chargingStation: ChargingStationStatusCountsDto) => {
-  if (!chargingStation.isOnline) {
-    return ChargingStationStatus.UNAVAILABLE;
-  }
-
   const counts = getChargingStationStatusCounts(chargingStation);
 
   if (counts[ChargingStationStatus.FAULTED] > 0) {
