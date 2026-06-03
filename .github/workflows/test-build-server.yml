@@ -55,7 +55,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Build and Run Docker Compose
-        run: docker compose -f ${{ github.workspace }}/apps/ocpp-server/docker-compose.yml up -d
+        run: docker compose -f ${{ github.workspace }}/docker-compose.yml -f ${{ github.workspace }}/docker-compose.local.yml up -d --build
 
       - name: Install Newman
         run: |
@@ -83,4 +83,4 @@ jobs:
           docker container ls -aq | xargs -I {} docker logs {}
 
       - name: Clean up
-        run: docker compose -f ${{ github.workspace }}/apps/ocpp-server/docker-compose.yml down
+        run: docker compose -f ${{ github.workspace }}/docker-compose.yml -f ${{ github.workspace }}/docker-compose.local.yml down

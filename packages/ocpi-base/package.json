@@ -11,9 +11,7 @@
   "scripts": {
     "build": "tsc -b tsconfig.json && tsc-alias -p tsconfig.json",
     "lint": "eslint .",
-    "lint-fix": "eslint . --fix",
-    "prepublish": "pnpm exec eslint ./src",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [
     "ocpi"

@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 ![CitrineOS Logo](../../logo_white.png#gh-dark-mode-only)
 ![CitrineOS Logo](../../logo_black.png#gh-light-mode-only)
 
-# CitrineOS Server (`@citrineos/server`)
+# CitrineOS Server (`@citrineos/ocpp-server`)
 
 This is the OCPP server application for CitrineOS — the runnable entrypoint that wires together
 [`@citrineos/base`](../../packages/base) and [`@citrineos/core`](../../packages/core) into a deployable
@@ -40,17 +40,17 @@ Make sure the workspace has been installed and built first (from the repository 
 
 ### With Docker (backend only)
 
-`apps/Server/docker-compose.yml` brings up the server plus its supporting services — RabbitMQ, PostgreSQL, MinIO,
-and Hasura — but **not** the operator UI. The server image is built from local source and the source tree is mounted
-as volumes for live reload. Run it from this directory:
+From the repository root, the `--solo` flag brings up the server plus its supporting services — RabbitMQ, PostgreSQL,
+MinIO, and Hasura — but **not** the operator UI:
 
 ```shell
-cd apps/Server
-docker compose up -d
+node scripts/stack.mjs --solo            # from published images
+node scripts/stack.mjs --solo --local    # built from local source
 ```
 
-To run the full stack including the operator UI, use one of the root-level Compose files instead — see the
-[root README](../../README.md#information-on-docker-setup).
+To run the full stack including the operator UI (or to add the OCPI server), drop `--solo` or add `--ocpi` — see the
+[root README](../../README.md#running-the-full-stack-with-docker). For live-reload development against the source tree,
+run the server directly with pnpm instead (below).
 
 ### Without Docker
 
@@ -63,7 +63,7 @@ pnpm run start
 Or from this directory:
 
 ```shell
-cd apps/Server
+cd apps/ocpp-server
 pnpm run start
 ```
 
@@ -72,7 +72,7 @@ and then starts the process with the Node.js inspector listening on port 9229.
 
 CitrineOS requires configuration to allow your OCPP 1.6 and OCPP 2.0.1 compliant charging stations to connect.
 To change the configuration used outside of Docker, adjust the configuration file at
-`apps/Server/src/config/envs/local.ts`. Make sure any changes to the local configuration do not make it into your PR.
+`apps/ocpp-server/src/config/envs/local.ts`. Make sure any changes to the local configuration do not make it into your PR.
 
 ## Attaching a Debugger
 
@@ -82,18 +82,18 @@ breakpoints in the TypeScript code directly from your IDE.
 To make the process **wait for the debugger to attach** before executing, modify the `nodemon.json` exec command from:
 
 ```shell
-pnpm run build --prefix ../../ && pnpm run migrate && node --inspect=0.0.0.0:9229 ./dist/index.js
+pnpm run build --prefix ../../ && pnpm run db:migrate && node --inspect=0.0.0.0:9229 ./dist/index.js
 ```
 
 to:
 
 ```shell
-pnpm run build --prefix ../../ && pnpm run migrate && node --inspect-brk=0.0.0.0:9229 ./dist/index.js
+pnpm run build --prefix ../../ && pnpm run db:migrate && node --inspect-brk=0.0.0.0:9229 ./dist/index.js
 ```
 
 ## Server Ports
 
-When running, the server container exposes the following ports (see `docker-compose.yml`):
+When running, the server container exposes the following ports (see the root `docker-compose.yml`):
 
 - `8080`: webserver HTTP — [Swagger](http://localhost:8080/docs)
 - `8081`: websocket server TCP connection without auth
@@ -102,22 +102,11 @@ When running, the server container exposes the following ports (see `docker-comp
 - `8443` / `8444`: TLS websocket servers
 - `9229`: Node.js debugger
 
-## Database Sync vs. Migration
+## Database Migrations
 
-By default, CitrineOS uses migrations to manage database schema changes. This is the recommended approach for
-production environments. The `pnpm run migrate` script (run automatically on start via `nodemon.json`) applies
-Sequelize migrations.
-
-For development purposes, you can also use `sync` to automatically synchronize your database schema with the models.
-Two sync scripts are available at the repository root:
-
-- `pnpm run sync-db`: synchronizes the database schema with the models without altering existing tables. Useful for
-  development when you want to quickly update the schema without losing data.
-- `pnpm run force-sync-db`: drops all tables and recreates them based on the models. Useful when you want to start
-  with a fresh database.
-
-**Disclaimer:** Using `sync` in a production environment is not recommended as it can lead to data loss. Always use
-migrations for production deployments.
+CitrineOS uses Sequelize migrations to manage database schema changes. The `pnpm run db:migrate` script — run
+automatically on start via `nodemon.json`, and on container start via `entrypoint.sh` — applies any pending
+migrations.
 
 ## Runtime Configuration
 
@@ -144,8 +133,8 @@ may be overridden by setting the environment variable `CITRINEOS_util_messageBro
 ## Bootstrap Configuration Environment Variables
 
 All environment variables use the `CITRINEOS_` prefix.
-Additional prefixes can be added by passing the `--env-prefix` argument to nodemon (see `start:instance1` in
-`package.json`).
+Additional prefixes can be added by passing the `--env-prefix` argument to nodemon (e.g.
+`nodemon --env-prefix=instance1_`), which is useful for running multiple instances side by side.
 Here's the complete list of environment variables used in bootstrapping the application (this is not the full system
 configuration):
 
@@ -291,5 +280,5 @@ hasura metadata export
 ## Testing with EVerest
 
 In case you don't have a charger that supports OCPP to experiment with, you can run the EVerest charger simulator
-locally and point it at CitrineOS. Helper scripts (`pnpm run start-everest` and `pnpm run start-everest-16`) and full
+locally and point it at CitrineOS. Helper scripts (`pnpm run start:everest` and `pnpm run start:everest:16`) and full
 instructions live in [`everest/README.md`](./everest/README.md).

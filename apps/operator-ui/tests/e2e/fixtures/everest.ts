@@ -8,7 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { makeApiClient, type ApiClient } from './api-client';
 
 // EVerest fixture using the citrineos-core docker-compose prototype
-// (`pnpm run start-everest` from citrineos-core/apps/ocpp-server). The fixture brings
+// (`pnpm run start:everest` from citrineos-core/apps/ocpp-server). The fixture brings
 // the simulator up, waits for the simulator's OCPP BootNotification to
 // register the well-known station id `cp001` in citrineos-core's DB
 // (visible via Hasura), and tears the stack down on dispose.
@@ -31,7 +31,7 @@ interface EverestStartOptions {
 function defaultCorePath(): string {
   // operator-ui and Server are sibling apps in the monorepo. Override via env
   // CITRINE_CORE_PATH if your layout differs.
-  return process.env.CITRINE_CORE_PATH ?? resolve(__dirname, '..', '..', '..', '..', 'Server');
+  return process.env.CITRINE_CORE_PATH ?? resolve(__dirname, '..', '..', '..', '..', 'ocpp-server');
 }
 
 async function awaitStationOnline(
@@ -264,7 +264,7 @@ export async function startEverest(options: EverestStartOptions = {}): Promise<E
   const cwd = options.citrineCoreServerPath ?? defaultCorePath();
   const bootTimeoutMs = options.bootTimeoutMs ?? DEFAULT_BOOT_TIMEOUT_MS;
 
-  await runComposeCommand(cwd, ['run', 'start-everest'], {});
+  await runComposeCommand(cwd, ['run', 'start:everest'], {});
   await patchEverestNetworkProfile();
 
   const api = await makeApiClient();
@@ -284,7 +284,7 @@ export async function startEverest(options: EverestStartOptions = {}): Promise<E
       const everestDir = resolve(cwd, 'everest');
       // `docker compose down` from the everest directory tears the
       // stack down. Wrapped in npm so we use the same toolchain shell as
-      // start-everest. Errors are non-fatal so a failed teardown doesn't
+      // start:everest. Errors are non-fatal so a failed teardown doesn't
       // mask test results.
       await new Promise<void>((res) => {
         const proc = spawn(

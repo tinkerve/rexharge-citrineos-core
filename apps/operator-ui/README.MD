@@ -135,16 +135,17 @@ References:
 
 ### Running with Docker (Recommended)
 
-If **CitrineOS Core** is already running via Docker, the Operator UI can be started with a single command:
+The Operator UI is part of the default stack — the launcher at the repository root starts CitrineOS Core and the UI
+together (the UI is on by default; `--solo` omits it):
 
 ```bash
-docker compose up -d
+node scripts/stack.mjs            # Core + UI from published ghcr.io images
+node scripts/stack.mjs --local    # build Core + UI from local source
 ```
 
-This will:
-
-- Build the Operator UI container
-- Start the UI connected to the configured Hasura and Core service
+The UI is then available at [http://localhost:3000](http://localhost:3000), connected to the configured Hasura and
+Core services. For the full flag matrix, see the
+[root README](../../README.md#running-the-full-stack-with-docker).
 
 ### Running with pnpm (Local Development)
 
@@ -332,7 +333,7 @@ Now that the backend configuration is complete, start the EVerest simulator:
 
 ```bash
 cd citrineos-core/apps/ocpp-server
-pnpm run start-everest
+pnpm run start:everest
 ```
 
 This will:

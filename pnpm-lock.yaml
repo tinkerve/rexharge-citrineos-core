@@ -177,6 +177,9 @@ importers:
         specifier: 9.0.0
         version: 9.0.0
     devDependencies:
+      '@eslint/js':
+        specifier: 'catalog:'
+        version: 9.16.0
       '@types/amqplib':
         specifier: 0.10.8
         version: 0.10.8
@@ -186,6 +189,15 @@ importers:
       '@types/uuid':
         specifier: 9.0.1
         version: 9.0.1
+      eslint:
+        specifier: 'catalog:'
+        version: 9.16.0(jiti@2.7.0)
+      eslint-config-prettier:
+        specifier: 'catalog:'
+        version: 9.1.2(eslint@9.16.0(jiti@2.7.0))
+      eslint-plugin-prettier:
+        specifier: 'catalog:'
+        version: 5.2.3(eslint-config-prettier@9.1.2(eslint@9.16.0(jiti@2.7.0)))(eslint@9.16.0(jiti@2.7.0))(prettier@3.6.2)
       nodemon:
         specifier: 2.0.22
         version: 2.0.22
@@ -198,6 +210,9 @@ importers:
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
+      typescript-eslint:
+        specifier: 'catalog:'
+        version: 8.17.0(eslint@9.16.0(jiti@2.7.0))(typescript@6.0.3)
     optionalDependencies:
       bufferutil:
         specifier: 4.1.0

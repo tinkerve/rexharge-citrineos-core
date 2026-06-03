@@ -29,8 +29,7 @@ export default {
       ],
       version: {
         version: '2.2.1',
-        versionDetailsUrl:
-          'http://host.docker.internal:8083/ocpi/versions/2.2.1',
+        versionDetailsUrl: 'http://host.docker.internal:8083/ocpi/versions/2.2.1',
       },
       endpoints: [
         {
@@ -86,18 +85,10 @@ export default {
       updatedAt: new Date('2025-08-07T17:55:00+00:00'),
     };
 
-    await queryInterface.bulkInsert(
-      'TenantPartners',
-      [tenantPartner],
-      {} as QueryOptions,
-    );
+    await queryInterface.bulkInsert('TenantPartners', [tenantPartner], {} as QueryOptions);
   },
 
   down: async (queryInterface: QueryInterface) => {
-    await queryInterface.bulkDelete(
-      'TenantPartners',
-      { id: 1 },
-      {} as QueryOptions,
-    );
+    await queryInterface.bulkDelete('TenantPartners', { id: 1 }, {} as QueryOptions);
   },
 };

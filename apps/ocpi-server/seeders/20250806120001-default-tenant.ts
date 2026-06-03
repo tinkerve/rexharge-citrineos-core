@@ -86,12 +86,7 @@ export default {
         updatedAt: new Date('2025-08-07T17:55:00+00:00'),
       };
       try {
-        await queryInterface.bulkUpdate(
-          'Tenants',
-          tenantUpdate,
-          { id: 1 },
-          {} as QueryOptions,
-        );
+        await queryInterface.bulkUpdate('Tenants', tenantUpdate, { id: 1 }, {} as QueryOptions);
       } catch (updateError) {
         console.error('Error updating tenant:', updateError);
       }

@@ -63,14 +63,12 @@ export function createDockerOcpiConfig(): OcpiConfigInput {
     },
 
     graphql: {
-      endpoint:
-        process.env.GRAPHQL_ENDPOINT || 'http://graphql-engine:8080/v1/graphql',
+      endpoint: process.env.GRAPHQL_ENDPOINT || 'http://graphql-engine:8080/v1/graphql',
     },
 
     commands: {
       timeout: parseInt(process.env.COMMANDS_TIMEOUT || '30'),
-      ocpiBaseUrl:
-        process.env.COMMANDS_OCPI_BASE_URL || 'http://citrineos-ocpi:8085/ocpi',
+      ocpiBaseUrl: process.env.COMMANDS_OCPI_BASE_URL || 'http://citrineos-ocpi:8085/ocpi',
       coreHeaders: JSON.parse(process.env.COMMANDS_CORE_HEADERS || '{}'),
       ocpp1_6: {
         remoteStartTransactionRequestUrl:
@@ -85,8 +83,7 @@ export function createDockerOcpiConfig(): OcpiConfigInput {
       },
       ocpp2_0_1: {
         requestStartTransactionRequestUrl:
-          process.env
-            .COMMANDS_OCPP2_0_1_REQUEST_START_TRANSACTION_REQUEST_URL ||
+          process.env.COMMANDS_OCPP2_0_1_REQUEST_START_TRANSACTION_REQUEST_URL ||
           'http://citrine:8080/ocpp/2.0.1/evdriver/requestStartTransaction',
         requestStopTransactionRequestUrl:
           process.env.COMMANDS_OCPP2_0_1_REQUEST_STOP_TRANSACTION_REQUEST_URL ||

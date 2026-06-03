@@ -180,9 +180,7 @@ export class CitrineOSServer {
   }
 }
 
-new CitrineOSServer(process.env.APP_NAME as EventGroup)
-  .run()
-  .catch((error: any) => {
-    console.error(error);
-    process.exit(1);
-  });
+new CitrineOSServer(process.env.APP_NAME as EventGroup).run().catch((error: any) => {
+  console.error(error);
+  process.exit(1);
+});

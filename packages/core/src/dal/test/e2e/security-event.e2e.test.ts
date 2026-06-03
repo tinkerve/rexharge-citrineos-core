@@ -184,7 +184,7 @@ beforeAll(async () => {
   // sequelize.bridge.config.ts reads BOOTSTRAP_CITRINEOS_DATABASE_* env vars,
   // so the same vars we use to start the server point migrations at test PG.
   // This also runs 20250430110000-create-default-tenant which seeds Tenant id=1.
-  execSync('pnpm run migrate', {
+  execSync('pnpm run db:migrate', {
     cwd: SERVER_ROOT,
     env: buildTestEnv(),
     stdio: 'inherit',

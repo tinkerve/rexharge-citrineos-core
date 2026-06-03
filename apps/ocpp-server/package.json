@@ -1,5 +1,5 @@
 {
-  "name": "@citrineos/server",
+  "name": "@citrineos/ocpp-server",
   "version": "2.0.0-alpha2",
   "description": "The OCPP server implementation which acts right on top of an asynchronous WebSocket.",
   "type": "module",
@@ -9,22 +9,14 @@
     "dist"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "rm -rf dist/* tsconfig.tsbuildinfo",
-    "fresh": "rm -rf node_modules pnpm-lock.yaml && pnpm run clean",
-    "compile": "pnpm run clean && tsc -p tsconfig.json && tsc -p tsconfig.migrations.json",
     "build": "tsc -b tsconfig.json && tsc -p tsconfig.migrations.json && pnpm run copy-assets",
     "copy-assets": "ts-node ./copy-assets.ts ./src/assets ./dist/assets",
-    "start": "cross-env APP_NAME=all APP_ENV=local BOOTSTRAP_CITRINEOS_CONFIG_FILENAME=config.json BOOTSTRAP_CITRINEOS_FILE_ACCESS_TYPE=local BOOTSTRAP_CITRINEOS_FILE_ACCESS_LOCAL_DEFAULT_FILE_PATH=/data nodemon",
-    "start:instance1": "cross-env APP_NAME=all APP_ENV=local BOOTSTRAP_INSTANCE1_CONFIG_FILENAME=config.json BOOTSTRAP_INSTANCE1_FILE_ACCESS_TYPE=local BOOTSTRAP_INSTANCE1_FILE_ACCESS_LOCAL_DEFAULT_FILE_PATH=/data nodemon --require dist/index.js --env-prefix=instance1_",
-    "start:instance2": "cross-env APP_NAME=all APP_ENV=local BOOTSTRAP_INSTANCE2_CONFIG_FILENAME=config.json BOOTSTRAP_INSTANCE2_FILE_ACCESS_TYPE=local BOOTSTRAP_INSTANCE2_FILE_ACCESS_LOCAL_DEFAULT_FILE_PATH=/data nodemon --require dist/index.js --env-prefix=instance2_",
-    "start-docker": "nodemon",
-    "start-docker-cloud": "node --inspect=0.0.0.0:9229 ./dist/index.js",
-    "start-everest": "cd ./everest && cross-env OCPP_VERSION=2.1 EVEREST_IMAGE_TAG=2025.6.1-dt-esdp docker compose up -d",
-    "start-everest-16": "cd ./everest && cross-env OCPP_VERSION=1.6 EVEREST_IMAGE_TAG=2025.6.1-dt-esdp docker compose up -d",
-    "migrate": "pnpm exec sequelize-cli db:migrate --debug && echo migration completed successfully",
     "lint": "eslint .",
-    "lint-fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "db:migrate": "pnpm exec sequelize-cli db:migrate --debug && echo migration completed successfully",
+    "start": "cross-env APP_NAME=all APP_ENV=local BOOTSTRAP_CITRINEOS_CONFIG_FILENAME=config.json BOOTSTRAP_CITRINEOS_FILE_ACCESS_TYPE=local BOOTSTRAP_CITRINEOS_FILE_ACCESS_LOCAL_DEFAULT_FILE_PATH=/data nodemon",
+    "start:everest": "cd ./everest && cross-env OCPP_VERSION=2.1 EVEREST_IMAGE_TAG=2025.6.1-dt-esdp docker compose up -d",
+    "start:everest:16": "cd ./everest && cross-env OCPP_VERSION=1.6 EVEREST_IMAGE_TAG=2025.6.1-dt-esdp docker compose up -d"
   },
   "keywords": [
     "ocpp",

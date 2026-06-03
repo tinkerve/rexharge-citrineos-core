@@ -15,8 +15,8 @@ CitrineOS.
 You will notice in the `apps/ocpp-server/everest` directory the files created to support running EVerest within Docker.
 In addition, we created some helpful package scripts (run from the `apps/ocpp-server` directory):
 
-- `pnpm run start-everest` — starts EVerest for OCPP 2.x (defaults to `OCPP_VERSION=2.1`)
-- `pnpm run start-everest-16` — starts EVerest for OCPP 1.6
+- `pnpm run start:everest` — starts EVerest for OCPP 2.x (defaults to `OCPP_VERSION=2.1`)
+- `pnpm run start:everest:16` — starts EVerest for OCPP 1.6
 
 Both scripts `cd` into `everest` and trigger the `docker compose up` command (below) from within the
 `apps/ocpp-server/everest` directory so that it can pick up the `Dockerfile` and the `docker-compose.yml` files.
@@ -24,9 +24,9 @@ Both scripts `cd` into `everest` and trigger the `docker compose up` command (be
 You will notice that there are two args that are configurable:
 
 - `EVEREST_IMAGE_TAG` - The image tag that will be used for the EVerest image (ghcr.io/everest/everest-demo/manager).
-- `OCPP_VERSION` - The version of OCPP to run EVerest for. `start-everest` handles all 2.x versions for the given 2.x `OCPP_VERSION`, and `start-everest-16` is for OCPP 1.6 only.
+- `OCPP_VERSION` - The version of OCPP to run EVerest for. `start:everest` handles all 2.x versions for the given 2.x `OCPP_VERSION`, and `start:everest:16` is for OCPP 1.6 only.
 
-After running `pnpm run start-everest` (or `pnpm run start-everest-16`), you should see 3 running EVerest containers
+After running `pnpm run start:everest` (or `pnpm run start:everest:16`), you should see 3 running EVerest containers
 and the `manager` container should have the appropriate EVerest logs.
 
 ### EVerest UI

@@ -35,11 +35,7 @@ export default {
       updatedAt: new Date(),
     };
 
-    await queryInterface.bulkInsert(
-      'Locations',
-      [location],
-      {} as QueryOptions,
-    );
+    await queryInterface.bulkInsert('Locations', [location], {} as QueryOptions);
 
     // Create ChargingStation
     const chargingStation = {
@@ -66,11 +62,7 @@ export default {
       updatedAt: new Date(),
     };
 
-    await queryInterface.bulkInsert(
-      'ChargingStations',
-      [chargingStation],
-      {} as QueryOptions,
-    );
+    await queryInterface.bulkInsert('ChargingStations', [chargingStation], {} as QueryOptions);
 
     // Create EVSE
     const evse = {
@@ -111,11 +103,7 @@ export default {
       updatedAt: new Date(),
     };
 
-    await queryInterface.bulkInsert(
-      'Connectors',
-      [connector],
-      {} as QueryOptions,
-    );
+    await queryInterface.bulkInsert('Connectors', [connector], {} as QueryOptions);
 
     // Create Tariff
     const tariff = {
@@ -159,8 +147,7 @@ export default {
       chargingPriority: 1,
       language1: 'en',
       realTimeAuth: 'AllowedOffline',
-      realTimeAuthUrl:
-        'http://citrineos-ocpi:8085/ocpi/2.2.1/tokens/realTimeAuth',
+      realTimeAuthUrl: 'http://citrineos-ocpi:8085/ocpi/2.2.1/tokens/realTimeAuth',
       concurrentTransaction: false,
       tenantId: 1,
       tenantPartnerId: 1,
@@ -168,32 +155,16 @@ export default {
       updatedAt: new Date(),
     };
 
-    await queryInterface.bulkInsert(
-      'Authorizations',
-      [authorization],
-      {} as QueryOptions,
-    );
+    await queryInterface.bulkInsert('Authorizations', [authorization], {} as QueryOptions);
   },
 
   down: async (queryInterface: QueryInterface) => {
     // Delete in reverse order to respect foreign key constraints
-    await queryInterface.bulkDelete(
-      'Authorizations',
-      { id: 1 },
-      {} as QueryOptions,
-    );
+    await queryInterface.bulkDelete('Authorizations', { id: 1 }, {} as QueryOptions);
     await queryInterface.bulkDelete('Tariffs', { id: 1 }, {} as QueryOptions);
-    await queryInterface.bulkDelete(
-      'Connectors',
-      { id: 1 },
-      {} as QueryOptions,
-    );
+    await queryInterface.bulkDelete('Connectors', { id: 1 }, {} as QueryOptions);
     await queryInterface.bulkDelete('Evses', { id: 1 }, {} as QueryOptions);
-    await queryInterface.bulkDelete(
-      'ChargingStations',
-      { id: 'cp001' },
-      {} as QueryOptions,
-    );
+    await queryInterface.bulkDelete('ChargingStations', { id: 'cp001' }, {} as QueryOptions);
     await queryInterface.bulkDelete('Locations', { id: 1 }, {} as QueryOptions);
   },
 };

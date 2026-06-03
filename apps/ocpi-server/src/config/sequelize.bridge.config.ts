@@ -40,10 +40,7 @@ export default (async () => {
       logging: true,
     };
   } catch (error) {
-    console.error(
-      '[sequelize.bridge.config.ts] Failed to load bootstrap configuration:',
-      error,
-    );
+    console.error('[sequelize.bridge.config.ts] Failed to load bootstrap configuration:', error);
     throw error;
   }
 })();
