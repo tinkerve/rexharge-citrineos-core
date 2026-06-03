@@ -124,7 +124,7 @@ export const getChargingStationStatusCounts = (chargingStation: ChargingStationS
         if (
           statusNotificationForStation.statusNotification?.evseId === parseInt(evse.evseId) &&
           statusNotificationForStation.statusNotification?.connectorId ===
-          evse.connectors?.[0]?.connectorId
+            evse.connectors?.[0]?.connectorId
         ) {
           latestStatusNotificationForEvse = statusNotificationForStation.statusNotification;
         }
