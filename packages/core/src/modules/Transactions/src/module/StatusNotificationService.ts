@@ -79,7 +79,7 @@ export class StatusNotificationService {
         tenantId,
         connectorId: statusNotificationRequest.connectorId,
         ocppConnectionName: ocppConnectionName,
-        evseId: matchingConnector?.evseId ?? (matchingEvse?.id as number | undefined),
+        evseId: matchingConnector?.evseId ?? matchingEvse?.id,
         evseTypeConnectorId: matchingConnector?.evseTypeConnectorId,
         status: OCPP2_0_1_Mapper.LocationMapper.mapConnectorStatus(
           statusNotificationRequest.connectorStatus,
