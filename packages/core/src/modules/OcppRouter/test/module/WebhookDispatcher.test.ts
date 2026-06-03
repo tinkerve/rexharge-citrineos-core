@@ -1,7 +1,14 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { createIdentifier, DEFAULT_TENANT_ID, MessageOrigin, MessageState } from '@citrineos/base';
+import {
+  AbstractModule,
+  createIdentifier,
+  DEFAULT_TENANT_ID,
+  ICache,
+  MessageOrigin,
+  MessageState,
+} from '@citrineos/base';
 import {
   IOCPPMessageRepository,
   ISubscriptionRepository,
@@ -26,6 +33,7 @@ describe('WebhookDispatcher', () => {
   let subscriptionRepository: Mocked<ISubscriptionRepository>;
   let ocppMessageRepository: IOCPPMessageRepository;
   let createOCPPMessage: ReturnType<typeof vi.fn>;
+  let cache: Mocked<ICache>;
   let webhookDispatcher: WebhookDispatcher;
 
   beforeEach(() => {
@@ -42,7 +50,14 @@ describe('WebhookDispatcher', () => {
       createOCPPMessage,
     } as unknown as IOCPPMessageRepository;
 
-    webhookDispatcher = new WebhookDispatcher(ocppMessageRepository, subscriptionRepository);
+    cache = {
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(true),
+      exists: vi.fn().mockResolvedValue(false),
+      remove: vi.fn().mockResolvedValue(true),
+    } as unknown as Mocked<ICache>;
+
+    webhookDispatcher = new WebhookDispatcher(ocppMessageRepository, subscriptionRepository, cache);
   });
 
   afterEach(() => {
@@ -773,6 +788,36 @@ describe('WebhookDispatcher', () => {
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(fetch).toHaveBeenCalledWith(subscription.url, expect.anything());
       expect(fetch).not.toHaveBeenCalledWith(anotherSubscription.url, expect.anything());
+    });
+  });
+
+  describe('dispatchCallbackUrl', () => {
+    const CORRELATION_ID = 'corr-abc';
+    const STATION_ID = 'CS001';
+
+    it('should POST to callback URL when one exists in cache', async () => {
+      const callbackUrl = 'http://localhost:3000/callback';
+      cache.get.mockResolvedValueOnce(callbackUrl);
+
+      await webhookDispatcher.dispatchCallbackUrl(CORRELATION_ID, STATION_ID, { status: 'Accepted' });
+
+      expect(fetch).toHaveBeenCalledWith(callbackUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Accepted' }),
+      });
+      expect(cache.get).toHaveBeenCalledWith(
+        CORRELATION_ID,
+        AbstractModule.CALLBACK_URL_CACHE_PREFIX + STATION_ID,
+      );
+    });
+
+    it('should not call fetch when no callback URL is cached', async () => {
+      cache.get.mockResolvedValueOnce(null);
+
+      await webhookDispatcher.dispatchCallbackUrl(CORRELATION_ID, STATION_ID, { status: 'Accepted' });
+
+      expect(fetch).not.toHaveBeenCalled();
     });
   });
 
