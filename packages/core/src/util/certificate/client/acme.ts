@@ -3,69 +3,116 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { IChargingStationCertificateAuthorityClient } from './interface.js';
-import type { SystemConfig } from '@citrineos/base';
+import type { IFileStorage, SystemConfig } from '@citrineos/base';
 import * as acme from 'acme-client';
+import { LocalStorage } from '@/util/files/localStorage.js';
 import { Client } from 'acme-client';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import fs from 'fs';
 import {
   createSignedCertificateFromCSR,
   parseCertificateChainPem,
 } from '@util/certificate/CertificateUtil.js';
 
 export class Acme implements IChargingStationCertificateAuthorityClient {
-  private readonly _directoryUrl: string = acme.directory.letsencrypt.staging;
   private readonly _email: string | undefined;
   private readonly _preferredChain = {
     name: 'ISRG Root X1',
     file: 'isrgrootx1',
   };
   // Key: serverId, Value: [cert chain, sub ca private key]
-  private _securityCertChainKeyMap: Map<string, [string, string]> = new Map();
+  private _securityCertChainKeyMap: Map<string, [string, string]>;
 
   private _client: Client | undefined;
   private _logger: Logger<ILogObj>;
+  private readonly _fileStorage: IFileStorage;
 
-  constructor(config: SystemConfig, logger?: Logger<ILogObj>, client?: Client) {
+  private constructor(
+    config: SystemConfig,
+    fileStorage: IFileStorage,
+    securityCertChainKeyMap: Map<string, [string, string]>,
+    client: Client,
+    logger?: Logger<ILogObj>,
+  ) {
+    this._fileStorage = fileStorage;
+    this._securityCertChainKeyMap = securityCertChainKeyMap;
+    this._client = client;
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
-
-    config.util.networkConnection.websocketServers.forEach((server) => {
-      if (server.securityProfile === 3) {
-        try {
-          this._securityCertChainKeyMap.set(server.id, [
-            fs.readFileSync(server.tlsCertificateChainFilePath as string, 'utf8'),
-            fs.readFileSync(server.mtlsCertificateAuthorityKeyFilePath as string, 'utf8'),
-          ]);
-        } catch (error) {
-          this._logger.error(
-            'Unable to start Certificates module due to invalid security certificates for {}: {}',
-            server,
-            error,
-          );
-          throw error;
-        }
-      }
-    });
-
     this._email = config.util.certificateAuthority.chargingStationCA.acme?.email;
-    const accountKey = fs.readFileSync(
-      config.util.certificateAuthority.chargingStationCA?.acme?.accountKeyFilePath as string,
+  }
+
+  static async create(
+    config: SystemConfig,
+    fileStorage: IFileStorage,
+    logger?: Logger<ILogObj>,
+    client?: Client,
+  ): Promise<Acme> {
+    const log = logger
+      ? logger.getSubLogger({ name: 'Acme' })
+      : new Logger<ILogObj>({ name: 'Acme' });
+
+    // Collect all required file paths to check existence in configured file storage
+    const securityProfile3Servers = config.util.networkConnection.websocketServers.filter(
+      (s) => s.securityProfile === 3,
     );
-    const acmeEnv: string | undefined =
-      config.util.certificateAuthority.chargingStationCA?.acme?.env;
-    if (acmeEnv === 'production') {
-      this._directoryUrl = acme.directory.letsencrypt.production;
+    const requiredPaths = securityProfile3Servers.flatMap((s) => [
+      s.tlsCertificateChainFilePath as string,
+      s.mtlsCertificateAuthorityKeyFilePath as string,
+    ]);
+    const existResults = await Promise.all(requiredPaths.map((p) => fileStorage.exists(p)));
+    const allExistInFileStorage = existResults.every(Boolean);
+    if (allExistInFileStorage) {
+      log.debug('Loading certificate files from configured file storage');
+    } else {
+      log.debug(
+        'Not all certificate files found in configured file storage, falling back to direct path lookup',
+      );
+    }
+    const storage: IFileStorage = allExistInFileStorage ? fileStorage : new LocalStorage('', '');
+    const diskStorage = new LocalStorage('', '');
+
+    const securityCertChainKeyMap = new Map<string, [string, string]>();
+    for (const server of securityProfile3Servers) {
+      try {
+        const certChain = await storage.getFile(server.tlsCertificateChainFilePath as string);
+        const mtlsKey = await storage.getFile(server.mtlsCertificateAuthorityKeyFilePath as string);
+        if (certChain === undefined || mtlsKey === undefined) {
+          throw new Error(`Certificate file not found for server ${server.id}`);
+        }
+        securityCertChainKeyMap.set(server.id, [certChain, mtlsKey]);
+      } catch (error) {
+        log.error(
+          'Unable to start Certificates module due to invalid security certificates for {}: {}',
+          server,
+          error,
+        );
+        throw error;
+      }
     }
 
-    this._client =
-      client ||
-      new acme.Client({
-        directoryUrl: this._directoryUrl,
-        accountKey: accountKey.toString(),
+    const acmeEnv = config.util.certificateAuthority.chargingStationCA?.acme?.env;
+    const directoryUrl =
+      acmeEnv === 'production'
+        ? acme.directory.letsencrypt.production
+        : acme.directory.letsencrypt.staging;
+
+    let resolvedClient = client;
+    if (!resolvedClient) {
+      const accountKeyFilePath = config.util.certificateAuthority.chargingStationCA?.acme
+        ?.accountKeyFilePath as string;
+      const accountKeyStr = await diskStorage.getFile(accountKeyFilePath);
+      if (!accountKeyStr) {
+        throw new Error('Account key file not found');
+      }
+      resolvedClient = new acme.Client({
+        directoryUrl,
+        accountKey: accountKeyStr,
       });
+    }
+
+    return new Acme(config, fileStorage, securityCertChainKeyMap, resolvedClient, logger);
   }
 
   /**
@@ -103,21 +150,20 @@ export class Acme implements IChargingStationCertificateAuthorityClient {
       challengeCreateFn: async (authz, challenge, keyAuthorization) => {
         this._logger.debug('Triggered challengeCreateFn()');
         const filePath = `${folderPath}/${challenge.token}`;
-        if (!fs.existsSync(folderPath)) {
-          fs.mkdirSync(folderPath, { recursive: true });
+        if (!(await this._fileStorage.exists(folderPath))) {
+          await this._fileStorage.createDirectory(folderPath, { recursive: true });
           this._logger.debug(`Directory created: ${folderPath}`);
         } else {
           this._logger.debug(`Directory already exists: ${folderPath}`);
         }
-        const fileContents = keyAuthorization;
         this._logger.debug(
-          `Creating challenge response ${fileContents} for ${authz.identifier.value} at path: ${filePath}`,
+          `Creating challenge response ${keyAuthorization} for ${authz.identifier.value} at path: ${filePath}`,
         );
-        fs.writeFileSync(filePath, fileContents);
+        await this._fileStorage.saveFile(filePath, Buffer.from(keyAuthorization));
       },
       challengeRemoveFn: async (_authz, _challenge, _keyAuthorization) => {
         this._logger.debug(`Triggered challengeRemoveFn(). Would remove "${folderPath}`);
-        fs.rmSync(folderPath, { recursive: true, force: true });
+        await this._fileStorage.deleteFile(folderPath, { recursive: true, force: true });
       },
     });
 

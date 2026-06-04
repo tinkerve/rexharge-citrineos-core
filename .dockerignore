@@ -1,9 +1,13 @@
 # Ignore node modules directories
 **/node_modules
 
-# Ignore distribution directories (lib for backwards compatibility)
+# Ignore distribution directories
 **/dist
-**/lib
+
+# Ignore build caches/output that are regenerated inside the image
+# (operator-ui/.next can exceed 1.5GB and is the main build-context bloat)
+**/.next
+**/.turbo
 
 # Common ignore files
 .gitignore
@@ -20,10 +24,9 @@
 **/*.Dockerfile
 
 # Specific directories to ignore
-**/data
+**/Server/data
 
-# include sequelize bridge
-!Server/
-!Server/src/
-!Server/src/config/
-!Server/src/config/sequelize.bridge.config.ts
+# VCS and CI/test artifacts (not needed in any image)
+.git
+**/playwright-report
+**/test-results

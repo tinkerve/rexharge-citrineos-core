@@ -2,10 +2,19 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 /* eslint-disable */
+
+/**
+ * Extracts the charging station identifier (ocppConnectionName) from a WebSocket upgrade URL.
+ */
+export function getClientIdFromUrl(url: string): string {
+  return url.split('?')[0].split('/').pop() as string;
+}
+
 import type {
   IAuthenticator,
   ICache,
   IConnectionManager,
+  IFileStorage,
   IMessageRouter,
   INetworkConnection,
   IWebsocketConnection,
@@ -20,7 +29,6 @@ import {
   getStationIdFromIdentifier,
   getTenantIdFromIdentifier,
 } from '@citrineos/base';
-import fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
 import { Duplex } from 'stream';
@@ -54,6 +62,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
   private _authenticator: IAuthenticator;
   private _router: IMessageRouter;
   private _connectionManager?: IConnectionManager;
+  private _fileStorage: IFileStorage;
   private _doesChargingStationExistByStationId?: (
     tenantId: number,
     ocppConnectionName: string,
@@ -65,6 +74,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     cache: ICache,
     authenticator: IAuthenticator,
     router: IMessageRouter,
+    fileStorage: IFileStorage,
     logger?: Logger<ILogObj>,
     doesChargingStationExistByStationId?: (
       tenantId: number,
@@ -78,6 +88,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     this._config = config;
     this._doesChargingStationExistByStationId = doesChargingStationExistByStationId;
     this._connectionManager = connectionManager;
+    this._fileStorage = fileStorage;
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
@@ -89,7 +100,11 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       const _httpServer = await this._createAndStartWebsocketServer(websocketServerConfig);
       this._httpServersMap.set(websocketServerConfig.id, _httpServer);
       if (websocketServerConfig.securityProfile > 1) {
-        const certManager = new TlsCredentialManager(websocketServerConfig);
+        const certManager = new TlsCredentialManager(
+          websocketServerConfig,
+          this._fileStorage,
+          this._logger,
+        );
         this._certManagersMap.set(websocketServerConfig.id, certManager);
       }
     });
@@ -101,10 +116,10 @@ export class WebsocketNetworkConnection implements INetworkConnection {
    *
    * @param serverId websocketServerConfig.id
    */
-  public reloadTlsCertificates(serverId: string): void {
+  public async reloadTlsCertificates(serverId: string): Promise<void> {
     const certManager = this._certManagersMap.get(serverId);
     if (certManager) {
-      certManager.reload();
+      await certManager.reload();
     } else {
       this._logger.error(`No TLS Credential Manager found for server ${serverId}`);
       throw new Error(`No TLS Credential Manager found for server ${serverId}`);
@@ -406,7 +421,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       // Pause the WebSocket event emitter until broker is established
       ws.pause();
 
-      const ocppConnectionName = this._getClientIdFromUrl(req.url as string);
+      const ocppConnectionName = getClientIdFromUrl(req.url as string);
       // Prefer tenant resolved during upgrade; fallback to server-configured tenant.
       const tenantId = (req as any).__resolvedTenantId ?? websocketServerConfig.tenantId;
 
@@ -729,17 +744,6 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       });
   }
   /**
-   *
-   * @param url Http upgrade request url used by charger
-   * @returns Charger identifier
-   */
-  private _getClientIdFromUrl(url: string): string {
-    // Remove query string first
-    const pathOnly = url.split('?')[0];
-    return pathOnly.split('/').pop() as string;
-  }
-
-  /**
    * Extract tenant id from the incoming upgrade request.
    * Supported sources (in order): query `tenant`/`tenantId`, header `x-tenant-id`,
    * path segment (second-last segment if URL is `/tenant/station`).
@@ -774,19 +778,21 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     return undefined;
   }
 
-  private _generateServerOptions(config: WebsocketServerConfig): https.ServerOptions {
+  private async _generateServerOptions(
+    config: WebsocketServerConfig,
+  ): Promise<https.ServerOptions> {
     const serverOptions: https.ServerOptions = {
       SNICallback:
         config.securityProfile > 1
-          ? (serverName, cb) => {
-              const opts = this._certManagersMap.get(config.id)!.getServerOptions(config);
+          ? async (serverName, cb) => {
+              const opts = await this._certManagersMap.get(config.id)!.getServerOptions(config);
               const ctx = tls.createSecureContext(opts);
               cb(null, ctx);
             }
           : undefined,
       ca:
         config.securityProfile > 2 && config.rootCACertificateFilePath
-          ? fs.readFileSync(config.rootCACertificateFilePath)
+          ? (await this._fileStorage.getFile(config.rootCACertificateFilePath))!
           : undefined,
       requestCert: config.securityProfile > 2,
       rejectUnauthorized: config.securityProfile > 2,
@@ -794,7 +800,7 @@ export class WebsocketNetworkConnection implements INetworkConnection {
     return serverOptions;
   }
 
-  private _createAndStartWebsocketServer(
+  private async _createAndStartWebsocketServer(
     wsConfig: WebsocketServerConfig,
   ): Promise<http.Server | https.Server> {
     for (const [key, value] of Object.entries(wsConfig.tenantPathMapping ?? {})) {
@@ -805,13 +811,13 @@ export class WebsocketNetworkConnection implements INetworkConnection {
       );
     }
 
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       let httpServer: http.Server | https.Server;
       switch (wsConfig.securityProfile) {
         case 3: // mTLS
         case 2: // TLS
           httpServer = https.createServer(
-            this._generateServerOptions(wsConfig),
+            await this._generateServerOptions(wsConfig),
             this._onHttpRequest.bind(this),
           );
           break;

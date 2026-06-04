@@ -10,6 +10,10 @@ export default defineConfig({
     environment: 'node',
     setupFiles: [], // optional, see below
     include: ['**/*.(test|spec).{ts,tsx}'],
+    // operator-ui owns its own Playwright e2e specs; vitest can't run them
+    // (they call @playwright/test's test.use(), which only works under the
+    // Playwright runner). Run them via `pnpm --filter @citrineos/operator-ui test:e2e`.
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.next/**', 'apps/operator-ui/**'],
     coverage: {
       reporter: ['text', 'json', 'html'],
     },

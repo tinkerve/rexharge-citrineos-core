@@ -9,7 +9,8 @@
     "**/node_modules/**",
     "**/vitest.config.ts",
     "**/test/**",
-    "./migrations/**"
+    "./migrations/**",
+    "./apps/operator-ui/**"
   ],
   "references": [
     {

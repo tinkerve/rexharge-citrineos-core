@@ -10,7 +10,7 @@ import * as FastifyAuth from '@fastify/auth';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import fs from 'fs';
+import { LocalStorage } from '../files/localStorage.js';
 import type { OpenAPIV3_1 } from 'openapi-types';
 import { OpenAPIV2, OpenAPIV3 } from 'openapi-types';
 import * as packageJson from '../../../package.json' with { type: 'json' };
@@ -57,7 +57,7 @@ function OcppTransformObject({
   return openapiObject;
 }
 
-const registerSwaggerUi = (systemConfig: SystemConfig, server: FastifyInstance) => {
+const registerSwaggerUi = async (systemConfig: SystemConfig, server: FastifyInstance) => {
   const swaggerUiOptions: any = {
     routePrefix: systemConfig.util.swagger?.path,
     securityDefinitions: {
@@ -84,10 +84,14 @@ const registerSwaggerUi = (systemConfig: SystemConfig, server: FastifyInstance) 
   };
 
   if (systemConfig.util.swagger?.logoPath) {
-    swaggerUiOptions['logo'] = {
-      type: 'image/png',
-      content: fs.readFileSync(systemConfig.util.swagger?.logoPath),
-    };
+    const storage = new LocalStorage('', '');
+    const logoContent = await storage.getFile(systemConfig.util.swagger.logoPath);
+    if (logoContent) {
+      swaggerUiOptions['logo'] = {
+        type: 'image/png',
+        content: Buffer.from(logoContent),
+      };
+    }
   }
 
   server.register(fastifySwaggerUi, swaggerUiOptions);
@@ -174,6 +178,6 @@ const registerFastifySwagger = (systemConfig: SystemConfig, server: FastifyInsta
 
 export async function initSwagger(systemConfig: SystemConfig, server: FastifyInstance) {
   registerFastifySwagger(systemConfig, server);
-  registerSwaggerUi(systemConfig, server);
+  await registerSwaggerUi(systemConfig, server);
   await registerFastifyAuth(server);
 }

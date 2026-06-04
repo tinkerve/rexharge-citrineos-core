@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { OCPP2_0_1, SystemConfig } from '@citrineos/base';
+import { IFileStorage, OCPP2_0_1, SystemConfig } from '@citrineos/base';
 import { faker } from '@faker-js/faker';
 import { KJUR } from 'jsrsasign';
 import { beforeAll, describe, expect, it, Mock, Mocked, vi } from 'vitest';
@@ -58,6 +58,7 @@ describe('CertificateAuthorityService', () => {
       undefined,
       mockChargingStationClient,
       mockV2GClient,
+      undefined as unknown as IFileStorage,
     );
   });
 
