@@ -48,32 +48,32 @@ export const OnlineStatusCard = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h2 className={heading2Style}>{translate('overview.chargerOnlineStatus')}</h2>
+            <h2 className={heading2Style}>{translate('Overview.chargerOnlineStatus')}</h2>
             <div
               onClick={() => push(`/${MenuSection.CHARGING_STATIONS}`)}
               className={overviewClickableStyle}
             >
-              {translate('overview.viewAllChargers')} <ChevronRightIcon />
+              {translate('Overview.viewAllChargers')} <ChevronRightIcon />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {error ? (
-            <p>{translate('overview.errorLoadingData')}</p>
+            <p>{translate('Overview.errorLoadingData')}</p>
           ) : (
             <div className="flex items-center gap-12">
               <div className={statusFlex}>
                 <span className={statusLabelStyle}>{onlineCount}</span>
                 <div className={statusIndicatorFlex}>
                   <Circle status={ChargerStatusEnum.ONLINE} />
-                  Online
+                  {translate('Common.online')}
                 </div>
               </div>
               <div className={statusFlex}>
                 <span className={statusLabelStyle}>{offlineCount}</span>
                 <div className={statusIndicatorFlex}>
                   <Circle status={ChargerStatusEnum.OFFLINE} />
-                  Offline
+                  {translate('Common.offline')}
                 </div>
               </div>
             </div>
