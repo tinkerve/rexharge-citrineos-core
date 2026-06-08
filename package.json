@@ -6,7 +6,7 @@
   "packageManager": "pnpm@10.19.0",
   "scripts": {
     "build": "pnpm -r run build",
-    "stack": "node scripts/stack.mjs",
+    "citrine": "node scripts/stack.mjs",
     "lint": "pnpm -r run lint",
     "lint:fix": "pnpm -r run lint:fix",
     "prettier": "prettier --write .",
