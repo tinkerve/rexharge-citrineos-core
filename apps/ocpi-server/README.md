@@ -123,7 +123,7 @@ The OCPI Server runs as part of the unified stack. From the repository root, the
 (`citrine`, PostgreSQL, RabbitMQ, MinIO, Hasura), the operator UI, and the OCPI Server together:
 
 ```bash
-node scripts/stack.mjs --ocpi
+pnpm citrine --ocpi
 ```
 
 All three services use published `ghcr.io` images by default; pass `--local` to build them from source instead. The
@@ -136,7 +136,7 @@ builds from source instead of trying to pull. The OCPI Server is then available 
 ### Running with pnpm (Local Development)
 
 You can also run the OCPI Server directly with pnpm. Bring up Core first for its database, broker, and APIs
-(`node scripts/stack.mjs --solo` from the repository root), then from this directory:
+(`pnpm citrine --solo` from the repository root), then from this directory:
 
 ```bash
 cd apps/ocpi-server
@@ -162,7 +162,7 @@ the shared `citrineos` network:
 - `graphql-engine` — Hasura GraphQL Engine
 
 Because they share a Compose project, the OCPI service declares `depends_on` these services and the launcher starts
-everything together — there is no separate "start Core first" step when you use `node scripts/stack.mjs --ocpi`.
+everything together — there is no separate "start Core first" step when you use `pnpm citrine --ocpi`.
 
 ## Server Ports & Endpoints
 

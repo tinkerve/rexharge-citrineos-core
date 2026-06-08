@@ -153,15 +153,13 @@ server, the operator UI, RabbitMQ, PostgreSQL, MinIO, and Hasura together. It pi
 profiles for you based on a few flags:
 
 ```shell
-node scripts/stack.mjs            # ocpp-server + operator UI, from published ghcr.io images
-node scripts/stack.mjs --local    # build the server and UI from local source instead of pulling
-node scripts/stack.mjs --solo     # ocpp-server only (no operator UI)
-node scripts/stack.mjs --ocpi     # also run the OCPI server
-node scripts/stack.mjs --local --ocpi   # flags combine freely
-node scripts/stack.mjs down       # stop the stack (pass the same flags you started it with)
+pnpm citrine            # ocpp-server + operator UI, from published ghcr.io images
+pnpm citrine --local    # build the server and UI from local source instead of pulling
+pnpm citrine --solo     # ocpp-server only (no operator UI)
+pnpm citrine --ocpi     # also run the OCPI server
+pnpm citrine --local --ocpi   # flags combine freely
+pnpm citrine down       # stop the stack (pass the same flags you started it with)
 ```
-
-It is also wired up as a workspace script — `pnpm run stack -- --local` (the `--` forwards the flags through pnpm).
 
 Published images are the default because most issues users hit come from stale local builds; reach for `--local` when
 you are working on the code itself. The OCPI image is published starting with the first release tag — until that tag
@@ -190,7 +188,7 @@ The stack is defined by two Compose files at the repository root, driven by the 
   local source. Applied by the launcher's `--local` flag.
 
 You can call `docker compose` directly if you prefer, but the launcher saves you from remembering the file/profile
-matrix — e.g. `node scripts/stack.mjs --local --ocpi` expands to
+matrix — e.g. `pnpm citrine --local --ocpi` expands to
 `docker compose -f docker-compose.yml -f docker-compose.local.yml --profile ui --profile ocpi up -d --build`.
 
 Once a stack is running, the following services should be available:
@@ -227,7 +225,7 @@ These scripts are run from the repository root and operate across the whole work
 ### Building
 
 - `pnpm run build` - builds all packages
-- `pnpm run stack` - brings the Docker stack up (see [Running the Full Stack with Docker](#running-the-full-stack-with-docker) above)
+- `pnpm citrine` - brings the Docker stack up (see [Running the Full Stack with Docker](#running-the-full-stack-with-docker) above)
 
 To run an individual app directly, use its own `start` script — e.g. `pnpm --filter @citrineos/ocpp-server run start`,
 or `cd apps/ocpp-server && pnpm start`. See each app's README for details.

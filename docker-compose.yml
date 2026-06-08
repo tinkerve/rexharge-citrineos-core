@@ -5,10 +5,10 @@
 # Base stack for CitrineOS. Do not invoke this file directly — use the launcher
 # at the repository root, which selects the right files and profiles:
 #
-#   node scripts/stack.mjs            # ocpp-server + operator UI, ghcr.io images
-#   node scripts/stack.mjs --local    # build server + UI from local source
-#   node scripts/stack.mjs --solo     # ocpp-server only (no UI)
-#   node scripts/stack.mjs --ocpi     # add the OCPI server
+#   pnpm citrine            # ocpp-server + operator UI, ghcr.io images
+#   pnpm citrine --local    # build server + UI from local source
+#   pnpm citrine --solo     # ocpp-server only (no UI)
+#   pnpm citrine --ocpi     # add the OCPI server
 #
 # Profiles: `ui` adds the operator UI, `ocpi` adds the OCPI server. The
 # infrastructure services and `citrine` (the OCPP server) are always on.
@@ -105,7 +105,7 @@ services:
       RABBITMQ_DEFAULT_USER: "guest"
       RABBITMQ_DEFAULT_PASS: "guest"
     volumes:
-      - ./apps/ocpp-server/rabbitmq:/var/lib/rabbitmq
+      - ./apps/ocpp-server/data/rabbitmq:/var/lib/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics -q check_port_connectivity
       interval: 10s
@@ -118,7 +118,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./apps/ocpp-server/postgresql/pgdata:/var/lib/postgresql/data
+      - ./apps/ocpp-server/data/postgresql/pgdata:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: citrine
       POSTGRES_USER: citrine
@@ -143,7 +143,7 @@ services:
       MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
       MINIO_SERVER_URL: http://localhost:9000
     volumes:
-      - ./apps/ocpp-server/minio:/data
+      - ./apps/ocpp-server/data/minio:/data
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
@@ -166,7 +166,7 @@ services:
   graphql-engine:
     image: hasura/graphql-engine:v2.40.3.cli-migrations-v3
     volumes:
-      - ./apps/ocpp-server/hasura-metadata:/hasura-metadata
+      - ./apps/ocpp-server/data/hasura-metadata:/hasura-metadata
     ports:
       - 8090:8080
     restart: always

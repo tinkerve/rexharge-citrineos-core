@@ -13,7 +13,7 @@ End-to-end tests for `citrineos-operator-ui` against a real Hasura + CitrineOS C
 1. Backend stack running. From the `citrineos-core` repository root, start the full stack (Core + UI), or pass
    `--solo` for backend only:
    ```bash
-   node scripts/stack.mjs
+   pnpm citrine
    ```
    Healthchecks: Hasura `:8090/healthz`, Citrine `:8080/health`, UI `:3000/login`.
 2. UI server running. From `apps/operator-ui`:

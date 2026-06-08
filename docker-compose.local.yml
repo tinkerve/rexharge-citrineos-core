@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Local-build override for docker-compose.yml. Applied via the launcher's
-# `--local` flag (`node scripts/stack.mjs --local`), which expands to:
+# `--local` flag (`pnpm citrine --local`), which expands to:
 #
 #   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 #

@@ -44,8 +44,8 @@ From the repository root, the `--solo` flag brings up the server plus its suppor
 MinIO, and Hasura — but **not** the operator UI:
 
 ```shell
-node scripts/stack.mjs --solo            # from published images
-node scripts/stack.mjs --solo --local    # built from local source
+pnpm citrine --solo            # from published images
+pnpm citrine --solo --local    # built from local source
 ```
 
 To run the full stack including the operator UI (or to add the OCPI server), drop `--solo` or add `--ocpi` — see the

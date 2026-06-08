@@ -139,8 +139,8 @@ The Operator UI is part of the default stack — the launcher at the repository 
 together (the UI is on by default; `--solo` omits it):
 
 ```bash
-node scripts/stack.mjs            # Core + UI from published ghcr.io images
-node scripts/stack.mjs --local    # build Core + UI from local source
+pnpm citrine            # Core + UI from published ghcr.io images
+pnpm citrine --local    # build Core + UI from local source
 ```
 
 The UI is then available at [http://localhost:3000](http://localhost:3000), connected to the configured Hasura and
