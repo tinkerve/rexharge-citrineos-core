@@ -117,6 +117,7 @@ describe('F07 - Remote start with fixed cost, energy, SoC or time', () => {
     transactionEventRepository = {
       createOrUpdateTransactionByTransactionEventAndStationId: vi.fn(),
       updateTransactionByStationIdAndTransactionId: vi.fn(),
+      readTransactionByStationIdAndTransactionId: vi.fn().mockResolvedValue(null),
     };
 
     mockCache = {
