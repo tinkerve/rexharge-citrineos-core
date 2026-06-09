@@ -272,6 +272,7 @@ jobs:
           ALLOW_IMAGE_UPLOAD: "false"
           OCPP_VERSION: "2.1"
           EVEREST_IMAGE_TAG: 2025.6.1-dt-esdp
+          CITRINE_CORE_PATH: ${{ github.workspace }}/apps/Server
         working-directory: apps/operator-ui
         run: pnpm exec playwright test --project=everest-serial
 
