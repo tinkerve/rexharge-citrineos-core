@@ -243,50 +243,25 @@ jobs:
           echo "Backend did not become healthy in time."
           exit 1
 
-      - name: Start EVerest SIL stack
-        # The everest fixture spawns the same compose stack itself when run
-        # locally; in CI we bring it up here so the cold image pull
-        # (~5-10 min for everest-manager:2025.6.1-dt-esdp) happens once
-        # rather than racing the first test's beforeAll. extra_hosts in the
-        # compose maps host.docker.internal so the manager can reach the
-        # core OCPP listener on port 8081 on the runner host.
+      - name: Pre-pull and build EVerest SIL images
+        # Fetch/build the manager image (FROM everest-demo/manager) plus the
+        # mqtt/nodered images ahead of time so the first @everest test's fixture
+        # — which runs `docker compose up -d` itself — doesn't pay the
+        # multi-minute cold pull inside its boot-timeout budget. We deliberately
+        # do NOT start the stack here: the fixture owns the lifecycle, and the
+        # manager's FIRST boot must coincide with the fixture's awaitStationOnline
+        # (which waits for a StatusNotification fresher than fixture start). A
+        # manager started here would emit its only boot StatusNotification
+        # minutes before the tests run, so awaitStationOnline would never see a
+        # fresh one. The fixture's cold boot also lets libocpp create the
+        # device-model DB clean from start.sh's already-URL-corrected JSON.
         env:
           OCPP_VERSION: "2.1"
           EVEREST_IMAGE_TAG: 2025.6.1-dt-esdp
         working-directory: apps/Server/everest
-        run: docker compose up -d
-
-      - name: Reset EVerest device-model DB and wait for manager healthy
-        # The upstream everest-demo manager image ships a pre-migration
-        # device_model_storage.db (PRAGMA user_version = 0). This libocpp build
-        # rejects it with "Database does not support migrations yet, please
-        # update the database" and the manager crash-loops on every COLD boot.
-        # CI is always cold (down -v between runs); a local dev stack only works
-        # because its DB is warm/persisted. Deleting the baked DB lets libocpp
-        # recreate a fresh migration-aware DB from the InternalCtrlr.json that
-        # start.sh already rewrites with the correct CSMS URL, then we restart
-        # and wait for the device-model schema to materialize before testing.
         run: |
-          DB=/ext/dist/share/everest/modules/OCPP201/device_model_storage.db
-          echo "=== Pre-reset: device-model DB files present in the manager ==="
-          docker exec everest-manager-1 sh -c 'find / -xdev -name "device_model_storage.db*" 2>/dev/null' || true
-          docker exec everest-manager-1 sh -c "ls -la $DB 2>/dev/null; sqlite3 -readonly $DB 'PRAGMA user_version;' 2>&1 | head -1" || true
-          echo "=== Removing baked device-model DB so libocpp recreates it clean ==="
-          docker exec everest-manager-1 sh -c "rm -f ${DB} ${DB}-wal ${DB}-shm ${DB}-journal" || true
-          docker restart everest-manager-1
-          echo "=== Waiting for libocpp to build a fresh migration-aware DB ==="
-          for i in $(seq 1 80); do
-            if docker exec everest-manager-1 sqlite3 -readonly "$DB" "SELECT count(*) FROM VARIABLE_ATTRIBUTE;" >/dev/null 2>&1; then
-              echo "Device-model DB ready after ${i} attempt(s) (~$((i * 3))s)."
-              docker exec everest-manager-1 sqlite3 -readonly "$DB" "PRAGMA user_version;" || true
-              exit 0
-            fi
-            sleep 3
-          done
-          echo "EVerest manager did not initialize the device-model DB in time." >&2
-          docker ps -a
-          docker logs everest-manager-1 2>&1 | tail -300 || true
-          exit 1
+          docker compose build
+          docker compose pull mqtt-server nodered
 
       - name: Run operator-ui Playwright EVerest lane
         env:

@@ -185,15 +185,23 @@ function runEverestCompose(everestDir: string, args: ReadonlyArray<string>): Pro
   });
 }
 
-// citrineos-core's OCPP listener is on host port 8081, path `/cp001`. The
-// EVerest manager image ships a baked-in default of `ws://host.docker.internal/ws/cp001`
-// (port 80, wrong path) which is persisted into the manager's SQLite
-// device-model storage on first boot. start.sh patches the JSON template,
-// but the SQLite DB is the runtime source of truth and is not regenerated
-// from JSON on subsequent boots. We therefore correct it directly via
-// docker exec after compose up; the patch survives container restarts but
-// is re-applied on every fixture invocation in case the container was
-// recreated by `docker compose up --force-recreate`.
+// citrineos-core's OCPP listener is on host port 8081, path `/cp001`.
+// start.sh already rewrites the manager's InternalCtrlr.json on every boot to
+// point NetworkConnectionProfiles at ws://host.docker.internal:8081/cp001, and
+// libocpp builds the device-model SQLite DB FROM that JSON the first time it
+// creates the DB. So on a cold boot the runtime URL is already correct and no
+// SQLite patch is needed. We only correct the DB directly for the rare
+// warm/persisted-DB case where an old wrong URL lingers from a previous boot.
+//
+// CRITICAL: this is gated on a `sqlite3 -readonly` probe and only ever writes
+// when the DB already exists WITH the expected schema. Plain `sqlite3 <path>`
+// CREATES an empty database file when the path is missing — and an empty file
+// at this path makes libocpp's InitDeviceModelDb abort on its next boot with
+// "Database does not support migrations yet", crash-looping the manager. The
+// read-only probe never creates the file, so it cannot poison a cold boot that
+// is still initialising the DB.
+const CORRECT_CSMS_URL_NEEDLE = 'host.docker.internal:8081/cp001';
+const EVEREST_DEVICE_MODEL_DB = '/ext/dist/share/everest/modules/OCPP201/device_model_storage.db';
 const CORRECT_NETWORK_PROFILE_JSON = JSON.stringify([
   {
     configurationSlot: 1,
@@ -208,20 +216,49 @@ const CORRECT_NETWORK_PROFILE_JSON = JSON.stringify([
   },
 ]);
 
+// Reads the current NetworkConnectionProfiles value via `sqlite3 -readonly` so
+// a missing/uninitialised DB is never created as an empty file. Returns null
+// when the DB file or table isn't ready yet (cold boot still migrating) or the
+// row is absent — callers treat null as "nothing to patch".
+async function readEverestNetworkProfile(): Promise<string | null> {
+  return new Promise((resolve) => {
+    const proc = spawn(
+      process.platform === 'win32' ? 'docker.exe' : 'docker',
+      [
+        'exec',
+        'everest-manager-1',
+        'sqlite3',
+        '-readonly',
+        EVEREST_DEVICE_MODEL_DB,
+        "SELECT VALUE FROM VARIABLE_ATTRIBUTE WHERE VARIABLE_ID = (SELECT ID FROM VARIABLE WHERE NAME='NetworkConnectionProfiles');",
+      ],
+      { stdio: ['ignore', 'pipe', 'pipe'], shell: false },
+    );
+    let stdout = '';
+    proc.stdout?.on('data', (c: Buffer) => (stdout += c.toString()));
+    proc.on('exit', (code) => resolve(code === 0 ? stdout.trim() : null));
+    proc.on('error', () => resolve(null));
+  });
+}
+
 async function patchEverestNetworkProfile(): Promise<void> {
+  const current = await readEverestNetworkProfile();
+  // DB not ready yet (cold boot still creating it) or the row is missing — skip.
+  // libocpp will materialise the DB from start.sh's already-correct JSON, so
+  // there is nothing to fix and writing here would only risk poisoning it.
+  if (current === null) return;
+  // Already pointing at the correct CSMS URL (the cold-boot case) — no-op.
+  if (current.includes(CORRECT_CSMS_URL_NEEDLE)) return;
+
+  // Warm/stale DB with a wrong URL: correct it in place, then restart so
+  // libocpp re-reads the device-model DB on boot.
   const escaped = CORRECT_NETWORK_PROFILE_JSON.replace(/'/g, "''");
   const sql = `UPDATE VARIABLE_ATTRIBUTE SET VALUE='${escaped}' WHERE VARIABLE_ID = (SELECT ID FROM VARIABLE WHERE NAME='NetworkConnectionProfiles');\n`;
   // Pipe SQL via stdin to avoid shell quoting hell with the embedded JSON.
   await new Promise<void>((res, rej) => {
     const proc = spawn(
       process.platform === 'win32' ? 'docker.exe' : 'docker',
-      [
-        'exec',
-        '-i',
-        'everest-manager-1',
-        'sqlite3',
-        '/ext/dist/share/everest/modules/OCPP201/device_model_storage.db',
-      ],
+      ['exec', '-i', 'everest-manager-1', 'sqlite3', EVEREST_DEVICE_MODEL_DB],
       { stdio: ['pipe', 'pipe', 'pipe'], shell: false },
     );
     let stderr = '';
@@ -234,7 +271,6 @@ async function patchEverestNetworkProfile(): Promise<void> {
     proc.stdin?.write(sql);
     proc.stdin?.end();
   });
-  // Restart the manager so libocpp re-reads the device-model DB on boot.
   await new Promise<void>((res) => {
     const proc = spawn(
       process.platform === 'win32' ? 'docker.exe' : 'docker',
