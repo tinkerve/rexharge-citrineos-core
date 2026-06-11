@@ -41,6 +41,11 @@ const DEFAULT_BOOT_TIMEOUT_MS = 90_000;
 // online guard waits longer than the initial-boot budget.
 const RECONNECT_TIMEOUT_MS = 150_000;
 const POLL_INTERVAL_MS = 2_000;
+// How long to wait for libocpp to materialise the device-model DB on a cold
+// boot before applying the network-profile patch. The DB normally appears a
+// few seconds after `compose up`; this bounds the wait so a manager that never
+// boots fails fast into awaitStationOnline's diagnostics rather than hanging.
+const DB_READY_TIMEOUT_MS = 60_000;
 
 export interface EverestHandle {
   readonly ocppConnectionName: string;
@@ -242,16 +247,29 @@ async function readEverestNetworkProfile(): Promise<string | null> {
 }
 
 async function patchEverestNetworkProfile(): Promise<void> {
-  const current = await readEverestNetworkProfile();
-  // DB not ready yet (cold boot still creating it) or the row is missing — skip.
-  // libocpp will materialise the DB from start.sh's already-correct JSON, so
-  // there is nothing to fix and writing here would only risk poisoning it.
-  if (current === null) return;
-  // Already pointing at the correct CSMS URL (the cold-boot case) — no-op.
-  if (current.includes(CORRECT_CSMS_URL_NEEDLE)) return;
+  // Wait — read-only, so we never create an empty file that would crash
+  // libocpp's migration init — until libocpp has materialised the device-model
+  // DB, then rewrite the network profile. The rewrite is REQUIRED on every boot,
+  // not just warm/stale ones: start.sh bakes ocppVersion=OCPP21 (from
+  // OCPP_VERSION=2.1) into the DB, but citrineos-core speaks OCPP 2.0.1, so the
+  // profile must be downgraded to OCPP20 (and the CSMS URL pinned to
+  // host:8081/cp001) before the manager can register with core. The trailing
+  // `docker restart` makes libocpp reconnect with the corrected profile, which
+  // also yields the fresh BootNotification/StatusNotification that
+  // awaitStationOnline waits for.
+  const deadline = Date.now() + DB_READY_TIMEOUT_MS;
+  let current = await readEverestNetworkProfile();
+  while (current === null) {
+    if (Date.now() >= deadline) return; // DB never appeared — awaitStationOnline reports it
+    await delay(POLL_INTERVAL_MS);
+    current = await readEverestNetworkProfile();
+  }
+  // Already exactly the citrineos profile (warm DB patched on a prior run) —
+  // skip the rewrite+restart to avoid a needless reconnect cycle.
+  if (current.includes(CORRECT_CSMS_URL_NEEDLE) && current.includes('"ocppVersion":"OCPP20"')) {
+    return;
+  }
 
-  // Warm/stale DB with a wrong URL: correct it in place, then restart so
-  // libocpp re-reads the device-model DB on boot.
   const escaped = CORRECT_NETWORK_PROFILE_JSON.replace(/'/g, "''");
   const sql = `UPDATE VARIABLE_ATTRIBUTE SET VALUE='${escaped}' WHERE VARIABLE_ID = (SELECT ID FROM VARIABLE WHERE NAME='NetworkConnectionProfiles');\n`;
   // Pipe SQL via stdin to avoid shell quoting hell with the embedded JSON.
