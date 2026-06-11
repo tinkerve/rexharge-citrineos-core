@@ -60,9 +60,12 @@ export class BasicAuthenticationFilter extends AuthenticatorFilter {
       })
       .then((r) => {
         if (r && r[0]) {
-          const hashedPassword = r[0].value;
-          if (hashedPassword) {
-            return CryptoUtils.isPasswordMatch(hashedPassword, password);
+          const storedPassword = r[0].value;
+          if (storedPassword) {
+            // Fall back to legacy PBKDF2 hash comparison for passwords stored before plain-text migration
+            return (
+              storedPassword === password || CryptoUtils.isPasswordMatch(storedPassword, password)
+            );
           }
         }
         this._logger.warn('Has no password', username);

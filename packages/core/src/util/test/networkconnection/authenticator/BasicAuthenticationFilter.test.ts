@@ -10,21 +10,11 @@ import { aRequestWithAuthorization, basicAuth } from '../../providers/IncomingMe
 import { anAuthenticationOptions } from '../../providers/AuthenticationOptionsProvider.js';
 import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
 
-type PasswordPair = {
-  plaintext: string;
-  hash: string;
-};
-
 describe('BasicAuthenticationFilter', () => {
-  const password: PasswordPair = {
-    plaintext: 'SEPtwLckb5QD5on0EXcCAmuQVmJ*bu3ZXmA:Clt3',
-    hash: 'PBKDF2:1000:64:sha512:salt:8a9ee05c38e81af180a43e5a707cfd70bf3624400e7c986ab4b8ef9c7a7647cd17a3c0f1860ebe08f7173dc1414c13f5a25528b08e9facd16fa4d089b35ba808',
-  };
-
-  const anotherPassword: PasswordPair = {
-    plaintext: '_Oec8yF4r1hH6ildo4yvM25:SU2hpL*jobDskYos',
-    hash: 'PBKDF2:1000:64:sha512:salt:7f87adf79f3050b0639c079c30c6696efaa1a84b437907de7f6545aac15322ee29a2d9cd66d459d41de9af56b2834c2a7cd3c3f7fa897db3d8f94a3a1c147ca2',
-  };
+  const password = 'SEPtwLckb5QD5on0EXcCAmuQVmJ*bu3ZXmA:Clt3';
+  const anotherPassword = '_Oec8yF4r1hH6ildo4yvM25:SU2hpL*jobDskYos';
+  const legacyPasswordHash =
+    'PBKDF2:1000:64:sha512:salt:8a9ee05c38e81af180a43e5a707cfd70bf3624400e7c986ab4b8ef9c7a7647cd17a3c0f1860ebe08f7173dc1414c13f5a25528b08e9facd16fa4d089b35ba808';
 
   let deviceModelRepository: Mocked<IDeviceModelRepository>;
   let filter: BasicAuthenticationFilter;
@@ -56,13 +46,13 @@ describe('BasicAuthenticationFilter', () => {
     ])(
       'should reject when station identifier does not match username',
       async (ocppConnectionName, username) => {
-        givenPassword(ocppConnectionName, password.hash);
+        givenPassword(ocppConnectionName, password);
 
         await expect(
           filter.authenticate(
             DEFAULT_TENANT_ID,
             ocppConnectionName,
-            aRequestWithAuthorization(basicAuth(username, password.plaintext)),
+            aRequestWithAuthorization(basicAuth(username, password)),
             authenticationOptions,
           ),
         ).rejects.toThrow(`Unauthorized ${ocppConnectionName}`);
@@ -121,7 +111,7 @@ describe('BasicAuthenticationFilter', () => {
         filter.authenticate(
           DEFAULT_TENANT_ID,
           ocppConnectionName,
-          aRequestWithAuthorization(basicAuth('', password.plaintext)),
+          aRequestWithAuthorization(basicAuth('', password)),
           authenticationOptions,
         ),
       ).rejects.toThrow('Auth header missing or incorrectly formatted');
@@ -164,7 +154,7 @@ describe('BasicAuthenticationFilter', () => {
         filter.authenticate(
           DEFAULT_TENANT_ID,
           ocppConnectionName,
-          aRequestWithAuthorization(basicAuth(ocppConnectionName, password.plaintext)),
+          aRequestWithAuthorization(basicAuth(ocppConnectionName, password)),
           authenticationOptions,
         ),
       ).rejects.toThrow(`Unauthorized ${ocppConnectionName}`);
@@ -179,28 +169,28 @@ describe('BasicAuthenticationFilter', () => {
 
     it.each([
       {
-        actualPassword: password.hash,
+        actualPassword: password,
         authenticationPassword: ` `,
       },
       {
-        actualPassword: password.hash,
-        authenticationPassword: anotherPassword.plaintext,
+        actualPassword: password,
+        authenticationPassword: anotherPassword,
       },
       {
-        actualPassword: anotherPassword.hash,
-        authenticationPassword: password.plaintext,
+        actualPassword: anotherPassword,
+        authenticationPassword: password,
       },
       {
-        actualPassword: password.hash,
-        authenticationPassword: `${password.plaintext} `,
+        actualPassword: password,
+        authenticationPassword: `${password} `,
       },
       {
-        actualPassword: password.hash,
-        authenticationPassword: ` ${password.plaintext}`,
+        actualPassword: password,
+        authenticationPassword: ` ${password}`,
       },
       {
-        actualPassword: password.hash,
-        authenticationPassword: ` ${password.plaintext} `,
+        actualPassword: password,
+        authenticationPassword: ` ${password} `,
       },
     ])(
       'should reject when password does not match',
@@ -221,12 +211,17 @@ describe('BasicAuthenticationFilter', () => {
 
     it.each([
       {
-        actualPassword: password.hash,
-        authenticationPassword: password.plaintext,
+        actualPassword: password,
+        authenticationPassword: password,
       },
       {
-        actualPassword: anotherPassword.hash,
-        authenticationPassword: anotherPassword.plaintext,
+        actualPassword: anotherPassword,
+        authenticationPassword: anotherPassword,
+      },
+      {
+        // Legacy: PBKDF2 hash stored before plain-text migration
+        actualPassword: legacyPasswordHash,
+        authenticationPassword: password,
       },
     ])(
       'should do nothing when password matches',
@@ -270,7 +265,7 @@ describe('BasicAuthenticationFilter', () => {
       await filter.authenticate(
         DEFAULT_TENANT_ID,
         ocppConnectionName,
-        aRequestWithAuthorization(basicAuth(ocppConnectionName, password.plaintext)),
+        aRequestWithAuthorization(basicAuth(ocppConnectionName, password)),
         authenticationOptions,
       );
 
@@ -278,10 +273,10 @@ describe('BasicAuthenticationFilter', () => {
     });
   });
 
-  function givenPassword(ocppConnectionName: string, passwordHash: string): void {
+  function givenPassword(ocppConnectionName: string, storedPassword: string): void {
     const passwordVariable = aBasicAuthPasswordVariable({
       ocppConnectionName: ocppConnectionName,
-      value: passwordHash,
+      value: storedPassword,
     } as Partial<VariableAttribute>);
 
     deviceModelRepository.readAllByQuerystring.mockResolvedValue([passwordVariable]);
