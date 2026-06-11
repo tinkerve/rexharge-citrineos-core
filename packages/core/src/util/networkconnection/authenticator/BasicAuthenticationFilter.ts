@@ -62,10 +62,16 @@ export class BasicAuthenticationFilter extends AuthenticatorFilter {
         if (r && r[0]) {
           const storedPassword = r[0].value;
           if (storedPassword) {
+            if (storedPassword === password) {
+              return true;
+            }
             // Fall back to legacy PBKDF2 hash comparison for passwords stored before plain-text migration
-            return (
-              storedPassword === password || CryptoUtils.isPasswordMatch(storedPassword, password)
-            );
+            try {
+              return CryptoUtils.isPasswordMatch(storedPassword, password);
+            } catch (error) {
+              this._logger.warn('Failed to compare password hash for', username, error);
+              return false;
+            }
           }
         }
         this._logger.warn('Has no password', username);
