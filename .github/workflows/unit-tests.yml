@@ -243,6 +243,18 @@ jobs:
           echo "Backend did not become healthy in time."
           exit 1
 
+      - name: Free up runner disk space
+        # The EVerest manager image (FROM everest-demo/manager) is several GB; with
+        # the core stack images, Playwright browsers and node_modules already on
+        # disk it can exhaust the ~14GB default free space on ubuntu-latest,
+        # surfacing as "no space left on device" while building/pulling the manager
+        # image. Reclaim ~13GB of preinstalled toolchains the lane never uses.
+        run: |
+          df -h /
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/.ghcup /usr/share/swift || true
+          df -h /
+
       - name: Pre-pull and build EVerest SIL images
         # Fetch/build the manager image (FROM everest-demo/manager) plus the
         # mqtt/nodered images ahead of time so the first @everest test's fixture
