@@ -256,6 +256,38 @@ jobs:
         working-directory: apps/Server/everest
         run: docker compose up -d
 
+      - name: Reset EVerest device-model DB and wait for manager healthy
+        # The upstream everest-demo manager image ships a pre-migration
+        # device_model_storage.db (PRAGMA user_version = 0). This libocpp build
+        # rejects it with "Database does not support migrations yet, please
+        # update the database" and the manager crash-loops on every COLD boot.
+        # CI is always cold (down -v between runs); a local dev stack only works
+        # because its DB is warm/persisted. Deleting the baked DB lets libocpp
+        # recreate a fresh migration-aware DB from the InternalCtrlr.json that
+        # start.sh already rewrites with the correct CSMS URL, then we restart
+        # and wait for the device-model schema to materialize before testing.
+        run: |
+          DB=/ext/dist/share/everest/modules/OCPP201/device_model_storage.db
+          echo "=== Pre-reset: device-model DB files present in the manager ==="
+          docker exec everest-manager-1 sh -c 'find / -xdev -name "device_model_storage.db*" 2>/dev/null' || true
+          docker exec everest-manager-1 sh -c "ls -la $DB 2>/dev/null; sqlite3 -readonly $DB 'PRAGMA user_version;' 2>&1 | head -1" || true
+          echo "=== Removing baked device-model DB so libocpp recreates it clean ==="
+          docker exec everest-manager-1 sh -c "rm -f ${DB} ${DB}-wal ${DB}-shm ${DB}-journal" || true
+          docker restart everest-manager-1
+          echo "=== Waiting for libocpp to build a fresh migration-aware DB ==="
+          for i in $(seq 1 80); do
+            if docker exec everest-manager-1 sqlite3 -readonly "$DB" "SELECT count(*) FROM VARIABLE_ATTRIBUTE;" >/dev/null 2>&1; then
+              echo "Device-model DB ready after ${i} attempt(s) (~$((i * 3))s)."
+              docker exec everest-manager-1 sqlite3 -readonly "$DB" "PRAGMA user_version;" || true
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "EVerest manager did not initialize the device-model DB in time." >&2
+          docker ps -a
+          docker logs everest-manager-1 2>&1 | tail -300 || true
+          exit 1
+
       - name: Run operator-ui Playwright EVerest lane
         env:
           CI: "true"
@@ -291,6 +323,8 @@ jobs:
         if: failure()
         run: |
           docker ps -a
+          echo "=== full everest-manager-1 logs (first boot included) ==="
+          docker logs everest-manager-1 2>&1 || true
           docker container ls -aq | xargs -I {} docker logs --tail 400 {} || true
 
       - name: Tear down EVerest stack
