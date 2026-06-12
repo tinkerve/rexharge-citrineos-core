@@ -85,4 +85,3 @@ export {
 } from './layers/sequelize/index.js'; // TODO ensure all needed modules are properly exported
 export { RepositoryStore } from './layers/sequelize/repository/RepositoryStore.js';
 export { DefaultDrizzleInstance } from './layers/drizzle/index.js';
-export { CryptoUtils } from './util/CryptoUtils.js';

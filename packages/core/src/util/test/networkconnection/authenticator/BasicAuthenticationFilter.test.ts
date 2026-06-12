@@ -13,8 +13,6 @@ import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from 'vitest'
 describe('BasicAuthenticationFilter', () => {
   const password = 'SEPtwLckb5QD5on0EXcCAmuQVmJ*bu3ZXmA:Clt3';
   const anotherPassword = '_Oec8yF4r1hH6ildo4yvM25:SU2hpL*jobDskYos';
-  const legacyPasswordHash =
-    'PBKDF2:1000:64:sha512:salt:8a9ee05c38e81af180a43e5a707cfd70bf3624400e7c986ab4b8ef9c7a7647cd17a3c0f1860ebe08f7173dc1414c13f5a25528b08e9facd16fa4d089b35ba808';
 
   let deviceModelRepository: Mocked<IDeviceModelRepository>;
   let filter: BasicAuthenticationFilter;
@@ -217,11 +215,6 @@ describe('BasicAuthenticationFilter', () => {
       {
         actualPassword: anotherPassword,
         authenticationPassword: anotherPassword,
-      },
-      {
-        // Legacy: PBKDF2 hash stored before plain-text migration
-        actualPassword: legacyPasswordHash,
-        authenticationPassword: password,
       },
     ])(
       'should do nothing when password matches',

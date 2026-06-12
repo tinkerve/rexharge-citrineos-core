@@ -4,7 +4,6 @@
 import type { AuthenticationOptions } from '@citrineos/base';
 import { OCPP2_0_1 } from '@citrineos/base';
 import type { IDeviceModelRepository } from '@dal/interfaces/repositories.js';
-import { CryptoUtils } from '@dal/util/CryptoUtils.js';
 import { IncomingMessage } from 'http';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -62,16 +61,7 @@ export class BasicAuthenticationFilter extends AuthenticatorFilter {
         if (r && r[0]) {
           const storedPassword = r[0].value;
           if (storedPassword) {
-            if (storedPassword === password) {
-              return true;
-            }
-            // Fall back to legacy PBKDF2 hash comparison for passwords stored before plain-text migration
-            try {
-              return CryptoUtils.isPasswordMatch(storedPassword, password);
-            } catch (error) {
-              this._logger.warn('Failed to compare password hash for', username, error);
-              return false;
-            }
+            return storedPassword === password;
           }
         }
         this._logger.warn('Has no password', username);
