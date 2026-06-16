@@ -23,7 +23,6 @@ export const GET_TARIFF_BY_KEY_QUERY = gql`
       pricePerKwh
       pricePerMin
       pricePerSession
-      stationId
       taxRate
       tariffAltText
       updatedAt
@@ -51,7 +50,6 @@ export const GET_TARIFFS_QUERY = gql`
       pricePerKwh
       pricePerMin
       pricePerSession
-      stationId
       taxRate
       tariffAltText
       updatedAt

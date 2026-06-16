@@ -65,6 +65,13 @@ export type TenantPartners_Bool_Exp = {
 export type String_Comparison_Exp = {
   _eq?: InputMaybe<Scalars['String']['input']>;
 };
+export type GetChargingStationByPkQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type GetChargingStationByPkQueryResult = GetChargingStationByIdQueryResult;
+
 export type GetChargingStationByIdQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
@@ -426,7 +433,6 @@ export type GetTariffByKeyQueryResult = {
     pricePerKwh: any,
     pricePerMin?: any | null,
     pricePerSession?: any | null,
-    stationId?: string | null,
     taxRate?: any | null,
     tariffAltText?: string | null,
     updatedAt: any,
@@ -454,7 +460,6 @@ export type GetTariffsQueryResult = {
     pricePerKwh: any,
     pricePerMin?: any | null,
     pricePerSession?: any | null,
-    stationId?: string | null,
     taxRate?: any | null,
     tariffAltText?: string | null,
     updatedAt: any,
@@ -813,6 +818,12 @@ export type GetTransactionsQueryResult = {
     locationId?: number | null,
     authorizationId?: number | null,
     tariffId?: number | null,
+    tenant: {
+      countryCode: string,
+      partyId: string,
+      name: string,
+      isUserTenant: boolean
+    },
     transactionEvents: Array<{
       id: number,
       eventType?: string | null,

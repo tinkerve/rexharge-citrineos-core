@@ -36,6 +36,12 @@ export const GET_TRANSACTIONS_QUERY = gql`
       locationId
       authorizationId
       tariffId
+      tenant: Tenant {
+        countryCode
+        partyId
+        name
+        isUserTenant
+      }
       station: ChargingStation {
         ocppConnectionName
         isOnline

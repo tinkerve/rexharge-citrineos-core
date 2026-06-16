@@ -7,12 +7,87 @@
 import type { QueryOptions } from 'sequelize';
 import { QueryInterface } from 'sequelize';
 
+/**
+ * Idempotent upsert helper for seeders.
+ *
+ * Seeders in this app are run with `db:seed:all` and are NOT tracked in a
+ * SequelizeMeta-style table, so they execute on every run. Each seeder must
+ * therefore be safe to apply repeatedly: insert the row if it is missing,
+ * otherwise update the existing row in place.
+ */
+async function upsert(
+  queryInterface: QueryInterface,
+  table: string,
+  record: Record<string, any>,
+  conflictKeys: string[] = ['id'],
+): Promise<void> {
+  const whereClause = conflictKeys.map((k) => `"${k}" = :${k}`).join(' AND ');
+  const replacements: Record<string, any> = {};
+  for (const key of conflictKeys) {
+    replacements[key] = record[key];
+  }
+
+  const [existing] = await queryInterface.sequelize.query(
+    `SELECT 1 FROM "${table}" WHERE ${whereClause} LIMIT 1`,
+    { replacements },
+  );
+
+  if ((existing as unknown[]).length > 0) {
+    const updateValues: Record<string, any> = { ...record };
+    for (const key of conflictKeys) {
+      delete updateValues[key];
+    }
+    delete updateValues.createdAt; // never overwrite the original creation timestamp
+    const where = conflictKeys.reduce<Record<string, any>>((acc, key) => {
+      acc[key] = record[key];
+      return acc;
+    }, {});
+    await queryInterface.bulkUpdate(table, updateValues, where, {} as QueryOptions);
+  } else {
+    await queryInterface.bulkInsert(table, [record], {} as QueryOptions);
+  }
+}
+
+/**
+ * Best-effort delete used by `down`. If the delete is blocked because the row has
+ * accumulated live dependents (FK / trigger conflict), log a warning and continue
+ * rather than aborting the entire undo.
+ */
+async function tryDelete(
+  queryInterface: QueryInterface,
+  table: string,
+  where: Record<string, any>,
+): Promise<void> {
+  try {
+    await queryInterface.bulkDelete(table, where, {} as QueryOptions);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `Skipping delete of ${table} ${JSON.stringify(where)} — it appears to be in live use: ${reason}`,
+    );
+  }
+}
+
+// Fixed identifiers shared across the seeded objects so the graph wires together
+// deterministically and re-running the seeder updates the same rows.
+const TENANT_ID = 1;
+const TENANT_PARTNER_ID = 1;
+const LOCATION_ID = 1;
+const STATION_ID = 1;
+const STATION_NAME = 'cp001'; // ocppConnectionName (the tenant-scoped WebSocket identifier)
+const EVSE_ID = 1;
+const CONNECTOR_ID = 1;
+const TARIFF_ID = 1;
+const AUTHORIZATION_ID = 1;
+
 /** @type {import('sequelize-cli').Migration} */
 export default {
   up: async (queryInterface: QueryInterface) => {
-    // Create Location
+    const now = new Date();
+
+    // Location
     const location = {
-      id: 1,
+      id: LOCATION_ID,
       name: 'Test Charging Hub',
       address: '123 Electric Avenue',
       city: 'San Francisco',
@@ -30,17 +105,17 @@ export default {
       openingHours: JSON.stringify({
         twentyfourSeven: true,
       }),
-      tenantId: 1, // Assuming tenant exists
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      tenantId: TENANT_ID,
+      createdAt: now,
+      updatedAt: now,
     };
+    await upsert(queryInterface, 'Locations', location);
 
-    await queryInterface.bulkInsert('Locations', [location], {} as QueryOptions);
-
-    // Create ChargingStation
+    // ChargingStation
     const chargingStation = {
-      id: 'cp001',
-      isOnline: null,
+      id: STATION_ID,
+      ocppConnectionName: STATION_NAME,
+      isOnline: false,
       protocol: 'ocpp2.0.1',
       chargePointVendor: 'CitrineOS',
       chargePointModel: 'TestStation',
@@ -56,36 +131,52 @@ export default {
       floorLevel: '0',
       parkingRestrictions: JSON.stringify(['EVOnly']),
       capabilities: JSON.stringify(['RFIDReader', 'CreditCardPayable']),
-      locationId: 1,
-      tenantId: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      locationId: LOCATION_ID,
+      tenantId: TENANT_ID,
+      createdAt: now,
+      updatedAt: now,
     };
+    await upsert(queryInterface, 'ChargingStations', chargingStation);
 
-    await queryInterface.bulkInsert('ChargingStations', [chargingStation], {} as QueryOptions);
+    // Tariff
+    const tariff = {
+      id: TARIFF_ID,
+      currency: 'USD',
+      pricePerKwh: 0.3,
+      pricePerMin: 0.05,
+      pricePerSession: 1.5,
+      authorizationAmount: 25.0,
+      paymentFee: 0.35,
+      taxRate: 0.0875, // 8.75% tax rate
+      tenantId: TENANT_ID,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await upsert(queryInterface, 'Tariffs', tariff);
 
-    // Create EVSE
+    // EVSE
     const evse = {
-      id: 1,
-      stationId: 'cp001',
+      id: EVSE_ID,
+      stationId: STATION_ID,
+      ocppConnectionName: STATION_NAME,
       evseTypeId: 1,
       evseId: 'US*TST*E123456*1', // eMI3 compliant EVSE ID format
       physicalReference: 'EVSE-001-PHYSICAL',
       removed: false,
-      tenantId: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      tenantId: TENANT_ID,
+      createdAt: now,
+      updatedAt: now,
     };
+    await upsert(queryInterface, 'Evses', evse);
 
-    await queryInterface.bulkInsert('Evses', [evse], {} as QueryOptions);
-
-    // Create Connector
+    // Connector
     const connector = {
-      id: 1,
-      stationId: 'cp001',
-      evseId: 1,
-      connectorId: 1, // OCPP 1.6 connector ID
-      evseTypeConnectorId: 1, // OCPP 2.0.1 connector ID per EVSE
+      id: CONNECTOR_ID,
+      stationId: STATION_ID,
+      ocppConnectionName: STATION_NAME,
+      evseId: EVSE_ID,
+      connectorId: 1,
+      evseTypeConnectorId: 1,
       status: 'Available',
       type: 'IEC62196T2COMBO',
       format: 'Socket',
@@ -94,39 +185,20 @@ export default {
       maximumVoltage: 400,
       maximumPowerWatts: 22000,
       errorCode: 'NoError',
-      timestamp: new Date(),
+      timestamp: now,
       info: 'Test connector for CP001',
       vendorId: 'CitrineOS',
       termsAndConditionsUrl: 'https://citrineos.com/terms',
-      tenantId: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      tariffId: TARIFF_ID,
+      tenantId: TENANT_ID,
+      createdAt: now,
+      updatedAt: now,
     };
+    await upsert(queryInterface, 'Connectors', connector);
 
-    await queryInterface.bulkInsert('Connectors', [connector], {} as QueryOptions);
-
-    // Create Tariff
-    const tariff = {
-      id: 1,
-      stationId: 'cp001',
-      connectorId: 1,
-      currency: 'USD',
-      pricePerKwh: 0.3,
-      pricePerMin: 0.05,
-      pricePerSession: 1.5,
-      authorizationAmount: 25.0,
-      paymentFee: 0.35,
-      taxRate: 0.0875, // 8.75% tax rate
-      tenantId: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await queryInterface.bulkInsert('Tariffs', [tariff], {} as QueryOptions);
-
-    // Create Authorization with Real-Time Auth enabled
+    // Authorization with Real-Time Auth enabled
     const authorization = {
-      id: 1,
+      id: AUTHORIZATION_ID,
       idToken: 'DEADBEEF',
       idTokenType: 'ISO14443',
       additionalInfo: JSON.stringify([
@@ -149,22 +221,30 @@ export default {
       realTimeAuth: 'AllowedOffline',
       realTimeAuthUrl: 'http://citrineos-ocpi:8085/ocpi/2.2.1/tokens/realTimeAuth',
       concurrentTransaction: false,
-      tenantId: 1,
-      tenantPartnerId: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      tenantId: TENANT_ID,
+      tenantPartnerId: TENANT_PARTNER_ID,
+      createdAt: now,
+      updatedAt: now,
     };
-
-    await queryInterface.bulkInsert('Authorizations', [authorization], {} as QueryOptions);
+    await upsert(queryInterface, 'Authorizations', authorization);
   },
 
   down: async (queryInterface: QueryInterface) => {
-    // Delete in reverse order to respect foreign key constraints
-    await queryInterface.bulkDelete('Authorizations', { id: 1 }, {} as QueryOptions);
-    await queryInterface.bulkDelete('Tariffs', { id: 1 }, {} as QueryOptions);
-    await queryInterface.bulkDelete('Connectors', { id: 1 }, {} as QueryOptions);
-    await queryInterface.bulkDelete('Evses', { id: 1 }, {} as QueryOptions);
-    await queryInterface.bulkDelete('ChargingStations', { id: 'cp001' }, {} as QueryOptions);
-    await queryInterface.bulkDelete('Locations', { id: 1 }, {} as QueryOptions);
+    // Delete in reverse order to respect foreign key constraints.
+    await queryInterface.bulkDelete('Authorizations', { id: AUTHORIZATION_ID }, {} as QueryOptions);
+    await queryInterface.bulkDelete('Connectors', { id: CONNECTOR_ID }, {} as QueryOptions);
+    await queryInterface.bulkDelete('Evses', { id: EVSE_ID }, {} as QueryOptions);
+    await queryInterface.bulkDelete('Tariffs', { id: TARIFF_ID }, {} as QueryOptions);
+
+    // The ChargingStation (and the Location it belongs to) may have accumulated
+    // live data once a real charger connected with this ocppConnectionName — e.g.
+    // OCPPMessages / StatusNotifications / VariableAttributes that reference it via
+    // ON DELETE SET NULL. Deleting the station then cascades a `SET "stationId" =
+    // NULL` onto those rows, which trips the `populate_station_id` BEFORE UPDATE
+    // trigger (it tries to re-resolve the now-deleted station and raises). That is
+    // expected: a seed-undo should not force-delete a station that is in live use.
+    // Treat such conflicts as a no-op so the rest of the undo still succeeds.
+    await tryDelete(queryInterface, 'ChargingStations', { id: STATION_ID });
+    await tryDelete(queryInterface, 'Locations', { id: LOCATION_ID });
   },
 };

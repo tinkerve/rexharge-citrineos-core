@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type {
-  GetChargingStationByIdQueryResult,
-  GetChargingStationByIdQueryVariables,
+  GetChargingStationByPkQueryResult,
+  GetChargingStationByPkQueryVariables,
   IDtoEvent,
   OcpiConfig,
 } from '../../index.js';
@@ -12,7 +12,7 @@ import {
   AsDtoEventHandler,
   DtoEventObjectType,
   DtoEventType,
-  GET_CHARGING_STATION_BY_ID_QUERY,
+  GET_CHARGING_STATION_BY_PK_QUERY,
   LocationsBroadcaster,
   OcpiConfigToken,
   OcpiGraphqlClient,
@@ -130,13 +130,20 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
       return;
     }
 
+    if (evseDto.stationId == null) {
+      this._logger.error(
+        `Station ID missing in ${event._context.eventType} notification for ${event._context.objectType} ${evseDto.id}, cannot broadcast.`,
+      );
+      return;
+    }
+
     const chargingStationResponse = await this.ocpiGraphqlClient.request<
-      GetChargingStationByIdQueryResult,
-      GetChargingStationByIdQueryVariables
-    >(GET_CHARGING_STATION_BY_ID_QUERY, { id: evseDto.ocppConnectionName });
+      GetChargingStationByPkQueryResult,
+      GetChargingStationByPkQueryVariables
+    >(GET_CHARGING_STATION_BY_PK_QUERY, { id: evseDto.stationId });
     if (!chargingStationResponse.ChargingStations[0]) {
       this._logger.error(
-        `Charging Station not found for ID ${evseDto.ocppConnectionName}, cannot broadcast.`,
+        `Charging Station not found for station ID ${evseDto.stationId}, cannot broadcast.`,
       );
       return;
     }
@@ -166,13 +173,20 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
       return;
     }
 
+    if (evseDto.stationId == null) {
+      this._logger.error(
+        `Station ID missing in ${event._context.eventType} notification for ${event._context.objectType} ${evseDto.id}, cannot broadcast.`,
+      );
+      return;
+    }
+
     const chargingStationResponse = await this.ocpiGraphqlClient.request<
-      GetChargingStationByIdQueryResult,
-      GetChargingStationByIdQueryVariables
-    >(GET_CHARGING_STATION_BY_ID_QUERY, { id: evseDto.ocppConnectionName! });
+      GetChargingStationByPkQueryResult,
+      GetChargingStationByPkQueryVariables
+    >(GET_CHARGING_STATION_BY_PK_QUERY, { id: evseDto.stationId });
     if (!chargingStationResponse.ChargingStations[0]) {
       this._logger.error(
-        `Charging Station not found for ID ${evseDto.ocppConnectionName}, cannot broadcast.`,
+        `Charging Station not found for station ID ${evseDto.stationId}, cannot broadcast.`,
       );
       return;
     }
@@ -202,15 +216,22 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
       return;
     }
 
+    if (connectorDto.stationId == null) {
+      this._logger.error(
+        `Station ID missing in ${event._context.eventType} notification for ${event._context.objectType} ${connectorDto.id}, cannot broadcast.`,
+      );
+      return;
+    }
+
     const chargingStationResponse = await this.ocpiGraphqlClient.request<
-      GetChargingStationByIdQueryResult,
-      GetChargingStationByIdQueryVariables
-    >(GET_CHARGING_STATION_BY_ID_QUERY, {
-      id: connectorDto.ocppConnectionName,
+      GetChargingStationByPkQueryResult,
+      GetChargingStationByPkQueryVariables
+    >(GET_CHARGING_STATION_BY_PK_QUERY, {
+      id: connectorDto.stationId,
     });
     if (!chargingStationResponse.ChargingStations[0]) {
       this._logger.error(
-        `Charging Station not found for ID ${connectorDto.ocppConnectionName}, cannot broadcast.`,
+        `Charging Station not found for station ID ${connectorDto.stationId}, cannot broadcast.`,
       );
       return;
     }
@@ -238,15 +259,22 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
       return;
     }
 
+    if (connectorDto.stationId == null) {
+      this._logger.error(
+        `Station ID missing in ${event._context.eventType} notification for ${event._context.objectType} ${connectorDto.id}, cannot broadcast.`,
+      );
+      return;
+    }
+
     const chargingStationResponse = await this.ocpiGraphqlClient.request<
-      GetChargingStationByIdQueryResult,
-      GetChargingStationByIdQueryVariables
-    >(GET_CHARGING_STATION_BY_ID_QUERY, {
-      id: connectorDto.ocppConnectionName!,
+      GetChargingStationByPkQueryResult,
+      GetChargingStationByPkQueryVariables
+    >(GET_CHARGING_STATION_BY_PK_QUERY, {
+      id: connectorDto.stationId,
     });
     if (!chargingStationResponse.ChargingStations[0]) {
       this._logger.error(
-        `Charging Station not found for ID ${connectorDto.ocppConnectionName}, cannot broadcast.`,
+        `Charging Station not found for station ID ${connectorDto.stationId}, cannot broadcast.`,
       );
       return;
     }

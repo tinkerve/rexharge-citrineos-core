@@ -7,6 +7,47 @@
 import type { QueryOptions } from 'sequelize';
 import { QueryInterface } from 'sequelize';
 
+/**
+ * Idempotent upsert helper for seeders.
+ *
+ * Seeders in this app are run with `db:seed:all` and are NOT tracked in a
+ * SequelizeMeta-style table, so they execute on every run. Each seeder must
+ * therefore be safe to apply repeatedly: insert the row if it is missing,
+ * otherwise update the existing row in place.
+ */
+async function upsert(
+  queryInterface: QueryInterface,
+  table: string,
+  record: Record<string, any>,
+  conflictKeys: string[] = ['id'],
+): Promise<void> {
+  const whereClause = conflictKeys.map((k) => `"${k}" = :${k}`).join(' AND ');
+  const replacements: Record<string, any> = {};
+  for (const key of conflictKeys) {
+    replacements[key] = record[key];
+  }
+
+  const [existing] = await queryInterface.sequelize.query(
+    `SELECT 1 FROM "${table}" WHERE ${whereClause} LIMIT 1`,
+    { replacements },
+  );
+
+  if ((existing as unknown[]).length > 0) {
+    const updateValues: Record<string, any> = { ...record };
+    for (const key of conflictKeys) {
+      delete updateValues[key];
+    }
+    delete updateValues.createdAt; // never overwrite the original creation timestamp
+    const where = conflictKeys.reduce<Record<string, any>>((acc, key) => {
+      acc[key] = record[key];
+      return acc;
+    }, {});
+    await queryInterface.bulkUpdate(table, updateValues, where, {} as QueryOptions);
+  } else {
+    await queryInterface.bulkInsert(table, [record], {} as QueryOptions);
+  }
+}
+
 /** @type {import('sequelize-cli').Migration} */
 export default {
   up: async (queryInterface: QueryInterface) => {
@@ -82,10 +123,10 @@ export default {
       countryCode: 'US',
       partnerProfileOCPI: JSON.stringify(partnerProfileOCPI),
       createdAt: new Date('2025-08-07T17:55:00+00:00'),
-      updatedAt: new Date('2025-08-07T17:55:00+00:00'),
+      updatedAt: new Date(),
     };
 
-    await queryInterface.bulkInsert('TenantPartners', [tenantPartner], {} as QueryOptions);
+    await upsert(queryInterface, 'TenantPartners', tenantPartner);
   },
 
   down: async (queryInterface: QueryInterface) => {

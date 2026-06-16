@@ -3,28 +3,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-  type TenantPartnerDto,
   type Endpoint as BaseEndpoint,
-  type OCPIVersionNumberEnumType,
-  type CredentialRole,
   type BusinessDetails,
+  type CredentialRole,
   type Image,
   OCPIVersionNumberEnum,
+  type OCPIVersionNumberEnumType,
+  type TenantPartnerDto,
 } from '@citrineos/base';
 import type { CredentialsDTO } from '../index.js';
 import { ImageCategory, ImageType, Role, VersionNumber } from '../index.js';
-import { EndpointIdentifier } from '../model/EndpointIdentifier.js';
-import type { Endpoint } from '../model/Endpoint.js';
-import { InterfaceRole } from '../model/InterfaceRole.js';
-import { ModuleId } from '../model/ModuleId.js';
+import type { BusinessDetailsDTO } from '../model/DTO/BusinessDetailsDTO.js';
 import type { CredentialsRoleDTO } from '../model/DTO/CredentialsRoleDTO.js';
 import type { ImageDTO } from '../model/DTO/ImageDTO.js';
-import type { BusinessDetailsDTO } from '../model/DTO/BusinessDetailsDTO.js';
+import type { Endpoint } from '../model/Endpoint.js';
+import { EndpointIdentifier } from '../model/EndpointIdentifier.js';
+import { InterfaceRole } from '../model/InterfaceRole.js';
+import { ModuleId } from '../model/ModuleId.js';
 
 export class RegistrationMapper {
-  static tenantPartnerToCredentialsDto(
-    partner: TenantPartnerDto,
-  ): CredentialsDTO {
+  static tenantPartnerToCredentialsDto(partner: TenantPartnerDto): CredentialsDTO {
     const partnerProfile = partner.partnerProfileOCPI!;
     const tenant = partner.tenant!;
     const serverProfile = tenant.serverProfileOCPI!;
@@ -50,18 +48,14 @@ export class RegistrationMapper {
       country_code: countryCode,
       party_id: partyId,
       role: RegistrationMapper.toRole(value.role),
-      business_details: RegistrationMapper.toBusinessDetails(
-        value.businessDetails,
-      ),
+      business_details: RegistrationMapper.toBusinessDetails(value.businessDetails),
     };
   }
 
   static toCredentialsRole(value: CredentialsRoleDTO): CredentialRole {
     return {
       role: RegistrationMapper.toRoleString(value.role),
-      businessDetails: RegistrationMapper.toRegistrationBusinessDetails(
-        value.business_details,
-      ),
+      businessDetails: RegistrationMapper.toRegistrationBusinessDetails(value.business_details),
     };
   }
 
@@ -73,15 +67,11 @@ export class RegistrationMapper {
     };
   }
 
-  static toRegistrationBusinessDetails(
-    value: BusinessDetailsDTO,
-  ): BusinessDetails {
+  static toRegistrationBusinessDetails(value: BusinessDetailsDTO): BusinessDetails {
     return {
       name: value.name,
       website: value.website || undefined,
-      logo:
-        (value.logo && RegistrationMapper.toRegistrationImage(value.logo)) ||
-        undefined,
+      logo: (value.logo && RegistrationMapper.toRegistrationImage(value.logo)) || undefined,
     };
   }
 
@@ -122,9 +112,7 @@ export class RegistrationMapper {
     }
   }
 
-  static toRoleString(
-    value: Role,
-  ): 'CPO' | 'EMSP' | 'HUB' | 'NAP' | 'NSP' | 'SCSP' {
+  static toRoleString(value: Role): 'CPO' | 'EMSP' | 'HUB' | 'NAP' | 'NSP' | 'SCSP' {
     switch (value) {
       case Role.CPO:
         return 'CPO';
@@ -151,6 +139,8 @@ export class RegistrationMapper {
         return ImageType.jpg;
       case 'png':
         return ImageType.png;
+      case 'svg':
+        return ImageType.svg;
       default:
         throw new Error(`Unknown image type ${value}`);
     }
@@ -207,53 +197,38 @@ export class RegistrationMapper {
       case ModuleId.Credentials:
         return EndpointIdentifier.CREDENTIALS;
       case ModuleId.Cdrs:
-        if (value.role === InterfaceRole.SENDER)
-          return EndpointIdentifier.CDRS_SENDER;
-        if (value.role === InterfaceRole.RECEIVER)
-          return EndpointIdentifier.CDRS_RECEIVER;
+        if (value.role === InterfaceRole.SENDER) return EndpointIdentifier.CDRS_SENDER;
+        if (value.role === InterfaceRole.RECEIVER) return EndpointIdentifier.CDRS_RECEIVER;
         break;
       case ModuleId.Locations:
-        if (value.role === InterfaceRole.SENDER)
-          return EndpointIdentifier.LOCATIONS_SENDER;
-        if (value.role === InterfaceRole.RECEIVER)
-          return EndpointIdentifier.LOCATIONS_RECEIVER;
+        if (value.role === InterfaceRole.SENDER) return EndpointIdentifier.LOCATIONS_SENDER;
+        if (value.role === InterfaceRole.RECEIVER) return EndpointIdentifier.LOCATIONS_RECEIVER;
         break;
       case ModuleId.Sessions:
-        if (value.role === InterfaceRole.SENDER)
-          return EndpointIdentifier.SESSIONS_SENDER;
-        if (value.role === InterfaceRole.RECEIVER)
-          return EndpointIdentifier.SESSIONS_RECEIVER;
+        if (value.role === InterfaceRole.SENDER) return EndpointIdentifier.SESSIONS_SENDER;
+        if (value.role === InterfaceRole.RECEIVER) return EndpointIdentifier.SESSIONS_RECEIVER;
         break;
       case ModuleId.Tariffs:
-        if (value.role === InterfaceRole.SENDER)
-          return EndpointIdentifier.TARIFFS_SENDER;
-        if (value.role === InterfaceRole.RECEIVER)
-          return EndpointIdentifier.TARIFFS_RECEIVER;
+        if (value.role === InterfaceRole.SENDER) return EndpointIdentifier.TARIFFS_SENDER;
+        if (value.role === InterfaceRole.RECEIVER) return EndpointIdentifier.TARIFFS_RECEIVER;
         break;
       case ModuleId.Tokens:
-        if (value.role === InterfaceRole.SENDER)
-          return EndpointIdentifier.TOKENS_SENDER;
-        if (value.role === InterfaceRole.RECEIVER)
-          return EndpointIdentifier.TOKENS_RECEIVER;
+        if (value.role === InterfaceRole.SENDER) return EndpointIdentifier.TOKENS_SENDER;
+        if (value.role === InterfaceRole.RECEIVER) return EndpointIdentifier.TOKENS_RECEIVER;
         break;
       case ModuleId.Commands:
-        if (value.role === InterfaceRole.SENDER)
-          return EndpointIdentifier.COMMANDS_SENDER;
-        if (value.role === InterfaceRole.RECEIVER)
-          return EndpointIdentifier.COMMANDS_RECEIVER;
+        if (value.role === InterfaceRole.SENDER) return EndpointIdentifier.COMMANDS_SENDER;
+        if (value.role === InterfaceRole.RECEIVER) return EndpointIdentifier.COMMANDS_RECEIVER;
         break;
       case ModuleId.ChargingProfiles:
-        if (value.role === InterfaceRole.SENDER)
-          return EndpointIdentifier.CHARGING_PROFILES_SENDER;
+        if (value.role === InterfaceRole.SENDER) return EndpointIdentifier.CHARGING_PROFILES_SENDER;
         if (value.role === InterfaceRole.RECEIVER)
           return EndpointIdentifier.CHARGING_PROFILES_RECEIVER;
         break;
       default:
         throw new Error(`Unknown module identifier: ${value.identifier}`);
     }
-    throw new Error(
-      `Unknown role for module ${value.identifier}: ${value.role}`,
-    );
+    throw new Error(`Unknown role for module ${value.identifier}: ${value.role}`);
   }
 
   static toModuleAndRole(value: BaseEndpoint): {

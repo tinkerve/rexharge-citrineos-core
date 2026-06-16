@@ -2,45 +2,30 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type { StartSession } from '../model/StartSession.js';
-import type {
-  ICache,
-  ChargingStationDto,
-  TenantPartnerDto,
-} from '@citrineos/base';
+import type { ChargingStationDto, ICache, TenantPartnerDto } from '@citrineos/base';
 import { OCPPVersion } from '@citrineos/base';
-import { Inject, InjectMany, Service } from 'typedi';
-import type { StopSession } from '../model/StopSession.js';
-import type { SetChargingProfile } from '../model/SetChargingProfile.js';
-import type { ReserveNow } from '../model/ReserveNow.js';
-import type { CancelReservation } from '../model/CancelReservation.js';
-import type { OcpiConfig, UnlockConnector } from '../index.js';
-import {
-  CacheWrapper,
-  CommandResultType,
-  CommandType,
-  OcpiConfigToken,
-} from '../index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
+import { Inject, InjectMany, Service } from 'typedi';
+import { v4 as uuidv4 } from 'uuid';
 import type {
   GetTenantPartnerByIdQueryResult,
   GetTenantPartnerByIdQueryVariables,
 } from '../graphql/index.js';
-import {
-  GET_TENANT_PARTNER_BY_ID,
-  OcpiGraphqlClient,
-} from '../graphql/index.js';
+import { GET_TENANT_PARTNER_BY_ID, OcpiGraphqlClient } from '../graphql/index.js';
+import type { OcpiConfig, UnlockConnector } from '../index.js';
+import { CacheWrapper, CommandResultType, CommandType, OcpiConfigToken } from '../index.js';
+import type { CancelReservation } from '../model/CancelReservation.js';
+import type { ReserveNow } from '../model/ReserveNow.js';
+import type { SetChargingProfile } from '../model/SetChargingProfile.js';
+import type { StartSession } from '../model/StartSession.js';
+import type { StopSession } from '../model/StopSession.js';
 import { CommandsClientApi } from '../trigger/CommandsClientApi.js';
-import { v4 as uuidv4 } from 'uuid';
-import {
-  OCPP_COMMAND_HANDLER,
-  OCPPCommandHandler,
-} from './ocppCommandHandlers/index.js';
 import {
   COMMAND_RESPONSE_URL_CACHE_NAMESPACE,
   COMMAND_RESPONSE_URL_CACHE_RESOLVED,
 } from './Consts.js';
+import { OCPP_COMMAND_HANDLER, OCPPCommandHandler } from './ocppCommandHandlers/base.js';
 
 @Service()
 export class CommandExecutor {
@@ -73,10 +58,7 @@ export class CommandExecutor {
   ): Promise<void> {
     this.logger.info('Executing StartSession command', { startSession });
 
-    const commandId = await this.generateCommandId(
-      startSession.response_url,
-      tenantPartner,
-    );
+    const commandId = await this.generateCommandId(startSession.response_url, tenantPartner);
 
     const commandHandler = this.getCommandHandler(
       chargingStation.protocol || undefined,
@@ -104,10 +86,7 @@ export class CommandExecutor {
   ): Promise<void> {
     this.logger.info('Executing StopSession command', { stopSession });
 
-    const commandId = await this.generateCommandId(
-      stopSession.response_url,
-      tenantPartner,
-    );
+    const commandId = await this.generateCommandId(stopSession.response_url, tenantPartner);
 
     const commandHandler = this.getCommandHandler(
       chargingStation.protocol || undefined,
@@ -135,10 +114,7 @@ export class CommandExecutor {
   ): Promise<void> {
     this.logger.info('Executing UnlockConnector command', { unlockConnector });
 
-    const commandId = await this.generateCommandId(
-      unlockConnector.response_url,
-      tenantPartner,
-    );
+    const commandId = await this.generateCommandId(unlockConnector.response_url, tenantPartner);
 
     const commandHandler = this.getCommandHandler(
       chargingStation.protocol || undefined,
@@ -204,10 +180,7 @@ export class CommandExecutor {
     // );
   }
 
-  public async executeClearChargingProfile(
-    _sessionId: string,
-    _responseUrl: string,
-  ) {
+  public async executeClearChargingProfile(_sessionId: string, _responseUrl: string) {
     // based on the current assumption, transactionId is equal to sessionId
     // If this map assumption changes, this needs to be changed
     // const transaction =
@@ -467,18 +440,14 @@ export class CommandExecutor {
       id: tenantPartnerId,
     });
     if (!tenantPartnerResponse.TenantPartners_by_pk) {
-      this.logger.error(
-        'Tenant partner not found, unable to complete command',
-        {
-          tenantPartnerId,
-          command,
-          commandId,
-        },
-      );
+      this.logger.error('Tenant partner not found, unable to complete command', {
+        tenantPartnerId,
+        command,
+        commandId,
+      });
       return;
     }
-    const tenantPartner =
-      tenantPartnerResponse.TenantPartners_by_pk as TenantPartnerDto;
+    const tenantPartner = tenantPartnerResponse.TenantPartners_by_pk as TenantPartnerDto;
 
     const commandHandler = this.getCommandHandler(
       ocppVersion,
@@ -516,11 +485,7 @@ export class CommandExecutor {
     );
 
     this.cache
-      .onChange(
-        commandId,
-        this.config.commands.timeout,
-        COMMAND_RESPONSE_URL_CACHE_NAMESPACE,
-      )
+      .onChange(commandId, this.config.commands.timeout, COMMAND_RESPONSE_URL_CACHE_NAMESPACE)
       .then((value) => {
         if (value !== COMMAND_RESPONSE_URL_CACHE_RESOLVED) {
           this.logger.warn('Command timed out', {
@@ -544,13 +509,10 @@ export class CommandExecutor {
               commandId,
             )
             .catch((error: any) => {
-              this.logger.error(
-                'Error posting command result on command timeout',
-                {
-                  commandId,
-                  error,
-                },
-              );
+              this.logger.error('Error posting command result on command timeout', {
+                commandId,
+                error,
+              });
             });
         }
       })
@@ -595,13 +557,10 @@ export class CommandExecutor {
           commandId,
         )
         .catch((error: any) => {
-          this.logger.error(
-            'Error posting command result for unsupported OCPP version',
-            {
-              commandId,
-              error,
-            },
-          );
+          this.logger.error('Error posting command result for unsupported OCPP version', {
+            commandId,
+            error,
+          });
         });
       return undefined;
     }
