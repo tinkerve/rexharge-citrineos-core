@@ -22,8 +22,6 @@ export class OverviewPage {
 
   readonly expandSidebarButton: Locator;
   readonly collapseSidebarButton: Locator;
-  readonly themeToggleLightLabel: Locator;
-  readonly themeToggleDarkLabel: Locator;
   readonly logoutButton: Locator;
 
   constructor(private readonly page: Page) {
@@ -66,12 +64,6 @@ export class OverviewPage {
     });
     this.collapseSidebarButton = page.getByRole('button', {
       name: /collapse sidebar/i,
-    });
-    this.themeToggleLightLabel = page.getByRole('button', {
-      name: /^light mode$/i,
-    });
-    this.themeToggleDarkLabel = page.getByRole('button', {
-      name: /^dark mode$/i,
     });
     this.logoutButton = page.getByRole('button', { name: /^logout$/i });
   }
@@ -129,13 +121,6 @@ export class OverviewPage {
       await this.expandSidebarButton.click();
       await expect(this.collapseSidebarButton).toBeVisible();
     }
-  }
-
-  async toggleTheme(): Promise<void> {
-    await this.expandSidebar();
-    const lightVisible = await this.themeToggleLightLabel.isVisible().catch(() => false);
-    const target = lightVisible ? this.themeToggleLightLabel : this.themeToggleDarkLabel;
-    await target.click();
   }
 
   async signOut(): Promise<void> {
