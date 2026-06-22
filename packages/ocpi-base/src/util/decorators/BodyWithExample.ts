@@ -4,17 +4,21 @@
 
 import type { ZodTypeAny } from 'zod';
 import { generateMockForSchema } from '../../controllers/BaseController.js';
-import { BodyWithSchema } from './BodyWithSchema.js';
+import { BodyWithSchema, type BodyWithSchemaOptions } from './BodyWithSchema.js';
 
 export const BODY_WITH_EXAMPLE_PARAM = 'BodyWithExample';
 
-export const BodyWithExample = (schema: ZodTypeAny, name: string) =>
+export const BodyWithExample = (
+  schema: ZodTypeAny,
+  name: string,
+  options?: BodyWithSchemaOptions,
+) =>
   function (object: NonNullable<unknown>, methodName: string, index: number) {
     const example = generateMockForSchema(schema, name).then(
       undefined,
       () => null,
     );
-    BodyWithSchema(schema, name)(object, methodName, index);
+    BodyWithSchema(schema, name, options)(object, methodName, index);
 
     // Add custom metadata for additional use cases
     Reflect.defineMetadata(

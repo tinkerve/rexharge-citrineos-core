@@ -18,7 +18,6 @@ import { HttpHeader } from '@citrineos/base';
 import { ENUM_QUERY_PARAM } from '../util/decorators/EnumQueryParam.js';
 import type { ParamMetadataArgs } from 'routing-controllers/types/metadata/args/ParamMetadataArgs.js';
 import type { Constructable } from 'typedi';
-import { BODY_WITH_EXAMPLE_PARAM } from '../util/decorators/BodyWithExample.js';
 import { ContentType } from '../util/ContentType.js';
 import type { ZodTypeAny } from 'zod';
 import { BODY_PARAM } from '../util/decorators/BodyWithSchema.js';
@@ -238,71 +237,66 @@ export function getRequestBody(route: IRoute): oa.RequestBodyObject | void {
         )
       : null;*/
 
-  const bodyMeta = route.params.find((d) => d.type === 'body');
+  // The body parameter is either a plain @Body() (type 'body', used with
+  // @MultipleTypes) or a @BodyWithSchema/@BodyWithExample, which is registered
+  // as a custom-converter so it can validate the body before the action runs.
+  // The latter carries BODY_PARAM metadata identifying its schema.
+  const bodyMeta =
+    route.params.find((d) => d.type === 'body') ??
+    route.params.find(
+      (d) =>
+        d.type === 'custom-converter' &&
+        Reflect.getMetadata(BODY_PARAM, d.object, `${d.method}.${d.index}`),
+    );
 
   if (!bodyMeta) {
     return undefined;
   }
 
-  const content: any = {
-    [ContentType.JSON]: {},
-    required: isRequired(bodyMeta, route),
-  };
+  const mediaType: oa.MediaTypeObject = {};
 
-  const example = Reflect.getMetadata(
-    BODY_WITH_EXAMPLE_PARAM,
+  // Body declared via @BodyWithSchema(schema, name): a single schema reference.
+  const bodyParam = Reflect.getMetadata(
+    BODY_PARAM,
     bodyMeta.object,
-    bodyMeta.method,
+    `${bodyMeta.method}.${bodyMeta.index}`,
   );
-
-  if (example && typeof (example as any).then !== 'function') {
-    content[ContentType.JSON]['example'] = example;
+  if (bodyParam) {
+    const { schema, name: schemaName } = bodyParam;
+    if (schema && schemaName) {
+      SchemaStore.addToSchemaStore(schema, schemaName);
+      mediaType.schema = { $ref: `${refPointerPrefix}${schemaName}` };
+    }
   }
 
-  // return {
-  //   content,
-  //
-  // };
-
-  // console.log('bodyMeta', bodyMeta);
-  if (bodyMeta) {
-    const bodyParam = Reflect.getMetadata(
-      BODY_PARAM,
+  // Body declared via @Body() + @MultipleTypes(...): a oneOf of the variants.
+  // Each variant schema is registered so the references resolve, and the
+  // endpoint can supplement per-variant examples via @OpenAPI.
+  const multipleTypes: { name: string; schema: ZodTypeAny }[] | undefined =
+    Reflect.getMetadata(
+      MULTIPLE_TYPES,
       bodyMeta.object,
       `${bodyMeta.method}.${bodyMeta.index}`,
     );
-    if (!bodyParam) {
-      return undefined;
-    }
-    const { schema, name: schemaName } = bodyParam;
-    SchemaStore.addToSchemaStore(schema, schemaName);
-    if (schema && schemaName) {
-      content[ContentType.JSON].schema = {
-        $ref: `${refPointerPrefix}${schemaName}`,
-      };
-    }
-    // const bodySchema = getParamSchema(bodyMeta);
-    // // const ref =
-    // //   'items' in bodySchema && bodySchema.items ? bodySchema.items : bodySchema;
-    // // const $ref = { $ref: ref };
-    //
-    // const content: any = {
-    //   [ContentType.JSON]: {
-    //     schema: bodyParamsSchema
-    //       ? { allOf: [bodySchema, bodyParamsSchema] }
-    //       : bodySchema,
-    //   },
-    // };
-    return {
-      content,
+  if (!mediaType.schema && multipleTypes?.length) {
+    mediaType.schema = {
+      oneOf: multipleTypes.map((type) => {
+        SchemaStore.addToSchemaStore(type.schema, type.name);
+        return { $ref: `${refPointerPrefix}${type.name}` };
+      }),
     };
-  } else {
-    return undefined;
-    // } else if (bodyParamsSchema) {
-    // return {
-    //   content: { [ContentType.JSON]: { schema: bodyParamsSchema } },
-    // };
   }
+
+  if (!mediaType.schema) {
+    return undefined;
+  }
+
+  return {
+    required: isRequired(bodyMeta, route),
+    content: {
+      [ContentType.JSON]: mediaType,
+    },
+  };
 }
 
 /**

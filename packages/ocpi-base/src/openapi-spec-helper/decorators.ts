@@ -2,16 +2,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-  OperationObject,
-  ReferenceObject,
-  ResponsesObject,
-  SchemaObject,
-} from 'openapi3-ts';
+import type { OperationObject, ReferenceObject, ResponsesObject, SchemaObject } from 'openapi3-ts';
 import 'reflect-metadata';
-import type { IRoute } from './parse.metadata.js';
 import { getContentType, getStatusCode } from './generate.spec.helpers.js';
 import { mergeDeep } from './merge.deep.js';
+import type { IRoute } from './parse.metadata.js';
 import { SchemaStore } from './schema.store.js';
 
 const OPEN_API_KEY = Symbol('routing-controllers-openapi:OpenAPI');
@@ -23,10 +18,7 @@ export type OpenAPIParam =
 /**
  * Get the OpenAPI Operation object stored in given target property's metadata.
  */
-export function getOpenAPIMetadata(
-  target: object,
-  key?: string,
-): OpenAPIParam[] {
+export function getOpenAPIMetadata(target: object, key?: string): OpenAPIParam[] {
   return (
     (key
       ? Reflect.getMetadata(OPEN_API_KEY, target.constructor, key)
@@ -37,11 +29,7 @@ export function getOpenAPIMetadata(
 /**
  * Store given OpenAPI Operation object into target property's metadata.
  */
-export function setOpenAPIMetadata(
-  value: OpenAPIParam[],
-  target: object,
-  key?: string,
-) {
+export function setOpenAPIMetadata(value: OpenAPIParam[], target: object, key?: string) {
   return key
     ? Reflect.defineMetadata(OPEN_API_KEY, value, target.constructor, key)
     : Reflect.defineMetadata(OPEN_API_KEY, value, target);
@@ -85,9 +73,7 @@ export function applyOpenAPIDecorator(
 
   return openAPIParams.reduce(
     (acc: OperationObject, oaParam: OpenAPIParam) =>
-      typeof oaParam === 'function'
-        ? oaParam(acc, route)
-        : mergeDeep({}, acc, oaParam),
+      typeof oaParam === 'function' ? oaParam(acc, route) : mergeDeep({}, acc, oaParam),
     originalOperation,
   ) as OperationObject;
 }
@@ -128,7 +114,17 @@ export function ResponseSchema(
         },
       };
       if (options.examples) {
-        (content[contentType] as any).examples = options.examples;
+        const examples = Object.fromEntries(
+          Object.entries(options.examples)
+            .filter(([, value]) => value !== null && value !== undefined)
+            .map(([name, value]) => [
+              name,
+              value && typeof value === 'object' && 'value' in value ? value : { value },
+            ]),
+        );
+        if (Object.keys(examples).length > 0) {
+          (content[contentType] as any).examples = examples;
+        }
       }
       const responses: ResponsesObject = {
         [statusCode]: {
@@ -137,13 +133,9 @@ export function ResponseSchema(
         },
       };
 
-      const oldSchema =
-        source.responses[statusCode]?.content[contentType].schema;
+      const oldSchema = source.responses[statusCode]?.content[contentType].schema;
 
-      if (
-        oldSchema &&
-        (oldSchema?.$ref || oldSchema?.items || oldSchema?.oneOf)
-      ) {
+      if (oldSchema && (oldSchema?.$ref || oldSchema?.items || oldSchema?.oneOf)) {
         // case where we're adding multiple schemas under single statuscode/contentType
         const newStatusCodeResponse = mergeDeep(
           {},

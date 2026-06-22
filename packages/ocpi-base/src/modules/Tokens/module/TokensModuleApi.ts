@@ -209,7 +209,7 @@ export class TokensModuleApi
     @Param('partyId') partyId: string,
     @Param('tokenUid') tokenUid: string,
     @FunctionalEndpointParams() ocpiHeader: OcpiHeaders,
-    @BodyWithSchema(TokenDTOSchema, TokenDTOSchemaName)
+    @BodyWithSchema(TokenDTOSchema, TokenDTOSchemaName, { partial: true })
     token: Partial<TokenDTO>,
     @EnumQueryParam('type', TokenTypeSchema, TokenTypeSchemaName)
     type?: TokenType,

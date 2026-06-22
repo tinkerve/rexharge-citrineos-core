@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { ZodTypeAny } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { zodToOpenApiSchema } from './zod.to.json.schema.js';
 
 export const SchemaStore = {
   components: {
@@ -24,10 +24,7 @@ export const SchemaStore = {
 
   addToSchemaStore(schema: ZodTypeAny, name: string) {
     if (!this.getSchema(name)) {
-      this.addSchema(
-        name,
-        (zodToJsonSchema(schema, name) as any).definitions[name],
-      );
+      this.addSchema(name, zodToOpenApiSchema(schema));
     }
   },
 };

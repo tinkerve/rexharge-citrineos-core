@@ -7,7 +7,7 @@ import { getAllSchemas } from '../openapi-spec-helper/schemas.js';
 import type { PaginatedCdrResponse } from '../model/Cdr.js';
 import { PaginatedParams } from './param/PaginatedParams.js';
 import { DEFAULT_LIMIT, DEFAULT_OFFSET } from '../model/PaginatedResponse.js';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { zodToOpenApiSchema } from '../openapi-spec-helper/zod.to.json.schema.js';
 import type { ZodTypeAny } from 'zod';
 import { Container } from 'typedi';
 import { Logger } from 'tslog';
@@ -18,7 +18,7 @@ export const generateMockForSchema = async (
   schema: ZodTypeAny,
   name: string,
 ): Promise<any> => {
-  const jsonSchema: any = zodToJsonSchema(schema, name);
+  const jsonSchema: any = zodToOpenApiSchema(schema);
   (jsonSchema as any).components = {
     schemas: getAllSchemas(),
   };

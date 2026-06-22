@@ -261,7 +261,7 @@ export {
   UPDATE,
 } from './util/Consts.js';
 
-export { ResponseSchema } from './openapi-spec-helper/decorators.js';
+export { ResponseSchema, OpenAPI } from './openapi-spec-helper/decorators.js';
 export { BaseClientApi } from './trigger/BaseClientApi.js';
 export { LocationsClientApi } from './trigger/LocationsClientApi.js';
 

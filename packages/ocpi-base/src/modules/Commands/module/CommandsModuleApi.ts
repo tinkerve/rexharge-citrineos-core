@@ -29,6 +29,7 @@ import {
   generateMockForSchema,
   ModuleId,
   MultipleTypes,
+  OpenAPI,
   ReserveNowSchema,
   ReserveNowSchemaName,
   ResponseGenerator,
@@ -40,13 +41,56 @@ import {
   UnlockConnectorSchema,
   UnlockConnectorSchemaName,
   versionIdParam,
+  VersionNumber,
+  VersionNumberParam,
 } from '../../../index.js';
+import { ContentType } from '../../../util/ContentType.js';
 import { Inject, Service } from 'typedi';
 
 const MOCK_COMMAND_RESPONSE = await generateMockForSchema(
   CommandResponseSchema,
   CommandResponseSchemaName,
 );
+
+// The command body is a union of command-specific payloads (see @MultipleTypes
+// below). Generate a concrete example per command type so Swagger UI can offer a
+// realistic request body for each one rather than a single ambiguous schema.
+const COMMAND_REQUEST_SCHEMAS: Record<
+  CommandType,
+  { schema: any; name: string }
+> = {
+  [CommandType.CANCEL_RESERVATION]: {
+    schema: CancelReservationSchema,
+    name: CancelReservationSchemaName,
+  },
+  [CommandType.RESERVE_NOW]: {
+    schema: ReserveNowSchema,
+    name: ReserveNowSchemaName,
+  },
+  [CommandType.START_SESSION]: {
+    schema: StartSessionSchema,
+    name: StartSessionSchemaName,
+  },
+  [CommandType.STOP_SESSION]: {
+    schema: StopSessionSchema,
+    name: StopSessionSchemaName,
+  },
+  [CommandType.UNLOCK_CONNECTOR]: {
+    schema: UnlockConnectorSchema,
+    name: UnlockConnectorSchemaName,
+  },
+};
+
+const COMMAND_REQUEST_EXAMPLES: Record<string, { summary: string; value: any }> =
+  {};
+for (const [commandType, { schema, name }] of Object.entries(
+  COMMAND_REQUEST_SCHEMAS,
+)) {
+  const value = await generateMockForSchema(schema, name);
+  if (value !== null && value !== undefined) {
+    COMMAND_REQUEST_EXAMPLES[commandType] = { summary: commandType, value };
+  }
+}
 
 @JsonController(`/:${versionIdParam}/${ModuleId.Commands}`)
 @Service()
@@ -70,7 +114,17 @@ export class CommandsModuleApi
       success: MOCK_COMMAND_RESPONSE,
     },
   })
+  @OpenAPI({
+    requestBody: {
+      content: {
+        [ContentType.JSON]: {
+          examples: COMMAND_REQUEST_EXAMPLES,
+        },
+      },
+    },
+  })
   async postCommand(
+    @VersionNumberParam() _versionNumber: VersionNumber,
     @EnumParam('commandType', CommandType, 'CommandType')
     commandType: CommandType,
     @Body() // todo use new @Body from ocpi-base
