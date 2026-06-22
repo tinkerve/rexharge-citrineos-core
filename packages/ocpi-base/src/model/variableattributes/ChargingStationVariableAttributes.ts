@@ -34,15 +34,10 @@ export class ChargingStationVariableAttributes {
   evse_ids_string!: string;
 
   // not a database-derived field
-  evses: Map<number, EvseVariableAttributes> = new Map<
-    number,
-    EvseVariableAttributes
-  >();
+  evses: Map<number, EvseVariableAttributes> = new Map<number, EvseVariableAttributes>();
 }
 
-export const CONSTRUCT_CHARGING_STATION_VARIABLE_ATTRIBUTES_QUERY = (
-  stationId: string,
-) => `
+export const CONSTRUCT_CHARGING_STATION_VARIABLE_ATTRIBUTES_QUERY = (stationId: string) => `
   select * 
   from 
     coalesce(

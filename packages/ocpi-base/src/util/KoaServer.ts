@@ -4,11 +4,7 @@
 
 import Koa from 'koa';
 import type { RoutingControllersOptions } from 'routing-controllers';
-import {
-  getMetadataArgsStorage,
-  MetadataArgsStorage,
-  useKoaServer,
-} from 'routing-controllers';
+import { getMetadataArgsStorage, MetadataArgsStorage, useKoaServer } from 'routing-controllers';
 import type { InfoObject, OpenAPIObject, ServerObject } from 'openapi3-ts';
 import KoaLogger from 'koa-logger';
 import { routingControllersToSpec } from '../openapi-spec-helper/index.js';

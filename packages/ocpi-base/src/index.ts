@@ -30,14 +30,8 @@ export * from './graphql/index.js';
 export type { Version } from './model/Version.js';
 export { BodyWithSchema } from './util/decorators/BodyWithSchema.js';
 export { plainToClass } from './util/Util.js';
-export {
-  OcpiErrorResponse,
-  buildOcpiErrorResponse,
-} from './model/OcpiErrorResponse.js';
-export type {
-  AuthorizationInfo,
-  AuthorizationInfoResponse,
-} from './model/AuthorizationInfo.js';
+export { OcpiErrorResponse, buildOcpiErrorResponse } from './model/OcpiErrorResponse.js';
+export type { AuthorizationInfo, AuthorizationInfoResponse } from './model/AuthorizationInfo.js';
 export { TokensClientApi } from './trigger/TokensClientApi.js';
 export { AuthorizationInfoAllowed } from './model/AuthorizationInfoAllowed.js';
 export type { PostTokenParams } from './trigger/param/tokens/PostTokenParams.js';
@@ -80,20 +74,13 @@ export { NotRegisteredException } from './exception/NotRegisteredException.js';
 export { VersionsClientApi } from './trigger/VersionsClientApi.js';
 // export { ChargingProfilesClientApi } from './trigger/ChargingProfilesClientApi';
 export type { CredentialsDTO } from './model/DTO/CredentialsDTO.js';
-export {
-  CredentialsDTOSchema,
-  CredentialsDTOSchemaName,
-} from './model/DTO/CredentialsDTO.js';
+export { CredentialsDTOSchema, CredentialsDTOSchemaName } from './model/DTO/CredentialsDTO.js';
 export type { AdminCredentialsRequestDTO } from './model/DTO/AdminCredentialsRequestDTO.js';
 export {
   AdminCredentialsRequestDTOSchema,
   AdminCredentialsRequestDTOSchemaName,
 } from './model/DTO/AdminCredentialsRequestDTO.js';
-export type {
-  SingleTokenRequest,
-  TokenDTO,
-  TokenResponse,
-} from './model/DTO/TokenDTO.js';
+export type { SingleTokenRequest, TokenDTO, TokenResponse } from './model/DTO/TokenDTO.js';
 export {
   SingleTokenRequestSchema,
   TokenDTOSchema,
@@ -127,10 +114,7 @@ export {
 } from './model/PaginatedResponse.js';
 export { CommandType } from './model/CommandType.js';
 export type { CancelReservation } from './model/CancelReservation.js';
-export {
-  CancelReservationSchema,
-  CancelReservationSchemaName,
-} from './model/CancelReservation.js';
+export { CancelReservationSchema, CancelReservationSchemaName } from './model/CancelReservation.js';
 export type { ReserveNow } from './model/ReserveNow.js';
 export { ReserveNowSchema, ReserveNowSchemaName } from './model/ReserveNow.js';
 export type { SetChargingProfile } from './model/SetChargingProfile.js';
@@ -139,20 +123,11 @@ export {
   SetChargingProfileSchemaName,
 } from './model/SetChargingProfile.js';
 export type { StartSession } from './model/StartSession.js';
-export {
-  StartSessionSchema,
-  StartSessionSchemaName,
-} from './model/StartSession.js';
+export { StartSessionSchema, StartSessionSchemaName } from './model/StartSession.js';
 export type { StopSession } from './model/StopSession.js';
-export {
-  StopSessionSchema,
-  StopSessionSchemaName,
-} from './model/StopSession.js';
+export { StopSessionSchema, StopSessionSchemaName } from './model/StopSession.js';
 export type { UnlockConnector } from './model/UnlockConnector.js';
-export {
-  UnlockConnectorSchema,
-  UnlockConnectorSchemaName,
-} from './model/UnlockConnector.js';
+export { UnlockConnectorSchema, UnlockConnectorSchemaName } from './model/UnlockConnector.js';
 export type { OcpiCommandResponse } from './model/CommandResponse.js';
 export { ModuleId } from './model/ModuleId.js';
 export type { CredentialsResponse } from './model/CredentialsResponse.js';
@@ -175,11 +150,7 @@ export {
   VersionListResponseDTOSchema,
   VersionListResponseDTOSchemaName,
 } from './model/DTO/VersionListResponseDTO.js';
-export {
-  TokenType,
-  TokenTypeSchema,
-  TokenTypeSchemaName,
-} from './model/TokenType.js';
+export { TokenType, TokenTypeSchema, TokenTypeSchemaName } from './model/TokenType.js';
 export { WhitelistType } from './model/WhitelistType.js';
 export type { VersionDetailsDTO } from './model/DTO/VersionDetailsDTO.js';
 export type { VersionDTO } from './model/DTO/VersionDTO.js';
@@ -211,10 +182,7 @@ export {
   EvseResponseSchema,
   EvseResponseSchemaName,
 } from './model/DTO/EvseDTO.js';
-export type {
-  ConnectorDTO,
-  ConnectorResponse,
-} from './model/DTO/ConnectorDTO.js';
+export type { ConnectorDTO, ConnectorResponse } from './model/DTO/ConnectorDTO.js';
 export {
   TEMPORARY_CONNECTOR_ID,
   ConnectorResponseSchema,
@@ -290,10 +258,7 @@ export { OcpiHttpHeader } from './util/OcpiHttpHeader.js';
 export { CdrsService } from './services/CdrsService.js';
 export type { PaginatedCdrResponse } from './model/Cdr.js';
 export { BaseBroadcaster } from './broadcaster/BaseBroadcaster.js';
-export type {
-  PaginatedTariffResponse,
-  TariffDTO,
-} from './model/DTO/tariffs/TariffDTO.js';
+export type { PaginatedTariffResponse, TariffDTO } from './model/DTO/tariffs/TariffDTO.js';
 export {
   PaginatedTariffResponseSchema,
   PaginatedTariffResponseSchemaName,
@@ -363,8 +328,7 @@ export class OcpiServer extends KoaServer {
 
   public async initialize() {
     for (const moduleListElement of this.moduleList) {
-      const constructedModule = Container.get(moduleListElement) as OcpiModule &
-        IDtoModule;
+      const constructedModule = Container.get(moduleListElement) as OcpiModule & IDtoModule;
       if (constructedModule) {
         if (constructedModule.init) {
           await constructedModule.init();
@@ -381,9 +345,7 @@ export class OcpiServer extends KoaServer {
   private initKoaServer() {
     try {
       this.koa = new Koa();
-      const controllers = this._modules.map((module) =>
-        (module as OcpiModule).getController(),
-      );
+      const controllers = this._modules.map((module) => (module as OcpiModule).getController());
       const options: RoutingControllersOptions = {
         controllers: [...controllers, HealthController],
         routePrefix: '/ocpi',
@@ -391,7 +353,7 @@ export class OcpiServer extends KoaServer {
         defaultErrorHandler: false,
       } as RoutingControllersOptions;
       this.initApp(options);
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       this.initKoaSwagger(
         {
           title: 'CitrineOS OCPI 2.2.1',
@@ -403,10 +365,7 @@ export class OcpiServer extends KoaServer {
           },
         ],
       );
-      this.run(
-        this.ocpiConfig.ocpiServer.host,
-        this.ocpiConfig.ocpiServer.port,
-      );
+      this.run(this.ocpiConfig.ocpiServer.host, this.ocpiConfig.ocpiServer.port);
     } catch (error) {
       console.error(error);
       process.exit(1);
@@ -420,10 +379,7 @@ export class OcpiServer extends KoaServer {
 
     Container.set(
       OcpiGraphqlClient,
-      new OcpiGraphqlClient(
-        this.ocpiConfig.graphql.endpoint,
-        this.ocpiConfig.graphql.headers,
-      ),
+      new OcpiGraphqlClient(this.ocpiConfig.graphql.endpoint, this.ocpiConfig.graphql.headers),
     );
 
     const ajv = new Ajv({
@@ -449,17 +405,11 @@ export class OcpiServer extends KoaServer {
 
 export { OcpiConfigToken };
 
-export {
-  CommandResponseSchema,
-  CommandResponseSchemaName,
-} from './model/CommandResponse.js';
+export { CommandResponseSchema, CommandResponseSchemaName } from './model/CommandResponse.js';
 export { ChargingProfileResponseSchemaName } from './model/ChargingProfileResponse.js';
 export { ChargingProfileResponseSchema } from './model/ChargingProfileResponse.js';
 
-export {
-  PaginatedCdrResponseSchema,
-  PaginatedCdrResponseSchemaName,
-} from './model/Cdr.js';
+export { PaginatedCdrResponseSchema, PaginatedCdrResponseSchemaName } from './model/Cdr.js';
 
 // OCPI modules (folded in from the former 03_Modules/* packages).
 // Must remain the last export so foundational symbols (OcpiModule,

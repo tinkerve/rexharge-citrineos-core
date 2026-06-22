@@ -48,10 +48,7 @@ const MOCK_LOCATION = await generateMockForSchema(
   LocationResponseSchema,
   LocationResponseSchemaName,
 );
-const MOCK_EVSE = await generateMockForSchema(
-  EvseResponseSchema,
-  EvseResponseSchemaName,
-);
+const MOCK_EVSE = await generateMockForSchema(EvseResponseSchema, EvseResponseSchemaName);
 const MOCK_CONNECTOR = await generateMockForSchema(
   ConnectorResponseSchema,
   ConnectorResponseSchemaName,
@@ -62,10 +59,7 @@ const MOCK_CONNECTOR = await generateMockForSchema(
  */
 @JsonController(`/:${versionIdParam}/${ModuleId.Locations}`)
 @Service()
-export class LocationsModuleApi
-  extends BaseController
-  implements ILocationsModuleApi
-{
+export class LocationsModuleApi extends BaseController implements ILocationsModuleApi {
   /**
    * Constructs a new instance of the class.
    *
@@ -81,17 +75,13 @@ export class LocationsModuleApi
 
   @Get()
   @AsOcpiFunctionalEndpoint()
-  @ResponseSchema(
-    PaginatedLocationResponseSchema,
-    PaginatedLocationResponseSchemaName,
-    {
-      statusCode: HttpStatus.OK,
-      description: 'Successful response',
-      examples: {
-        success: MOCK_PAGINATED_LOCATION,
-      },
+  @ResponseSchema(PaginatedLocationResponseSchema, PaginatedLocationResponseSchemaName, {
+    statusCode: HttpStatus.OK,
+    description: 'Successful response',
+    examples: {
+      success: MOCK_PAGINATED_LOCATION,
     },
-  )
+  })
   async getLocations(
     @VersionNumberParam() version: VersionNumber,
     @FunctionalEndpointParams() ocpiHeaders: OcpiHeaders,
@@ -133,11 +123,7 @@ export class LocationsModuleApi
     const stationId = EXTRACT_STATION_ID(evseUid);
     const evseId = EXTRACT_EVSE_ID(evseUid);
 
-    return this.locationsService.getEvseById(
-      locationId,
-      stationId,
-      Number(evseId),
-    );
+    return this.locationsService.getEvseById(locationId, stationId, Number(evseId));
   }
 
   @Get('/:location_id/:evse_uid/:connector_id')

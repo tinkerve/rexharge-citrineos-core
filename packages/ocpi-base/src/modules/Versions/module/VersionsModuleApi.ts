@@ -1,10 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type {
-  VersionDetailsResponseDTO,
-  VersionListResponseDTO,
-} from '../../../index.js';
+import type { VersionDetailsResponseDTO, VersionListResponseDTO } from '../../../index.js';
 import {
   AsOcpiRegistrationEndpoint,
   BaseController,
@@ -24,42 +21,29 @@ import { Get, JsonController, Param } from 'routing-controllers';
 
 @JsonController(`/${ModuleId.Versions}`)
 @Service()
-export class VersionsModuleApi
-  extends BaseController
-  implements IVersionsModuleApi
-{
+export class VersionsModuleApi extends BaseController implements IVersionsModuleApi {
   constructor(readonly versionService: VersionService) {
     super();
   }
 
   @Get('/:tenant_id')
   @AsOcpiRegistrationEndpoint()
-  @ResponseSchema(
-    VersionListResponseDTOSchema,
-    VersionListResponseDTOSchemaName,
-    {
-      statusCode: HttpStatus.OK,
-      description: 'Successful response',
-      // examples: {}, // todo real example
-    },
-  )
-  async getVersions(
-    @Param('tenant_id') tenantId: number,
-  ): Promise<VersionListResponseDTO> {
+  @ResponseSchema(VersionListResponseDTOSchema, VersionListResponseDTOSchemaName, {
+    statusCode: HttpStatus.OK,
+    description: 'Successful response',
+    // examples: {}, // todo real example
+  })
+  async getVersions(@Param('tenant_id') tenantId: number): Promise<VersionListResponseDTO> {
     return this.versionService.getVersions(tenantId);
   }
 
   @Get(`/:tenant_id/:${versionIdParam}`)
   @AsOcpiRegistrationEndpoint()
-  @ResponseSchema(
-    VersionListResponseDTOSchema,
-    VersionListResponseDTOSchemaName,
-    {
-      statusCode: HttpStatus.OK,
-      description: 'Successful response',
-      // examples: {}, // todo real example
-    },
-  )
+  @ResponseSchema(VersionListResponseDTOSchema, VersionListResponseDTOSchemaName, {
+    statusCode: HttpStatus.OK,
+    description: 'Successful response',
+    // examples: {}, // todo real example
+  })
   async getVersionDetails(
     @Param('tenant_id') tenantId: number,
     @VersionNumberParam() versionNumber: VersionNumber,

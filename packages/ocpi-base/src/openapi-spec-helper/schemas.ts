@@ -5,15 +5,10 @@
 import { SchemaStore } from './schema.store.js';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import { defaultClassValidatorJsonSchemaOptions } from './class.validator.js';
-import {
-  VersionNumber,
-  VersionNumberEnumName,
-} from '../model/VersionNumber.js';
+import { VersionNumber, VersionNumberEnumName } from '../model/VersionNumber.js';
 import type { SchemaObject } from 'openapi3-ts';
 
-const generatedSchemas = validationMetadatasToSchemas(
-  defaultClassValidatorJsonSchemaOptions,
-);
+const generatedSchemas = validationMetadatasToSchemas(defaultClassValidatorJsonSchemaOptions);
 
 export const getAllSchemas = () => ({
   [VersionNumberEnumName]: {

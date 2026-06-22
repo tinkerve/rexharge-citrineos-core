@@ -2,12 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-  AuthorizationDto,
-  LocationDto,
-  TariffDto,
-  TransactionDto,
-} from '@citrineos/base';
+import type { AuthorizationDto, LocationDto, TariffDto, TransactionDto } from '@citrineos/base';
 import type { TokenDTO } from '../model/DTO/TokenDTO.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -80,8 +75,7 @@ export abstract class BaseTransactionMapper {
           GetAuthorizationByIdQueryVariables
         >(GET_AUTHORIZATION_BY_ID, { id: transaction.authorizationId });
         if (result.Authorizations_by_pk) {
-          transaction.authorization =
-            result.Authorizations_by_pk as AuthorizationDto;
+          transaction.authorization = result.Authorizations_by_pk as AuthorizationDto;
         }
       }
       if (transaction.authorization) {
@@ -148,10 +142,7 @@ export abstract class BaseTransactionMapper {
           >(GET_TARIFF_BY_KEY_QUERY, tariffVariables);
           const tariff = result.Tariffs[0] as TariffDto;
           if (tariff) {
-            transactionIdToOcpiTariffMap.set(
-              session.id,
-              TariffMapper.map(tariff),
-            );
+            transactionIdToOcpiTariffMap.set(session.id, TariffMapper.map(tariff));
           }
         }),
     );

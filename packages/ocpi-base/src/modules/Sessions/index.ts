@@ -56,14 +56,8 @@ export class SessionsModule extends AbstractDtoModule implements OcpiModule {
     await super.shutdown();
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.INSERT,
-    DtoEventObjectType.Transaction,
-    'TransactionNotification',
-  )
-  async handleTransactionInsert(
-    event: IDtoEvent<TransactionDto>,
-  ): Promise<void> {
+  @AsDtoEventHandler(DtoEventType.INSERT, DtoEventObjectType.Transaction, 'TransactionNotification')
+  async handleTransactionInsert(event: IDtoEvent<TransactionDto>): Promise<void> {
     this._logger.debug(`Handling Transaction Insert: ${JSON.stringify(event)}`);
     const transactionDto = event._payload;
     const tenant = transactionDto.tenant;
@@ -76,14 +70,8 @@ export class SessionsModule extends AbstractDtoModule implements OcpiModule {
     await this.sessionBroadcaster.broadcastPutSession(tenant, transactionDto);
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.UPDATE,
-    DtoEventObjectType.Transaction,
-    'TransactionNotification',
-  )
-  async handleTransactionUpdate(
-    event: IDtoEvent<Partial<TransactionDto>>,
-  ): Promise<void> {
+  @AsDtoEventHandler(DtoEventType.UPDATE, DtoEventObjectType.Transaction, 'TransactionNotification')
+  async handleTransactionUpdate(event: IDtoEvent<Partial<TransactionDto>>): Promise<void> {
     this._logger.debug(`Handling Transaction Update: ${JSON.stringify(event)}`);
     const transactionDto = event._payload;
     const tenant = transactionDto.tenant;
@@ -111,17 +99,12 @@ export class SessionsModule extends AbstractDtoModule implements OcpiModule {
         return;
       }
 
-      const fullTransactionDto = fullTransactionDtoResponse
-        .Transactions[0] as TransactionDto;
+      const fullTransactionDto = fullTransactionDtoResponse.Transactions[0] as TransactionDto;
       await this.cdrBroadcaster.broadcastPostCdr(fullTransactionDto);
     }
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.INSERT,
-    DtoEventObjectType.MeterValue,
-    'MeterValueNotification',
-  )
+  @AsDtoEventHandler(DtoEventType.INSERT, DtoEventObjectType.MeterValue, 'MeterValueNotification')
   async handleMeterValueInsert(event: IDtoEvent<MeterValueDto>): Promise<void> {
     this._logger.debug(`Handling Meter Value Insert: ${JSON.stringify(event)}`);
     const meterValueDto = event._payload;
@@ -143,10 +126,7 @@ export class SessionsModule extends AbstractDtoModule implements OcpiModule {
         return;
       }
 
-      await this.sessionBroadcaster.broadcastPatchSessionChargingPeriod(
-        tenant,
-        meterValueDto,
-      );
+      await this.sessionBroadcaster.broadcastPatchSessionChargingPeriod(tenant, meterValueDto);
     }
   }
 }

@@ -70,19 +70,13 @@ export function isPromise<T = unknown>(p: T | Promise<T>): p is Promise<T> {
  * @param {number} [logLevel=3] - The log level.
  * @returns {PropertyDescriptor} - The modified property descriptor.
  */
-export function Timed(
-  logger: Logger<ILogObj>,
-  logPrefix?: string,
-  logLevel: number = 3,
-) {
+export function Timed(logger: Logger<ILogObj>, logPrefix?: string, logLevel: number = 3) {
   return (
     target: any,
     propertyKey: string,
     propertyDescriptor: PropertyDescriptor,
   ): PropertyDescriptor => {
-    propertyDescriptor =
-      propertyDescriptor ||
-      Object.getOwnPropertyDescriptor(target, propertyKey);
+    propertyDescriptor = propertyDescriptor || Object.getOwnPropertyDescriptor(target, propertyKey);
     const originalMethod = propertyDescriptor.value;
 
     propertyDescriptor.value = function (...args: unknown[]) {

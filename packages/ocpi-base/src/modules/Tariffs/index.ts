@@ -46,11 +46,7 @@ export class TariffsModule extends AbstractDtoModule implements OcpiModule {
     await super.shutdown();
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.INSERT,
-    DtoEventObjectType.Tariff,
-    'TariffNotification',
-  )
+  @AsDtoEventHandler(DtoEventType.INSERT, DtoEventObjectType.Tariff, 'TariffNotification')
   async handleTariffInsert(event: IDtoEvent<TariffDto>): Promise<void> {
     this._logger.debug(`Handling Tariff Insert: ${JSON.stringify(event)}`);
     const tariffDto = event._payload;
@@ -65,14 +61,8 @@ export class TariffsModule extends AbstractDtoModule implements OcpiModule {
     await this.tariffsBroadcaster.broadcastPutTariff(tenant, tariffDto);
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.UPDATE,
-    DtoEventObjectType.Tariff,
-    'TariffNotification',
-  )
-  async handleTariffUpdate(
-    event: IDtoEvent<Partial<TariffDto>>,
-  ): Promise<void> {
+  @AsDtoEventHandler(DtoEventType.UPDATE, DtoEventObjectType.Tariff, 'TariffNotification')
+  async handleTariffUpdate(event: IDtoEvent<Partial<TariffDto>>): Promise<void> {
     this._logger.debug(`Handling Tariff Update: ${JSON.stringify(event)}`);
     const tariffDto = event._payload;
     const tenant = tariffDto.tenant;
@@ -86,11 +76,7 @@ export class TariffsModule extends AbstractDtoModule implements OcpiModule {
     await this.tariffsBroadcaster.broadcastPutTariff(tenant, tariffDto);
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.DELETE,
-    DtoEventObjectType.Tariff,
-    'TariffNotification',
-  )
+  @AsDtoEventHandler(DtoEventType.DELETE, DtoEventObjectType.Tariff, 'TariffNotification')
   async handleTariffDelete(event: IDtoEvent<TariffDto>): Promise<void> {
     this._logger.debug(`Handling Tariff Delete: ${JSON.stringify(event)}`);
     const tariffDto = event._payload;

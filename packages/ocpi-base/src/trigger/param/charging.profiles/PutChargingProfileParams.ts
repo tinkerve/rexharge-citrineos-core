@@ -15,9 +15,7 @@ export const PutChargingProfileParamsSchema = z.object({
   toPartyId: z.string().length(3),
 });
 
-export type PutChargingProfileParams = z.infer<
-  typeof PutChargingProfileParamsSchema
->;
+export type PutChargingProfileParams = z.infer<typeof PutChargingProfileParamsSchema>;
 
 export const buildPutChargingProfileParams = (
   sessionId: string,

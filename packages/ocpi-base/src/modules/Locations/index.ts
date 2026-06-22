@@ -22,12 +22,7 @@ import {
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { LocationsModuleApi } from './module/LocationsModuleApi.js';
-import type {
-  ChargingStationDto,
-  ConnectorDto,
-  EvseDto,
-  LocationDto,
-} from '@citrineos/base';
+import type { ChargingStationDto, ConnectorDto, EvseDto, LocationDto } from '@citrineos/base';
 import { Inject, Service } from 'typedi';
 
 export { LocationsModuleApi } from './module/LocationsModuleApi.js';
@@ -59,11 +54,7 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
     await super.shutdown();
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.INSERT,
-    DtoEventObjectType.Location,
-    'LocationNotification',
-  )
+  @AsDtoEventHandler(DtoEventType.INSERT, DtoEventObjectType.Location, 'LocationNotification')
   async handleLocationInsert(event: IDtoEvent<LocationDto>): Promise<void> {
     this._logger.debug(`Handling Location Insert: ${JSON.stringify(event)}`);
     const locationDto = event._payload;
@@ -78,14 +69,8 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
     await this.locationsBroadcaster.broadcastPutLocation(tenant, locationDto);
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.UPDATE,
-    DtoEventObjectType.Location,
-    'LocationNotification',
-  )
-  async handleLocationUpdate(
-    event: IDtoEvent<Partial<LocationDto>>,
-  ): Promise<void> {
+  @AsDtoEventHandler(DtoEventType.UPDATE, DtoEventObjectType.Location, 'LocationNotification')
+  async handleLocationUpdate(event: IDtoEvent<Partial<LocationDto>>): Promise<void> {
     this._logger.debug(`Handling Location Update: ${JSON.stringify(event)}`);
     const locationDto = event._payload;
     const tenant = locationDto.tenant;
@@ -104,21 +89,13 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
     DtoEventObjectType.ChargingStation,
     'ChargingStationNotification',
   )
-  async handleChargingStationUpdate(
-    event: IDtoEvent<Partial<ChargingStationDto>>,
-  ): Promise<void> {
-    this._logger.debug(
-      `Handling Charging Station Update: ${JSON.stringify(event)}`,
-    );
+  async handleChargingStationUpdate(event: IDtoEvent<Partial<ChargingStationDto>>): Promise<void> {
+    this._logger.debug(`Handling Charging Station Update: ${JSON.stringify(event)}`);
     // Updates are Location/Evse PATCH requests
     // await this.locationsBroadcaster.broadcastPatchEvse(event._payload); // todo
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.INSERT,
-    DtoEventObjectType.Evse,
-    'EvseNotification',
-  )
+  @AsDtoEventHandler(DtoEventType.INSERT, DtoEventObjectType.Evse, 'EvseNotification')
   async handleEvseInsert(event: IDtoEvent<EvseDto>): Promise<void> {
     this._logger.debug(`Handling EVSE Insert: ${JSON.stringify(event)}`);
     const evseDto = event._payload;
@@ -147,21 +124,12 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
       );
       return;
     }
-    const chargingStationDto = chargingStationResponse
-      .ChargingStations[0] as ChargingStationDto;
+    const chargingStationDto = chargingStationResponse.ChargingStations[0] as ChargingStationDto;
 
-    await this.locationsBroadcaster.broadcastPutEvse(
-      tenant,
-      evseDto,
-      chargingStationDto,
-    );
+    await this.locationsBroadcaster.broadcastPutEvse(tenant, evseDto, chargingStationDto);
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.UPDATE,
-    DtoEventObjectType.Evse,
-    'EvseNotification',
-  )
+  @AsDtoEventHandler(DtoEventType.UPDATE, DtoEventObjectType.Evse, 'EvseNotification')
   async handleEvseUpdate(event: IDtoEvent<Partial<EvseDto>>): Promise<void> {
     this._logger.debug(`Handling EVSE Update: ${JSON.stringify(event)}`);
     const evseDto = event._payload;
@@ -190,21 +158,12 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
       );
       return;
     }
-    const chargingStationDto = chargingStationResponse
-      .ChargingStations[0] as ChargingStationDto;
+    const chargingStationDto = chargingStationResponse.ChargingStations[0] as ChargingStationDto;
 
-    await this.locationsBroadcaster.broadcastPatchEvse(
-      tenant,
-      evseDto,
-      chargingStationDto,
-    );
+    await this.locationsBroadcaster.broadcastPatchEvse(tenant, evseDto, chargingStationDto);
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.INSERT,
-    DtoEventObjectType.Connector,
-    'ConnectorNotification',
-  )
+  @AsDtoEventHandler(DtoEventType.INSERT, DtoEventObjectType.Connector, 'ConnectorNotification')
   async handleConnectorInsert(event: IDtoEvent<ConnectorDto>): Promise<void> {
     this._logger.debug(`Handling Connector Insert: ${JSON.stringify(event)}`);
     const connectorDto = event._payload;
@@ -241,14 +200,8 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
     await this.locationsBroadcaster.broadcastPutConnector(tenant, connectorDto);
   }
 
-  @AsDtoEventHandler(
-    DtoEventType.UPDATE,
-    DtoEventObjectType.Connector,
-    'ConnectorNotification',
-  )
-  async handleConnectorUpdate(
-    event: IDtoEvent<Partial<ConnectorDto>>,
-  ): Promise<void> {
+  @AsDtoEventHandler(DtoEventType.UPDATE, DtoEventObjectType.Connector, 'ConnectorNotification')
+  async handleConnectorUpdate(event: IDtoEvent<Partial<ConnectorDto>>): Promise<void> {
     this._logger.debug(`Handling Connector Update: ${JSON.stringify(event)}`);
     const connectorDto = event._payload;
     const tenant = connectorDto.tenant;
@@ -283,9 +236,6 @@ export class LocationsModule extends AbstractDtoModule implements OcpiModule {
 
     // TODO: filter out status updates, since they should only apply at the EVSE level
 
-    await this.locationsBroadcaster.broadcastPatchConnector(
-      tenant,
-      connectorDto,
-    );
+    await this.locationsBroadcaster.broadcastPatchConnector(tenant, connectorDto);
   }
 }

@@ -6,10 +6,7 @@ import { BadRequestError } from 'routing-controllers';
 import type { CredentialsRoleDTO } from '../../model/DTO/CredentialsRoleDTO.js';
 import { Role } from '../../model/Role.js';
 
-export function validateRole(
-  credentialsRoles: CredentialsRoleDTO[],
-  role: Role,
-) {
+export function validateRole(credentialsRoles: CredentialsRoleDTO[], role: Role) {
   for (const credentialsRole of credentialsRoles) {
     if (credentialsRole.role !== role) {
       throw new BadRequestError(

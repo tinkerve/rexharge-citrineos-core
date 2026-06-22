@@ -5,17 +5,8 @@
 import { gql } from 'graphql-request';
 
 export const GET_TRANSACTIONS_QUERY = gql`
-  query GetTransactions(
-    $offset: Int
-    $limit: Int
-    $where: Transactions_bool_exp!
-  ) {
-    Transactions(
-      offset: $offset
-      limit: $limit
-      order_by: { createdAt: asc }
-      where: $where
-    ) {
+  query GetTransactions($offset: Int, $limit: Int, $where: Transactions_bool_exp!) {
+    Transactions(offset: $offset, limit: $limit, order_by: { createdAt: asc }, where: $where) {
       id
       stationId
       ocppConnectionName

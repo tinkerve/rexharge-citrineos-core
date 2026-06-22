@@ -4,10 +4,7 @@
 
 import { IsDateString, IsInt, Min } from 'class-validator';
 import { Optional } from '../../util/decorators/Optional.js';
-import {
-  DEFAULT_LIMIT,
-  DEFAULT_OFFSET,
-} from '../../model/PaginatedResponse.js';
+import { DEFAULT_LIMIT, DEFAULT_OFFSET } from '../../model/PaginatedResponse.js';
 
 export class PaginatedParams {
   @IsInt()

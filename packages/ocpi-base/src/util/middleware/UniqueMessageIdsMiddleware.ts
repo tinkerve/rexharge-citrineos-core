@@ -13,19 +13,10 @@ import { BaseMiddleware } from './BaseMiddleware.js';
  * if they are present in the request headers.
  */
 @Service()
-export class UniqueMessageIdsMiddleware
-  extends BaseMiddleware
-  implements KoaMiddlewareInterface
-{
-  public async use(
-    context: Context,
-    next: (err?: any) => Promise<any>,
-  ): Promise<any> {
+export class UniqueMessageIdsMiddleware extends BaseMiddleware implements KoaMiddlewareInterface {
+  public async use(context: Context, next: (err?: any) => Promise<any>): Promise<any> {
     const xRequestId = this.getHeader(context, OcpiHttpHeader.XRequestId);
-    const xCorrelationId = this.getHeader(
-      context,
-      OcpiHttpHeader.XCorrelationId,
-    );
+    const xCorrelationId = this.getHeader(context, OcpiHttpHeader.XCorrelationId);
     context.response.set(OcpiHttpHeader.XRequestId, xRequestId);
     context.response.set(OcpiHttpHeader.XCorrelationId, xCorrelationId);
     await next();

@@ -23,10 +23,7 @@ import { ContentType } from '../ContentType.js';
  */
 @Service()
 export class OcpiExceptionHandler implements KoaMiddlewareInterface {
-  public async use(
-    context: Context,
-    next: (err?: any) => Promise<any>,
-  ): Promise<any> {
+  public async use(context: Context, next: (err?: any) => Promise<any>): Promise<any> {
     try {
       await next();
     } catch (err) {

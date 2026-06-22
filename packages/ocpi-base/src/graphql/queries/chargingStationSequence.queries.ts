@@ -7,11 +7,7 @@ import { gql } from 'graphql-request';
 export const GET_SEQUENCE = gql`
   query GetSequence($tenantId: Int!, $stationId: Int!, $type: String!) {
     ChargingStationSequences(
-      where: {
-        tenantId: { _eq: $tenantId }
-        stationId: { _eq: $stationId }
-        type: { _eq: $type }
-      }
+      where: { tenantId: { _eq: $tenantId }, stationId: { _eq: $stationId }, type: { _eq: $type } }
     ) {
       value
     }

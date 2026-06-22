@@ -37,8 +37,7 @@ export function AuthToken() {
   return createParamDecorator({
     required: true,
     value: (action) => {
-      const authorizationHeader =
-        action.request.headers[HttpHeader.Authorization.toLowerCase()];
+      const authorizationHeader = action.request.headers[HttpHeader.Authorization.toLowerCase()];
       if (authorizationHeader) {
         return extractToken(authorizationHeader);
       } else {

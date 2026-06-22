@@ -15,10 +15,7 @@ export const READ_AUTHORIZATION = gql`
       where: {
         idToken: { _eq: $idToken }
         idTokenType: { _eq: $type }
-        TenantPartner: {
-          countryCode: { _eq: $countryCode }
-          partyId: { _eq: $partyId }
-        }
+        TenantPartner: { countryCode: { _eq: $countryCode }, partyId: { _eq: $partyId } }
       }
     ) {
       id
@@ -85,11 +82,7 @@ export const UPDATE_TOKEN_MUTATION = gql`
 `;
 
 export const GET_AUTHORIZATION_BY_TOKEN = gql`
-  query GetAuthorizationByToken(
-    $idToken: citext!
-    $idTokenType: String!
-    $tenantPartnerId: Int!
-  ) {
+  query GetAuthorizationByToken($idToken: citext!, $idTokenType: String!, $tenantPartnerId: Int!) {
     Authorizations(
       where: {
         idToken: { _eq: $idToken }

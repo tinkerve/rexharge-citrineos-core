@@ -36,11 +36,10 @@ export class OCPP1_6_CommandHandler extends OCPPCommandHandler {
       this.config.commands.ocpiBaseUrl +
       `/2.2.1/commands/callback/${tenantPartner.id}/${this.supportedVersion}/${CommandType.START_SESSION}/${commandId}`;
     options.queryParameters = queryParameters;
-    const remoteStartTransactionRequest: OCPP1_6.RemoteStartTransactionRequest =
-      {
-        connectorId: Number(startSession.connector_id),
-        idTag: startSession.token.uid,
-      };
+    const remoteStartTransactionRequest: OCPP1_6.RemoteStartTransactionRequest = {
+      connectorId: Number(startSession.connector_id),
+      idTag: startSession.token.uid,
+    };
     await this.sendOCPPMessage(
       this.config.commands.ocpp1_6.remoteStartTransactionRequestUrl,
       remoteStartTransactionRequest,
@@ -70,10 +69,9 @@ export class OCPP1_6_CommandHandler extends OCPPCommandHandler {
       `/2.2.1/commands/callback/${tenantPartner.id}/${this.supportedVersion}/${CommandType.STOP_SESSION}/${commandId}`;
     options.queryParameters = queryParameters;
 
-    const requestStopTransactionRequest: OCPP1_6.RemoteStopTransactionRequest =
-      {
-        transactionId: Number(stopSession.session_id),
-      };
+    const requestStopTransactionRequest: OCPP1_6.RemoteStopTransactionRequest = {
+      transactionId: Number(stopSession.session_id),
+    };
     await this.sendOCPPMessage(
       this.config.commands.ocpp1_6.remoteStopTransactionRequestUrl,
       requestStopTransactionRequest,
@@ -103,9 +101,7 @@ export class OCPP1_6_CommandHandler extends OCPPCommandHandler {
       `/2.2.1/commands/callback/${tenantPartner.id}/${this.supportedVersion}/${CommandType.UNLOCK_CONNECTOR}/${commandId}`;
     options.queryParameters = queryParameters;
 
-    const ocpp1_6ConnectorId = Array.from(
-      chargingStation.connectors || [],
-    ).find(
+    const ocpp1_6ConnectorId = Array.from(chargingStation.connectors || []).find(
       (connector) => connector.id === Number(unlockConnector.connector_id),
     )?.connectorId;
     if (ocpp1_6ConnectorId === undefined) {
@@ -170,12 +166,7 @@ export class OCPP1_6_CommandHandler extends OCPPCommandHandler {
           commandId,
         );
       case CommandType.UNLOCK_CONNECTOR:
-        return this.handleUnlockConnectorResponse(
-          tenantPartner,
-          responseUrl,
-          response,
-          commandId,
-        );
+        return this.handleUnlockConnectorResponse(tenantPartner, responseUrl, response, commandId);
       default:
         throw new Error(`Unknown command type: ${command}`);
     }
@@ -187,12 +178,11 @@ export class OCPP1_6_CommandHandler extends OCPPCommandHandler {
     response: any,
     commandId: string,
   ): Promise<void> {
-    const validatedResponse =
-      this.validate<OCPP1_6.RemoteStartTransactionResponse>(
-        this.supportedVersion,
-        OCPP1_6.RemoteStartTransactionResponseSchema,
-        response,
-      );
+    const validatedResponse = this.validate<OCPP1_6.RemoteStartTransactionResponse>(
+      this.supportedVersion,
+      OCPP1_6.RemoteStartTransactionResponseSchema,
+      response,
+    );
 
     switch (validatedResponse.status) {
       case OCPP1_6.RemoteStartTransactionResponseStatus.Accepted:
@@ -239,12 +229,11 @@ export class OCPP1_6_CommandHandler extends OCPPCommandHandler {
     response: any,
     commandId: string,
   ): Promise<void> {
-    const validatedResponse =
-      this.validate<OCPP1_6.RemoteStopTransactionResponse>(
-        this.supportedVersion,
-        OCPP1_6.RemoteStopTransactionResponseSchema,
-        response,
-      );
+    const validatedResponse = this.validate<OCPP1_6.RemoteStopTransactionResponse>(
+      this.supportedVersion,
+      OCPP1_6.RemoteStopTransactionResponseSchema,
+      response,
+    );
 
     switch (validatedResponse.status) {
       case OCPP1_6.RemoteStopTransactionResponseStatus.Accepted:

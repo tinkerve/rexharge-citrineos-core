@@ -26,13 +26,9 @@ export class CdrBroadcaster extends BaseBroadcaster {
   }
 
   async broadcastPostCdr(transactionDto: TransactionDto): Promise<void> {
-    const cdrs: Cdr[] = await this.cdrMapper.mapTransactionsToCdrs([
-      transactionDto,
-    ]);
+    const cdrs: Cdr[] = await this.cdrMapper.mapTransactionsToCdrs([transactionDto]);
     if (cdrs.length === 0) {
-      this.logger.warn(
-        `No CDRs generated for Transaction: ${transactionDto.transactionId}`,
-      );
+      this.logger.warn(`No CDRs generated for Transaction: ${transactionDto.transactionId}`);
       return;
     }
     const cdrDto = cdrs[0];

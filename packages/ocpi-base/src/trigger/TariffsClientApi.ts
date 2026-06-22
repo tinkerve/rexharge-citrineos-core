@@ -10,11 +10,7 @@ import type { OcpiEmptyResponse } from '../model/OcpiEmptyResponse.js';
 import { OcpiEmptyResponseSchema } from '../model/OcpiEmptyResponse.js';
 import { ModuleId } from '../model/ModuleId.js';
 import { EndpointIdentifier } from '../model/EndpointIdentifier.js';
-import {
-  type Endpoint,
-  HttpMethod,
-  type PartnerProfile,
-} from '@citrineos/base';
+import { type Endpoint, HttpMethod, type PartnerProfile } from '@citrineos/base';
 
 @Service()
 export class TariffsClientApi extends BaseClientApi {
@@ -22,8 +18,7 @@ export class TariffsClientApi extends BaseClientApi {
 
   getUrl(partnerProfile: PartnerProfile): string {
     const url = partnerProfile.endpoints?.find(
-      (value: Endpoint) =>
-        value.identifier === EndpointIdentifier.TARIFFS_RECEIVER,
+      (value: Endpoint) => value.identifier === EndpointIdentifier.TARIFFS_RECEIVER,
     )?.url;
     if (!url) {
       throw new Error(

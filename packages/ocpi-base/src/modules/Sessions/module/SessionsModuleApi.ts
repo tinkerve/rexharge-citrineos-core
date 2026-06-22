@@ -48,27 +48,20 @@ const MOCK_CHARGING_PREFERENCES = await generateMockForSchema(
 
 @JsonController(`/:${versionIdParam}/${ModuleId.Sessions}`)
 @Service()
-export class SessionsModuleApi
-  extends BaseController
-  implements ISessionsModuleApi
-{
+export class SessionsModuleApi extends BaseController implements ISessionsModuleApi {
   constructor(readonly sessionsService: SessionsService) {
     super();
   }
 
   @Get()
   @AsOcpiFunctionalEndpoint()
-  @ResponseSchema(
-    PaginatedSessionResponseSchema,
-    PaginatedSessionResponseSchemaName,
-    {
-      statusCode: HttpStatus.OK,
-      description: 'Successful response',
-      examples: {
-        success: MOCK_PAGINATED_SESSIONS,
-      },
+  @ResponseSchema(PaginatedSessionResponseSchema, PaginatedSessionResponseSchemaName, {
+    statusCode: HttpStatus.OK,
+    description: 'Successful response',
+    examples: {
+      success: MOCK_PAGINATED_SESSIONS,
     },
-  )
+  })
   async getSessions(
     @VersionNumberParam() versionNumber: VersionNumber,
     @Paginated() paginatedParams?: PaginatedParams,
@@ -88,17 +81,13 @@ export class SessionsModuleApi
 
   @Put('/{sessionId}/charging_preferences')
   @AsOcpiFunctionalEndpoint()
-  @ResponseSchema(
-    ChargingPreferencesResponseSchema,
-    ChargingPreferencesResponseSchemaName,
-    {
-      statusCode: HttpStatus.OK,
-      description: 'Successful response',
-      examples: {
-        success: MOCK_CHARGING_PREFERENCES,
-      },
+  @ResponseSchema(ChargingPreferencesResponseSchema, ChargingPreferencesResponseSchemaName, {
+    statusCode: HttpStatus.OK,
+    description: 'Successful response',
+    examples: {
+      success: MOCK_CHARGING_PREFERENCES,
     },
-  )
+  })
   async updateChargingPreferences(
     @Param('sessionId') sessionId: string,
     @BodyWithSchema(ChargingPreferencesSchema, ChargingPreferencesSchemaName)

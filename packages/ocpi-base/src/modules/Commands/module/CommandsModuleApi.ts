@@ -55,10 +55,7 @@ const MOCK_COMMAND_RESPONSE = await generateMockForSchema(
 // The command body is a union of command-specific payloads (see @MultipleTypes
 // below). Generate a concrete example per command type so Swagger UI can offer a
 // realistic request body for each one rather than a single ambiguous schema.
-const COMMAND_REQUEST_SCHEMAS: Record<
-  CommandType,
-  { schema: any; name: string }
-> = {
+const COMMAND_REQUEST_SCHEMAS: Record<CommandType, { schema: any; name: string }> = {
   [CommandType.CANCEL_RESERVATION]: {
     schema: CancelReservationSchema,
     name: CancelReservationSchemaName,
@@ -81,11 +78,8 @@ const COMMAND_REQUEST_SCHEMAS: Record<
   },
 };
 
-const COMMAND_REQUEST_EXAMPLES: Record<string, { summary: string; value: any }> =
-  {};
-for (const [commandType, { schema, name }] of Object.entries(
-  COMMAND_REQUEST_SCHEMAS,
-)) {
+const COMMAND_REQUEST_EXAMPLES: Record<string, { summary: string; value: any }> = {};
+for (const [commandType, { schema, name }] of Object.entries(COMMAND_REQUEST_SCHEMAS)) {
   const value = await generateMockForSchema(schema, name);
   if (value !== null && value !== undefined) {
     COMMAND_REQUEST_EXAMPLES[commandType] = { summary: commandType, value };
@@ -94,10 +88,7 @@ for (const [commandType, { schema, name }] of Object.entries(
 
 @JsonController(`/:${versionIdParam}/${ModuleId.Commands}`)
 @Service()
-export class CommandsModuleApi
-  extends BaseController
-  implements ICommandsModuleApi
-{
+export class CommandsModuleApi extends BaseController implements ICommandsModuleApi {
   @Inject()
   private commandsExecutor!: CommandExecutor;
 
@@ -135,12 +126,7 @@ export class CommandsModuleApi
       { schema: StopSessionSchema, name: StopSessionSchemaName },
       { schema: UnlockConnectorSchema, name: UnlockConnectorSchemaName },
     )
-    payload:
-      | CancelReservation
-      | ReserveNow
-      | StartSession
-      | StopSession
-      | UnlockConnector,
+    payload: CancelReservation | ReserveNow | StartSession | StopSession | UnlockConnector,
     @Ctx() ctx: any,
   ): Promise<OcpiCommandResponse> {
     this.logger.debug('postCommand', commandType, payload);
@@ -179,10 +165,7 @@ export class CommandsModuleApi
         .map((error) => `${error.path.join('.')}: ${error.message}`)
         .join(', ');
 
-      return ResponseGenerator.buildGenericClientErrorResponse(
-        undefined,
-        errorString,
-      ) as any;
+      return ResponseGenerator.buildGenericClientErrorResponse(undefined, errorString) as any;
     }
 
     return await this.commandsService.postCommand(

@@ -26,12 +26,7 @@ export const buildPostCredentialsParams = (
   xCorrelationId?: string,
 ): PostCredentialsParams => {
   return {
-    ...buildOcpiRegistrationParams(
-      version,
-      authorization,
-      xRequestId,
-      xCorrelationId,
-    ),
+    ...buildOcpiRegistrationParams(version, authorization, xRequestId, xCorrelationId),
     credentials,
   };
 };

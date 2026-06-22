@@ -7,5 +7,5 @@
  * This interface can be extended to define specific method contracts
  * or augmented using TypeScript declaration merging.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+
 export interface IChargingProfilesModuleApi {}

@@ -20,11 +20,7 @@ export const ChargingProfileSchema = z.object({
 
 export type ChargingProfile = z.infer<typeof ChargingProfileSchema>;
 
-export const ChargingProfileResponseSchema = OcpiResponseSchema(
-  ChargingProfileSchema,
-);
+export const ChargingProfileResponseSchema = OcpiResponseSchema(ChargingProfileSchema);
 export const ChargingProfileResponseSchemaName = 'ChargingProfileResponse';
 
-export type ChargingProfileResponse = z.infer<
-  typeof ChargingProfileResponseSchema
->;
+export type ChargingProfileResponse = z.infer<typeof ChargingProfileResponseSchema>;

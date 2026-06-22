@@ -16,10 +16,7 @@ import type {
   GetTenantPartnerByServerTokenQueryResult,
   GetTenantPartnerByServerTokenQueryVariables,
 } from '../../graphql/index.js';
-import {
-  GET_TENANT_PARTNER_BY_SERVER_TOKEN,
-  OcpiGraphqlClient,
-} from '../../graphql/index.js';
+import { GET_TENANT_PARTNER_BY_SERVER_TOKEN, OcpiGraphqlClient } from '../../graphql/index.js';
 
 const permittedRoutes: string[] = ['/docs', '/docs/spec', '/favicon.png'];
 const registrationModules: string[] = ['versions', 'credentials'];
@@ -32,10 +29,7 @@ const registrationModules: string[] = ['versions', 'credentials'];
  * by global exception handler.
  */
 @Service()
-export class AuthMiddleware
-  extends BaseMiddleware
-  implements KoaMiddlewareInterface
-{
+export class AuthMiddleware extends BaseMiddleware implements KoaMiddlewareInterface {
   constructor(readonly ocpiGraphqlClient: OcpiGraphqlClient) {
     super();
   }
@@ -44,18 +38,14 @@ export class AuthMiddleware
     ctx.type = ContentType.JSON;
     ctx.status = HttpStatus.UNAUTHORIZED;
     ctx.body = JSON.stringify(
-      buildOcpiErrorResponse(
-        OcpiResponseStatusCode.ClientNotEnoughInformation,
-        'Not Authorized',
-      ),
+      buildOcpiErrorResponse(OcpiResponseStatusCode.ClientNotEnoughInformation, 'Not Authorized'),
     );
   }
 
   async use(context: any, next: (err?: any) => Promise<any>): Promise<any> {
     const logger = Container.get(Logger);
 
-    const authHeader =
-      context.request.headers[HttpHeader.Authorization.toLowerCase()];
+    const authHeader = context.request.headers[HttpHeader.Authorization.toLowerCase()];
 
     if (!permittedRoutes.includes(context.request.originalUrl)) {
       if (!authHeader) {
@@ -75,12 +65,8 @@ export class AuthMiddleware
 
         const tenantPartner = response.TenantPartners[0];
         if (!tenantPartner) {
-          logger.debug(
-            `Authorization failed - tenant partner not found for token`,
-          );
-          throw new UnauthorizedException(
-            'Credentials not found for given token',
-          );
+          logger.debug(`Authorization failed - tenant partner not found for token`);
+          throw new UnauthorizedException('Credentials not found for given token');
         }
 
         if (
@@ -88,22 +74,10 @@ export class AuthMiddleware
             (context.request.originalUrl as string).includes(value),
           )
         ) {
-          const fromCountryCode = this.getHeader(
-            context,
-            OcpiHttpHeader.OcpiFromCountryCode,
-          );
-          const fromPartyId = this.getHeader(
-            context,
-            OcpiHttpHeader.OcpiFromPartyId,
-          );
-          const toCountryCode = this.getHeader(
-            context,
-            OcpiHttpHeader.OcpiToCountryCode,
-          );
-          const toPartyId = this.getHeader(
-            context,
-            OcpiHttpHeader.OcpiToPartyId,
-          );
+          const fromCountryCode = this.getHeader(context, OcpiHttpHeader.OcpiFromCountryCode);
+          const fromPartyId = this.getHeader(context, OcpiHttpHeader.OcpiFromPartyId);
+          const toCountryCode = this.getHeader(context, OcpiHttpHeader.OcpiToCountryCode);
+          const toPartyId = this.getHeader(context, OcpiHttpHeader.OcpiToPartyId);
           if (
             tenantPartner.countryCode !== fromCountryCode ||
             tenantPartner.partyId !== fromPartyId ||
@@ -113,9 +87,7 @@ export class AuthMiddleware
             logger.debug(
               `String token matched tenantPartner with incorrect routing headers - ${tenantPartner.countryCode}:${fromCountryCode}, ${tenantPartner.partyId}:${fromPartyId}, ${tenantPartner.tenant.countryCode}:${toCountryCode}, ${tenantPartner.tenant.partyId}:${toPartyId}`,
             );
-            throw new UnauthorizedException(
-              'Credentials not found for given token',
-            );
+            throw new UnauthorizedException('Credentials not found for given token');
           }
         }
 

@@ -14,10 +14,7 @@ import { VersionsInterface } from '../model/EndpointIdentifier.js';
 
 @Service()
 export class VersionsClientApi extends BaseClientApi {
-  getUrl(
-    partnerProfile: PartnerProfile,
-    versionInterface = VersionsInterface.VERSIONS,
-  ): string {
+  getUrl(partnerProfile: PartnerProfile, versionInterface = VersionsInterface.VERSIONS): string {
     switch (versionInterface) {
       case VersionsInterface.VERSIONS:
         return partnerProfile.credentials!.versionsUrl;
@@ -49,9 +46,7 @@ export class VersionsClientApi extends BaseClientApi {
         url,
       );
     } catch (e: any) {
-      throw new UnsuccessfulRequestException(
-        `Could not get version list. Error: ${e.message}`,
-      );
+      throw new UnsuccessfulRequestException(`Could not get version list. Error: ${e.message}`);
     }
   }
 
@@ -77,9 +72,7 @@ export class VersionsClientApi extends BaseClientApi {
         url,
       );
     } catch (e: any) {
-      throw new UnsuccessfulRequestException(
-        `Could not get version details. Error: ${e.message}`,
-      );
+      throw new UnsuccessfulRequestException(`Could not get version details. Error: ${e.message}`);
     }
   }
 }

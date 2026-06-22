@@ -2,10 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-  VersionDetailsResponseDTO,
-  VersionListResponseDTO,
-} from '../../../index.js';
+import type { VersionDetailsResponseDTO, VersionListResponseDTO } from '../../../index.js';
 import { VersionNumber } from '../../../index.js';
 
 /**

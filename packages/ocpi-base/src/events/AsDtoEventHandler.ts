@@ -36,19 +36,9 @@ export const AsDtoEventHandler = function (
   objectType: DtoEventObjectType,
   eventId: string,
 ) {
-  return (
-    target: any,
-    propertyKey: string,
-    descriptor: PropertyDescriptor,
-  ): PropertyDescriptor => {
-    if (
-      !Reflect.hasMetadata(AS_DTO_EVENT_HANDLER_METADATA, target.constructor)
-    ) {
-      Reflect.defineMetadata(
-        AS_DTO_EVENT_HANDLER_METADATA,
-        [],
-        target.constructor,
-      );
+  return (target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor => {
+    if (!Reflect.hasMetadata(AS_DTO_EVENT_HANDLER_METADATA, target.constructor)) {
+      Reflect.defineMetadata(AS_DTO_EVENT_HANDLER_METADATA, [], target.constructor);
     }
     const handlers = Reflect.getMetadata(
       AS_DTO_EVENT_HANDLER_METADATA,
@@ -61,22 +51,13 @@ export const AsDtoEventHandler = function (
       methodName: propertyKey,
       method: descriptor.value,
     });
-    Reflect.defineMetadata(
-      AS_DTO_EVENT_HANDLER_METADATA,
-      handlers,
-      target.constructor,
-    );
+    Reflect.defineMetadata(AS_DTO_EVENT_HANDLER_METADATA, handlers, target.constructor);
     return descriptor;
   };
 };
 
-export const getDtoEventHandlerMetaData = (
-  target: any,
-): IDtoEventHandlerDefinition[] => {
-  const metadata = Reflect.getMetadata(
-    AS_DTO_EVENT_HANDLER_METADATA,
-    target.constructor,
-  );
+export const getDtoEventHandlerMetaData = (target: any): IDtoEventHandlerDefinition[] => {
+  const metadata = Reflect.getMetadata(AS_DTO_EVENT_HANDLER_METADATA, target.constructor);
   if (!metadata) {
     return [];
   }

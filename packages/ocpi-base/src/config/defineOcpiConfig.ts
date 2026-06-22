@@ -8,8 +8,7 @@ import { ocpiConfigInputSchema, ocpiConfigSchema } from './ocpi.types.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 
-const args =
-  typeof process !== 'undefined' && process.argv ? process.argv.slice(2) : [];
+const args = typeof process !== 'undefined' && process.argv ? process.argv.slice(2) : [];
 let dynamicPrefix = 'citrineos_ocpi_';
 for (const arg of args) {
   if (arg.startsWith('--env-prefix=')) {
@@ -81,9 +80,7 @@ function mergeOcpiConfigFromEnvVars<T extends Record<string, any>>(
 
     const lowercaseEnvKey = fullEnvKey.toLowerCase();
     if (lowercaseEnvKey.startsWith(OCPI_ENV_VAR_PREFIX)) {
-      const envKeyWithoutPrefix = lowercaseEnvKey.substring(
-        OCPI_ENV_VAR_PREFIX.length,
-      );
+      const envKeyWithoutPrefix = lowercaseEnvKey.substring(OCPI_ENV_VAR_PREFIX.length);
       const path = envKeyWithoutPrefix.split('_');
       let currentConfigPart: Record<string, any> = config;
       let currentConfigKeyMap: Record<string, any> = configKeyMap;
@@ -93,9 +90,7 @@ function mergeOcpiConfigFromEnvVars<T extends Record<string, any>>(
         const part = path[i];
         const matchingKey = findCaseInsensitiveMatch(currentConfigKeyMap, part);
         if (!matchingKey) {
-          errors.push(
-            `Invalid environment variable key: ${fullEnvKey} (part: ${part})`,
-          );
+          errors.push(`Invalid environment variable key: ${fullEnvKey} (part: ${part})`);
           validMapping = false;
           break;
         }
@@ -108,16 +103,11 @@ function mergeOcpiConfigFromEnvVars<T extends Record<string, any>>(
 
       if (validMapping) {
         const finalPart = path[path.length - 1];
-        const finalKey = findCaseInsensitiveMatch(
-          currentConfigKeyMap,
-          finalPart,
-        );
+        const finalKey = findCaseInsensitiveMatch(currentConfigKeyMap, finalPart);
         if (finalKey) {
           currentConfigPart[finalKey] = parseEnvValue(value);
         } else {
-          errors.push(
-            `Invalid environment variable key: ${fullEnvKey} (final part: ${finalPart})`,
-          );
+          errors.push(`Invalid environment variable key: ${fullEnvKey} (final part: ${finalPart})`);
         }
       }
     }
@@ -175,11 +165,7 @@ export function defineOcpiConfig(config: OcpiConfigInput): OcpiConfig {
   const configKeyMap = getZodSchemaKeyMap(ocpiConfigInputSchema);
 
   // Apply environment variable overrides
-  const configWithEnvOverrides = mergeOcpiConfigFromEnvVars(
-    config,
-    process.env,
-    configKeyMap,
-  );
+  const configWithEnvOverrides = mergeOcpiConfigFromEnvVars(config, process.env, configKeyMap);
 
   // Validate and return the final configuration
   return ocpiConfigSchema.parse(configWithEnvOverrides);

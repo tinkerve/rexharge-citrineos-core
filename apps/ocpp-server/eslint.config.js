@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { fileURLToPath } from 'url';
+import graphqlPlugin from '@graphql-eslint/eslint-plugin';
 import { dirname } from 'path';
 import tseslint from 'typescript-eslint';
+import { fileURLToPath } from 'url';
 import { sharedConfigs, sharedIgnores } from '../../eslint.config.base.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,6 +22,13 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-floating-promises': 'error',
     },
+  },
+  {
+    files: ['./src/graphql/queries/*.ts'],
+    plugins: {
+      '@graphql-eslint': graphqlPlugin,
+    },
+    processor: '@graphql-eslint/graphql',
   },
   sharedIgnores,
 );

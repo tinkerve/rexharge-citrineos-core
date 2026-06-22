@@ -3,25 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotFoundException } from '../exception/NotFoundException.js';
-import {
-  buildOcpiResponse,
-  OcpiResponseStatusCode,
-} from '../model/OcpiResponse.js';
+import { buildOcpiResponse, OcpiResponseStatusCode } from '../model/OcpiResponse.js';
 
 export class ResponseGenerator {
   static buildGenericSuccessResponse<T>(data?: T, message?: string) {
-    return buildOcpiResponse(
-      OcpiResponseStatusCode.GenericSuccessCode,
-      data,
-      message ?? 'Success',
-    );
+    return buildOcpiResponse(OcpiResponseStatusCode.GenericSuccessCode, data, message ?? 'Success');
   }
 
-  static buildGenericServerErrorResponse<T>(
-    data?: T,
-    message?: string,
-    error?: Error,
-  ) {
+  static buildGenericServerErrorResponse<T>(data?: T, message?: string, error?: Error) {
     return buildOcpiResponse(
       OcpiResponseStatusCode.ServerGenericError,
       data,
@@ -29,11 +18,7 @@ export class ResponseGenerator {
     );
   }
 
-  static buildGenericClientErrorResponse<T>(
-    data?: T,
-    message?: string,
-    error?: Error,
-  ) {
+  static buildGenericClientErrorResponse<T>(data?: T, message?: string, error?: Error) {
     return buildOcpiResponse(
       OcpiResponseStatusCode.ClientGenericError,
       data,
@@ -41,11 +26,7 @@ export class ResponseGenerator {
     );
   }
 
-  static buildUnknownLocationResponse<T>(
-    data?: T,
-    message?: string,
-    error?: Error,
-  ) {
+  static buildUnknownLocationResponse<T>(data?: T, message?: string, error?: Error) {
     return buildOcpiResponse(
       OcpiResponseStatusCode.ClientUnknownLocation,
       data,
@@ -53,11 +34,7 @@ export class ResponseGenerator {
     );
   }
 
-  static buildInvalidOrMissingParametersResponse<T>(
-    data?: T,
-    message?: string,
-    error?: Error,
-  ) {
+  static buildInvalidOrMissingParametersResponse<T>(data?: T, message?: string, error?: Error) {
     return buildOcpiResponse(
       OcpiResponseStatusCode.ClientInvalidOrMissingParameters,
       data,

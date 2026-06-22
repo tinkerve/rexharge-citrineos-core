@@ -35,10 +35,7 @@ const MOCK_PAGINATED_TARIFF = await generateMockForSchema(
 
 @Service()
 @JsonController(`/:${versionIdParam}/${ModuleId.Tariffs}`)
-export class TariffsModuleApi
-  extends BaseController
-  implements ITariffsModuleApi
-{
+export class TariffsModuleApi extends BaseController implements ITariffsModuleApi {
   constructor(
     readonly tariffService: TariffsService,
     // readonly tariffsPublisher: TariffsBroadcaster,
@@ -48,29 +45,20 @@ export class TariffsModuleApi
 
   @Get()
   @AsOcpiFunctionalEndpoint()
-  @ResponseSchema(
-    PaginatedTariffResponseSchema,
-    PaginatedTariffResponseSchemaName,
-    {
-      statusCode: HttpStatus.OK,
-      description: 'Successful response',
-      examples: {
-        success: MOCK_PAGINATED_TARIFF,
-      },
+  @ResponseSchema(PaginatedTariffResponseSchema, PaginatedTariffResponseSchemaName, {
+    statusCode: HttpStatus.OK,
+    description: 'Successful response',
+    examples: {
+      success: MOCK_PAGINATED_TARIFF,
     },
-  )
+  })
   async getTariffs(
     @VersionNumberParam() version: VersionNumber,
     @FunctionalEndpointParams() ocpiHeaders: OcpiHeaders,
     @Paginated() paginationParams?: PaginatedParams,
   ): Promise<PaginatedTariffResponse> {
-    console.log(
-      `GET /tariffs ${JSON.stringify(paginationParams)}, ${JSON.stringify(ocpiHeaders)}`,
-    );
-    const { data, count } = await this.tariffService.getTariffs(
-      ocpiHeaders,
-      paginationParams,
-    );
+    console.log(`GET /tariffs ${JSON.stringify(paginationParams)}, ${JSON.stringify(ocpiHeaders)}`);
+    const { data, count } = await this.tariffService.getTariffs(ocpiHeaders, paginationParams);
 
     return {
       data: data,

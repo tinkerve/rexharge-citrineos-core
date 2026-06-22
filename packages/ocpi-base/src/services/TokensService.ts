@@ -3,11 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { AuthorizationDto, ChargingStationDto } from '@citrineos/base';
-import {
-  AuthorizationStatusEnum,
-  IdTokenEnum,
-  OCPP2_0_1,
-} from '@citrineos/base';
+import { AuthorizationStatusEnum, IdTokenEnum, OCPP2_0_1 } from '@citrineos/base';
 
 type AdditionalInfoType = OCPP2_0_1.AdditionalInfoType;
 import type {
@@ -62,14 +58,10 @@ export class TokensService {
     private readonly tokensClientApi: TokensClientApi,
   ) {}
 
-  async getToken(
-    tokenRequest: SingleTokenRequest,
-  ): Promise<TokenDTO | undefined> {
+  async getToken(tokenRequest: SingleTokenRequest): Promise<TokenDTO | undefined> {
     const variables = {
       idToken: tokenRequest.uid,
-      type: TokensMapper.mapOcpiTokenTypeToOcppIdTokenType(
-        tokenRequest?.type ?? TokenType.RFID,
-      ),
+      type: TokensMapper.mapOcpiTokenTypeToOcppIdTokenType(tokenRequest?.type ?? TokenType.RFID),
       countryCode: tokenRequest.country_code,
       partyId: tokenRequest.party_id,
     };
@@ -90,13 +82,8 @@ export class TokensService {
     return TokensMapper.toDto(result.Authorizations[0] as AuthorizationDto);
   }
 
-  async upsertToken(
-    token: TokenDTO,
-    tenantId: number,
-    tenantPartnerId: number,
-  ): Promise<TokenDTO> {
-    const authorization =
-      TokensMapper.mapOcpiTokenToPartialOcppAuthorization(token);
+  async upsertToken(token: TokenDTO, tenantId: number, tenantPartnerId: number): Promise<TokenDTO> {
+    const authorization = TokensMapper.mapOcpiTokenToPartialOcppAuthorization(token);
 
     const existingAuth = await this.ocpiGraphqlClient.request<
       GetAuthorizationByTokenQueryResult,
@@ -134,9 +121,7 @@ export class TokensService {
         },
       });
 
-      return TokensMapper.toDto(
-        result.update_Authorizations?.returning[0] as AuthorizationDto,
-      );
+      return TokensMapper.toDto(result.update_Authorizations?.returning[0] as AuthorizationDto);
     } else {
       const timestamp = token.last_updated;
       const result = await this.ocpiGraphqlClient.request<
@@ -156,9 +141,7 @@ export class TokensService {
         updatedAt: timestamp,
       });
 
-      return TokensMapper.toDto(
-        result.insert_Authorizations_one as AuthorizationDto,
-      );
+      return TokensMapper.toDto(result.insert_Authorizations_one as AuthorizationDto);
     }
   }
 
@@ -170,12 +153,9 @@ export class TokensService {
     tenantPartnerId: number,
   ): Promise<TokenDTO> {
     if (!token.last_updated)
-      throw new MissingParamException(
-        `Tokens PATCH must contain last_updated.`,
-      );
+      throw new MissingParamException(`Tokens PATCH must contain last_updated.`);
     const idTokenType = TokensMapper.mapOcpiTokenTypeToOcppIdTokenType(type);
-    const authorization =
-      TokensMapper.mapOcpiTokenToPartialOcppAuthorization(token);
+    const authorization = TokensMapper.mapOcpiTokenToPartialOcppAuthorization(token);
 
     const existingAuth = await this.ocpiGraphqlClient.request<
       GetAuthorizationByTokenQueryResult,
@@ -211,8 +191,7 @@ export class TokensService {
         tenantPartnerId,
       );
     }
-    if (authorization.realTimeAuth !== undefined)
-      set.realTimeAuth = authorization.realTimeAuth;
+    if (authorization.realTimeAuth !== undefined) set.realTimeAuth = authorization.realTimeAuth;
 
     const updateVariables = {
       idToken: tokenUid,
@@ -224,9 +203,7 @@ export class TokensService {
       UpdateAuthorizationMutationResult,
       UpdateAuthorizationMutationVariables
     >(UPDATE_TOKEN_MUTATION, updateVariables);
-    return TokensMapper.toDto(
-      result.update_Authorizations?.returning[0] as AuthorizationDto,
-    );
+    return TokensMapper.toDto(result.update_Authorizations?.returning[0] as AuthorizationDto);
   }
 
   async realTimeAuthorization(
@@ -243,10 +220,7 @@ export class TokensService {
     }
 
     let locationReferences: LocationReferences | undefined;
-    if (
-      realTimeAuthRequest.locationId &&
-      realTimeAuthRequest.ocppConnectionName
-    ) {
+    if (realTimeAuthRequest.locationId && realTimeAuthRequest.ocppConnectionName) {
       const chargingStationResponse = await this.ocpiGraphqlClient.request<
         GetChargingStationByIdQueryResult,
         GetChargingStationByIdQueryVariables
@@ -262,8 +236,7 @@ export class TokensService {
           `Unknown charging station ${realTimeAuthRequest.ocppConnectionName} at location ${realTimeAuthRequest.locationId}`,
         );
       }
-      const chargingStation = chargingStationResponse
-        .ChargingStations[0] as ChargingStationDto;
+      const chargingStation = chargingStationResponse.ChargingStations[0] as ChargingStationDto;
       locationReferences = {
         location_id: realTimeAuthRequest.locationId.toString(),
         evse_uids: chargingStation.evses!.map((evse) =>
@@ -281,19 +254,13 @@ export class TokensService {
       tenantPartner.partyId!,
       tenantPartner.partnerProfileOCPI!,
       realTimeAuthRequest.idToken,
-      TokensMapper.mapOcppIdTokenTypeToOcpiTokenType(
-        realTimeAuthRequest.idTokenType,
-      ),
+      TokensMapper.mapOcppIdTokenTypeToOcpiTokenType(realTimeAuthRequest.idTokenType),
       locationReferences,
     );
     this.logger.debug(`Real Time Auth response`, postTokenResult.data?.allowed);
 
-    if (
-      postTokenResult.status_code !== OcpiResponseStatusCode.GenericSuccessCode
-    ) {
-      throw new InvalidParamException(
-        `Failed to authorize token ${realTimeAuthRequest.idToken}`,
-      );
+    if (postTokenResult.status_code !== OcpiResponseStatusCode.GenericSuccessCode) {
+      throw new InvalidParamException(`Failed to authorize token ${realTimeAuthRequest.idToken}`);
     }
 
     return {
@@ -357,9 +324,6 @@ export class TokensService {
       }
       return value;
     });
-    return mergedAdditionalInfo as [
-      AdditionalInfoType,
-      ...AdditionalInfoType[],
-    ];
+    return mergedAdditionalInfo as [AdditionalInfoType, ...AdditionalInfoType[]];
   }
 }

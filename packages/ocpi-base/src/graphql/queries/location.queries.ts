@@ -6,12 +6,7 @@ import { gql } from 'graphql-request';
 
 export const GET_LOCATIONS_QUERY = gql`
   query GetLocations($limit: Int, $offset: Int, $where: Locations_bool_exp!) {
-    Locations(
-      offset: $offset
-      limit: $limit
-      order_by: { createdAt: asc }
-      where: $where
-    ) {
+    Locations(offset: $offset, limit: $limit, order_by: { createdAt: asc }, where: $where) {
       id
       name
       address
@@ -176,9 +171,7 @@ export const GET_LOCATION_BY_ID_QUERY = gql`
 export const GET_EVSE_BY_ID_QUERY = gql`
   query GetEvseById($locationId: Int!, $stationId: String!, $evseId: Int!) {
     Locations(where: { id: { _eq: $locationId } }) {
-      chargingPool: ChargingStations(
-        where: { ocppConnectionName: { _eq: $stationId } }
-      ) {
+      chargingPool: ChargingStations(where: { ocppConnectionName: { _eq: $stationId } }) {
         id
         ocppConnectionName
         isOnline
@@ -222,13 +215,9 @@ export const GET_CONNECTOR_BY_ID_QUERY = gql`
     $connectorId: Int!
   ) {
     Locations(where: { id: { _eq: $locationId } }) {
-      chargingPool: ChargingStations(
-        where: { ocppConnectionName: { _eq: $stationId } }
-      ) {
+      chargingPool: ChargingStations(where: { ocppConnectionName: { _eq: $stationId } }) {
         evses: Evses(where: { id: { _eq: $evseId } }) {
-          connectors: Connectors(
-            where: { connectorId: { _eq: $connectorId } }
-          ) {
+          connectors: Connectors(where: { connectorId: { _eq: $connectorId } }) {
             id
             ocppConnectionName
             evseId

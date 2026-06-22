@@ -14,10 +14,7 @@ import { Logger } from 'tslog';
 
 registerFormat('url', () => 'https://example.com');
 
-export const generateMockForSchema = async (
-  schema: ZodTypeAny,
-  name: string,
-): Promise<any> => {
+export const generateMockForSchema = async (schema: ZodTypeAny, name: string): Promise<any> => {
   const jsonSchema: any = zodToOpenApiSchema(schema);
   (jsonSchema as any).components = {
     schemas: getAllSchemas(),
@@ -38,10 +35,7 @@ export const generateMockOcpiPaginatedResponse = async (
   name: string,
   paginationParams?: PaginatedParams,
 ): Promise<any> => {
-  const response = (await generateMockForSchema(
-    schema,
-    name,
-  )) as PaginatedCdrResponse;
+  const response = (await generateMockForSchema(schema, name)) as PaginatedCdrResponse;
   if (response) {
     response.limit = paginationParams?.limit || DEFAULT_LIMIT;
     response.offset = paginationParams?.offset || DEFAULT_OFFSET;
@@ -58,6 +52,5 @@ export class BaseController {
     model: any,
     name: string,
     paginationParams?: PaginatedParams,
-  ): Promise<any> =>
-    generateMockOcpiPaginatedResponse(model, name, paginationParams);
+  ): Promise<any> => generateMockOcpiPaginatedResponse(model, name, paginationParams);
 }

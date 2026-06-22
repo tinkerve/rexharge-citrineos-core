@@ -34,12 +34,9 @@ export const TokenResponseSchemaName = 'TokenResponseSchema';
 
 export type TokenResponse = z.infer<typeof TokenResponseSchema>;
 
-export const PaginatedTokenResponseSchema =
-  PaginatedResponseSchema(TokenDTOSchema);
+export const PaginatedTokenResponseSchema = PaginatedResponseSchema(TokenDTOSchema);
 
-export type PaginatedTokenResponse = z.infer<
-  typeof PaginatedTokenResponseSchema
->;
+export type PaginatedTokenResponse = z.infer<typeof PaginatedTokenResponseSchema>;
 
 export const SingleTokenRequestSchema = z.object({
   country_code: z.string().length(2),

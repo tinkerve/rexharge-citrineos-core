@@ -32,9 +32,7 @@ export class TariffMapper {
       last_updated: coreTariff.updatedAt!,
     };
   }
-  private static getTariffElement(
-    coreTariff: Partial<TariffDto>,
-  ): TariffElement {
+  private static getTariffElement(coreTariff: Partial<TariffDto>): TariffElement {
     return {
       price_components: [
         {
@@ -69,20 +67,16 @@ export class TariffMapper {
   }
 
   // TODO make flexible for more complicated tariffs
-  private mapTariffElementToCoreTariff(
-    tariffElements: TariffElement[],
-  ): Partial<TariffDto> {
+  private mapTariffElementToCoreTariff(tariffElements: TariffElement[]): Partial<TariffDto> {
     const tariffElement = tariffElements[0];
     const priceComponents = tariffElement.price_components ?? [];
     const pricePerKwh =
-      priceComponents.find((pc) => pc.type === TariffDimensionType.ENERGY)
-        ?.price ?? 0;
+      priceComponents.find((pc) => pc.type === TariffDimensionType.ENERGY)?.price ?? 0;
     const pricePerMin =
-      (priceComponents.find((pc) => pc.type === TariffDimensionType.TIME)
-        ?.price ?? 0) / MINUTES_IN_HOUR;
+      (priceComponents.find((pc) => pc.type === TariffDimensionType.TIME)?.price ?? 0) /
+      MINUTES_IN_HOUR;
     const pricePerSession =
-      priceComponents.find((pc) => pc.type === TariffDimensionType.FLAT)
-        ?.price ?? 0;
+      priceComponents.find((pc) => pc.type === TariffDimensionType.FLAT)?.price ?? 0;
     const taxRate = priceComponents.find((pc) => pc.vat)?.vat ?? 0;
 
     return {

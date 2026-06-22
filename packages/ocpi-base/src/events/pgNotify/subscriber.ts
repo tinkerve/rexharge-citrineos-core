@@ -34,10 +34,7 @@ export class PgNotifyEventSubscriber implements IDtoEventSubscriber {
   protected subscribedChannels = new Set<string>();
   protected eventHandlers = new Map<string, EventHandler>();
 
-  constructor(
-    @Inject(OcpiConfigToken) config: OcpiConfig,
-    logger?: Logger<ILogObj>,
-  ) {
+  constructor(@Inject(OcpiConfigToken) config: OcpiConfig, logger?: Logger<ILogObj>) {
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });

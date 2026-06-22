@@ -11,6 +11,4 @@ export const ActiveChargingProfileResultSchema = z.object({
   profile: ActiveChargingProfileSchema.nullish(),
 });
 
-export type ActiveChargingProfileResult = z.infer<
-  typeof ActiveChargingProfileResultSchema
->;
+export type ActiveChargingProfileResult = z.infer<typeof ActiveChargingProfileResultSchema>;

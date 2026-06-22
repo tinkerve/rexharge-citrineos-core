@@ -62,10 +62,7 @@ const MOCK_EMPTY = await generateMockForSchema(
 
 @JsonController(`/:${versionIdParam}/${ModuleId.Credentials}`)
 @Service()
-export class CredentialsModuleApi
-  extends BaseController
-  implements ICredentialsModuleApi
-{
+export class CredentialsModuleApi extends BaseController implements ICredentialsModuleApi {
   constructor(
     readonly logger: OcpiLogger,
     readonly credentialsService: CredentialsService,
@@ -91,8 +88,7 @@ export class CredentialsModuleApi
   ): Promise<CredentialsResponse> {
     this.logger.info('getCredentials', _version);
     const tenantPartner = ctx!.state!.tenantPartner as TenantPartnerDto;
-    const credentialsDto =
-      await this.credentialsService.getCredentials(tenantPartner);
+    const credentialsDto = await this.credentialsService.getCredentials(tenantPartner);
     return buildCredentialsResponse(credentialsDto);
   }
 
@@ -239,10 +235,7 @@ export class CredentialsModuleApi
   @AsAdminEndpoint()
   async unregisterClient(
     @VersionNumberParam() versionNumber: VersionNumber,
-    @BodyWithSchema(
-      UnregisterClientRequestDTOSchema,
-      UnregisterClientRequestDTOSchemaName,
-    )
+    @BodyWithSchema(UnregisterClientRequestDTOSchema, UnregisterClientRequestDTOSchemaName)
     request: UnregisterClientRequestDTO,
   ): Promise<void> {
     this.logger.info('unregisterClient', request);
@@ -271,19 +264,13 @@ export class CredentialsModuleApi
   })
   async generateCredentialsTokenA(
     @VersionNumberParam() versionNumber: VersionNumber,
-    @BodyWithSchema(
-      AdminCredentialsRequestDTOSchema,
-      AdminCredentialsRequestDTOSchemaName,
-    )
+    @BodyWithSchema(AdminCredentialsRequestDTOSchema, AdminCredentialsRequestDTOSchemaName)
     credentialsRequest: AdminCredentialsRequestDTO,
   ): Promise<CredentialsResponse> {
     this.logger.info('generateCredentialsTokenA', credentialsRequest);
 
     const createdCredentials: CredentialsDTO =
-      await this.credentialsService?.generateCredentialsTokenA(
-        credentialsRequest,
-        versionNumber,
-      );
+      await this.credentialsService?.generateCredentialsTokenA(credentialsRequest, versionNumber);
 
     return buildCredentialsResponse(createdCredentials);
   }
@@ -302,19 +289,13 @@ export class CredentialsModuleApi
   })
   async regenerateCredentialsToken(
     @VersionNumberParam() versionNumber: VersionNumber,
-    @BodyWithSchema(
-      AdminCredentialsRequestDTOSchema,
-      AdminCredentialsRequestDTOSchemaName,
-    )
+    @BodyWithSchema(AdminCredentialsRequestDTOSchema, AdminCredentialsRequestDTOSchemaName)
     credentialsRequest: AdminCredentialsRequestDTO,
   ): Promise<CredentialsResponse> {
     this.logger.info('regenerateCredentialsToken', credentialsRequest);
 
     const createdCredentials: CredentialsDTO =
-      await this.credentialsService?.regenerateCredentialsToken(
-        credentialsRequest,
-        versionNumber,
-      );
+      await this.credentialsService?.regenerateCredentialsToken(credentialsRequest, versionNumber);
 
     return buildCredentialsResponse(createdCredentials);
   }

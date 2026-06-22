@@ -10,6 +10,4 @@ export const ResponseUrlCorrelationIdSchema = z.object({
   params: z.any().optional(),
 });
 
-export type ResponseUrlCorrelationId = z.infer<
-  typeof ResponseUrlCorrelationIdSchema
->;
+export type ResponseUrlCorrelationId = z.infer<typeof ResponseUrlCorrelationIdSchema>;

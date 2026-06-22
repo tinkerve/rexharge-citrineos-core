@@ -7,12 +7,7 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { IDtoEventHandlerDefinition } from './AsDtoEventHandler.js';
 import { AS_DTO_EVENT_HANDLER_METADATA } from './AsDtoEventHandler.js';
-import type {
-  IDtoEvent,
-  IDtoEventReceiver,
-  IDtoModule,
-  IDtoPayload,
-} from './types.js';
+import type { IDtoEvent, IDtoEventReceiver, IDtoModule, IDtoPayload } from './types.js';
 import { DtoEventObjectType, DtoEventType } from './types.js';
 import type { OcpiConfig } from '../index.js';
 
@@ -25,11 +20,7 @@ export abstract class AbstractDtoModule implements IDtoModule {
   protected _objectTypes: DtoEventObjectType[] = [];
   private startTime = Date.now();
 
-  constructor(
-    config: OcpiConfig,
-    receiver: IDtoEventReceiver,
-    logger?: Logger<ILogObj>,
-  ) {
+  constructor(config: OcpiConfig, receiver: IDtoEventReceiver, logger?: Logger<ILogObj>) {
     this._logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
@@ -66,9 +57,7 @@ export abstract class AbstractDtoModule implements IDtoModule {
   set config(config: OcpiConfig) {
     this._config = config;
     // Update all necessary settings for hot reload
-    this._logger.info(
-      `Updating system configuration for ${this.constructor.name} module...`,
-    );
+    this._logger.info(`Updating system configuration for ${this.constructor.name} module...`);
     this._logger.settings.minLevel = this._config.logLevel;
   }
 
@@ -136,9 +125,7 @@ export abstract class AbstractDtoModule implements IDtoModule {
         this._logger.error(
           `Failed to initialize handler for eventType: ${handlerDefinition.eventType} and objectType: ${handlerDefinition.objectType} at module ${this.constructor.name}`,
         );
-        throw new Error(
-          'Could not initialize module due to failure in handler initialization.',
-        );
+        throw new Error('Could not initialize module due to failure in handler initialization.');
       }
     }
     this._logger.info(`Initialized in ${Date.now() - this.startTime}ms...`);

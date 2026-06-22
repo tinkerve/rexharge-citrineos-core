@@ -5,10 +5,7 @@
 import { z } from 'zod';
 import { ModuleId } from './ModuleId.js';
 import type { ClientCredentialsRole } from './ClientCredentialsRole.js';
-import {
-  ClientCredentialsRoleSchema,
-  toCredentialsRoleDTO,
-} from './ClientCredentialsRole.js';
+import { ClientCredentialsRoleSchema, toCredentialsRoleDTO } from './ClientCredentialsRole.js';
 import type { ClientVersion } from './ClientVersion.js';
 import { ClientVersionSchema } from './ClientVersion.js';
 import type { ServerVersion } from './ServerVersion.js';
@@ -64,9 +61,7 @@ export const getClientVersionDetailsByModuleId = (
   );
 };
 
-export const toCredentialsDTO = (
-  clientInformation: ClientInformation,
-): CredentialsDTO => {
+export const toCredentialsDTO = (clientInformation: ClientInformation): CredentialsDTO => {
   const credentialsEndpoint = getClientVersionDetailsByModuleId(
     clientInformation,
     ModuleId.Credentials,

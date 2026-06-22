@@ -14,11 +14,7 @@ export const ENUM_QUERY_PARAM = 'EnumQueryParam';
  * @param clazz
  * @param options
  */
-export const EnumQueryParam = (
-  name: string,
-  schema: ZodTypeAny,
-  schemaName: string,
-) =>
+export const EnumQueryParam = (name: string, schema: ZodTypeAny, schemaName: string) =>
   function (object: NonNullable<unknown>, methodName: string, index: number) {
     QueryParam(name)(object, methodName, index);
 

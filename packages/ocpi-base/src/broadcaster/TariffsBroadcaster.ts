@@ -14,14 +14,8 @@ import { HttpMethod } from '@citrineos/base';
 import type { Tariff } from '../model/Tariff.js';
 import { TariffMapper } from '../mapper/index.js';
 import { OcpiEmptyResponseSchema } from '../model/OcpiEmptyResponse.js';
-import type {
-  GetTariffByKeyQueryResult,
-  GetTariffByKeyQueryVariables,
-} from '../graphql/index.js';
-import {
-  GET_TARIFF_BY_KEY_QUERY,
-  OcpiGraphqlClient,
-} from '../graphql/index.js';
+import type { GetTariffByKeyQueryResult, GetTariffByKeyQueryVariables } from '../graphql/index.js';
+import { GET_TARIFF_BY_KEY_QUERY, OcpiGraphqlClient } from '../graphql/index.js';
 
 @Service()
 export class TariffsBroadcaster extends BaseBroadcaster {
@@ -55,10 +49,7 @@ export class TariffsBroadcaster extends BaseBroadcaster {
     }
   }
 
-  async broadcastPutTariff(
-    tenant: TenantDto,
-    tariffDto: Partial<TariffDto>,
-  ): Promise<void> {
+  async broadcastPutTariff(tenant: TenantDto, tariffDto: Partial<TariffDto>): Promise<void> {
     if (!tariffDto.currency || !tariffDto.pricePerKwh) {
       this.logger.debug(
         `Currency or pricePerKwh missing in Tariff ${tariffDto.id}, fetching data.`,
@@ -86,10 +77,7 @@ export class TariffsBroadcaster extends BaseBroadcaster {
     await this.broadcast(tenant, HttpMethod.Put, path, tariff);
   }
 
-  async broadcastTariffDeletion(
-    tenant: TenantDto,
-    tariffDto: TariffDto,
-  ): Promise<void> {
+  async broadcastTariffDeletion(tenant: TenantDto, tariffDto: TariffDto): Promise<void> {
     const path = `/${tenant.countryCode}/${tenant.partyId}/${tariffDto.id}`;
     await this.broadcast(tenant, HttpMethod.Delete, path);
   }

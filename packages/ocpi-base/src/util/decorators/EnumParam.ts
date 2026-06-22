@@ -29,10 +29,5 @@ export const EnumParam = (name: string, enumType: any, enumName: string) =>
     }
 
     // Add custom metadata for additional use cases
-    Reflect.defineMetadata(
-      ENUM_PARAM,
-      enumName,
-      object,
-      `${methodName}.${name}`,
-    );
+    Reflect.defineMetadata(ENUM_PARAM, enumName, object, `${methodName}.${name}`);
   };

@@ -7,10 +7,7 @@ import type { Context } from 'vm';
 import { Service } from 'typedi';
 import { BaseMiddleware } from './BaseMiddleware.js';
 import type { PaginatedResponse } from '../../model/PaginatedResponse.js';
-import {
-  DEFAULT_LIMIT,
-  DEFAULT_OFFSET,
-} from '../../model/PaginatedResponse.js';
+import { DEFAULT_LIMIT, DEFAULT_OFFSET } from '../../model/PaginatedResponse.js';
 import { OcpiHttpHeader } from '../OcpiHttpHeader.js';
 
 /**
@@ -19,10 +16,7 @@ import { OcpiHttpHeader } from '../OcpiHttpHeader.js';
  * response body.
  */
 @Service()
-export class PaginatedMiddleware
-  extends BaseMiddleware
-  implements KoaMiddlewareInterface
-{
+export class PaginatedMiddleware extends BaseMiddleware implements KoaMiddlewareInterface {
   async use(context: Context, next: (err?: any) => Promise<any>): Promise<any> {
     await next();
     const paginatedResponse = context.response.body as PaginatedResponse<any>;
@@ -37,10 +31,7 @@ export class PaginatedMiddleware
     delete (paginatedResponse as any).total;
   }
 
-  private createLink(
-    context: Context,
-    paginatedResponse: PaginatedResponse<any>,
-  ) {
+  private createLink(context: Context, paginatedResponse: PaginatedResponse<any>) {
     const url = new URL(
       `${context.request.protocol}://${context.request.host}${context.request.url}`,
     );

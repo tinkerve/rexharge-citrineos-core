@@ -14,11 +14,7 @@ import type {
   GetTariffsQueryVariables,
   Tariffs_Bool_Exp,
 } from '../graphql/index.js';
-import {
-  GET_TARIFF_BY_KEY_QUERY,
-  GET_TARIFFS_QUERY,
-  OcpiGraphqlClient,
-} from '../graphql/index.js';
+import { GET_TARIFF_BY_KEY_QUERY, GET_TARIFFS_QUERY, OcpiGraphqlClient } from '../graphql/index.js';
 import { TariffMapper } from '../mapper/index.js';
 import type { TariffDto } from '@citrineos/base';
 
@@ -55,10 +51,8 @@ export class TariffsService {
       },
     };
     const dateFilters: any = {};
-    if (paginationParams?.dateFrom)
-      dateFilters._gte = paginationParams.dateFrom.toISOString();
-    if (paginationParams?.dateTo)
-      dateFilters._lte = paginationParams?.dateTo.toISOString();
+    if (paginationParams?.dateFrom) dateFilters._gte = paginationParams.dateFrom.toISOString();
+    if (paginationParams?.dateTo) dateFilters._lte = paginationParams?.dateTo.toISOString();
     if (Object.keys(dateFilters).length > 0) {
       where.updatedAt = dateFilters;
     }

@@ -25,12 +25,8 @@ export class SessionBroadcaster extends BaseBroadcaster {
     super();
   }
 
-  async broadcastPutSession(
-    tenant: TenantDto,
-    transactionDto: TransactionDto,
-  ): Promise<void> {
-    const session =
-      await this.sessionMapper.mapTransactionToSession(transactionDto);
+  async broadcastPutSession(tenant: TenantDto, transactionDto: TransactionDto): Promise<void> {
+    const session = await this.sessionMapper.mapTransactionToSession(transactionDto);
     const path = `/${tenant.countryCode}/${tenant.partyId}/${session.id}`;
     await this.broadcastSession(tenant, session, HttpMethod.Put, path);
   }
@@ -39,10 +35,7 @@ export class SessionBroadcaster extends BaseBroadcaster {
     tenant: TenantDto,
     transactionDto: Partial<TransactionDto>,
   ): Promise<void> {
-    const session =
-      await this.sessionMapper.mapPartialTransactionToPartialSession(
-        transactionDto,
-      );
+    const session = await this.sessionMapper.mapPartialTransactionToPartialSession(transactionDto);
     const path = `/${tenant.countryCode}/${tenant.partyId}/${session.id}`;
     await this.broadcastSession(tenant, session, HttpMethod.Patch, path);
   }
@@ -56,12 +49,7 @@ export class SessionBroadcaster extends BaseBroadcaster {
       meterValueDto.tariffId!.toString(),
     );
     const path = `/${tenant.countryCode}/${tenant.partyId}/${meterValueDto.transactionId}`;
-    await this.broadcastSession(
-      tenant,
-      { charging_periods },
-      HttpMethod.Patch,
-      path,
-    );
+    await this.broadcastSession(tenant, { charging_periods }, HttpMethod.Patch, path);
   }
 
   private async broadcastSession(

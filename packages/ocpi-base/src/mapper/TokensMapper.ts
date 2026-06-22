@@ -42,9 +42,7 @@ export class TokensMapper {
     return tokenDto;
   }
 
-  public static mapOcpiTokenTypeToOcppIdTokenType(
-    type: TokenType,
-  ): IdTokenEnumType {
+  public static mapOcpiTokenTypeToOcppIdTokenType(type: TokenType): IdTokenEnumType {
     switch (type) {
       case TokenType.RFID:
         // If you are actually using ISO15693, you need to change this
@@ -115,8 +113,7 @@ export class TokensMapper {
   ): Partial<AuthorizationDto> {
     const idToken: string | undefined = tokenDto.uid;
     const idTokenType: IdTokenEnumType | undefined =
-      tokenDto.type &&
-      TokensMapper.mapOcpiTokenTypeToOcppIdTokenType(tokenDto.type);
+      tokenDto.type && TokensMapper.mapOcpiTokenTypeToOcppIdTokenType(tokenDto.type);
 
     const partialAdditionalInfo: OCPP2_0_1.AdditionalInfoType[] = [];
 

@@ -2,16 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  Body,
-  Ctx,
-  Get,
-  JsonController,
-  Param,
-  Patch,
-  Post,
-  Put,
-} from 'routing-controllers';
+import { Body, Ctx, Get, JsonController, Param, Patch, Post, Put } from 'routing-controllers';
 import { Service } from 'typedi';
 
 import { HttpStatus } from '@citrineos/base';
@@ -91,10 +82,7 @@ const MockPutTokenBody = {
 
 @JsonController(`/:${versionIdParam}/${ModuleId.Tokens}`)
 @Service()
-export class TokensModuleApi
-  extends BaseController
-  implements ITokensModuleApi
-{
+export class TokensModuleApi extends BaseController implements ITokensModuleApi {
   constructor(
     readonly tokensService: TokensService,
     // readonly tokensFetchService: TokensAdminService,
@@ -121,13 +109,8 @@ export class TokensModuleApi
     type?: TokenType,
   ): Promise<TokenResponse | OcpiEmptyResponse> {
     this.logger.info('getTokens', countryCode, partyId, tokenId, type);
-    if (
-      ocpiHeader.fromCountryCode !== countryCode ||
-      ocpiHeader.fromPartyId !== partyId
-    ) {
-      throw new WrongClientAccessException(
-        'Client is trying to access wrong resource',
-      );
+    if (ocpiHeader.fromCountryCode !== countryCode || ocpiHeader.fromPartyId !== partyId) {
+      throw new WrongClientAccessException('Client is trying to access wrong resource');
     }
     const tokenRequest: SingleTokenRequest = {
       country_code: countryCode,
@@ -167,19 +150,12 @@ export class TokensModuleApi
   ): Promise<OcpiEmptyResponse> {
     this.logger.info('putToken', countryCode, partyId, tokenId, tokenDTO, type);
 
-    if (
-      ocpiHeader.fromCountryCode !== countryCode ||
-      ocpiHeader.fromPartyId !== partyId
-    ) {
-      throw new WrongClientAccessException(
-        'Client is trying to access wrong resource',
-      );
+    if (ocpiHeader.fromCountryCode !== countryCode || ocpiHeader.fromPartyId !== partyId) {
+      throw new WrongClientAccessException('Client is trying to access wrong resource');
     }
 
     if (tokenId !== tokenDTO.uid) {
-      throw new InvalidParamException(
-        'Path token_uid and body token_uid must match',
-      );
+      throw new InvalidParamException('Path token_uid and body token_uid must match');
     }
 
     const tenantId = ctx?.state?.tenantPartner?.tenant?.id;
@@ -216,13 +192,8 @@ export class TokensModuleApi
     @Ctx() ctx?: any,
   ): Promise<OcpiEmptyResponse> {
     this.logger.info('patchToken', countryCode, partyId, tokenUid, token, type);
-    if (
-      ocpiHeader.fromCountryCode !== countryCode ||
-      ocpiHeader.fromPartyId !== partyId
-    ) {
-      throw new WrongClientAccessException(
-        'Client is trying to access wrong resource',
-      );
+    if (ocpiHeader.fromCountryCode !== countryCode || ocpiHeader.fromPartyId !== partyId) {
+      throw new WrongClientAccessException('Client is trying to access wrong resource');
     }
 
     const tenantId = ctx?.state?.tenantPartner?.tenant?.id;

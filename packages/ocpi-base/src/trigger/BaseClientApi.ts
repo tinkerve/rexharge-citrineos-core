@@ -4,10 +4,7 @@
 
 import type { IRequestOptions, IRestResponse } from 'typed-rest-client';
 import { RestClient } from 'typed-rest-client';
-import type {
-  IHeaders,
-  IRequestQueryParams,
-} from 'typed-rest-client/Interfaces.js';
+import type { IHeaders, IRequestQueryParams } from 'typed-rest-client/Interfaces.js';
 import { VersionNumber } from '../model/VersionNumber.js';
 import { UnsuccessfulRequestException } from '../exception/UnsuccessfulRequestException.js';
 import type { TenantPartnerDto, PartnerProfile } from '@citrineos/base';
@@ -162,14 +159,10 @@ export abstract class BaseClientApi {
         queryParameters.params['limit'] = paginatedParams.limit;
       }
       if (paginatedParams.date_from) {
-        queryParameters.params['date_from'] = new Date(
-          paginatedParams.date_from,
-        ).toISOString();
+        queryParameters.params['date_from'] = new Date(paginatedParams.date_from).toISOString();
       }
       if (paginatedParams.date_to) {
-        queryParameters.params['date_to'] = new Date(
-          paginatedParams.date_to,
-        ).toISOString();
+        queryParameters.params['date_to'] = new Date(paginatedParams.date_to).toISOString();
       }
     }
     options.queryParameters = queryParameters;
@@ -202,17 +195,11 @@ export abstract class BaseClientApi {
     }
   }
 
-  protected async getRaw<T>(
-    url: string,
-    options?: IRequestOptions,
-  ): Promise<IRestResponse<T>> {
+  protected async getRaw<T>(url: string, options?: IRequestOptions): Promise<IRestResponse<T>> {
     return this.restClient.get<T>(url, options);
   }
 
-  protected async delRaw<T>(
-    url: string,
-    options?: IRequestOptions,
-  ): Promise<IRestResponse<T>> {
+  protected async delRaw<T>(url: string, options?: IRequestOptions): Promise<IRestResponse<T>> {
     return this.restClient.del<T>(url, options);
   }
 
@@ -249,9 +236,7 @@ export abstract class BaseClientApi {
     return 0;
   }
 
-  public async broadcastToClients<T extends ZodTypeAny>(
-    params: BroadcastParams<T>,
-  ): Promise<T[]> {
+  public async broadcastToClients<T extends ZodTypeAny>(params: BroadcastParams<T>): Promise<T[]> {
     const {
       cpoCountryCode,
       cpoPartyId,
@@ -266,12 +251,8 @@ export abstract class BaseClientApi {
       otherParams,
       path,
     } = params;
-    this.logger.debug(
-      `Broadcasting to clients for ${moduleId}_${interfaceRole}`,
-    );
-    this.logger.debug(
-      `Requesting partners for ${cpoCountryCode}_${cpoPartyId}`,
-    );
+    this.logger.debug(`Broadcasting to clients for ${moduleId}_${interfaceRole}`);
+    this.logger.debug(`Requesting partners for ${cpoCountryCode}_${cpoPartyId}`);
     this.logger.debug(`Using URL: ${url} with path ${path}`);
     const responses: T[] = [];
     const response = await this.ocpiGraphqlClient.request<
@@ -284,9 +265,7 @@ export abstract class BaseClientApi {
     });
     const partners = response.TenantPartners as TenantPartnerDto[];
     for (const partner of partners) {
-      this.logger.debug(
-        `Requesting partner ${partner.countryCode}_${partner.partyId}`,
-      );
+      this.logger.debug(`Requesting partner ${partner.countryCode}_${partner.partyId}`);
       const response = await this.request(
         cpoCountryCode,
         cpoPartyId,

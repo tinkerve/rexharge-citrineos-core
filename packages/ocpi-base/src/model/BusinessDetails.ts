@@ -22,9 +22,7 @@ export const toBusinessDetailsDTO = (businessDetails: BusinessDetails) => {
   };
 };
 
-export const fromBusinessDetailsDTO = (
-  businessDetailsDTO: BusinessDetailsDTO,
-): BusinessDetails => {
+export const fromBusinessDetailsDTO = (businessDetailsDTO: BusinessDetailsDTO): BusinessDetails => {
   const record: any = {
     name: businessDetailsDTO.name,
     website: businessDetailsDTO.website,

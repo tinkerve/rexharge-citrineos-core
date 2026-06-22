@@ -39,9 +39,7 @@ export class SessionMapper extends BaseTransactionMapper {
   /**
    * Maps a single transaction to a session
    */
-  public async mapTransactionToSession(
-    transaction: TransactionDto,
-  ): Promise<Session> {
+  public async mapTransactionToSession(transaction: TransactionDto): Promise<Session> {
     const [locationMap, tokenMap, tariffMap] =
       await this.getLocationsTokensAndTariffsMapsForTransactions([transaction]);
 
@@ -60,12 +58,7 @@ export class SessionMapper extends BaseTransactionMapper {
       );
     }
 
-    return this.mapTransactionWithContextToSession(
-      transaction,
-      location,
-      token,
-      tariff,
-    );
+    return this.mapTransactionWithContextToSession(transaction, location, token, tariff);
   }
 
   /**
@@ -82,20 +75,13 @@ export class SessionMapper extends BaseTransactionMapper {
     try {
       // Try to fetch context data, but handle failures gracefully
       const [locationMap, tokenMap, tariffMap] =
-        await this.getLocationsTokensAndTariffsMapsForTransactions([
-          transaction as TransactionDto,
-        ]);
+        await this.getLocationsTokensAndTariffsMapsForTransactions([transaction as TransactionDto]);
 
       const location = locationMap.get(transaction.transactionId);
       const token = tokenMap.get(transaction.transactionId);
       const tariff = tariffMap.get(transaction.transactionId);
 
-      return this.mapPartialTransactionWithContext(
-        transaction,
-        location,
-        token,
-        tariff,
-      );
+      return this.mapPartialTransactionWithContext(transaction, location, token, tariff);
     } catch (error) {
       this.logger.warn(
         `Failed to fetch context for partial transaction ${transaction.transactionId}. Mapping without context.`,
@@ -107,9 +93,7 @@ export class SessionMapper extends BaseTransactionMapper {
 
   public async getLocationsTokensAndTariffsMapsForTransactions(
     transactions: TransactionDto[],
-  ): Promise<
-    [Map<string, LocationDTO>, Map<string, TokenDTO>, Map<string, TariffDto>]
-  > {
+  ): Promise<[Map<string, LocationDTO>, Map<string, TokenDTO>, Map<string, TariffDto>]> {
     return await Promise.all([
       this.getLocationDTOsForTransactions(transactions),
       this.getTokensForTransactions(transactions),
@@ -117,14 +101,8 @@ export class SessionMapper extends BaseTransactionMapper {
     ]);
   }
 
-  public async mapTransactionsToSessions(
-    transactions: TransactionDto[],
-  ): Promise<Session[]> {
-    const [
-      transactionIdToLocationMap,
-      transactionIdToTokenMap,
-      transactionIdToTariffMap,
-    ] =
+  public async mapTransactionsToSessions(transactions: TransactionDto[]): Promise<Session[]> {
+    const [transactionIdToLocationMap, transactionIdToTokenMap, transactionIdToTariffMap] =
       await this.getLocationsTokensAndTariffsMapsForTransactions(transactions);
     return await this.mapTransactionsToSessionsHelper(
       transactions,
@@ -142,21 +120,12 @@ export class SessionMapper extends BaseTransactionMapper {
   ): Promise<Session[]> {
     const result: Session[] = [];
     for (const transaction of transactions) {
-      const location = transactionIdToLocationMap.get(
-        transaction.transactionId!,
-      );
+      const location = transactionIdToLocationMap.get(transaction.transactionId!);
       const token = transactionIdToTokenMap.get(transaction.transactionId!);
       const tariff = transactionIdToTariffMap.get(transaction.transactionId!);
 
       if (location && token && tariff) {
-        result.push(
-          this.mapTransactionWithContextToSession(
-            transaction,
-            location,
-            token,
-            tariff,
-          ),
-        );
+        result.push(this.mapTransactionWithContextToSession(transaction, location, token, tariff));
       } else {
         this.logger.debug(`Skipped transaction ${transaction.transactionId}`);
       }
@@ -181,15 +150,11 @@ export class SessionMapper extends BaseTransactionMapper {
     }
 
     if (transaction.startTime !== undefined) {
-      session.start_date_time = transaction.startTime
-        ? new Date(transaction.startTime)
-        : undefined;
+      session.start_date_time = transaction.startTime ? new Date(transaction.startTime) : undefined;
     }
 
     if (transaction.endTime !== undefined) {
-      session.end_date_time = transaction.endTime
-        ? new Date(transaction.endTime)
-        : null;
+      session.end_date_time = transaction.endTime ? new Date(transaction.endTime) : null;
     }
 
     if (transaction.totalKwh !== undefined) {
@@ -214,15 +179,9 @@ export class SessionMapper extends BaseTransactionMapper {
 
     if (tariff) {
       session.currency = tariff.currency;
-      if (
-        transaction.totalKwh !== undefined &&
-        transaction.endTime !== undefined
-      ) {
+      if (transaction.totalKwh !== undefined && transaction.endTime !== undefined) {
         session.total_cost = transaction.endTime
-          ? this.calculateTotalCost(
-              transaction.totalKwh || 0,
-              tariff.pricePerKwh,
-            )
+          ? this.calculateTotalCost(transaction.totalKwh || 0, tariff.pricePerKwh)
           : null;
       }
     }
@@ -272,15 +231,11 @@ export class SessionMapper extends BaseTransactionMapper {
     }
 
     if (transaction.startTime !== undefined) {
-      session.start_date_time = transaction.startTime
-        ? new Date(transaction.startTime)
-        : undefined;
+      session.start_date_time = transaction.startTime ? new Date(transaction.startTime) : undefined;
     }
 
     if (transaction.endTime !== undefined) {
-      session.end_date_time = transaction.endTime
-        ? new Date(transaction.endTime)
-        : null;
+      session.end_date_time = transaction.endTime ? new Date(transaction.endTime) : null;
     }
 
     if (transaction.totalKwh !== undefined) {
@@ -338,10 +293,7 @@ export class SessionMapper extends BaseTransactionMapper {
       evse_uid: this.getEvseUid(transaction),
       connector_id: transaction.connectorId!.toString(),
       currency: tariff.currency,
-      charging_periods: this.getChargingPeriods(
-        transaction.meterValues,
-        String(tariff?.id),
-      ),
+      charging_periods: this.getChargingPeriods(transaction.meterValues, String(tariff?.id)),
       status: this.getTransactionStatus(transaction),
       last_updated: transaction.updatedAt!,
       // TODO: Fill in optional values
@@ -393,23 +345,12 @@ export class SessionMapper extends BaseTransactionMapper {
     }
   }
 
-  public getChargingPeriods(
-    meterValues: MeterValueDto[] = [],
-    tariffId: string,
-  ): ChargingPeriod[] {
+  public getChargingPeriods(meterValues: MeterValueDto[] = [], tariffId: string): ChargingPeriod[] {
     return meterValues
-      .sort(
-        (a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-      )
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
       .map((meterValue, index, sortedMeterValues) => {
-        const previousMeterValue =
-          index > 0 ? sortedMeterValues[index - 1] : undefined;
-        return this.mapMeterValueToChargingPeriod(
-          meterValue,
-          tariffId,
-          previousMeterValue,
-        );
+        const previousMeterValue = index > 0 ? sortedMeterValues[index - 1] : undefined;
+        return this.mapMeterValueToChargingPeriod(meterValue, tariffId, previousMeterValue);
       });
   }
 
@@ -446,8 +387,7 @@ export class SessionMapper extends BaseTransactionMapper {
               type: CdrDimensionType.ENERGY_IMPORT,
               volume: Number(sampledValue.value),
             });
-            const previousEnergyImport =
-              this.getEnergyImportForMeterValue(previousMeterValue);
+            const previousEnergyImport = this.getEnergyImportForMeterValue(previousMeterValue);
             if (
               previousEnergyImport !== undefined &&
               !isNaN(Number(previousEnergyImport)) &&
@@ -455,8 +395,7 @@ export class SessionMapper extends BaseTransactionMapper {
             ) {
               cdrDimensions.push({
                 type: CdrDimensionType.ENERGY,
-                volume:
-                  Number(sampledValue.value) - Number(previousEnergyImport),
+                volume: Number(sampledValue.value) - Number(previousEnergyImport),
               });
             }
           }
@@ -480,8 +419,7 @@ export class SessionMapper extends BaseTransactionMapper {
     return (
       meterValue?.sampledValue.find(
         (sampledValue) =>
-          sampledValue.measurand ===
-            OCPP2_0_1.MeasurandEnumType.Energy_Active_Import_Register &&
+          sampledValue.measurand === OCPP2_0_1.MeasurandEnumType.Energy_Active_Import_Register &&
           !sampledValue.phase,
       )?.value ?? undefined
     );
@@ -492,8 +430,7 @@ export class SessionMapper extends BaseTransactionMapper {
     previousMeterValue?: MeterValueDto,
   ): number {
     const timeDiffMs = previousMeterValue
-      ? new Date(meterValue.timestamp).getTime() -
-        new Date(previousMeterValue.timestamp).getTime()
+      ? new Date(meterValue.timestamp).getTime() - new Date(previousMeterValue.timestamp).getTime()
       : 0;
 
     // Convert milliseconds to hours

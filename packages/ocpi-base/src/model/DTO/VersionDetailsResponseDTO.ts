@@ -6,10 +6,6 @@ import { z } from 'zod';
 import { VersionDetailsDTOSchema } from './VersionDetailsDTO.js';
 import { OcpiResponseSchema } from '../OcpiResponse.js';
 
-export const VersionDetailsResponseDTOSchema = OcpiResponseSchema(
-  VersionDetailsDTOSchema,
-);
+export const VersionDetailsResponseDTOSchema = OcpiResponseSchema(VersionDetailsDTOSchema);
 
-export type VersionDetailsResponseDTO = z.infer<
-  typeof VersionDetailsResponseDTOSchema
->;
+export type VersionDetailsResponseDTO = z.infer<typeof VersionDetailsResponseDTOSchema>;

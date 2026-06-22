@@ -14,10 +14,8 @@ import { OcpiResponseSchema } from '../OcpiResponse.js';
 
 // TODO make dynamic
 export const uidDelimiter = '::';
-export const UID_FORMAT = (
-  stationId: string,
-  evseId: string | number,
-): string => `${stationId}${uidDelimiter}${evseId}`;
+export const UID_FORMAT = (stationId: string, evseId: string | number): string =>
+  `${stationId}${uidDelimiter}${evseId}`;
 
 export const EXTRACT_STATION_ID = (evseUid: string) => {
   const split = evseUid.split(uidDelimiter);
@@ -40,10 +38,7 @@ export const EvseDTOSchema = z.object({
   coordinates: GeoLocationSchema.nullable().optional(),
   physical_reference: z.string().max(16).nullable().optional(),
   directions: z.array(DisplayTextSchema).nullable().optional(),
-  parking_restrictions: z
-    .array(z.nativeEnum(ParkingRestriction))
-    .nullable()
-    .optional(),
+  parking_restrictions: z.array(z.nativeEnum(ParkingRestriction)).nullable().optional(),
   images: z.null().optional(),
   last_updated: z.coerce.date(),
 });

@@ -8,18 +8,8 @@ import {
   type TenantPartnerDto,
   OCPPVersion,
 } from '@citrineos/base';
-import type {
-  OcpiConfig,
-  StartSession,
-  StopSession,
-  UnlockConnector,
-} from '../../index.js';
-import {
-  CommandResultType,
-  CommandType,
-  ModuleId,
-  OcpiConfigToken,
-} from '../../index.js';
+import type { OcpiConfig, StartSession, StopSession, UnlockConnector } from '../../index.js';
+import { CommandResultType, CommandType, ModuleId, OcpiConfigToken } from '../../index.js';
 import type { IRequestOptions } from 'typed-rest-client';
 import { RestClient } from 'typed-rest-client';
 import type { ILogObj } from 'tslog';
@@ -30,9 +20,7 @@ import { CommandsClientApi } from '../../trigger/CommandsClientApi.js';
 import qs from 'qs';
 import type { Ajv } from 'ajv';
 
-export const OCPP_COMMAND_HANDLER = new Token<OCPPCommandHandler>(
-  'OCPP_COMMAND_HANDLER',
-);
+export const OCPP_COMMAND_HANDLER = new Token<OCPPCommandHandler>('OCPP_COMMAND_HANDLER');
 
 export abstract class OCPPCommandHandler {
   abstract readonly supportedVersion: OCPPVersion;

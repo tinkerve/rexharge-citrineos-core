@@ -76,9 +76,7 @@ export class CredentialsService {
   //   return clientInfo.clientToken;
   // }
 
-  async getCredentials(
-    tenantPartner: TenantPartnerDto,
-  ): Promise<CredentialsDTO> {
+  async getCredentials(tenantPartner: TenantPartnerDto): Promise<CredentialsDTO> {
     return RegistrationMapper.tenantPartnerToCredentialsDto(tenantPartner);
   }
 
@@ -92,9 +90,7 @@ export class CredentialsService {
     }
     if (
       versionNumber !==
-      RegistrationMapper.toVersionNumber(
-        partner.partnerProfileOCPI!.version.version,
-      )
+      RegistrationMapper.toVersionNumber(partner.partnerProfileOCPI!.version.version)
     ) {
       throw new NotFoundError(
         `TenantPartner expects ${partner.partnerProfileOCPI!.version.version}, received ${versionNumber}`,
@@ -104,16 +100,12 @@ export class CredentialsService {
       versionsUrl: credentials.url,
       token: credentials.token,
     };
-    const tenantPartner = await this.getVersionDetails(
-      partner,
-      credentials.url,
-    );
+    const tenantPartner = await this.getVersionDetails(partner, credentials.url);
 
     const newServerToken = uuidv4();
     tenantPartner.partnerProfileOCPI!.serverCredentials.token = newServerToken;
-    tenantPartner.partnerProfileOCPI!.roles = credentials.roles.map(
-      (value: CredentialsRoleDTO) =>
-        RegistrationMapper.toCredentialsRole(value),
+    tenantPartner.partnerProfileOCPI!.roles = credentials.roles.map((value: CredentialsRoleDTO) =>
+      RegistrationMapper.toCredentialsRole(value),
     );
 
     await this.ocpiGraphqlClient.request<
@@ -141,9 +133,8 @@ export class CredentialsService {
       versionsUrl: credentials.url,
       token: credentials.token,
     };
-    tenantPartner.partnerProfileOCPI!.roles = credentials.roles.map(
-      (value: CredentialsRoleDTO) =>
-        RegistrationMapper.toCredentialsRole(value),
+    tenantPartner.partnerProfileOCPI!.roles = credentials.roles.map((value: CredentialsRoleDTO) =>
+      RegistrationMapper.toCredentialsRole(value),
     );
 
     await this.ocpiGraphqlClient.request<
@@ -163,9 +154,7 @@ export class CredentialsService {
       DeleteTenantPartnerByServerTokenMutationVariables
     >(DELETE_TENANT_PARTNER_BY_SERVER_TOKEN, { serverToken: token });
     if (!response.delete_TenantPartners?.affected_rows) {
-      throw new NotFoundError(
-        'No client information found for the provided token',
-      );
+      throw new NotFoundError('No client information found for the provided token');
     }
   }
 
@@ -193,9 +182,7 @@ export class CredentialsService {
     }
     if (
       versionNumber !==
-      RegistrationMapper.toVersionNumber(
-        tenantPartner.partnerProfileOCPI!.version.version,
-      )
+      RegistrationMapper.toVersionNumber(tenantPartner.partnerProfileOCPI!.version.version)
     ) {
       throw new NotFoundError(
         `TenantPartner expects ${tenantPartner.partnerProfileOCPI!.version.version}, received ${versionNumber}`,
@@ -205,9 +192,8 @@ export class CredentialsService {
       versionsUrl: url,
       token: credentialsTokenA,
     };
-    tenantPartner.partnerProfileOCPI!.roles = roles.map(
-      (value: CredentialsRoleDTO) =>
-        RegistrationMapper.toCredentialsRole(value),
+    tenantPartner.partnerProfileOCPI!.roles = roles.map((value: CredentialsRoleDTO) =>
+      RegistrationMapper.toCredentialsRole(value),
     );
     tenantPartner = await this.getVersionDetails(tenantPartner, url);
 
@@ -242,10 +228,9 @@ export class CredentialsService {
       versionsUrl: credentialsResponse.data.url,
       token: credentialsResponse.data.token,
     };
-    tenantPartner.partnerProfileOCPI!.roles =
-      credentialsResponse.data.roles.map((value: CredentialsRoleDTO) =>
-        RegistrationMapper.toCredentialsRole(value),
-      );
+    tenantPartner.partnerProfileOCPI!.roles = credentialsResponse.data.roles.map(
+      (value: CredentialsRoleDTO) => RegistrationMapper.toCredentialsRole(value),
+    );
 
     await this.ocpiGraphqlClient.request<
       UpdateTenantPartnerProfileMutationResult,
@@ -273,14 +258,11 @@ export class CredentialsService {
       });
       const tenantPartner = response.TenantPartners[0] as TenantPartnerDto;
       const newCredentialsToken = uuidv4();
-      tenantPartner.partnerProfileOCPI!.serverCredentials.versionsUrl =
-        credentialsRequest.url;
-      tenantPartner.partnerProfileOCPI!.serverCredentials.token =
-        newCredentialsToken;
+      tenantPartner.partnerProfileOCPI!.serverCredentials.versionsUrl = credentialsRequest.url;
+      tenantPartner.partnerProfileOCPI!.serverCredentials.token = newCredentialsToken;
       tenantPartner.partnerProfileOCPI!.version.version =
         RegistrationMapper.toOCPIVersionNumber(versionNumber);
-      const newCredentialsDto =
-        RegistrationMapper.tenantPartnerToCredentialsDto(tenantPartner);
+      const newCredentialsDto = RegistrationMapper.tenantPartnerToCredentialsDto(tenantPartner);
 
       await this.ocpiGraphqlClient.request<
         UpdateTenantPartnerProfileMutationResult,
@@ -290,24 +272,22 @@ export class CredentialsService {
         input: tenantPartner.partnerProfileOCPI!,
       });
 
-      const putCredentialsResponse =
-        await this.credentialsClientApi.putCredentials(
-          credentialsRequest.role.country_code,
-          credentialsRequest.role.party_id,
-          credentialsRequest.mspCountryCode,
-          credentialsRequest.mspPartyId,
-          tenantPartner.partnerProfileOCPI!,
-          newCredentialsDto,
-        );
+      const putCredentialsResponse = await this.credentialsClientApi.putCredentials(
+        credentialsRequest.role.country_code,
+        credentialsRequest.role.party_id,
+        credentialsRequest.mspCountryCode,
+        credentialsRequest.mspPartyId,
+        tenantPartner.partnerProfileOCPI!,
+        newCredentialsDto,
+      );
 
       tenantPartner.partnerProfileOCPI!.credentials = {
         versionsUrl: putCredentialsResponse!.data!.url!,
         token: putCredentialsResponse?.data?.token,
       };
-      tenantPartner.partnerProfileOCPI!.roles =
-        putCredentialsResponse?.data?.roles.map((value: CredentialsRoleDTO) =>
-          RegistrationMapper.toCredentialsRole(value),
-        );
+      tenantPartner.partnerProfileOCPI!.roles = putCredentialsResponse?.data?.roles.map(
+        (value: CredentialsRoleDTO) => RegistrationMapper.toCredentialsRole(value),
+      );
 
       await this.ocpiGraphqlClient.request<
         UpdateTenantPartnerProfileMutationResult,
@@ -339,9 +319,7 @@ export class CredentialsService {
       versionsUrl,
     );
     if (!versions?.data) {
-      throw new NotFoundError(
-        'Versions list response was null or did not have expected data',
-      );
+      throw new NotFoundError('Versions list response was null or did not have expected data');
     }
     const versionNumber = RegistrationMapper.toVersionNumber(
       tenantPartner.partnerProfileOCPI!.version.version,
@@ -362,18 +340,14 @@ export class CredentialsService {
     if (!versionDetails?.data) {
       throw new NotFoundError('Matching version details not found');
     }
-    if (
-      versionDetails.data.endpoints &&
-      versionDetails.data.endpoints.length > 1
-    ) {
+    if (versionDetails.data.endpoints && versionDetails.data.endpoints.length > 1) {
       this.logger.warn(
         `Multiple endpoints found for version ${versionNumber}. Returning the first one. All entries: ${JSON.stringify(versionDetails.data.endpoints)}`,
       );
     }
-    tenantPartner.partnerProfileOCPI!.endpoints =
-      versionDetails.data.endpoints.map((value: Endpoint) =>
-        RegistrationMapper.toEndpoint(value),
-      );
+    tenantPartner.partnerProfileOCPI!.endpoints = versionDetails.data.endpoints.map(
+      (value: Endpoint) => RegistrationMapper.toEndpoint(value),
+    );
     return tenantPartner;
   }
 

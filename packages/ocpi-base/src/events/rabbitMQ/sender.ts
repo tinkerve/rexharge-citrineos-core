@@ -16,10 +16,7 @@ import { OcpiConfigToken } from '../../config/ocpi.types.js';
  * Implementation of a {@link IEventSender} using RabbitMQ as the underlying transport.
  */
 @Service()
-export class RabbitMqDtoSender
-  extends AbstractDtoEventSender
-  implements IDtoEventSender
-{
+export class RabbitMqDtoSender extends AbstractDtoEventSender implements IDtoEventSender {
   /**
    * Constants
    */
@@ -40,18 +37,13 @@ export class RabbitMqDtoSender
    * @param {OcpiConfig} config - The system configuration.
    * @param {Logger<ILogObj>} [logger] - The logger object.
    */
-  constructor(
-    @Inject(OcpiConfigToken) config: OcpiConfig,
-    logger?: Logger<ILogObj>,
-  ) {
+  constructor(@Inject(OcpiConfigToken) config: OcpiConfig, logger?: Logger<ILogObj>) {
     super(config, logger);
   }
 
   async init(): Promise<void> {
     this._abortReconnectController = new AbortController();
-    this._channel = await this._connectWithRetry(
-      this._abortReconnectController.signal,
-    );
+    this._channel = await this._connectWithRetry(this._abortReconnectController.signal);
   }
 
   /**
@@ -120,9 +112,7 @@ export class RabbitMqDtoSender
    * @param {AbortSignal} [abortSignal] - Optional abort signal to stop retrying.
    * @return {Promise<amqplib.Channel>} A promise that resolves to the AMQP channel.
    */
-  protected async _connectWithRetry(
-    abortSignal?: AbortSignal,
-  ): Promise<amqplib.Channel> {
+  protected async _connectWithRetry(abortSignal?: AbortSignal): Promise<amqplib.Channel> {
     let reconnectAttempts = 0;
     const url = this._config.messageBroker?.amqp?.url;
     if (!url) {
@@ -145,9 +135,7 @@ export class RabbitMqDtoSender
           `RabbitMQ reconnect attempt ${reconnectAttempts} failed (context: _connectWithRetry)`,
           err,
         );
-        await new Promise((res) =>
-          setTimeout(res, RabbitMqDtoSender.RECONNECT_DELAY),
-        );
+        await new Promise((res) => setTimeout(res, RabbitMqDtoSender.RECONNECT_DELAY));
       }
     }
     this._logger.warn('RabbitMQ reconnect aborted by signal.');
@@ -178,9 +166,7 @@ export class RabbitMqDtoSender
    */
   private async _handleDisconnect() {
     if (this._reconnecting) {
-      this._logger.warn(
-        'RabbitMQ reconnect already in progress, skipping duplicate reconnect.',
-      );
+      this._logger.warn('RabbitMQ reconnect already in progress, skipping duplicate reconnect.');
       return;
     }
     this._reconnecting = true;
@@ -191,15 +177,10 @@ export class RabbitMqDtoSender
     this._channel = undefined;
     this._connection = undefined;
     try {
-      this._channel = await this._connectWithRetry(
-        this._abortReconnectController.signal,
-      );
+      this._channel = await this._connectWithRetry(this._abortReconnectController.signal);
       this._logger.info('RabbitMQ reconnected successfully.');
     } catch (err) {
-      this._logger.error(
-        'Failed to reconnect to RabbitMQ (context: _handleDisconnect)',
-        err,
-      );
+      this._logger.error('Failed to reconnect to RabbitMQ (context: _handleDisconnect)', err);
     } finally {
       this._reconnecting = false;
     }

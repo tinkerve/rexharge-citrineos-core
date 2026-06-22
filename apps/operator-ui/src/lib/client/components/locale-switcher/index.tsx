@@ -35,10 +35,13 @@ export const LocaleSwitcher = ({ expanded }: { expanded: boolean }) => {
 
   const onSelectLocale = (nextLocale: string) => {
     if (nextLocale === locale) return;
-    startTransition(() => {
-      setUserLocale(nextLocale).then(() => {
-        router.refresh();
-      });
+    // Await the cookie write before refreshing so the refresh request carries
+    // the new NEXT_LOCALE cookie. Keeping both steps inside the transition (a
+    // React 19 async action) holds the pending state until the server has
+    // re-rendered, so the UI re-renders once with the new locale.
+    startTransition(async () => {
+      await setUserLocale(nextLocale);
+      router.refresh();
     });
   };
 

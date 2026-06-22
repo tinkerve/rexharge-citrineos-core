@@ -8,9 +8,7 @@ import { OcpiResponseSchema, OcpiResponseStatusCode } from './OcpiResponse.js';
 export const DEFAULT_LIMIT = 10;
 export const DEFAULT_OFFSET = 0;
 
-export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(
-  itemSchema: T,
-) =>
+export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
   OcpiResponseSchema(z.array(itemSchema)).extend({
     total: z.number().int().nonnegative(),
     offset: z.number().int().nonnegative().default(DEFAULT_OFFSET),

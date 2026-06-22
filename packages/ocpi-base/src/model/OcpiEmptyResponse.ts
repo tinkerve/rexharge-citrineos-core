@@ -17,9 +17,7 @@ export const OcpiEmptyResponseSchemaName = 'OcpiEmptyResponse';
 
 export type OcpiEmptyResponse = z.infer<typeof OcpiEmptyResponseSchema>;
 
-export const buildOcpiEmptyResponse = (
-  status_code: OcpiResponseStatusCode,
-): OcpiEmptyResponse => {
+export const buildOcpiEmptyResponse = (status_code: OcpiResponseStatusCode): OcpiEmptyResponse => {
   return {
     status_code,
     timestamp: new Date(),

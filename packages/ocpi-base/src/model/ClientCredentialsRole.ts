@@ -30,14 +30,10 @@ export const toCredentialsRoleDTO = (
   role: clientCredentialsRole.role,
   party_id: clientCredentialsRole.party_id,
   country_code: clientCredentialsRole.country_code,
-  business_details: toBusinessDetailsDTO(
-    clientCredentialsRole.business_details,
-  ),
+  business_details: toBusinessDetailsDTO(clientCredentialsRole.business_details),
 });
 
-export const fromCredentialsRoleDTO = (
-  dto: CredentialsRoleDTO,
-): ClientCredentialsRole => {
+export const fromCredentialsRoleDTO = (dto: CredentialsRoleDTO): ClientCredentialsRole => {
   return ClientCredentialsRoleSchema.parse({
     role: dto.role,
     party_id: dto.party_id,

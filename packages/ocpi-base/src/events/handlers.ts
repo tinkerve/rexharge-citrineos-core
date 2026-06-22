@@ -32,11 +32,7 @@ export abstract class AbstractDtoEventReceiver implements IDtoEventReceiver {
    * @param logger [Optional] The logger to use.
    * @param module [Optional] The module instance.
    */
-  constructor(
-    config: OcpiConfig,
-    logger?: Logger<ILogObj>,
-    module?: IDtoModule,
-  ) {
+  constructor(config: OcpiConfig, logger?: Logger<ILogObj>, module?: IDtoModule) {
     this._config = config;
     this._module = module;
     this._logger = logger

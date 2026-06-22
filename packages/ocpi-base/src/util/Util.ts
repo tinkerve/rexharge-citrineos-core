@@ -27,8 +27,7 @@ export const plainToClass = <T>(
     excludeExtraneousValues,
   });
 
-export const base64Encode = (input: string): string =>
-  Buffer.from(input).toString('base64');
+export const base64Encode = (input: string): string => Buffer.from(input).toString('base64');
 
 export const base64Decode = (input: string): string =>
   Buffer.from(input, 'base64').toString('utf-8');

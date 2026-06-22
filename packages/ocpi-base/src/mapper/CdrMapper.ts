@@ -29,24 +29,18 @@ export class CdrMapper extends BaseTransactionMapper {
     super(logger, locationsService, ocpiGraphqlClient);
   }
 
-  public async mapTransactionsToCdrs(
-    transactions: TransactionDto[],
-  ): Promise<Cdr[]> {
+  public async mapTransactionsToCdrs(transactions: TransactionDto[]): Promise<Cdr[]> {
     try {
       const validTransactions = this.getCompletedTransactions(transactions);
 
       const sessions = await this.mapTransactionsToSessions(validTransactions);
 
-      const [transactionIdToTariffMap, transactionIdToLocationMap] =
-        await Promise.all([
-          this.getTariffsForTransactions(validTransactions),
-          this.getLocationDTOsForTransactions(transactions),
-        ]);
+      const [transactionIdToTariffMap, transactionIdToLocationMap] = await Promise.all([
+        this.getTariffsForTransactions(validTransactions),
+        this.getLocationDTOsForTransactions(transactions),
+      ]);
       const transactionIdToOcpiTariffMap: Map<string, OcpiTariff> =
-        await this.getOcpiTariffsForTransactions(
-          sessions,
-          transactionIdToTariffMap,
-        );
+        await this.getOcpiTariffsForTransactions(sessions, transactionIdToTariffMap);
       return await this.mapSessionsToCDRs(
         sessions,
         transactionIdToLocationMap,
@@ -58,15 +52,12 @@ export class CdrMapper extends BaseTransactionMapper {
       this.logger.error('Error mapping transactions to CDRs', { error });
 
       // Preserve the original error context while providing a clear message
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to map transactions to CDRs: ${errorMessage}`);
     }
   }
 
-  private async mapTransactionsToSessions(
-    transactions: TransactionDto[],
-  ): Promise<Session[]> {
+  private async mapTransactionsToSessions(transactions: TransactionDto[]): Promise<Session[]> {
     return this.sessionMapper.mapTransactionsToSessions(transactions);
   }
 
@@ -121,10 +112,7 @@ export class CdrMapper extends BaseTransactionMapper {
       total_time_cost: await this.calculateTotalTimeCost(session, tariff),
       total_parking_time: await this.calculateTotalParkingTime(session),
       total_parking_cost: await this.calculateTotalParkingCost(session, tariff),
-      total_reservation_cost: await this.calculateTotalReservationCost(
-        session,
-        tariff,
-      ),
+      total_reservation_cost: await this.calculateTotalReservationCost(session, tariff),
       remark: this.generateRemark(session),
       invoice_reference_id: await this.generateInvoiceReferenceId(session),
       credit: this.isCredit(session, tariff),
@@ -137,10 +125,7 @@ export class CdrMapper extends BaseTransactionMapper {
     return session.id;
   }
 
-  private async createCdrLocation(
-    location: LocationDTO,
-    session: Session,
-  ): Promise<CdrLocation> {
+  private async createCdrLocation(location: LocationDTO, session: Session): Promise<CdrLocation> {
     return {
       id: location.id,
       name: location.name,
@@ -162,13 +147,8 @@ export class CdrMapper extends BaseTransactionMapper {
     return location.evses?.find((evse) => evse.uid === evseUid)?.evse_id ?? '';
   }
 
-  private getConnectorStandard(
-    location: LocationDTO,
-    session: Session,
-  ): string {
-    const evseDto = location.evses?.find(
-      (evse) => evse.uid === session.evse_uid,
-    );
+  private getConnectorStandard(location: LocationDTO, session: Session): string {
+    const evseDto = location.evses?.find((evse) => evse.uid === session.evse_uid);
     const connectorDto = evseDto?.connectors.find(
       (connector) => connector.id === session.connector_id,
     );
@@ -176,38 +156,27 @@ export class CdrMapper extends BaseTransactionMapper {
   }
 
   private getConnectorFormat(location: LocationDTO, session: Session): string {
-    const evseDto = location.evses?.find(
-      (evse) => evse.uid === session.evse_uid,
-    );
+    const evseDto = location.evses?.find((evse) => evse.uid === session.evse_uid);
     const connectorDto = evseDto?.connectors.find(
       (connector) => connector.id === session.connector_id,
     );
     return connectorDto?.format || '';
   }
 
-  private getConnectorPowerType(
-    location: LocationDTO,
-    session: Session,
-  ): string {
-    const evseDto = location.evses?.find(
-      (evse) => evse.uid === session.evse_uid,
-    );
+  private getConnectorPowerType(location: LocationDTO, session: Session): string {
+    const evseDto = location.evses?.find((evse) => evse.uid === session.evse_uid);
     const connectorDto = evseDto?.connectors.find(
       (connector) => connector.id === session.connector_id,
     );
     return connectorDto?.power_type || '';
   }
 
-  private async getSignedData(
-    _session: Session,
-  ): Promise<SignedData | undefined> {
+  private async getSignedData(_session: Session): Promise<SignedData | undefined> {
     // TODO: Implement signed data logic if required
     return undefined;
   }
 
-  private async calculateTotalFixedCost(
-    _tariff: any,
-  ): Promise<Price | undefined> {
+  private async calculateTotalFixedCost(_tariff: any): Promise<Price | undefined> {
     // TODO: Return total fixed cost if needed
     return undefined;
   }
@@ -222,10 +191,7 @@ export class CdrMapper extends BaseTransactionMapper {
 
   private calculateTotalTime(session: Session): number {
     if (session.end_date_time) {
-      return (
-        (session.end_date_time.getTime() - session.start_date_time.getTime()) /
-        3600000
-      ); // Convert ms to hours
+      return (session.end_date_time.getTime() - session.start_date_time.getTime()) / 3600000; // Convert ms to hours
     }
     return 0;
   }
@@ -264,9 +230,7 @@ export class CdrMapper extends BaseTransactionMapper {
     return undefined;
   }
 
-  private async generateInvoiceReferenceId(
-    _session: Session,
-  ): Promise<string | undefined> {
+  private async generateInvoiceReferenceId(_session: Session): Promise<string | undefined> {
     // TODO: Generate invoice reference ID if needed
     return undefined;
   }
@@ -276,17 +240,12 @@ export class CdrMapper extends BaseTransactionMapper {
     return undefined;
   }
 
-  private generateCreditReferenceId(
-    _session: Session,
-    _tariff: TariffDto,
-  ): string | undefined {
+  private generateCreditReferenceId(_session: Session, _tariff: TariffDto): string | undefined {
     // TODO: Return Credit Reference ID for Credit CDR if needed
     return undefined;
   }
 
-  private getCompletedTransactions(
-    transactions: TransactionDto[],
-  ): TransactionDto[] {
+  private getCompletedTransactions(transactions: TransactionDto[]): TransactionDto[] {
     return transactions.filter((transaction) => !transaction.isActive);
   }
 }

@@ -3,20 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { IChargingProfilesModuleApi } from './IChargingProfilesModuleApi.js';
-import {
-  Delete,
-  Get,
-  JsonController,
-  Param,
-  Put,
-  QueryParam,
-} from 'routing-controllers';
+import { Delete, Get, JsonController, Param, Put, QueryParam } from 'routing-controllers';
 
 import { HttpStatus } from '@citrineos/base';
-import type {
-  ChargingProfileResponse,
-  SetChargingProfile,
-} from '../../../index.js';
+import type { ChargingProfileResponse, SetChargingProfile } from '../../../index.js';
 import {
   AsOcpiFunctionalEndpoint,
   BaseController,
@@ -51,42 +41,30 @@ export class ChargingProfilesModuleApi
 
   @Get('/:sessionId')
   @AsOcpiFunctionalEndpoint()
-  @ResponseSchema(
-    ChargingProfileResponseSchema,
-    ChargingProfileResponseSchemaName,
-    {
-      statusCode: HttpStatus.OK,
-      description: 'Successful response',
-      examples: {
-        success: MOCK_CHARGING_PROFILE_RESPONSE,
-      },
+  @ResponseSchema(ChargingProfileResponseSchema, ChargingProfileResponseSchemaName, {
+    statusCode: HttpStatus.OK,
+    description: 'Successful response',
+    examples: {
+      success: MOCK_CHARGING_PROFILE_RESPONSE,
     },
-  )
+  })
   async getActiveChargingProfile(
     @Param('sessionId') sessionId: string,
     @QueryParam('duration', { required: true }) duration: number,
     @QueryParam('response_url', { required: true }) responseUrl: string,
   ): Promise<ChargingProfileResponse> {
-    return this.service.getActiveChargingProfile(
-      sessionId,
-      duration,
-      responseUrl,
-    );
+    return this.service.getActiveChargingProfile(sessionId, duration, responseUrl);
   }
 
   @Delete('/:sessionId')
   @AsOcpiFunctionalEndpoint()
-  @ResponseSchema(
-    ChargingProfileResponseSchema,
-    ChargingProfileResponseSchemaName,
-    {
-      statusCode: HttpStatus.OK,
-      description: 'Successful response',
-      examples: {
-        success: MOCK_CHARGING_PROFILE_RESPONSE,
-      },
+  @ResponseSchema(ChargingProfileResponseSchema, ChargingProfileResponseSchemaName, {
+    statusCode: HttpStatus.OK,
+    description: 'Successful response',
+    examples: {
+      success: MOCK_CHARGING_PROFILE_RESPONSE,
     },
-  )
+  })
   async deleteChargingProfile(
     @Param('sessionId') sessionId: string,
     @QueryParam('response_url', { required: true }) responseUrl: string,
@@ -96,17 +74,13 @@ export class ChargingProfilesModuleApi
 
   @Put('/:sessionId')
   @AsOcpiFunctionalEndpoint()
-  @ResponseSchema(
-    ChargingProfileResponseSchema,
-    ChargingProfileResponseSchemaName,
-    {
-      statusCode: HttpStatus.OK,
-      description: 'Successful response',
-      examples: {
-        success: MOCK_CHARGING_PROFILE_RESPONSE,
-      },
+  @ResponseSchema(ChargingProfileResponseSchema, ChargingProfileResponseSchemaName, {
+    statusCode: HttpStatus.OK,
+    description: 'Successful response',
+    examples: {
+      success: MOCK_CHARGING_PROFILE_RESPONSE,
     },
-  )
+  })
   async updateChargingProfile(
     @Param('sessionId') sessionId: string,
     @BodyWithSchema(SetChargingProfileSchema, SetChargingProfileSchemaName)

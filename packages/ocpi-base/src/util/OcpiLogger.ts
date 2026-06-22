@@ -22,8 +22,7 @@ export class OcpiLogger extends Logger<ILogObj> {
     super({
       name: 'CitrineOS Ocpi Logger',
       minLevel: serverConfig?.logLevel || 2, // Default to info level
-      hideLogPositionForProduction:
-        serverConfig?.env === Env.PRODUCTION || false,
+      hideLogPositionForProduction: serverConfig?.env === Env.PRODUCTION || false,
       // Disable colors for cloud deployment as some cloud logging environments such as cloudwatch can not interpret colors
       stylePrettyLogs: serverConfig?.env !== Env.DEVELOPMENT || true,
     });

@@ -25,11 +25,7 @@ import { BODY_PARAM } from '../util/decorators/BodyWithSchema.js';
 /** Return full Express path of given route. */
 export function getFullExpressPath(route: IRoute): string {
   const { action, controller, options } = route;
-  return (
-    (options.routePrefix || '') +
-    (controller.route || '') +
-    (action.route || '')
-  );
+  return (options.routePrefix || '') + (controller.route || '') + (action.route || '');
 }
 
 /**
@@ -56,9 +52,7 @@ export function getContentType(route: IRoute): string {
     ['json', 'default'].indexOf(route.controller.type) > -1
       ? ContentType.JSON
       : 'text/html; charset=utf-8';
-  const contentMeta = route.responseHandlers.find(
-    (h) => h.type === 'content-type',
-  );
+  const contentMeta = route.responseHandlers.find((h) => h.type === 'content-type');
   return contentMeta ? contentMeta.value : defaultContentType;
 }
 
@@ -66,9 +60,7 @@ export function getContentType(route: IRoute): string {
  * Return the status code of given route.
  */
 export function getStatusCode(route: IRoute): string {
-  const successMeta = route.responseHandlers.find(
-    (h) => h.type === 'success-code',
-  );
+  const successMeta = route.responseHandlers.find((h) => h.type === 'success-code');
   return successMeta ? successMeta.value + '' : '200';
 }
 
@@ -106,9 +98,7 @@ export function getTags(route: IRoute): string[] {
  */
 export function expressToOpenAPIPath(expressPath: string) {
   const tokens = pathToRegexp.parse(expressPath);
-  return tokens
-    .map((d) => (typeof d === 'string' ? d : `${d.prefix}{${d.name}}`))
-    .join('');
+  return tokens.map((d) => (typeof d === 'string' ? d : `${d.prefix}{${d.name}}`)).join('');
 }
 
 /**
@@ -128,11 +118,7 @@ function getParamSchema(
 ): oa.SchemaObject | oa.ReferenceObject {
   const { explicitType, index, object, method } = param;
 
-  const type: Constructable<any> = Reflect.getMetadata(
-    'design:paramtypes',
-    object,
-    method,
-  )[index];
+  const type: Constructable<any> = Reflect.getMetadata('design:paramtypes', object, method)[index];
 
   if (typeof type === 'function' && type.name === 'Array') {
     const items = explicitType
@@ -144,10 +130,7 @@ function getParamSchema(
     return { $ref: '#/components/schemas/' + explicitType.name };
   }
   if (typeof type === 'function') {
-    if (
-      type.prototype === String.prototype ||
-      type.prototype === Symbol.prototype
-    ) {
+    if (type.prototype === String.prototype || type.prototype === Symbol.prototype) {
       return { type: 'string' };
     } else if (type.prototype === Number.prototype) {
       return { type: 'number' };
@@ -272,12 +255,11 @@ export function getRequestBody(route: IRoute): oa.RequestBodyObject | void {
   // Body declared via @Body() + @MultipleTypes(...): a oneOf of the variants.
   // Each variant schema is registered so the references resolve, and the
   // endpoint can supplement per-variant examples via @OpenAPI.
-  const multipleTypes: { name: string; schema: ZodTypeAny }[] | undefined =
-    Reflect.getMetadata(
-      MULTIPLE_TYPES,
-      bodyMeta.object,
-      `${bodyMeta.method}.${bodyMeta.index}`,
-    );
+  const multipleTypes: { name: string; schema: ZodTypeAny }[] | undefined = Reflect.getMetadata(
+    MULTIPLE_TYPES,
+    bodyMeta.object,
+    `${bodyMeta.method}.${bodyMeta.index}`,
+  );
   if (!mediaType.schema && multipleTypes?.length) {
     mediaType.schema = {
       oneOf: multipleTypes.map((type) => {
@@ -354,15 +336,10 @@ export function getPathParams(route: IRoute): oa.ParameterObject[] {
         param.schema = { pattern: token.pattern, type: 'string' };
       }
 
-      const meta = route.params.find(
-        (p) => p.name === name && p.type === 'param',
-      );
+      const meta = route.params.find((p) => p.name === name && p.type === 'param');
       if (meta) {
         const metaSchema = getParamSchema(meta);
-        param.schema =
-          'type' in metaSchema
-            ? { ...param.schema, ...metaSchema }
-            : metaSchema;
+        param.schema = 'type' in metaSchema ? { ...param.schema, ...metaSchema } : metaSchema;
       }
 
       return param;
@@ -389,10 +366,7 @@ export function getQueryParams(
         `${queryMeta.method}.${queryMeta.name}`,
       );
       if (enumQueryParam) {
-        SchemaStore.addToSchemaStore(
-          enumQueryParam.schema,
-          enumQueryParam.name,
-        );
+        SchemaStore.addToSchemaStore(enumQueryParam.schema, enumQueryParam.name);
         return {
           in: 'query' as oa.ParameterLocation,
           name: queryMeta.name || '',
@@ -458,11 +432,7 @@ export function getOperation(
     tags: getTags(route),
   };
 
-  if (
-    operation.parameters?.find(
-      (param) => (param as any).name === HttpHeader.Authorization,
-    )
-  ) {
+  if (operation.parameters?.find((param) => (param as any).name === HttpHeader.Authorization)) {
     if (!operation.security) {
       operation.security = [];
     }
@@ -472,9 +442,7 @@ export function getOperation(
   }
 
   const cleanedOperation = Object.entries(operation)
-    .filter(
-      ([_, value]) => value && (value.length || Object.keys(value).length),
-    )
+    .filter(([_, value]) => value && (value.length || Object.keys(value).length))
     .reduce(
       (acc: any, [key, value]) => {
         acc[key] = value;

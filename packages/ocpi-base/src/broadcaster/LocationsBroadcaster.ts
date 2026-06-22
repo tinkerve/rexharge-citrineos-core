@@ -22,11 +22,7 @@ import type {
   TenantDto,
 } from '@citrineos/base';
 import { HttpMethod } from '@citrineos/base';
-import {
-  ConnectorMapper,
-  EvseMapper,
-  LocationMapper,
-} from '../mapper/index.js';
+import { ConnectorMapper, EvseMapper, LocationMapper } from '../mapper/index.js';
 import { OcpiEmptyResponseSchema } from '../model/OcpiEmptyResponse.js';
 
 @Service()
@@ -39,10 +35,7 @@ export class LocationsBroadcaster extends BaseBroadcaster {
     super();
   }
 
-  async broadcastPutLocation(
-    tenant: TenantDto,
-    locationDto: LocationDto,
-  ): Promise<void> {
+  async broadcastPutLocation(tenant: TenantDto, locationDto: LocationDto): Promise<void> {
     const location = LocationMapper.fromGraphql(locationDto);
     const path = `/${tenant.countryCode}/${tenant.partyId}/${location.id}`;
     await this.broadcastLocation(tenant, location, HttpMethod.Put, path);
@@ -77,10 +70,7 @@ export class LocationsBroadcaster extends BaseBroadcaster {
         path: path,
       });
     } catch (e) {
-      this.logger.error(
-        `broadcast${method}Location failed for Location ${path}`,
-        e,
-      );
+      this.logger.error(`broadcast${method}Location failed for Location ${path}`, e);
     }
   }
 
@@ -132,10 +122,7 @@ export class LocationsBroadcaster extends BaseBroadcaster {
     }
   }
 
-  async broadcastPutConnector(
-    tenant: TenantDto,
-    connectorDto: ConnectorDto,
-  ): Promise<void> {
+  async broadcastPutConnector(tenant: TenantDto, connectorDto: ConnectorDto): Promise<void> {
     const locationId = connectorDto.chargingStation?.locationId;
     if (!locationId) throw new Error('Location ID missing in Connector data');
     const connector = ConnectorMapper.fromGraphql(connectorDto);

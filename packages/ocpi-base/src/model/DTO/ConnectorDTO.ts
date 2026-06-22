@@ -24,8 +24,7 @@ export const ConnectorDTOSchema = z.object({
 
 export const ConnectorResponseSchema = OcpiResponseSchema(ConnectorDTOSchema);
 export const ConnectorResponseSchemaName = 'ConnectorResponseSchema';
-export const ConnectorListResponseSchema =
-  OcpiResponseSchema(ConnectorDTOSchema);
+export const ConnectorListResponseSchema = OcpiResponseSchema(ConnectorDTOSchema);
 
 export type ConnectorDTO = z.infer<typeof ConnectorDTOSchema>;
 export type ConnectorResponse = z.infer<typeof ConnectorResponseSchema>;
@@ -35,5 +34,4 @@ export const TEMPORARY_CONNECTOR_ID = (
   stationId: string,
   evseId: number,
   connectorId: number,
-): string =>
-  `${stationId}${uidDelimiter}${evseId}${uidDelimiter}${connectorId}`;
+): string => `${stationId}${uidDelimiter}${evseId}${uidDelimiter}${connectorId}`;

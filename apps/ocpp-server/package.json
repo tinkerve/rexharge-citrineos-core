@@ -27,6 +27,7 @@
   "devDependencies": {
     "@eslint/js": "catalog:",
     "@fastify/type-provider-json-schema-to-ts": "4.0.1",
+    "@graphql-eslint/eslint-plugin": "^4.4.0",
     "@types/amqplib": "0.10.1",
     "@types/ws": "8.5.4",
     "eslint": "catalog:",

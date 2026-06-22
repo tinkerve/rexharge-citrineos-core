@@ -22,12 +22,5 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': 'error',
     },
   },
-  {
-    files: ['./src/graphql/queries/*.ts'],
-    plugins: {
-      '@graphql-eslint': graphqlPlugin,
-    },
-    processor: '@graphql-eslint/graphql',
-  },
   sharedIgnores,
 );

@@ -9,10 +9,7 @@ export const GET_TARIFF_BY_KEY_QUERY = gql`
     Tariffs(
       where: {
         id: { _eq: $id }
-        Tenant: {
-          countryCode: { _eq: $countryCode }
-          partyId: { _eq: $partyId }
-        }
+        Tenant: { countryCode: { _eq: $countryCode }, partyId: { _eq: $partyId } }
       }
     ) {
       authorizationAmount
@@ -36,12 +33,7 @@ export const GET_TARIFF_BY_KEY_QUERY = gql`
 
 export const GET_TARIFFS_QUERY = gql`
   query GetTariffs($limit: Int, $offset: Int, $where: Tariffs_bool_exp!) {
-    Tariffs(
-      limit: $limit
-      offset: $offset
-      order_by: { createdAt: asc }
-      where: $where
-    ) {
+    Tariffs(limit: $limit, offset: $offset, order_by: { createdAt: asc }, where: $where) {
       authorizationAmount
       createdAt
       currency

@@ -2,10 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  BaseClientApi,
-  MissingRequiredParamException,
-} from './BaseClientApi.js';
+import { BaseClientApi, MissingRequiredParamException } from './BaseClientApi.js';
 import { Inject, Service } from 'typedi';
 import type { OcpiEmptyResponse } from '../model/OcpiEmptyResponse.js';
 import { OcpiEmptyResponseSchema } from '../model/OcpiEmptyResponse.js';

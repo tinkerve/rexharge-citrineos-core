@@ -5,10 +5,7 @@
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { Service } from 'typedi';
-import type {
-  LocationResponse,
-  PaginatedLocationResponse,
-} from '../model/DTO/LocationDTO.js';
+import type { LocationResponse, PaginatedLocationResponse } from '../model/DTO/LocationDTO.js';
 import type { EvseResponse } from '../model/DTO/EvseDTO.js';
 import type { ConnectorResponse } from '../model/DTO/ConnectorDTO.js';
 import { PaginatedParams } from '../controllers/param/PaginatedParams.js';
@@ -17,10 +14,7 @@ import {
   DEFAULT_LIMIT,
   DEFAULT_OFFSET,
 } from '../model/PaginatedResponse.js';
-import {
-  buildOcpiResponse,
-  OcpiResponseStatusCode,
-} from '../model/OcpiResponse.js';
+import { buildOcpiResponse, OcpiResponseStatusCode } from '../model/OcpiResponse.js';
 import { buildOcpiErrorResponse } from '../model/OcpiErrorResponse.js';
 import { OcpiHeaders } from '../model/OcpiHeaders.js';
 import { NotFoundException } from '../exception/NotFoundException.js';
@@ -42,17 +36,8 @@ import {
   GET_LOCATIONS_QUERY,
   OcpiGraphqlClient,
 } from '../graphql/index.js';
-import {
-  ConnectorMapper,
-  EvseMapper,
-  LocationMapper,
-} from '../mapper/index.js';
-import type {
-  ChargingStationDto,
-  ConnectorDto,
-  EvseDto,
-  LocationDto,
-} from '@citrineos/base';
+import { ConnectorMapper, EvseMapper, LocationMapper } from '../mapper/index.js';
+import type { ChargingStationDto, ConnectorDto, EvseDto, LocationDto } from '@citrineos/base';
 
 @Service()
 export class LocationsService {
@@ -81,10 +66,8 @@ export class LocationsService {
       },
     };
     const dateFilters: any = {};
-    if (paginatedParams?.dateFrom)
-      dateFilters._gte = paginatedParams.dateFrom.toISOString();
-    if (paginatedParams?.dateTo)
-      dateFilters._lte = paginatedParams?.dateTo.toISOString();
+    if (paginatedParams?.dateFrom) dateFilters._gte = paginatedParams.dateFrom.toISOString();
+    if (paginatedParams?.dateTo) dateFilters._lte = paginatedParams?.dateTo.toISOString();
     if (Object.keys(dateFilters).length > 0) {
       where.updatedAt = dateFilters;
     }
@@ -101,9 +84,7 @@ export class LocationsService {
 
     // Map GraphQL DTOs to OCPI DTOs
     const locations =
-      response.Locations.map((value) =>
-        LocationMapper.fromGraphql(value as LocationDto),
-      ) ?? [];
+      response.Locations.map((value) => LocationMapper.fromGraphql(value as LocationDto)) ?? [];
     const locationsTotal = locations.length;
 
     return buildOcpiPaginatedResponse(
@@ -130,9 +111,7 @@ export class LocationsService {
           `Multiple locations found for id ${locationId}. Returning the first one. All entries: ${JSON.stringify(response.Locations)}`,
         );
       }
-      const location = LocationMapper.fromGraphql(
-        response.Locations[0] as LocationDto,
-      );
+      const location = LocationMapper.fromGraphql(response.Locations[0] as LocationDto);
       return buildOcpiResponse(
         OcpiResponseStatusCode.GenericSuccessCode,
         location,
@@ -142,18 +121,11 @@ export class LocationsService {
         e instanceof NotFoundException
           ? OcpiResponseStatusCode.ClientUnknownLocation
           : OcpiResponseStatusCode.ClientGenericError;
-      return buildOcpiErrorResponse(
-        statusCode,
-        (e as Error).message,
-      ) as LocationResponse;
+      return buildOcpiErrorResponse(statusCode, (e as Error).message) as LocationResponse;
     }
   }
 
-  async getEvseById(
-    locationId: number,
-    stationId: string,
-    evseId: number,
-  ): Promise<EvseResponse> {
+  async getEvseById(locationId: number, stationId: string, evseId: number): Promise<EvseResponse> {
     this.logger.debug(
       `Getting EVSE ${evseId} from Charging Station ${stationId} in Location ${locationId}`,
     );
@@ -174,10 +146,7 @@ export class LocationsService {
         e instanceof NotFoundException
           ? OcpiResponseStatusCode.ClientUnknownLocation
           : OcpiResponseStatusCode.ClientGenericError;
-      return buildOcpiErrorResponse(
-        statusCode,
-        (e as Error).message,
-      ) as EvseResponse;
+      return buildOcpiErrorResponse(statusCode, (e as Error).message) as EvseResponse;
     }
   }
 
@@ -207,22 +176,15 @@ export class LocationsService {
         );
       }
       const connector = ConnectorMapper.fromGraphql(
-        response.Locations?.[0]?.chargingPool?.[0]?.evses?.[0]
-          ?.connectors?.[0] as ConnectorDto,
+        response.Locations?.[0]?.chargingPool?.[0]?.evses?.[0]?.connectors?.[0] as ConnectorDto,
       );
-      return buildOcpiResponse(
-        OcpiResponseStatusCode.GenericSuccessCode,
-        connector,
-      );
+      return buildOcpiResponse(OcpiResponseStatusCode.GenericSuccessCode, connector);
     } catch (e) {
       const statusCode =
         e instanceof NotFoundException
           ? OcpiResponseStatusCode.ClientUnknownLocation
           : OcpiResponseStatusCode.ClientGenericError;
-      return buildOcpiErrorResponse(
-        statusCode,
-        (e as Error).message,
-      ) as ConnectorResponse;
+      return buildOcpiErrorResponse(statusCode, (e as Error).message) as ConnectorResponse;
     }
   }
 }

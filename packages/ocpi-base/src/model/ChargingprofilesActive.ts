@@ -10,6 +10,4 @@ export const ChargingprofilesActiveSchema = z.object({
   charging_profile: ActiveChargingProfileSchema,
 });
 
-export type ChargingprofilesActive = z.infer<
-  typeof ChargingprofilesActiveSchema
->;
+export type ChargingprofilesActive = z.infer<typeof ChargingprofilesActiveSchema>;

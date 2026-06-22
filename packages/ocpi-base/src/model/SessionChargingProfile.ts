@@ -10,6 +10,4 @@ export const SessionChargingProfileSchema = z.object({
   chargingScheduleId: z.number(),
 });
 
-export type SessionChargingProfile = z.infer<
-  typeof SessionChargingProfileSchema
->;
+export type SessionChargingProfile = z.infer<typeof SessionChargingProfileSchema>;

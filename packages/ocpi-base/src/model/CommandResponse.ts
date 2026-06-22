@@ -22,8 +22,6 @@ export const CommandResponseSchemaName = 'CommandResponse';
 
 export type CommandResponse = z.infer<typeof CommandResponseSchema>;
 
-export const OcpiCommandResponseSchema = OcpiResponseSchema(
-  CommandResponseSchema,
-);
+export const OcpiCommandResponseSchema = OcpiResponseSchema(CommandResponseSchema);
 
 export type OcpiCommandResponse = z.infer<typeof OcpiCommandResponseSchema>;

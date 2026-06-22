@@ -3,10 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { EnumParam } from './EnumParam.js';
-import {
-  VersionNumber,
-  VersionNumberEnumName,
-} from '../../model/VersionNumber.js';
+import { VersionNumber, VersionNumberEnumName } from '../../model/VersionNumber.js';
 
 export const versionIdParam = 'versionId';
 
@@ -22,9 +19,5 @@ export const versionIdParam = 'versionId';
 export const VersionNumberParam =
   () => (object: NonNullable<unknown>, methodName: string, index: number) => {
     // Apply the @EnumParam() decorator
-    EnumParam(versionIdParam, VersionNumber, VersionNumberEnumName)(
-      object,
-      methodName,
-      index,
-    );
+    EnumParam(versionIdParam, VersionNumber, VersionNumberEnumName)(object, methodName, index);
   };

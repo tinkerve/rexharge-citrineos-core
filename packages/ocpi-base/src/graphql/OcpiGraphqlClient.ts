@@ -13,10 +13,7 @@ export class OcpiGraphqlClient {
     this.client = new GraphQLClient(endpoint, { headers });
   }
 
-  async request<T, V extends object | undefined>(
-    query: string,
-    variables?: V,
-  ): Promise<T> {
+  async request<T, V extends object | undefined>(query: string, variables?: V): Promise<T> {
     return this.client.request<T>(query, variables);
   }
 }

@@ -3,10 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { z } from 'zod';
-import {
-  DEFAULT_LIMIT,
-  DEFAULT_OFFSET,
-} from '../../model/PaginatedResponse.js';
+import { DEFAULT_LIMIT, DEFAULT_OFFSET } from '../../model/PaginatedResponse.js';
 import { OcpiParamsSchema } from '../util/OcpiParams.js';
 import { v4 as uuidv4 } from 'uuid';
 

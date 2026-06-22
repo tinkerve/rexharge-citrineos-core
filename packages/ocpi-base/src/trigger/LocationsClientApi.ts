@@ -3,15 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BaseClientApi } from './BaseClientApi.js';
-import type {
-  ConnectorDTO,
-  ConnectorResponse,
-} from '../model/DTO/ConnectorDTO.js';
+import type { ConnectorDTO, ConnectorResponse } from '../model/DTO/ConnectorDTO.js';
 import { ConnectorResponseSchema } from '../model/DTO/ConnectorDTO.js';
-import type {
-  LocationDTO,
-  LocationResponse,
-} from '../model/DTO/LocationDTO.js';
+import type { LocationDTO, LocationResponse } from '../model/DTO/LocationDTO.js';
 import { LocationResponseSchema } from '../model/DTO/LocationDTO.js';
 import type { OcpiEmptyResponse } from '../model/OcpiEmptyResponse.js';
 import { OcpiEmptyResponseSchema } from '../model/OcpiEmptyResponse.js';
@@ -20,11 +14,7 @@ import { EvseResponseSchema } from '../model/DTO/EvseDTO.js';
 import { Service } from 'typedi';
 import { ModuleId } from '../model/ModuleId.js';
 import { EndpointIdentifier } from '../model/EndpointIdentifier.js';
-import {
-  type Endpoint,
-  HttpMethod,
-  type PartnerProfile,
-} from '@citrineos/base';
+import { type Endpoint, HttpMethod, type PartnerProfile } from '@citrineos/base';
 
 @Service()
 export class LocationsClientApi extends BaseClientApi {
@@ -32,8 +22,7 @@ export class LocationsClientApi extends BaseClientApi {
 
   getUrl(partnerProfile: PartnerProfile): string {
     const url = partnerProfile.endpoints?.find(
-      (value: Endpoint) =>
-        value.identifier === EndpointIdentifier.LOCATIONS_RECEIVER,
+      (value: Endpoint) => value.identifier === EndpointIdentifier.LOCATIONS_RECEIVER,
     )?.url;
     if (!url) {
       throw new Error(

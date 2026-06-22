@@ -2,10 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-  GetTenantByIdQueryResult,
-  GetTenantByIdQueryVariables,
-} from '../graphql/index.js';
+import type { GetTenantByIdQueryResult, GetTenantByIdQueryVariables } from '../graphql/index.js';
 import { GET_TENANT_BY_ID, OcpiGraphqlClient } from '../graphql/index.js';
 import { VersionNumber } from '../model/VersionNumber.js';
 import { Service } from 'typedi';
@@ -26,9 +23,7 @@ export class VersionService {
       GetTenantByIdQueryVariables
     >(GET_TENANT_BY_ID, { id: tenantId });
     const tenant = response.Tenants[0] as TenantDto;
-    const versions: Version[] = Array.from(
-      tenant.serverProfileOCPI?.versionDetails || [],
-    );
+    const versions: Version[] = Array.from(tenant.serverProfileOCPI?.versionDetails || []);
     return {
       data: versions.map((version: Version) => ({
         version: RegistrationMapper.toVersionNumber(version.version),
@@ -50,9 +45,7 @@ export class VersionService {
     const tenant = response.Tenants[0] as TenantDto;
     const tenantVersionEndpoints: Endpoint[] | undefined =
       tenant.serverProfileOCPI?.versionEndpoints &&
-      tenant.serverProfileOCPI.versionEndpoints[
-        RegistrationMapper.toOCPIVersionNumber(version)
-      ];
+      tenant.serverProfileOCPI.versionEndpoints[RegistrationMapper.toOCPIVersionNumber(version)];
     if (!tenantVersionEndpoints) {
       throw new NotFoundError('Version not found');
     }
@@ -61,8 +54,7 @@ export class VersionService {
         version: version,
         endpoints:
           tenantVersionEndpoints.map((value: Endpoint) => {
-            const { identifier, role } =
-              RegistrationMapper.toModuleAndRole(value);
+            const { identifier, role } = RegistrationMapper.toModuleAndRole(value);
             return {
               identifier,
               role,

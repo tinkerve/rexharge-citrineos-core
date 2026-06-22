@@ -47,20 +47,12 @@ export class CommandsService {
 
   public async postCommand(
     commandType: CommandType,
-    payload:
-      | CancelReservation
-      | ReserveNow
-      | StartSession
-      | StopSession
-      | UnlockConnector,
+    payload: CancelReservation | ReserveNow | StartSession | StopSession | UnlockConnector,
     tenantPartner: TenantPartnerDto,
   ): Promise<OcpiCommandResponse> {
     switch (commandType) {
       case CommandType.CANCEL_RESERVATION:
-        return this.handleCancelReservation(
-          payload as CancelReservation,
-          tenantPartner,
-        );
+        return this.handleCancelReservation(payload as CancelReservation, tenantPartner);
       case CommandType.RESERVE_NOW:
         return this.handleReserveNow(payload as ReserveNow, tenantPartner);
       case CommandType.START_SESSION:
@@ -68,10 +60,7 @@ export class CommandsService {
       case CommandType.STOP_SESSION:
         return this.handleStopSession(payload as StopSession, tenantPartner);
       case CommandType.UNLOCK_CONNECTOR:
-        return this.handleUnlockConnector(
-          payload as UnlockConnector,
-          tenantPartner,
-        );
+        return this.handleUnlockConnector(payload as UnlockConnector, tenantPartner);
       default:
         return ResponseGenerator.buildGenericClientErrorResponse(
           {
@@ -153,8 +142,7 @@ export class CommandsService {
         'Unknown charging station',
       );
     }
-    const chargingStation = chargingStationResponse
-      .ChargingStations[0] as ChargingStationDto;
+    const chargingStation = chargingStationResponse.ChargingStations[0] as ChargingStationDto;
     if (!chargingStation.isOnline) {
       this.logger.error('Charging station is offline', {
         stationId: chargingStation.id,
@@ -220,10 +208,8 @@ export class CommandsService {
     }
     const transaction = transactionResponse.Transactions[0];
     if (
-      tenantPartner.countryCode !==
-        transaction.authorization!.tenantPartner!.countryCode! ||
-      tenantPartner.partyId !==
-        transaction.authorization!.tenantPartner!.partyId!
+      tenantPartner.countryCode !== transaction.authorization!.tenantPartner!.countryCode! ||
+      tenantPartner.partyId !== transaction.authorization!.tenantPartner!.partyId!
     ) {
       this.logger.error('Token information does not match credentials');
       return ResponseGenerator.buildInvalidOrMissingParametersResponse(
@@ -296,8 +282,7 @@ export class CommandsService {
         'Unknown charging station',
       );
     }
-    const chargingStation = chargingStationResponse
-      .ChargingStations[0] as ChargingStationDto;
+    const chargingStation = chargingStationResponse.ChargingStations[0] as ChargingStationDto;
     if (!chargingStation.isOnline) {
       this.logger.error('Charging station is offline', {
         stationId: chargingStation.id,

@@ -14,17 +14,9 @@ export const BodyWithExample = (
   options?: BodyWithSchemaOptions,
 ) =>
   function (object: NonNullable<unknown>, methodName: string, index: number) {
-    const example = generateMockForSchema(schema, name).then(
-      undefined,
-      () => null,
-    );
+    const example = generateMockForSchema(schema, name).then(undefined, () => null);
     BodyWithSchema(schema, name, options)(object, methodName, index);
 
     // Add custom metadata for additional use cases
-    Reflect.defineMetadata(
-      BODY_WITH_EXAMPLE_PARAM,
-      example,
-      object,
-      methodName,
-    );
+    Reflect.defineMetadata(BODY_WITH_EXAMPLE_PARAM, example, object, methodName);
   };

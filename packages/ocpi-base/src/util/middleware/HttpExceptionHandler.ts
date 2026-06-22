@@ -27,10 +27,7 @@ class HttpExceptionBody {
 
 @Service()
 export class HttpExceptionHandler implements KoaMiddlewareInterface {
-  public async use(
-    context: Context,
-    next: (err?: any) => Promise<any>,
-  ): Promise<any> {
+  public async use(context: Context, next: (err?: any) => Promise<any>): Promise<any> {
     try {
       await next();
     } catch (err) {
@@ -41,61 +38,43 @@ export class HttpExceptionHandler implements KoaMiddlewareInterface {
           case UnauthorizedError.name:
           case UnauthorizedException.name:
             context.status = HttpStatus.UNAUTHORIZED;
-            context.body = JSON.stringify(
-              new HttpExceptionBody('Not Authorized'),
-            );
+            context.body = JSON.stringify(new HttpExceptionBody('Not Authorized'));
             break;
           case NotFoundError.name:
           case NotFoundException.name:
             context.status = HttpStatus.NOT_FOUND;
-            context.body = JSON.stringify(
-              new HttpExceptionBody((err as any).message),
-            );
+            context.body = JSON.stringify(new HttpExceptionBody((err as any).message));
             break;
           case MissingParamException.name:
             context.status = HttpStatus.BAD_REQUEST;
-            context.body = JSON.stringify(
-              new HttpExceptionBody((err as any).message),
-            );
+            context.body = JSON.stringify(new HttpExceptionBody((err as any).message));
             break;
           case AlreadyRegisteredException.name:
             context.status = HttpStatus.METHOD_NOT_ALLOWED;
-            context.body = JSON.stringify(
-              new HttpExceptionBody('Client already registered'),
-            );
+            context.body = JSON.stringify(new HttpExceptionBody('Client already registered'));
             break;
           case NotRegisteredException.name:
             context.status = HttpStatus.METHOD_NOT_ALLOWED;
-            context.body = JSON.stringify(
-              new HttpExceptionBody('Client not registered'),
-            );
+            context.body = JSON.stringify(new HttpExceptionBody('Client not registered'));
             break;
           case UnknownTokenException.name:
             context.status = HttpStatus.NOT_FOUND;
-            context.body = JSON.stringify(
-              new HttpExceptionBody((err as any).message),
-            );
+            context.body = JSON.stringify(new HttpExceptionBody((err as any).message));
             break;
           case WrongClientAccessException.name:
             context.status = HttpStatus.NOT_FOUND;
             break;
           case InvalidParamException.name:
             context.status = HttpStatus.BAD_REQUEST;
-            context.body = JSON.stringify(
-              new HttpExceptionBody((err as any).message),
-            );
+            context.body = JSON.stringify(new HttpExceptionBody((err as any).message));
             break;
           case UnsuccessfulRequestException.name:
             context.status = HttpStatus.BAD_REQUEST;
-            context.body = JSON.stringify(
-              new HttpExceptionBody((err as any).message),
-            );
+            context.body = JSON.stringify(new HttpExceptionBody((err as any).message));
             break;
           case 'SequelizeUniqueConstraintError':
             context.status = HttpStatus.BAD_REQUEST;
-            context.body = JSON.stringify(
-              new HttpExceptionBody((err as any).message),
-            );
+            context.body = JSON.stringify(new HttpExceptionBody((err as any).message));
             break;
           default:
             context.status = HttpStatus.INTERNAL_SERVER_ERROR;

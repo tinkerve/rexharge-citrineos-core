@@ -35,10 +35,7 @@ export const nestedClassToJsonSchema = (
 
 function targetToSchema(type: any, options: IOptions): any | void {
   if (typeof type === 'function') {
-    if (
-      type.prototype === String.prototype ||
-      type.prototype === Symbol.prototype
-    ) {
+    if (type.prototype === String.prototype || type.prototype === Symbol.prototype) {
       return { type: 'string' };
     } else if (type.prototype === Number.prototype) {
       return { type: 'number' };
@@ -61,9 +58,7 @@ const getIsArray = (meta: ValidationMetadata): boolean => {
   );
 
   // Find validations for the specific property
-  const propertyValidations = validations.filter(
-    (v) => v.propertyName === meta.propertyName,
-  );
+  const propertyValidations = validations.filter((v) => v.propertyName === meta.propertyName);
 
   // Check if any of these validations are 'isArray'
   return propertyValidations.some((v) => v.name === 'isArray');
@@ -119,10 +114,7 @@ const additionalConverters: ISchemaConverters = {
     if (isOptional) {
       if (schema && schema.$ref) {
         if (!SchemaStore.getSchema(childType.name)) {
-          SchemaStore.addSchema(
-            childType.name,
-            nestedClassToJsonSchema(childType, options),
-          );
+          SchemaStore.addSchema(childType.name, nestedClassToJsonSchema(childType, options));
         }
         return {
           type: 'array',
@@ -139,10 +131,7 @@ const additionalConverters: ISchemaConverters = {
     } else {
       if (schema && schema.$ref) {
         if (!SchemaStore.getSchema(childType.name)) {
-          SchemaStore.addSchema(
-            childType.name,
-            nestedClassToJsonSchema(childType, options),
-          );
+          SchemaStore.addSchema(childType.name, nestedClassToJsonSchema(childType, options));
         }
         return {
           type: 'array',
@@ -163,16 +152,10 @@ const additionalConverters: ISchemaConverters = {
    * @param meta
    * @param options
    */
-  [ValidationTypes.NESTED_VALIDATION]: (
-    meta: ValidationMetadata,
-    options: IOptions,
-  ) => {
+  [ValidationTypes.NESTED_VALIDATION]: (meta: ValidationMetadata, options: IOptions) => {
     if (typeof meta.target === 'function') {
       const typeMeta = options.classTransformerMetadataStorage
-        ? options.classTransformerMetadataStorage.findTypeMetadata(
-            meta.target,
-            meta.propertyName,
-          )
+        ? options.classTransformerMetadataStorage.findTypeMetadata(meta.target, meta.propertyName)
         : null;
 
       const childType = typeMeta
@@ -183,11 +166,7 @@ const additionalConverters: ISchemaConverters = {
 
       const name = meta.target.name;
 
-      if (
-        !!schema &&
-        !!schema.$ref &&
-        schema.$ref === '#/components/schemas/Object'
-      ) {
+      if (!!schema && !!schema.$ref && schema.$ref === '#/components/schemas/Object') {
         schema.$ref = `${refPointerPrefix}${name}`;
       }
 
@@ -199,10 +178,7 @@ const additionalConverters: ISchemaConverters = {
       const isArray = getIsArray(meta);
 
       if (schema && schema.$ref && !SchemaStore.getSchema(childType.name)) {
-        SchemaStore.addSchema(
-          childType.name,
-          nestedClassToJsonSchema(childType, options),
-        );
+        SchemaStore.addSchema(childType.name, nestedClassToJsonSchema(childType, options));
       }
 
       if (isOptional && isArray) {

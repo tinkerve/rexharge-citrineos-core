@@ -11,8 +11,5 @@ export const UnregisterClientRequestDTOSchema = z.object({
   clientCountryCode: z.string().length(2),
 });
 
-export type UnregisterClientRequestDTO = z.infer<
-  typeof UnregisterClientRequestDTOSchema
->;
-export const UnregisterClientRequestDTOSchemaName =
-  'UnregisterClientRequestDTO';
+export type UnregisterClientRequestDTO = z.infer<typeof UnregisterClientRequestDTOSchema>;
+export const UnregisterClientRequestDTOSchemaName = 'UnregisterClientRequestDTO';

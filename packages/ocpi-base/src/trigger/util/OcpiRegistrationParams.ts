@@ -10,15 +10,10 @@ export const OcpiRegistrationParamsSchema = z.object({
   authorization: z.string(),
   xRequestId: z.string().optional(),
   xCorrelationId: z.string().optional(),
-  version: z
-    .nativeEnum(VersionNumber)
-    .optional()
-    .default(VersionNumber.TWO_DOT_TWO_DOT_ONE),
+  version: z.nativeEnum(VersionNumber).optional().default(VersionNumber.TWO_DOT_TWO_DOT_ONE),
 });
 
-export type OcpiRegistrationParams = z.infer<
-  typeof OcpiRegistrationParamsSchema
->;
+export type OcpiRegistrationParams = z.infer<typeof OcpiRegistrationParamsSchema>;
 
 export const buildOcpiRegistrationParams = (
   version: VersionNumber,

@@ -2,13 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  IsDateString,
-  IsNotEmpty,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsDateString, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class Hubclientinfo {

@@ -3,11 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { ChargingStationDto, TenantPartnerDto } from '@citrineos/base';
-import {
-  ChargingStationSequenceTypeEnum,
-  OCPP2_0_1,
-  OCPPVersion,
-} from '@citrineos/base';
+import { ChargingStationSequenceTypeEnum, OCPP2_0_1, OCPPVersion } from '@citrineos/base';
 import { OCPP2_0_1_Mapper } from '@citrineos/core';
 import type { IRequestOptions } from 'typed-rest-client';
 import type { IRequestQueryParams } from 'typed-rest-client/Interfaces.js';
@@ -59,41 +55,35 @@ export class OCPP2_0_1_CommandHandler extends OCPPCommandHandler {
       stationId: chargingStation.id!,
       type: ChargingStationSequenceTypeEnum.remoteStartId,
     });
-    let remoteStartId =
-      sequenceResponse.ChargingStationSequences[0]?.value || 0;
+    let remoteStartId = sequenceResponse.ChargingStationSequences[0]?.value || 0;
     remoteStartId++;
     this.ocpiGraphqlClient
-      .request<UpsertSequenceMutationResult, UpsertSequenceMutationVariables>(
-        UPSERT_SEQUENCE,
-        {
-          tenantId: tenantPartner.tenant!.id!,
-          stationId: chargingStation.id!,
-          ocppConnectionName: chargingStation.ocppConnectionName,
-          type: ChargingStationSequenceTypeEnum.remoteStartId,
-          value: remoteStartId,
-          createdAt: new Date().toISOString(),
-        },
-      )
+      .request<UpsertSequenceMutationResult, UpsertSequenceMutationVariables>(UPSERT_SEQUENCE, {
+        tenantId: tenantPartner.tenant!.id!,
+        stationId: chargingStation.id!,
+        ocppConnectionName: chargingStation.ocppConnectionName,
+        type: ChargingStationSequenceTypeEnum.remoteStartId,
+        value: remoteStartId,
+        createdAt: new Date().toISOString(),
+      })
       .catch((error) => {
-        this.logger.error(
-          'Failed to update remoteStartId sequence for charging station',
-          { error, tenantPartner, chargingStation },
-        );
+        this.logger.error('Failed to update remoteStartId sequence for charging station', {
+          error,
+          tenantPartner,
+          chargingStation,
+        });
       });
 
-    const requestStartTransactionRequest: OCPP2_0_1.RequestStartTransactionRequest =
-      {
-        remoteStartId,
-        idToken: {
-          idToken: startSession.token.uid,
-          type: OCPP2_0_1_Mapper.AuthorizationMapper.toIdTokenEnumType(
-            TokensMapper.mapOcpiTokenTypeToOcppIdTokenType(
-              startSession.token.type,
-            ),
-          ),
-        },
-        evseId: Number(EXTRACT_EVSE_ID(startSession.evse_uid!)),
-      };
+    const requestStartTransactionRequest: OCPP2_0_1.RequestStartTransactionRequest = {
+      remoteStartId,
+      idToken: {
+        idToken: startSession.token.uid,
+        type: OCPP2_0_1_Mapper.AuthorizationMapper.toIdTokenEnumType(
+          TokensMapper.mapOcpiTokenTypeToOcppIdTokenType(startSession.token.type),
+        ),
+      },
+      evseId: Number(EXTRACT_EVSE_ID(startSession.evse_uid!)),
+    };
     await this.sendOCPPMessage(
       this.config.commands.ocpp2_0_1.requestStartTransactionRequestUrl,
       requestStartTransactionRequest,
@@ -123,10 +113,9 @@ export class OCPP2_0_1_CommandHandler extends OCPPCommandHandler {
       `/2.2.1/commands/callback/${tenantPartner.id}/${this.supportedVersion}/${CommandType.STOP_SESSION}/${commandId}`;
     options.queryParameters = queryParameters;
 
-    const requestStopTransactionRequest: OCPP2_0_1.RequestStopTransactionRequest =
-      {
-        transactionId: stopSession.session_id,
-      };
+    const requestStopTransactionRequest: OCPP2_0_1.RequestStopTransactionRequest = {
+      transactionId: stopSession.session_id,
+    };
     await this.sendOCPPMessage(
       this.config.commands.ocpp2_0_1.requestStopTransactionRequestUrl,
       requestStopTransactionRequest,
@@ -159,9 +148,7 @@ export class OCPP2_0_1_CommandHandler extends OCPPCommandHandler {
     const evseTypeId = Array.from(chargingStation.evses || []).find(
       (evse) => evse.id === Number(EXTRACT_EVSE_ID(unlockConnector.evse_uid)),
     )?.evseTypeId;
-    const evseTypeConnectorId = Array.from(
-      chargingStation.connectors || [],
-    ).find(
+    const evseTypeConnectorId = Array.from(chargingStation.connectors || []).find(
       (connector) => connector.id === Number(unlockConnector.connector_id),
     )?.evseTypeConnectorId;
     if (evseTypeId === undefined || evseTypeConnectorId === undefined) {
@@ -227,12 +214,7 @@ export class OCPP2_0_1_CommandHandler extends OCPPCommandHandler {
           commandId,
         );
       case CommandType.UNLOCK_CONNECTOR:
-        return this.handleUnlockConnectorResponse(
-          tenantPartner,
-          responseUrl,
-          response,
-          commandId,
-        );
+        return this.handleUnlockConnectorResponse(tenantPartner, responseUrl, response, commandId);
       default:
         throw new Error(`Unknown command type: ${command}`);
     }
@@ -244,12 +226,11 @@ export class OCPP2_0_1_CommandHandler extends OCPPCommandHandler {
     response: any,
     commandId: string,
   ): Promise<void> {
-    const validatedResponse =
-      this.validate<OCPP2_0_1.RequestStartTransactionResponse>(
-        this.supportedVersion,
-        OCPP2_0_1.RequestStartTransactionResponseSchema,
-        response,
-      );
+    const validatedResponse = this.validate<OCPP2_0_1.RequestStartTransactionResponse>(
+      this.supportedVersion,
+      OCPP2_0_1.RequestStartTransactionResponseSchema,
+      response,
+    );
 
     switch (validatedResponse.status) {
       case OCPP2_0_1.RequestStartStopStatusEnumType.Accepted:
@@ -300,12 +281,11 @@ export class OCPP2_0_1_CommandHandler extends OCPPCommandHandler {
     response: any,
     commandId: string,
   ): Promise<void> {
-    const validatedResponse =
-      this.validate<OCPP2_0_1.RequestStopTransactionResponse>(
-        this.supportedVersion,
-        OCPP2_0_1.RequestStopTransactionResponseSchema,
-        response,
-      );
+    const validatedResponse = this.validate<OCPP2_0_1.RequestStopTransactionResponse>(
+      this.supportedVersion,
+      OCPP2_0_1.RequestStopTransactionResponseSchema,
+      response,
+    );
 
     switch (validatedResponse.status) {
       case OCPP2_0_1.RequestStartStopStatusEnumType.Accepted:

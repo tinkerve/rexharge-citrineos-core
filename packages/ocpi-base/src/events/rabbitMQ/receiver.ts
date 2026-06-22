@@ -7,11 +7,7 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { RetryMessageError } from '@citrineos/base';
 import type { IDtoEventReceiver, IDtoModule } from '../index.js';
-import {
-  AbstractDtoEventReceiver,
-  DtoEventObjectType,
-  DtoEventType,
-} from '../index.js';
+import { AbstractDtoEventReceiver, DtoEventObjectType, DtoEventType } from '../index.js';
 import { Inject } from 'typedi';
 import type { OcpiConfig } from '../../config/ocpi.types.js';
 import { OcpiConfigToken } from '../../config/ocpi.types.js';
@@ -19,10 +15,7 @@ import { OcpiConfigToken } from '../../config/ocpi.types.js';
 /**
  * Implementation of a {@link IEventHandler} using RabbitMQ as the underlying transport.
  */
-export class RabbitMqDtoReceiver
-  extends AbstractDtoEventReceiver
-  implements IDtoEventReceiver
-{
+export class RabbitMqDtoReceiver extends AbstractDtoEventReceiver implements IDtoEventReceiver {
   /**
    * Constants
    */
@@ -47,9 +40,7 @@ export class RabbitMqDtoReceiver
 
   async init(): Promise<void> {
     this._abortReconnectController = new AbortController();
-    this._channel = await this._connectWithRetry(
-      this._abortReconnectController.signal,
-    );
+    this._channel = await this._connectWithRetry(this._abortReconnectController.signal);
   }
 
   /**
@@ -87,9 +78,7 @@ export class RabbitMqDtoReceiver
       exclusive: false,
     });
 
-    this._logger.debug(
-      `Bind ${queueName} on ${exchange} with filter ${JSON.stringify(filter)}.`,
-    );
+    this._logger.debug(`Bind ${queueName} on ${exchange} with filter ${JSON.stringify(filter)}.`);
     await channel.bindQueue(queueName, exchange, '', filter);
 
     // Start consuming messages
@@ -114,9 +103,7 @@ export class RabbitMqDtoReceiver
    * @param {AbortSignal} [abortSignal] - Optional abort signal to stop retrying.
    * @return {Promise<amqplib.Channel>} A promise that resolves to the AMQP channel.
    */
-  protected async _connectWithRetry(
-    abortSignal?: AbortSignal,
-  ): Promise<amqplib.Channel> {
+  protected async _connectWithRetry(abortSignal?: AbortSignal): Promise<amqplib.Channel> {
     let reconnectAttempts = 0;
     const url = this._config.messageBroker?.amqp?.url;
     if (!url) {
@@ -139,9 +126,7 @@ export class RabbitMqDtoReceiver
           `RabbitMQ reconnect attempt ${reconnectAttempts} failed (context: _connectWithRetry)`,
           err,
         );
-        await new Promise((res) =>
-          setTimeout(res, RabbitMqDtoReceiver.RECONNECT_DELAY),
-        );
+        await new Promise((res) => setTimeout(res, RabbitMqDtoReceiver.RECONNECT_DELAY));
       }
     }
     this._logger.warn('RabbitMQ reconnect aborted by signal.');
@@ -172,9 +157,7 @@ export class RabbitMqDtoReceiver
    */
   private async _handleDisconnect() {
     if (this._reconnecting) {
-      this._logger.warn(
-        'RabbitMQ reconnect already in progress, skipping duplicate reconnect.',
-      );
+      this._logger.warn('RabbitMQ reconnect already in progress, skipping duplicate reconnect.');
       return;
     }
     this._reconnecting = true;
@@ -185,15 +168,10 @@ export class RabbitMqDtoReceiver
     this._channel = undefined;
     this._connection = undefined;
     try {
-      this._channel = await this._connectWithRetry(
-        this._abortReconnectController.signal,
-      );
+      this._channel = await this._connectWithRetry(this._abortReconnectController.signal);
       this._logger.info('RabbitMQ reconnected successfully.');
     } catch (err) {
-      this._logger.error(
-        'Failed to reconnect to RabbitMQ (context: _handleDisconnect)',
-        err,
-      );
+      this._logger.error('Failed to reconnect to RabbitMQ (context: _handleDisconnect)', err);
     } finally {
       this._reconnecting = false;
     }

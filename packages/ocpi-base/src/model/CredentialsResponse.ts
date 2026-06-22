@@ -6,8 +6,7 @@ import { z } from 'zod';
 import { CredentialsDTOSchema } from './DTO/CredentialsDTO.js';
 import { OcpiResponseSchema, OcpiResponseStatusCode } from './OcpiResponse.js';
 
-export const CredentialsResponseSchema =
-  OcpiResponseSchema(CredentialsDTOSchema);
+export const CredentialsResponseSchema = OcpiResponseSchema(CredentialsDTOSchema);
 export const CredentialsResponseSchemaName = 'CredentialsResponse';
 
 export type CredentialsResponse = z.infer<typeof CredentialsResponseSchema>;
