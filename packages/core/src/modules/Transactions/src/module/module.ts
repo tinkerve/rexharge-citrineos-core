@@ -890,7 +890,7 @@ export class TransactionsModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('StatusNotification received:', message, props);
 
-    this._statusNotificationService
+    await this._statusNotificationService
       .processStatusNotification(
         message.context.tenantId,
         message.context.ocppConnectionName,
