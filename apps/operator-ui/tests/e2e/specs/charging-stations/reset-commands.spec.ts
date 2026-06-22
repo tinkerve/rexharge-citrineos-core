@@ -3,37 +3,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { test } from '../../fixtures';
-import { awaitEverestReboot } from '../../fixtures/everest';
 import { ChargingStationDetailPage } from '../../pages/charging-stations/detail.page';
 import { ModalHarness } from '../../pages/components/modal.po';
 
 test.use({ storageState: 'playwright/.auth/admin.json' });
 
-// A Reset reboots the EVerest manager container (Immediate always; OnIdle once
-// the station settles), dropping cp001's OCPP link for ~1 minute. Previously the
-// reboot drained implicitly in the NEXT test's everestStation fixture setup, so
-// a slow recovery surfaced as that test failing in its guard ("did not return
-// online within 150000ms") — non-determinism attributed to the wrong test. We
-// instead drain the reboot in an afterEach, inside the reset test that caused it
-// (each reset test has the everest-serial 180s budget and only ~3s of real
-// work, so there is ample headroom). The next test's guard then returns
-// immediately and the ordering race is gone.
-//
-// The drain MUST observe the reboot's full offline→online cycle, not merely
-// "is the station online now". The Reset acks over OCPP — surfacing the toast
-// submitAndWaitForToast awaits — BEFORE the manager severs cp001's link, so at
-// afterEach time the station is still flagged online. A bare online check would
-// short-circuit on that pre-reboot state and hand the reconnect race straight to
-// the next test (the E2E-071 flake: a first attempt that hung ~2.5min, green
-// only on retry). awaitEverestReboot waits for the link to actually drop, then
-// for it to come back, and is a no-op when no reboot took hold (an OnIdle that
-// found the station busy), so a non-rebooting reset pays nothing.
+// A reboot-causing Reset (Immediate always; OnIdle on an idle station) reboots
+// the EVerest manager container, dropping cp001's OCPP link for >150s in CI. The
+// reset tests run LAST in the @everest lane, so the only test that can land on a
+// reconnecting station is the *next* reset test — its per-test everestStation
+// online guard waits for cp001 to come back (RECONNECT_TIMEOUT_MS). Because that
+// reconnect exceeds the default 180s test budget, this describe runs with an
+// extended timeout (so the guard can finish inside one attempt) plus retries as
+// a backstop. The contract under test is that the Reset is ACKnowledged (the
+// success toast); the reboot is a side effect we simply let settle.
 test.describe('charging-stations › Reset command @everest', () => {
-  test.describe.configure({ retries: 2 });
-
-  test.afterEach(async () => {
-    await awaitEverestReboot();
-  });
+  test.describe.configure({ retries: 2, timeout: 240_000 });
 
   test('E2E-070: Reset Hard happy path against EVerest station', async ({
     page,
