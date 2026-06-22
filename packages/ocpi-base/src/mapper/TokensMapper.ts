@@ -14,8 +14,8 @@ import {
   IdTokenEnum,
   OCPP2_0_1,
 } from '@citrineos/base';
-import { TokenType } from '../model/TokenType.js';
 import type { TokenDTO } from '../model/DTO/TokenDTO.js';
+import { TokenType } from '../model/TokenType.js';
 import { WhitelistType } from '../model/WhitelistType.js';
 
 export class TokensMapper {
@@ -177,14 +177,12 @@ export class TokensMapper {
     return contractId;
   }
 
-  public static getVisualNumber(authorization: AuthorizationDto): string {
+  public static getVisualNumber(authorization: AuthorizationDto): string | undefined {
     const visualNumber = authorization.additionalInfo!.find(
       (info) => info.type === 'visual_number',
     )?.additionalIdToken;
     if (!visualNumber) {
-      throw new Error(
-        'Visual number not found in authorization additional info, authorization is incomplete for OCPI token mapping. Please add additional info with type visual_number.',
-      );
+      return undefined;
     }
     return visualNumber;
   }

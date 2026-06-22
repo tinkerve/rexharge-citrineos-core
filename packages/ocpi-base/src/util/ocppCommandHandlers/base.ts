@@ -18,7 +18,7 @@ import { Inject, Token } from 'typedi';
 import { OcpiGraphqlClient } from '../../graphql/index.js';
 import { CommandsClientApi } from '../../trigger/CommandsClientApi.js';
 import qs from 'qs';
-import type { Ajv } from 'ajv';
+import { Ajv } from 'ajv';
 
 export const OCPP_COMMAND_HANDLER = new Token<OCPPCommandHandler>('OCPP_COMMAND_HANDLER');
 
