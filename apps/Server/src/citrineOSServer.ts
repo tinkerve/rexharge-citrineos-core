@@ -249,7 +249,7 @@ export class CitrineOSServer {
     await this._channelManager?.closeAll();
     await this._connectionManager?.close();
 
-    this._logger.info('Closing PostgreSQL connections...');
+    this._logger.info('Closing PostgresSQL connections...');
     await this._sequelizeInstance.connectionManager.close();
 
     this._logger.info('Shutdown complete');
@@ -447,7 +447,9 @@ export class CitrineOSServer {
     const webhookDispatcher = new WebhookDispatcher(
       this._repositoryStore.ocppMessageRepository,
       this._repositoryStore.subscriptionRepository,
+      this._cache,
       this._logger,
+      this._config,
     );
 
     const routerSender = this._createSender();
