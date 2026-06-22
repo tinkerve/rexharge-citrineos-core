@@ -4,7 +4,6 @@
 import type { AuthenticationOptions } from '@citrineos/base';
 import { OCPP2_0_1 } from '@citrineos/base';
 import type { IDeviceModelRepository } from '@dal/interfaces/repositories.js';
-import { CryptoUtils } from '@dal/util/CryptoUtils.js';
 import { IncomingMessage } from 'http';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -60,9 +59,9 @@ export class BasicAuthenticationFilter extends AuthenticatorFilter {
       })
       .then((r) => {
         if (r && r[0]) {
-          const hashedPassword = r[0].value;
-          if (hashedPassword) {
-            return CryptoUtils.isPasswordMatch(hashedPassword, password);
+          const storedPassword = r[0].value;
+          if (storedPassword) {
+            return storedPassword === password;
           }
         }
         this._logger.warn('Has no password', username);

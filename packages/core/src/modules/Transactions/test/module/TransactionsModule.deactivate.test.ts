@@ -122,6 +122,7 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
         totalKwh: null,
       }),
       createTransactionByStartTransaction: vi.fn().mockResolvedValue({ transactionId: '100' }),
+      readTransactionByStationIdAndTransactionId: vi.fn().mockResolvedValue(null),
     };
 
     locationRepository = {

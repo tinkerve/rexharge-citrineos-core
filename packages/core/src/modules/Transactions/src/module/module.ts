@@ -118,6 +118,9 @@ export class TransactionsModule extends AbstractModule {
    * @param {Logger<ILogObj>} [logger] - The `logger` parameter is an optional parameter that represents an instance of {@link Logger<ILogObj>}.
    * It is used to propagate system-wide logger settings and will serve as the parent logger for any sub-component logging. If no `logger` is provided, a default {@link Logger<ILogObj>} instance is created and used.
    *
+   * @param {OCPPValidator}[ocppValidator] - An optional parameter that represents an instance of {@link OCPPValidator} used to validate and sanitize incoming OCPP request and response payloads against
+   * the schema. If no `ocppValidator` is provided, a default {@link OCPPValidator} instance is created and used.
+   *
    * @param {ITransactionEventRepository} [transactionEventRepository] - An optional parameter of type {@link ITransactionEventRepository} which represents a repository for accessing and manipulating transaction event data.
    * If no `transactionEventRepository` is provided, a default {@link sequelize:transactionEventRepository} instance
    * is created and used.
@@ -164,6 +167,10 @@ export class TransactionsModule extends AbstractModule {
    *
    * @param {IAuthorizer} [realTimeAuthorizer] - An optional parameter of type {@link IAuthorizer} which represents
    * a real-time authorizer that can be used to authorize real-time requests.
+   *
+   * @param {IChargingProfileRepository} [chargingProfileRepository] - An optional parameter of type {@link IChargingProfileRepository}
+   * which represents a repository for accessing and manipulating charging profile Message data.
+   * If no `chargingProfileRepository` is provided, a default {@link sequelize:chargingProfileRepository} instance is created and used.
    */
   constructor(
     config: BootstrapConfig & SystemConfig,
@@ -297,7 +304,7 @@ export class TransactionsModule extends AbstractModule {
     let response: OCPP2_response_types.TransactionEventResponse | undefined = undefined;
     let transaction: Transaction | undefined = undefined;
     if (transactionEvent.idToken) {
-      if (message.protocol === OCPPVersion.OCPP2_1) {
+      if (isOcpp21) {
         response = await this._transactionService.authorizeOcpp21IdToken(
           tenantId,
           transactionEvent,
@@ -311,6 +318,22 @@ export class TransactionsModule extends AbstractModule {
         );
       }
     }
+    if (transactionEvent.eventType !== TransactionEventEnum.Started) {
+      const existingTransaction =
+        await this._transactionEventRepository.readTransactionByStationIdAndTransactionId(
+          tenantId,
+          ocppConnectionName,
+          transactionId,
+        );
+      if (existingTransaction && !existingTransaction.isActive) {
+        this._logger.warn(
+          `Received ${transactionEvent.eventType} for already-ended transaction ${transactionId} on ${ocppConnectionName}. Ignoring.`,
+        );
+        await this.sendCallResultWithMessage(message, response ?? {});
+        return;
+      }
+    }
+
     try {
       transaction =
         await this._transactionEventRepository.createOrUpdateTransactionByTransactionEventAndStationId(
@@ -890,7 +913,7 @@ export class TransactionsModule extends AbstractModule {
   ): Promise<void> {
     this._logger.debug('StatusNotification received:', message, props);
 
-    this._statusNotificationService
+    await this._statusNotificationService
       .processStatusNotification(
         message.context.tenantId,
         message.context.ocppConnectionName,
