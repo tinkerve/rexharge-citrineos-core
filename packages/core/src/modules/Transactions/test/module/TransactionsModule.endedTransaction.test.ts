@@ -23,7 +23,6 @@ import {
   EventGroup,
   MessageOrigin,
   MessageState,
-  OCPP1_6,
   OCPP2_0_1,
   OCPP_CallAction,
   OCPPVersion,
@@ -85,11 +84,7 @@ function makeConfig(): BootstrapConfig & SystemConfig {
   } as unknown as BootstrapConfig & SystemConfig;
 }
 
-function makeMessage<T extends OcppRequest>(
-  payload: T,
-  action: string,
-  protocol: OCPPVersion,
-): IMessage<T> {
+function makeMessage<T extends OcppRequest>(payload: T, action: string): IMessage<T> {
   return {
     context: {
       tenantId: DEFAULT_TENANT_ID,
@@ -102,38 +97,27 @@ function makeMessage<T extends OcppRequest>(
     eventGroup: EventGroup.Transactions,
     action,
     state: MessageState.Request,
-    protocol,
+    protocol: OCPPVersion.OCPP2_0_1,
   } as unknown as IMessage<T>;
 }
 
-describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTransaction deactivate triggers', () => {
+describe('TransactionsModule - ended transaction guard', () => {
   let module: TransactionsModule;
   let transactionEventRepository: Partial<ITransactionEventRepository>;
-  let locationRepository: Partial<ILocationRepository>;
-  let authorizationRepository: Partial<IAuthorizationRepository>;
-  let deactivateSpy: ReturnType<typeof vi.spyOn>;
+  let sendCallResultSpy: ReturnType<typeof vi.spyOn>;
+  let createOrUpdateSpy: ReturnType<typeof vi.fn>;
 
-  beforeEach(() => {
+  function setupModule(readTransactionResult: { isActive: boolean } | null) {
+    createOrUpdateSpy = vi.fn().mockResolvedValue({
+      id: 1,
+      transactionId: 'txn-001',
+      isActive: true,
+      totalKwh: null,
+    });
+
     transactionEventRepository = {
-      createOrUpdateTransactionByTransactionEventAndStationId: vi.fn().mockResolvedValue({
-        id: 1,
-        transactionId: 'txn-001',
-        isActive: true,
-        totalKwh: null,
-      }),
-      createTransactionByStartTransaction: vi.fn().mockResolvedValue({ transactionId: '100' }),
-      readTransactionByStationIdAndTransactionId: vi.fn().mockResolvedValue(null),
-    };
-
-    locationRepository = {
-      readConnectorByStationIdAndOcpp16ConnectorId: vi.fn().mockResolvedValue({
-        id: 1,
-        evse: { evseTypeId: 42 },
-      }),
-    };
-
-    authorizationRepository = {
-      readAllByQuerystring: vi.fn().mockResolvedValue([]),
+      createOrUpdateTransactionByTransactionEventAndStationId: createOrUpdateSpy,
+      readTransactionByStationIdAndTransactionId: vi.fn().mockResolvedValue(readTransactionResult),
     };
 
     const config = makeConfig();
@@ -156,28 +140,25 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
       set: vi.fn().mockResolvedValue(true),
     } as unknown as ICache;
 
-    const mockFileStorage = {} as IFileStorage;
-    const mockRealTimeAuthorizer = {
-      authorize: vi.fn().mockResolvedValue(AuthorizationStatusEnum.Accepted),
-    } as unknown as IAuthorizer;
-
     module = new TransactionsModule(
       config,
       mockCache,
-      mockFileStorage,
+      {} as IFileStorage,
       mockSender,
       mockHandler,
       logger,
       /* ocppValidator */ undefined,
       transactionEventRepository as ITransactionEventRepository,
-      authorizationRepository as IAuthorizationRepository,
+      /* authorizeRepository */ {
+        readAllByQuerystring: vi.fn().mockResolvedValue([]),
+      } as unknown as IAuthorizationRepository,
       /* deviceModelRepository */ {
         readAllByQuerystring: vi.fn().mockResolvedValue([]),
       } as unknown as IDeviceModelRepository,
       /* componentRepository */ {
         readAllByQuery: vi.fn().mockResolvedValue([]),
       } as unknown as CrudRepository<any>,
-      locationRepository as ILocationRepository,
+      /* locationRepository */ {} as ILocationRepository,
       /* tariffRepository */ {
         readAllByQuerystring: vi.fn().mockResolvedValue([]),
       } as unknown as ITariffRepository,
@@ -187,135 +168,153 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
       /* ocppMessageRepository */ {
         readOnlyOneByQuery: vi.fn().mockResolvedValue(null),
       } as unknown as IOCPPMessageRepository,
-      mockRealTimeAuthorizer,
+      /* realTimeAuthorizer */ {
+        authorize: vi.fn().mockResolvedValue(AuthorizationStatusEnum.Accepted),
+      } as unknown as IAuthorizer,
       /* authorizers */ undefined,
       /* chargingProfileRepository */ {
         readAllByQuery: vi.fn().mockResolvedValue([]),
       } as unknown as any,
     );
 
-    vi.spyOn(module, 'sendCallResultWithMessage').mockResolvedValue({ success: true });
+    sendCallResultSpy = vi
+      .spyOn(module, 'sendCallResultWithMessage')
+      .mockResolvedValue({ success: true });
+    vi.spyOn(module, 'sendCallErrorWithMessage').mockResolvedValue({ success: true });
+  }
 
-    deactivateSpy = vi
-      .spyOn((module as any)._transactionService, 'deactivateOtherActiveTransactionsAtEvse')
-      .mockResolvedValue(undefined);
+  describe('when transaction has already ended (isActive=false)', () => {
+    beforeEach(() => {
+      setupModule({ isActive: false });
+    });
+
+    it('should send an empty TransactionEventResponse and not update transaction for eventType=Updated', async () => {
+      const payload: OCPP2_0_1.TransactionEventRequest = {
+        eventType: OCPP2_0_1.TransactionEventEnumType.Updated,
+        timestamp: new Date().toISOString(),
+        triggerReason: OCPP2_0_1.TriggerReasonEnumType.MeterValuePeriodic,
+        seqNo: 5,
+        transactionInfo: { transactionId: 'txn-001' },
+      };
+
+      await (module as any)._handleTransactionEvent(
+        makeMessage(payload, OCPP_CallAction.TransactionEvent),
+      );
+
+      expect(sendCallResultSpy).toHaveBeenCalledOnce();
+      expect(sendCallResultSpy).toHaveBeenCalledWith(expect.anything(), {});
+      expect(createOrUpdateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should send an empty TransactionEventResponse and not update transaction for eventType=Ended', async () => {
+      const payload: OCPP2_0_1.TransactionEventRequest = {
+        eventType: OCPP2_0_1.TransactionEventEnumType.Ended,
+        timestamp: new Date().toISOString(),
+        triggerReason: OCPP2_0_1.TriggerReasonEnumType.EVDisconnected,
+        seqNo: 5,
+        transactionInfo: { transactionId: 'txn-001' },
+      };
+
+      await (module as any)._handleTransactionEvent(
+        makeMessage(payload, OCPP_CallAction.TransactionEvent),
+      );
+
+      expect(sendCallResultSpy).toHaveBeenCalledOnce();
+      expect(sendCallResultSpy).toHaveBeenCalledWith(expect.anything(), {});
+      expect(createOrUpdateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should forward the authorization response when idToken is present', async () => {
+      const authResponse = { idTokenInfo: { status: AuthorizationStatusEnum.Accepted } };
+      vi.spyOn((module as any)._transactionService, 'authorizeOcpp201IdToken').mockResolvedValue(
+        authResponse,
+      );
+
+      const payload: OCPP2_0_1.TransactionEventRequest = {
+        eventType: OCPP2_0_1.TransactionEventEnumType.Updated,
+        timestamp: new Date().toISOString(),
+        triggerReason: OCPP2_0_1.TriggerReasonEnumType.MeterValuePeriodic,
+        seqNo: 5,
+        transactionInfo: { transactionId: 'txn-001' },
+        idToken: { idToken: 'RFID-001', type: OCPP2_0_1.IdTokenEnumType.ISO14443 },
+      };
+
+      await (module as any)._handleTransactionEvent(
+        makeMessage(payload, OCPP_CallAction.TransactionEvent),
+      );
+
+      expect(sendCallResultSpy).toHaveBeenCalledOnce();
+      expect(sendCallResultSpy).toHaveBeenCalledWith(expect.anything(), authResponse);
+      expect(createOrUpdateSpy).not.toHaveBeenCalled();
+    });
   });
 
-  describe('_handleTransactionEvent (OCPP 2.0.1)', () => {
-    it('calls deactivateOtherActiveTransactionsAtEvse when eventType=Started and evse is defined', async () => {
-      const payload: OCPP2_0_1.TransactionEventRequest = {
-        eventType: OCPP2_0_1.TransactionEventEnumType.Started,
-        timestamp: new Date().toISOString(),
-        triggerReason: OCPP2_0_1.TriggerReasonEnumType.CablePluggedIn,
-        seqNo: 1,
-        transactionInfo: { transactionId: 'txn-start-evse' },
-        evse: { id: 1 },
-      };
-
-      await (module as any)._handleTransactionEvent(
-        makeMessage(payload, OCPP_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
-      );
-
-      expect(deactivateSpy).toHaveBeenCalledOnce();
-      expect(deactivateSpy).toHaveBeenCalledWith(
-        DEFAULT_TENANT_ID,
-        'txn-start-evse',
-        'station-001',
-        { id: 1 },
-      );
+  describe('when transaction is still active (isActive=true)', () => {
+    beforeEach(() => {
+      setupModule({ isActive: true });
     });
 
-    it('does NOT call deactivateOtherActiveTransactionsAtEvse when eventType=Started but evse is undefined', async () => {
-      const payload: OCPP2_0_1.TransactionEventRequest = {
-        eventType: OCPP2_0_1.TransactionEventEnumType.Started,
-        timestamp: new Date().toISOString(),
-        triggerReason: OCPP2_0_1.TriggerReasonEnumType.CablePluggedIn,
-        seqNo: 1,
-        transactionInfo: { transactionId: 'txn-start-noevse' },
-      };
-
-      await (module as any)._handleTransactionEvent(
-        makeMessage(payload, OCPP_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
-      );
-
-      expect(deactivateSpy).not.toHaveBeenCalled();
-    });
-
-    it('does NOT call deactivateOtherActiveTransactionsAtEvse when eventType=Updated', async () => {
+    it('should proceed normally and call createOrUpdate for eventType=Updated', async () => {
       const payload: OCPP2_0_1.TransactionEventRequest = {
         eventType: OCPP2_0_1.TransactionEventEnumType.Updated,
         timestamp: new Date().toISOString(),
         triggerReason: OCPP2_0_1.TriggerReasonEnumType.MeterValuePeriodic,
         seqNo: 2,
-        transactionInfo: { transactionId: 'txn-updated' },
+        transactionInfo: { transactionId: 'txn-001' },
       };
 
       await (module as any)._handleTransactionEvent(
-        makeMessage(payload, OCPP_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
+        makeMessage(payload, OCPP_CallAction.TransactionEvent),
       );
 
-      expect(deactivateSpy).not.toHaveBeenCalled();
-    });
-
-    it('does NOT call deactivateOtherActiveTransactionsAtEvse when eventType=Ended even with evse defined', async () => {
-      const payload: OCPP2_0_1.TransactionEventRequest = {
-        eventType: OCPP2_0_1.TransactionEventEnumType.Ended,
-        timestamp: new Date().toISOString(),
-        triggerReason: OCPP2_0_1.TriggerReasonEnumType.Authorized,
-        seqNo: 3,
-        transactionInfo: { transactionId: 'txn-ended' },
-        evse: { id: 1 },
-      };
-
-      await (module as any)._handleTransactionEvent(
-        makeMessage(payload, OCPP_CallAction.TransactionEvent, OCPPVersion.OCPP2_0_1),
-      );
-
-      expect(deactivateSpy).not.toHaveBeenCalled();
+      expect(createOrUpdateSpy).toHaveBeenCalledOnce();
     });
   });
 
-  describe('_handleOcpp16StartTransaction (OCPP 1.6)', () => {
-    it('calls deactivateOtherActiveTransactionsAtEvse when connector is found', async () => {
-      const payload: OCPP1_6.StartTransactionRequest = {
-        connectorId: 1,
-        idTag: 'TAG001',
-        meterStart: 0,
-        timestamp: new Date().toISOString(),
-      };
-
-      await (module as any)._handleOcpp16StartTransaction(
-        makeMessage(payload, OCPP_CallAction.StartTransaction, OCPPVersion.OCPP1_6),
-      );
-
-      expect(deactivateSpy).toHaveBeenCalledOnce();
-      expect(deactivateSpy).toHaveBeenCalledWith(
-        DEFAULT_TENANT_ID,
-        expect.any(String),
-        'station-001',
-        1,
-      );
+  describe('when transaction is not found', () => {
+    beforeEach(() => {
+      setupModule(null);
     });
 
-    it('throws and does NOT call deactivateOtherActiveTransactionsAtEvse when connector is not found', async () => {
-      (
-        locationRepository.readConnectorByStationIdAndOcpp16ConnectorId as ReturnType<typeof vi.fn>
-      ).mockResolvedValue(null);
-
-      const payload: OCPP1_6.StartTransactionRequest = {
-        connectorId: 99,
-        idTag: 'TAG001',
-        meterStart: 0,
+    it('should proceed normally and call createOrUpdate for eventType=Updated', async () => {
+      const payload: OCPP2_0_1.TransactionEventRequest = {
+        eventType: OCPP2_0_1.TransactionEventEnumType.Updated,
         timestamp: new Date().toISOString(),
+        triggerReason: OCPP2_0_1.TriggerReasonEnumType.MeterValuePeriodic,
+        seqNo: 2,
+        transactionInfo: { transactionId: 'txn-unknown' },
       };
 
-      await expect(
-        (module as any)._handleOcpp16StartTransaction(
-          makeMessage(payload, OCPP_CallAction.StartTransaction, OCPPVersion.OCPP1_6),
-        ),
-      ).rejects.toThrow('Unable to find connector 99');
+      await (module as any)._handleTransactionEvent(
+        makeMessage(payload, OCPP_CallAction.TransactionEvent),
+      );
 
-      expect(deactivateSpy).not.toHaveBeenCalled();
+      expect(createOrUpdateSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('when eventType=Started', () => {
+    beforeEach(() => {
+      setupModule({ isActive: false });
+    });
+
+    it('should skip the ended-transaction check entirely and proceed normally', async () => {
+      const payload: OCPP2_0_1.TransactionEventRequest = {
+        eventType: OCPP2_0_1.TransactionEventEnumType.Started,
+        timestamp: new Date().toISOString(),
+        triggerReason: OCPP2_0_1.TriggerReasonEnumType.CablePluggedIn,
+        seqNo: 0,
+        transactionInfo: { transactionId: 'txn-new' },
+      };
+
+      await (module as any)._handleTransactionEvent(
+        makeMessage(payload, OCPP_CallAction.TransactionEvent),
+      );
+
+      expect(
+        transactionEventRepository.readTransactionByStationIdAndTransactionId,
+      ).not.toHaveBeenCalled();
+      expect(createOrUpdateSpy).toHaveBeenCalledOnce();
     });
   });
 });
