@@ -2,11 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-  MeasurandEnumType,
-  MeterValueDto,
-  SampledValue,
-} from '@citrineos/base';
+import type { MeasurandEnumType, MeterValueDto, SampledValue } from '@citrineos/base';
 import { MeasurandEnum, OCPP2_0_1 } from '@citrineos/base';
 
 export class MeterValueClass implements Partial<MeterValueDto> {}
@@ -38,8 +34,7 @@ export const getTimestampToMeasurandArray = (
       !meterValue.sampledValue[0].context ||
       (typeof meterValue.sampledValue[0].context === 'string' &&
         validContextsArg.has(
-          meterValue.sampledValue[0]
-            .context as OCPP2_0_1.ReadingContextEnumType,
+          meterValue.sampledValue[0].context as OCPP2_0_1.ReadingContextEnumType,
         ))
     ) {
       const overallValue = findOverallValue(
@@ -110,10 +105,7 @@ export const findOverallValue = (
     if (perPhaseSampledValues.length === 0) {
       return undefined; // No per-phase data either; nothing to aggregate.
     }
-    const sumOfPhases = perPhaseSampledValues.reduce(
-      (acc, sv) => acc + Number(sv.value),
-      0,
-    );
+    const sumOfPhases = perPhaseSampledValues.reduce((acc, sv) => acc + Number(sv.value), 0);
     const aggregatedValue = isAdditiveMeasurand(measurand)
       ? sumOfPhases
       : sumOfPhases / perPhaseSampledValues.length;
