@@ -41,6 +41,13 @@ const DEFAULT_BOOT_TIMEOUT_MS = 90_000;
 // online guard waits longer than the initial-boot budget.
 const RECONNECT_TIMEOUT_MS = 150_000;
 const POLL_INTERVAL_MS = 2_000;
+// A reboot-causing Reset (Immediate always; OnIdle once the station settles)
+// acks over OCPP — surfacing the success toast — BEFORE the manager container
+// actually drops cp001's link. awaitEverestReboot therefore first waits for the
+// station to fall offline (proof the reboot took hold), bounded by this window,
+// then waits for the reconnect. If the link never drops within the window the
+// reset did not reboot (or already drained), so the drain is a no-op.
+const OFFLINE_DETECT_TIMEOUT_MS = 45_000;
 // How long to wait for libocpp to materialise the device-model DB on a cold
 // boot before applying the network-profile patch. The DB normally appears a
 // few seconds after `compose up`; this bounds the wait so a manager that never
@@ -114,6 +121,26 @@ async function awaitStationOnline(
   );
 }
 
+// One-shot read of citrineos-core's ChargingStations.isOnline flag for cp001.
+// Returns the boolean flag, or null when the query throws (transient Hasura/
+// network blip) so pollers can treat it as "unknown, keep waiting" rather than
+// flipping a definite offline/online verdict on a fluke error.
+async function readEverestOnline(api: ApiClient): Promise<boolean | null> {
+  try {
+    const data = await api.gql<{
+      ChargingStations: { isOnline: boolean }[];
+    }>(
+      `query EverestOnlineGuard($name: String!) {
+         ChargingStations(where: { ocppConnectionName: { _eq: $name } }) { isOnline }
+       }`,
+      { name: EVEREST_OCPP_CONNECTION_NAME },
+    );
+    return data.ChargingStations[0]?.isOnline ?? false;
+  } catch {
+    return null;
+  }
+}
+
 // Per-test guard for the worker-scoped manager: a destructive command in a
 // prior test (Reset Immediate reboots the manager container) drops cp001's
 // OCPP link, and the station is offline for ~1 minute while it reconnects.
@@ -124,26 +151,52 @@ export async function ensureEverestOnline(timeoutMs = RECONNECT_TIMEOUT_MS): Pro
   const api = await makeApiClient();
   try {
     const deadline = Date.now() + timeoutMs;
-    let lastErr: unknown;
     while (Date.now() < deadline) {
-      try {
-        const data = await api.gql<{
-          ChargingStations: { isOnline: boolean }[];
-        }>(
-          `query EverestOnlineGuard($name: String!) {
-             ChargingStations(where: { ocppConnectionName: { _eq: $name } }) { isOnline }
-           }`,
-          { name: EVEREST_OCPP_CONNECTION_NAME },
-        );
-        if (data.ChargingStations[0]?.isOnline === true) return;
-      } catch (e) {
-        lastErr = e;
-      }
+      if ((await readEverestOnline(api)) === true) return;
       await delay(POLL_INTERVAL_MS);
     }
     throw new Error(
-      `EVerest station ${EVEREST_OCPP_CONNECTION_NAME} did not return online within ${timeoutMs}ms` +
-        (lastErr ? `; last error: ${String(lastErr)}` : ''),
+      `EVerest station ${EVEREST_OCPP_CONNECTION_NAME} did not return online within ${timeoutMs}ms`,
+    );
+  } finally {
+    await api.dispose();
+  }
+}
+
+// Drains a reboot-causing Reset to completion, callable in the afterEach of the
+// reset test that issued it. The Reset acks over OCPP — surfacing the success
+// toast the spec awaits — BEFORE the manager container actually severs cp001's
+// link, so at the moment the toast fires the station is still flagged online.
+// ensureEverestOnline alone would therefore short-circuit on that pre-reboot
+// `isOnline === true` and hand the next test a station that is only now starting
+// to reboot, racing the ~1-minute reconnect. We instead observe the full
+// offline→online cycle: first wait (bounded by OFFLINE_DETECT_TIMEOUT_MS) for
+// the link to actually drop, then wait out the reconnect on the longer budget.
+// If the link never drops within the offline window the Reset did not reboot
+// (an OnIdle that found the station busy, or a drain already completed), so we
+// return without paying the reconnect wait.
+export async function awaitEverestReboot(): Promise<void> {
+  const api = await makeApiClient();
+  try {
+    const offlineDeadline = Date.now() + OFFLINE_DETECT_TIMEOUT_MS;
+    let wentOffline = false;
+    while (Date.now() < offlineDeadline) {
+      if ((await readEverestOnline(api)) === false) {
+        wentOffline = true;
+        break;
+      }
+      await delay(POLL_INTERVAL_MS);
+    }
+    if (!wentOffline) return; // no reboot took hold — nothing to drain
+
+    const onlineDeadline = Date.now() + RECONNECT_TIMEOUT_MS;
+    while (Date.now() < onlineDeadline) {
+      if ((await readEverestOnline(api)) === true) return;
+      await delay(POLL_INTERVAL_MS);
+    }
+    throw new Error(
+      `EVerest station ${EVEREST_OCPP_CONNECTION_NAME} did not return online within ` +
+        `${RECONNECT_TIMEOUT_MS}ms after a reboot-causing Reset`,
     );
   } finally {
     await api.dispose();

@@ -18,6 +18,7 @@ export class OverviewPage {
   readonly kpiChargerActivityHeading: Locator;
   readonly faultedChargersHeading: Locator;
   readonly locationsCardHeading: Locator;
+  readonly locationsMapSurface: Locator;
 
   readonly expandSidebarButton: Locator;
   readonly collapseSidebarButton: Locator;
@@ -54,6 +55,11 @@ export class OverviewPage {
     this.locationsCardHeading = page.getByRole('heading', {
       name: /^locations$/i,
     });
+    // The Google Maps SDK only mounts its `.gm-style` tile container after it
+    // authenticates a valid API key; with the placeholder key it never appears.
+    // Asserting on it (rather than the statically-rendered card heading) proves
+    // the key-gated map surface actually rendered.
+    this.locationsMapSurface = page.locator('.gm-style').first();
 
     this.expandSidebarButton = page.getByRole('button', {
       name: /expand sidebar/i,
