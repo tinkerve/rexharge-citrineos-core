@@ -124,7 +124,17 @@ jobs:
         # Build with the default docker driver (builds straight into the daemon's
         # image store) — no tarball export/import or cache round-trip, which is
         # what made the build-push-action approach ~3min slower than the build itself.
-        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml up -d --build
+        # Retry the bring-up: Docker Hub image pulls intermittently fail with a
+        # transient "registry-1.docker.io ... manifests ...: unknown" error.
+        run: |
+          COMPOSE="docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml"
+          n=0
+          until $COMPOSE up -d --build; do
+            n=$((n + 1))
+            if [ "$n" -ge 3 ]; then echo "backend stack failed to start after 3 attempts" >&2; exit 1; fi
+            echo "::warning::backend bring-up failed (attempt ${n}/3) — transient Docker registry pull error; retrying in 15s"
+            sleep 15
+          done
 
       - name: Wait for backend healthy
         run: |
@@ -225,7 +235,17 @@ jobs:
         run: pnpm exec playwright install-deps chromium
 
       - name: Start backend stack (Hasura + CitrineOS Core)
-        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml up -d --build
+        # Retry the bring-up: Docker Hub image pulls intermittently fail with a
+        # transient "registry-1.docker.io ... manifests ...: unknown" error.
+        run: |
+          COMPOSE="docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml"
+          n=0
+          until $COMPOSE up -d --build; do
+            n=$((n + 1))
+            if [ "$n" -ge 3 ]; then echo "backend stack failed to start after 3 attempts" >&2; exit 1; fi
+            echo "::warning::backend bring-up failed (attempt ${n}/3) — transient Docker registry pull error; retrying in 15s"
+            sleep 15
+          done
 
       - name: Wait for backend healthy
         run: |
@@ -271,9 +291,16 @@ jobs:
           OCPP_VERSION: "2.1"
           EVEREST_IMAGE_TAG: 2025.6.1-dt-esdp
         working-directory: apps/Server/everest
+        # Retry: Docker Hub / ghcr pulls intermittently fail with a transient
+        # "registry ... manifests ...: unknown" error.
         run: |
-          docker compose build
-          docker compose pull mqtt-server nodered
+          n=0
+          until docker compose build && docker compose pull mqtt-server nodered; do
+            n=$((n + 1))
+            if [ "$n" -ge 3 ]; then echo "EVerest image fetch failed after 3 attempts" >&2; exit 1; fi
+            echo "::warning::EVerest image build/pull failed (attempt ${n}/3) — transient Docker registry error; retrying in 15s"
+            sleep 15
+          done
 
       - name: Run operator-ui Playwright EVerest lane
         env:

@@ -15,9 +15,9 @@ import {
 } from '../../fixtures/seeded-data';
 import { OCPP_MODAL_SPECS, OCPP_MODAL_COUNT } from '../../utils/ocpp-modal-specs';
 
-// Parametric harness: one open-and-close smoke test per dispatchable OCPP
-// modal. Bespoke command specs cover the deeper happy / sad / offline paths;
-// this loop guarantees that every dispatchable modal at least mounts and
+// Parametric harness: one open-and-close smoke test per OCPP modal. Bespoke
+// command specs cover the deeper happy / sad / offline paths; this loop
+// guarantees that every modal in the station-page inventory at least mounts and
 // unmounts cleanly under the current source.
 //
 // Correctness: each test asserts the OPENED dialog's heading matches the
@@ -27,20 +27,16 @@ import { OCPP_MODAL_SPECS, OCPP_MODAL_COUNT } from '../../utils/ocpp-modal-specs
 //
 // This is a best-effort SMOKE layer: the deep open/submit/offline contracts for
 // the operator-critical modals are hard-asserted by the bespoke E2E-070..E2E-089
-// specs. A few dispatchable modals are not reachable from the charging-station
-// detail page at all (e.g. ToggleTransactionActiveModal's only trigger lives on
-// the transactions detail page), so when neither open route works this loop
-// records a documented skip rather than a hard failure — turning it into a hard
-// failure would make those genuinely-unreachable modals deterministically red
-// without adding coverage the bespoke specs don't already enforce.
+// specs. In practice all 31 station-page modals open from this page; the
+// soft-skip below is retained only as a safety net so a modal that ever stops
+// being reachable here records a documented skip rather than a hard failure —
+// it must never produce a false red.
 //
 // Context: each test seeds a station whose protocol matches the modal's OCPP
 // version (a 1.6 station for 1.6-only commands; otherwise 2.0.1). This both
 // surfaces the 1.6-only commands and disambiguates the 16-vs-2.0.1 variants
-// that share a dialog title. Transaction-gated modals (RemoteStop,
-// ToggleTransactionActive) additionally get an active seeded transaction so
-// their command button renders. The 12 non-dispatchable OCPP-spec placeholders
-// are skipped with a documented reason.
+// that share a dialog title. Transaction-gated modals (RemoteStop) additionally
+// get an active seeded transaction so their command button renders.
 
 test.use({ storageState: 'playwright/.auth/admin.json' });
 
@@ -51,9 +47,8 @@ function stationProtocolFor(versions: ReadonlyArray<string>): string {
 }
 
 function needsActiveTransaction(name: string): boolean {
-  // StopTransaction renders only when hasActiveTransactions === true; the
-  // toggle-transaction admin modal likewise requires a transaction to act on.
-  return name === 'RemoteStopTransactionModal' || name === 'ToggleTransactionActiveModal';
+  // StopTransaction renders only when hasActiveTransactions === true.
+  return name === 'RemoteStopTransactionModal';
 }
 
 test.describe('charging-stations › parametric modal harness (smoke)', () => {
@@ -63,28 +58,6 @@ test.describe('charging-stations › parametric modal harness (smoke)', () => {
 
   for (const spec of OCPP_MODAL_SPECS) {
     test(`E2E-MOD-PARAM-001: ${spec.name} opens and closes`, async ({ page, apiClient }) => {
-      // Non-dispatchable entries are deliberate OCPP-spec inventory
-      // placeholders: each is an OCPP 2.0.1 action with NO UI component, no
-      // ModalComponentType, and no command-registry entry, so it can never be
-      // opened from the UI (verified against the 1.6/2.0.1 command registries
-      // and the ModalComponentType enum). They are KEPT — not removed — because
-      // OCPP_MODAL_SPECS is the single source of truth for the modal inventory
-      // (the 44/32/12 invariant is enforced at module load), and this skip is
-      // the visible, machine-checked record of which OCPP actions remain
-      // unimplemented. Removing them would lose that spec-gap traceability
-      // without adding any executable coverage. This is a clean documented
-      // conditional skip, not a soft fallback — the documented reason surfaces
-      // in the report. When one of these actions gains a real component +
-      // registry entry, flip its `dispatchable` flag to true and it becomes a
-      // live smoke test automatically.
-      if (!spec.dispatchable) {
-        test.skip(
-          true,
-          `${spec.name}: non-dispatchable OCPP-spec placeholder — no UI component/registry entry (unimplemented OCPP action, kept for spec traceability).`,
-        );
-        return;
-      }
-
       // Seed a station in the protocol + transaction context this modal needs.
       const location = await seedLocation(apiClient);
       const station = await seedStation(apiClient, location.id, {
@@ -127,12 +100,12 @@ test.describe('charging-stations › parametric modal harness (smoke)', () => {
           opened = await modal.title.isVisible({ timeout: 5_000 }).catch(() => false);
         }
 
-        // A handful of dispatchable modals have no trigger on the charging-
-        // station detail page (their only entry point lives elsewhere, e.g.
-        // ToggleTransactionActiveModal on the transactions detail page), so
-        // neither route can open them from here. Record a documented skip rather
+        // Safety net: in practice every station-page modal opens via one of the
+        // two routes above. If a modal ever stops being reachable from this page
+        // (e.g. its trigger moves elsewhere), record a documented skip rather
         // than failing — the operator-critical modals' open/submit paths are
-        // hard-asserted by the bespoke E2E-070..E2E-089 specs.
+        // hard-asserted by the bespoke E2E-070..E2E-089 specs, so this must
+        // never produce a false red.
         if (!opened) {
           test.skip(
             true,
