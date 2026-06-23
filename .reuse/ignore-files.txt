@@ -93,6 +93,7 @@ apps/Server/everest/
 apps/operator-ui/config/countries/all-countries.json
 apps/operator-ui/config/countries/country-areas.json
 apps/operator-ui/config/countries/country-configs.json
+apps/operator-ui/playwright/.auth/admin.json
 apps/operator-ui/public/Citrine_Favicon_256_clear3.png
 apps/operator-ui/public/gradient-dark.svg
 apps/operator-ui/public/gradient.svg
