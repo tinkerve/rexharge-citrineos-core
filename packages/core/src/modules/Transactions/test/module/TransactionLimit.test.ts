@@ -113,6 +113,7 @@ describe('TransactionsModule - E16 Transaction Limits', () => {
   beforeEach(() => {
     transactionEventRepository = {
       createOrUpdateTransactionByTransactionEventAndStationId: vi.fn(),
+      readTransactionByStationIdAndTransactionId: vi.fn().mockResolvedValue(null),
     };
 
     const config = makeConfig();
