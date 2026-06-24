@@ -18,10 +18,13 @@ export class LocalAuthListService {
   protected _localAuthListRepository: ILocalAuthListRepository;
   protected _deviceModelRepository: IDeviceModelRepository;
 
-  constructor(
-    localAuthListRepository: ILocalAuthListRepository,
-    deviceModelRepository: IDeviceModelRepository,
-  ) {
+  constructor({
+    localAuthListRepository,
+    deviceModelRepository,
+  }: {
+    localAuthListRepository: ILocalAuthListRepository;
+    deviceModelRepository: IDeviceModelRepository;
+  }) {
     this._localAuthListRepository = localAuthListRepository;
     this._deviceModelRepository = deviceModelRepository;
   }

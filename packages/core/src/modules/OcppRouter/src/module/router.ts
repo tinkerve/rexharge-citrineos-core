@@ -41,7 +41,6 @@ import {
   RetryMessageError,
 } from '@citrineos/base';
 import type { ILocationRepository } from '@dal/interfaces/repositories.js';
-import { sequelize } from '@dal/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
@@ -77,26 +76,35 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
    * @param {Logger<ILogObj>} [logger] - the logger object (optional)
    * @param {OCPPValidator} [ocppValidator] - the OCPPValidator instance, for message validation (optional)
    */
-  constructor(
-    config: BootstrapConfig & SystemConfig,
-    cache: ICache,
-    sender: IMessageSender,
-    handler: IMessageHandler,
-    dispatcher: WebhookDispatcher,
-    networkHook: (identifier: string, message: string) => Promise<void>,
-    logger?: Logger<ILogObj>,
-    ocppValidator?: OCPPValidator,
-    locationRepository?: ILocationRepository,
-  ) {
-    super(config, cache, handler, sender, networkHook, logger, ocppValidator);
+  constructor({
+    config,
+    cache,
+    routerSender,
+    routerHandler,
+    webhookDispatcher,
+    networkHook,
+    logger,
+    ocppValidator,
+    locationRepository,
+  }: {
+    config: BootstrapConfig & SystemConfig;
+    cache: ICache;
+    routerSender: IMessageSender;
+    routerHandler: IMessageHandler;
+    webhookDispatcher: WebhookDispatcher;
+    networkHook: (identifier: string, message: string) => Promise<void>;
+    logger: Logger<ILogObj>;
+    ocppValidator: OCPPValidator;
+    locationRepository: ILocationRepository;
+  }) {
+    super(config, cache, routerHandler, routerSender, networkHook, logger, ocppValidator);
 
     this._cache = cache;
-    this._sender = sender;
-    this._handler = handler;
-    this._webhookDispatcher = dispatcher;
+    this._sender = routerSender;
+    this._handler = routerHandler;
+    this._webhookDispatcher = webhookDispatcher;
     this._networkHook = networkHook;
-    this._locationRepository =
-      locationRepository || new sequelize.SequelizeLocationRepository(config, logger);
+    this._locationRepository = locationRepository;
   }
 
   async doesChargingStationExistByStationId(
@@ -971,3 +979,5 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     return action;
   }
 }
+
+export default MessageRouterImpl;
