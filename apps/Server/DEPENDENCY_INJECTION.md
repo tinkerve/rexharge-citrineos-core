@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 Contributors to the CitrineOS Project
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Dependency Injection (Awilix)
 
 How DI is orchestrated in the server. Read this alongside `apps/Server/src/container.ts` and `apps/Server/src/citrineOSServer.ts`
