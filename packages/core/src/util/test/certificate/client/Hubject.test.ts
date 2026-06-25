@@ -87,7 +87,10 @@ describe('Hubject', () => {
         },
       } as SystemConfig;
 
-      const hubjectWithDefaults = getTestInstance(container, Hubject, { config: defaultConfig, cache });
+      const hubjectWithDefaults = getTestInstance(container, Hubject, {
+        config: defaultConfig,
+        cache,
+      });
 
       const token = await (hubjectWithDefaults as any)._getAuthorizationToken();
 

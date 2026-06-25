@@ -115,7 +115,10 @@ function makeRepos() {
   return {
     deviceModelRepo: new SequelizeDeviceModelRepository({ config, sequelizeInstance }),
     ocppMessageRepo: new SequelizeOCPPMessageRepository({ config, sequelizeInstance }),
-    variableMonitoringRepo: new SequelizeVariableMonitoringRepository({ config, sequelizeInstance }),
+    variableMonitoringRepo: new SequelizeVariableMonitoringRepository({
+      config,
+      sequelizeInstance,
+    }),
   };
 }
 
@@ -251,7 +254,6 @@ describe('MonitoringModule – SetVariables response handling', () => {
       });
       await seedSetVariablesRequest([data1, data2]);
 
-
       const map = await (module as any).getSetVariablesDataMapFromOriginalSetVariablesRequest(
         TENANT_ID,
         OCPP_CONNECTION_NAME,
@@ -271,7 +273,6 @@ describe('MonitoringModule – SetVariables response handling', () => {
         d.attributeType = undefined;
       });
       await seedSetVariablesRequest([data]);
-
 
       const map = await (module as any).getSetVariablesDataMapFromOriginalSetVariablesRequest(
         TENANT_ID,
@@ -293,7 +294,6 @@ describe('MonitoringModule – SetVariables response handling', () => {
       await seedSetVariablesRequest([data], 'other-corr-id');
       // No message seeded for CORRELATION_ID
 
-
       const map = await (module as any).getSetVariablesDataMapFromOriginalSetVariablesRequest(
         TENANT_ID,
         OCPP_CONNECTION_NAME,
@@ -314,7 +314,6 @@ describe('MonitoringModule – SetVariables response handling', () => {
       const component = await seedComponent('Connector');
       const variable = await seedVariable('MaxVoltage');
       const seeded = await seedVariableAttribute(component.id, variable.id, '120');
-
 
       const result = await (module as any).getExistingOrCreateVariableAttribute(
         TENANT_ID,
@@ -338,7 +337,6 @@ describe('MonitoringModule – SetVariables response handling', () => {
     it('creates a new VariableAttribute in the DB when none exists', async () => {
       await seedBase();
       // No Component, Variable, or VariableAttribute seeded
-
 
       const result = await (module as any).getExistingOrCreateVariableAttribute(
         TENANT_ID,
@@ -375,7 +373,6 @@ describe('MonitoringModule – SetVariables response handling', () => {
         '7200',
         OCPP2_0_1.AttributeEnumType.Actual,
       );
-
 
       const result = await (module as any).getExistingOrCreateVariableAttribute(
         TENANT_ID,

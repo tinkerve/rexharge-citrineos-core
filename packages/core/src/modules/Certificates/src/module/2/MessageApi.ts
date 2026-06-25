@@ -60,11 +60,13 @@ export class CertificatesOcpp2Api
    * Interface implementation
    */
 
-  @AsMessageEndpoint(OCPP_CallAction.CertificateSigned, (_instance: CertificatesOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'CertificateSignedRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.CertificateSigned,
+    (_instance: CertificatesOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'CertificateSignedRequestSchema',
+      ),
   )
   certificateSigned(
     identifier: string[],
@@ -84,11 +86,13 @@ export class CertificatesOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.InstallCertificate, (_instance: CertificatesOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'InstallCertificateRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.InstallCertificate,
+    (_instance: CertificatesOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'InstallCertificateRequestSchema',
+      ),
   )
   installCertificate(
     identifier: string[],
@@ -116,11 +120,13 @@ export class CertificatesOcpp2Api
     return Promise.all(results);
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.GetInstalledCertificateIds, (_instance: CertificatesOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'GetInstalledCertificateIdsRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.GetInstalledCertificateIds,
+    (_instance: CertificatesOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'GetInstalledCertificateIdsRequestSchema',
+      ),
   )
   getInstalledCertificateIds(
     identifier: string[],
@@ -140,11 +146,13 @@ export class CertificatesOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.DeleteCertificate, (_instance: CertificatesOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'DeleteCertificateRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.DeleteCertificate,
+    (_instance: CertificatesOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'DeleteCertificateRequestSchema',
+      ),
   )
   deleteCertificate(
     identifier: string[],

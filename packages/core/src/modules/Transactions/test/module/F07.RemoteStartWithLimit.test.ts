@@ -5,13 +5,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import type {
-  BootstrapConfig,
-  ICache,
-  IMessage,
-  OcppRequest,
-  SystemConfig,
-} from '@citrineos/base';
+import type { BootstrapConfig, ICache, IMessage, OcppRequest, SystemConfig } from '@citrineos/base';
 import {
   AuthorizationStatusEnum,
   CacheNamespace,
@@ -22,7 +16,6 @@ import {
   OCPP2_1,
   OCPP_CallAction,
   OCPPVersion,
-  TransactionEventEnum,
 } from '@citrineos/base';
 import { asValue } from 'awilix';
 import type { ITransactionEventRepository } from '@citrineos/core';
@@ -224,8 +217,6 @@ describe('F07 - Remote start with fixed cost, energy, SoC or time', () => {
         maxTime: 7200, // 2 hours in seconds
         maxSoC: 80, // 80%
       };
-      const cacheKey = `remotestart:${DEFAULT_TENANT_ID}:station-001:${remoteStartId}`;
-
       (mockCache.get as any).mockResolvedValue(JSON.stringify(transactionLimit));
 
       (

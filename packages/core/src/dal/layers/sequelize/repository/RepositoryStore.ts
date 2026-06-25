@@ -43,7 +43,6 @@ import { SequelizeTransactionEventRepository } from './TransactionEvent.js';
 import { SequelizeVariableMonitoringRepository } from './VariableMonitoring.js';
 import { Sequelize } from 'sequelize-typescript';
 import { Component } from '../model/DeviceModel/Component.js';
-import { TransactionEvent } from '../model/TransactionEvent/TransactionEvent.js';
 import { SequelizeRepository } from './Base.js';
 import { SequelizeReservationRepository } from './Reservation.js';
 import { SequelizeLocalAuthListRepository } from './LocalAuthList.js';

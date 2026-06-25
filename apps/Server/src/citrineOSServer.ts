@@ -204,6 +204,7 @@ export class CitrineOSServer {
         });
       // TODO Push config to microservices
     } catch (error) {
+      this._logger?.error('Fatal error during startup', error);
       throw error;
     }
   }
@@ -273,11 +274,11 @@ export class CitrineOSServer {
         'url' in this._config.util.cache.redis
           ? { url: this._config.util.cache.redis.url }
           : {
-            socket: {
-              host: this._config.util.cache.redis.host,
-              port: this._config.util.cache.redis.port,
-            },
-          };
+              socket: {
+                host: this._config.util.cache.redis.host,
+                port: this._config.util.cache.redis.port,
+              },
+            };
       return new RedisCache(redisClientOptions, this._logger);
     }
     return new MemoryCache();
@@ -469,7 +470,9 @@ export class CitrineOSServer {
   }
 
   protected async _syncWebsocketConfig() {
-    const serverNetworkProfileRepository = this._container.resolve<IServerNetworkProfileRepository>('serverNetworkProfileRepository');
+    const serverNetworkProfileRepository = this._container.resolve<IServerNetworkProfileRepository>(
+      'serverNetworkProfileRepository',
+    );
     for (const websocketServerConfig of this._config.util.networkConnection.websocketServers) {
       await serverNetworkProfileRepository.upsertServerNetworkProfile(
         websocketServerConfig,

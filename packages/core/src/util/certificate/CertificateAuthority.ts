@@ -56,11 +56,12 @@ export class CertificateAuthorityService {
     this._logger = logger.getSubLogger({ name: this.constructor.name });
     this._fileStorage = fileStorage;
     this._v2gClient = CertificateAuthorityService._instantiateV2GClient(config, cache, logger);
-    this._chargingStationClientPromise = CertificateAuthorityService._instantiateChargingStationClient(
-      config,
-      this._fileStorage,
-      logger,
-    );
+    this._chargingStationClientPromise =
+      CertificateAuthorityService._instantiateChargingStationClient(
+        config,
+        this._fileStorage,
+        logger,
+      );
   }
 
   /**

@@ -9,7 +9,10 @@ import type { AuthenticationOptions } from '@citrineos/base';
 import { UpgradeUnknownError } from './errors/UnknownError.js';
 
 interface IStationExistenceChecker {
-  doesChargingStationExistByStationId(tenantId: number, ocppConnectionName: string): Promise<boolean>;
+  doesChargingStationExistByStationId(
+    tenantId: number,
+    ocppConnectionName: string,
+  ): Promise<boolean>;
 }
 
 /**
@@ -19,7 +22,13 @@ interface IStationExistenceChecker {
 export class UnknownStationFilter extends AuthenticatorFilter {
   private _locationRepository: IStationExistenceChecker;
 
-  constructor({ locationRepository, logger }: { locationRepository: IStationExistenceChecker; logger: Logger<ILogObj> }) {
+  constructor({
+    locationRepository,
+    logger,
+  }: {
+    locationRepository: IStationExistenceChecker;
+    logger: Logger<ILogObj>;
+  }) {
     super(logger);
     this._locationRepository = locationRepository;
   }

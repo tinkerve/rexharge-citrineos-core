@@ -266,7 +266,10 @@ describe('RabbitMqReceiver', () => {
 
     beforeEach(() => {
       receiver = new RabbitMqReceiver({
-        config: aSystemConfigWithAmqp({ exchange: EXCHANGE, instanceIdentifier: `${instanceId}-${uid}` }),
+        config: aSystemConfigWithAmqp({
+          exchange: EXCHANGE,
+          instanceIdentifier: `${instanceId}-${uid}`,
+        }),
         channelManager,
         routerMode: true,
       });

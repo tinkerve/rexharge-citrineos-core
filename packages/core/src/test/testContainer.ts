@@ -1,6 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Contributors to the CitrineOS Project
 // SPDX-License-Identifier: Apache-2.0
-import { asClass, asValue, createContainer, InjectionMode, type AwilixContainer, type Constructor } from 'awilix';
+import {
+  asClass,
+  asValue,
+  createContainer,
+  InjectionMode,
+  type AwilixContainer,
+  type Constructor,
+} from 'awilix';
 import { vi, type Mock } from 'vitest';
 
 type AnyClass = Constructor<object>;
@@ -23,10 +30,9 @@ export type MockLogger = {
 };
 
 function makeDefaultLogger(): MockLogger {
-  // Two-step assignment lets the arrow function close over `logger` before it's
-  // assigned, which is safe because getSubLogger is never called during construction.
-  let logger: MockLogger;
-  logger = {
+  // getSubLogger returns the same mock; the self-reference is safe because the
+  // arrow is never called during construction.
+  const logger: MockLogger = {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),

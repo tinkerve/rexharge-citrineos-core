@@ -28,7 +28,7 @@ import { z } from 'zod';
 
 /**
  * Canonical signature every OCPP message-endpoint handler is invoked with by
- * {@link AbstractModuleApi._addMessageRoute}. 
+ * {@link AbstractModuleApi._addMessageRoute}.
  */
 export type OcppMessageHandler = (
   identifiers: string[],
@@ -66,8 +66,8 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
    * versions (e.g. 2.0.1 and 2.1) from distinct `/ocpp/<version>/...` routes.
    *
    * Defaults to [null], version-agnostic. Data-only APIs, whose routes
-   * carry no version segment. 
-   * OCPP message APIs override this: 
+   * carry no version segment.
+   * OCPP message APIs override this:
    * OCPP2 APIs return [OCPP2_0_1, OCPP2_1], OCPP 1.6 APIs return [OCPP1_6].
    */
   protected get supportedVersions(): (OCPPVersion | null)[] {
@@ -150,10 +150,7 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
       );
       return;
     }
-    this._logger.debug(
-      `Adding message route for ${action}`,
-      this._toMessagePath(action, version),
-    );
+    this._logger.debug(`Adding message route for ${action}`, this._toMessagePath(action, version));
 
     /**
      * Executes the handler function for the given request.
@@ -501,7 +498,11 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
    * @param {string} prefix - The module name.
    * @returns {string} - String representation of URL path.
    */
-  protected _toMessagePath(input: CallAction, version?: OCPPVersion | null, prefix?: string): string {
+  protected _toMessagePath(
+    input: CallAction,
+    version?: OCPPVersion | null,
+    prefix?: string,
+  ): string {
     const endpointPrefix = prefix || '';
     const effectiveVersion = version ?? OCPPVersion.OCPP2_0_1;
     const endpointVersion = effectiveVersion.replace(/^ocpp/, '');

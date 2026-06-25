@@ -133,7 +133,10 @@ describe('TransactionsModule - _handleTransactionEvent and _handleOcpp16StartTra
     container.register({
       config: asValue(config),
       logger: asValue(logger),
-      cache: asValue({ get: vi.fn().mockResolvedValue(null), set: vi.fn().mockResolvedValue(true) }),
+      cache: asValue({
+        get: vi.fn().mockResolvedValue(null),
+        set: vi.fn().mockResolvedValue(true),
+      }),
       sender: asValue({
         sendResponse: vi.fn().mockResolvedValue({ success: true }),
         sendRequest: vi.fn().mockResolvedValue({ success: true }),

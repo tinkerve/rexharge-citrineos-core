@@ -67,11 +67,13 @@ export class MonitoringOcpp2Api
     return [OCPPVersion.OCPP2_0_1, OCPPVersion.OCPP2_1];
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.SetVariableMonitoring, (_instance: MonitoringOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'SetVariableMonitoringRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.SetVariableMonitoring,
+    (_instance: MonitoringOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'SetVariableMonitoringRequestSchema',
+      ),
   )
   async setVariableMonitoring(
     identifier: string[],
@@ -166,11 +168,13 @@ export class MonitoringOcpp2Api
     return confirmations;
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.ClearVariableMonitoring, (_instance: MonitoringOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'ClearVariableMonitoringRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.ClearVariableMonitoring,
+    (_instance: MonitoringOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'ClearVariableMonitoringRequestSchema',
+      ),
   )
   async clearVariableMonitoring(
     identifier: string[],

@@ -172,8 +172,8 @@ export function buildContainer(config: BootstrapConfig & SystemConfig, prebuilt:
 
 // ============================================================
 // Module-internal services in scope. Each module package owns the wiring of its
-// own services via a register<Module>Services(container) function; 
-// The service classes stay private to their packages. 
+// own services via a register<Module>Services(container) function;
+// The service classes stay private to their packages.
 // Resolved per-module-scope alongside the module itself.
 // ============================================================
 function registerModuleServices(container: AwilixContainer): void {
@@ -217,7 +217,7 @@ function registerPrimitives(
 // ============================================================
 // RabbitMQ messaging
 // sender + handler: each per-module child scope gets its own pair
-// routerSender + routerHandler: dedicated singleton pair for the singleton MessageRouterImpl. 
+// routerSender + routerHandler: dedicated singleton pair for the singleton MessageRouterImpl.
 // sender/routerSender are a BrokerAwareMessageSender wrapping a RabbitMqSender.
 // ============================================================
 function registerMessaging(container: AwilixContainer): void {
@@ -226,34 +226,38 @@ function registerMessaging(container: AwilixContainer): void {
     channelManager: asClass(RabbitMQChannelManager).singleton(),
   });
 
-  // This is the message bus per module. Set to be scoped to each specific instance. 
+  // This is the message bus per module. Set to be scoped to each specific instance.
   container.register({
-    sender: asFunction(({ exchange, connectionManager, channelManager, logger, maxCallLengthSeconds }) =>
-      new BrokerAwareMessageSender(
-        new RabbitMqSender(exchange, connectionManager, channelManager, logger),
-        connectionManager,
-        maxCallLengthSeconds,
-        logger,
-      )
+    sender: asFunction(
+      ({ exchange, connectionManager, channelManager, logger, maxCallLengthSeconds }) =>
+        new BrokerAwareMessageSender(
+          new RabbitMqSender(exchange, connectionManager, channelManager, logger),
+          connectionManager,
+          maxCallLengthSeconds,
+          logger,
+        ),
     ).scoped(),
 
-    handler: asFunction(({ config, channelManager, logger }) =>
-      new RabbitMqReceiver({ config, channelManager, logger })
+    handler: asFunction(
+      ({ config, channelManager, logger }) =>
+        new RabbitMqReceiver({ config, channelManager, logger }),
     ).scoped(),
   });
 
   // This is the routing messenger between the charging stations and the message bus
   container.register({
-    routerSender: asFunction(({ exchange, connectionManager, channelManager, logger, maxCallLengthSeconds }) =>
-      new BrokerAwareMessageSender(
-        new RabbitMqSender(exchange, connectionManager, channelManager, logger),
-        connectionManager,
-        maxCallLengthSeconds,
-        logger,
-      )
+    routerSender: asFunction(
+      ({ exchange, connectionManager, channelManager, logger, maxCallLengthSeconds }) =>
+        new BrokerAwareMessageSender(
+          new RabbitMqSender(exchange, connectionManager, channelManager, logger),
+          connectionManager,
+          maxCallLengthSeconds,
+          logger,
+        ),
     ).singleton(),
-    routerHandler: asFunction(({ config, channelManager, logger }) =>
-      new RabbitMqReceiver({ config, channelManager, logger })
+    routerHandler: asFunction(
+      ({ config, channelManager, logger }) =>
+        new RabbitMqReceiver({ config, channelManager, logger }),
     ).singleton(),
   });
 }
@@ -271,11 +275,19 @@ function registerRepositories(container: AwilixContainer): void {
     certificateRepository: asClass(SequelizeCertificateRepository).singleton(),
     changeConfigurationRepository: asClass(SequelizeChangeConfigurationRepository).singleton(),
     chargingProfileRepository: asClass(SequelizeChargingProfileRepository).singleton(),
-    chargingStationSecurityInfoRepository: asClass(SequelizeChargingStationSecurityInfoRepository).singleton(),
-    chargingStationSequenceRepository: asClass(SequelizeChargingStationSequenceRepository).singleton(),
-    deleteCertificateAttemptRepository: asClass(SequelizeDeleteCertificateAttemptRepository).singleton(),
+    chargingStationSecurityInfoRepository: asClass(
+      SequelizeChargingStationSecurityInfoRepository,
+    ).singleton(),
+    chargingStationSequenceRepository: asClass(
+      SequelizeChargingStationSequenceRepository,
+    ).singleton(),
+    deleteCertificateAttemptRepository: asClass(
+      SequelizeDeleteCertificateAttemptRepository,
+    ).singleton(),
     deviceModelRepository: asClass(SequelizeDeviceModelRepository).singleton(),
-    installCertificateAttemptRepository: asClass(SequelizeInstallCertificateAttemptRepository).singleton(),
+    installCertificateAttemptRepository: asClass(
+      SequelizeInstallCertificateAttemptRepository,
+    ).singleton(),
     installedCertificateRepository: asClass(SequelizeInstalledCertificateRepository).singleton(),
     localAuthListRepository: asClass(SequelizeLocalAuthListRepository).singleton(),
     locationRepository: asClass(SequelizeLocationRepository).singleton(),
@@ -289,15 +301,16 @@ function registerRepositories(container: AwilixContainer): void {
     tenantRepository: asClass(SequelizeTenantRepository).singleton(),
     transactionEventRepository: asClass(SequelizeTransactionEventRepository).singleton(),
     variableMonitoringRepository: asClass(SequelizeVariableMonitoringRepository).singleton(),
-    componentRepository: asFunction(({ config, logger }) =>
-      new SequelizeRepository<Component>({ config, namespace: Component.MODEL_NAME, logger })
+    componentRepository: asFunction(
+      ({ config, logger }) =>
+        new SequelizeRepository<Component>({ config, namespace: Component.MODEL_NAME, logger }),
     ).singleton(),
   });
 
   if (process.env.CITRINEOS_USE_DRIZZLE_SECURITY_EVENT === 'true') {
     container.register({
-      securityEventRepository: asFunction(({ config, logger }) =>
-        new DrizzleSecurityEventRepository(config, logger)
+      securityEventRepository: asFunction(
+        ({ config, logger }) => new DrizzleSecurityEventRepository(config, logger),
       ).singleton(),
     });
   }
@@ -332,17 +345,19 @@ function registerServices(container: AwilixContainer): void {
 // ============================================================
 function registerNetwork(container: AwilixContainer): void {
   container.register({
-    networkHook: asValue(async (_identifier: string, _message: string) => { }),
+    networkHook: asValue(async (_identifier: string, _message: string) => {}),
 
-    doesChargingStationExistByStationId: asFunction(({ locationRepository }) =>
-      (tenantId: number, ocppConnectionName: string): Promise<boolean> =>
-        locationRepository.doesChargingStationExistByStationId(tenantId, ocppConnectionName)
+    doesChargingStationExistByStationId: asFunction(
+      ({ locationRepository }) =>
+        (tenantId: number, ocppConnectionName: string): Promise<boolean> =>
+          locationRepository.doesChargingStationExistByStationId(tenantId, ocppConnectionName),
     ).singleton(),
-    getMaxChargingStationsForTenant: asFunction(({ tenantRepository }) =>
-      async (tenantId: number): Promise<number | null> => {
-        const tenant = await tenantRepository.readByKey(tenantId, tenantId);
-        return tenant?.maxChargingStations ?? null;
-      }
+    getMaxChargingStationsForTenant: asFunction(
+      ({ tenantRepository }) =>
+        async (tenantId: number): Promise<number | null> => {
+          const tenant = await tenantRepository.readByKey(tenantId, tenantId);
+          return tenant?.maxChargingStations ?? null;
+        },
     ).singleton(),
 
     unknownStationFilter: asClass(UnknownStationFilter).singleton(),

@@ -60,11 +60,13 @@ export class SmartChargingOcpp2Api
     return [OCPPVersion.OCPP2_0_1, OCPPVersion.OCPP2_1];
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.ClearChargingProfile, (_instance: SmartChargingOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'ClearChargingProfileRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.ClearChargingProfile,
+    (_instance: SmartChargingOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'ClearChargingProfileRequestSchema',
+      ),
   )
   async clearChargingProfile(
     identifier: string[],
@@ -138,11 +140,13 @@ export class SmartChargingOcpp2Api
     return responses;
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.GetChargingProfiles, (_instance: SmartChargingOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'GetChargingProfilesRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.GetChargingProfiles,
+    (_instance: SmartChargingOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'GetChargingProfilesRequestSchema',
+      ),
   )
   async getChargingProfiles(
     identifier: string[],
@@ -213,11 +217,13 @@ export class SmartChargingOcpp2Api
     return results;
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.SetChargingProfile, (_instance: SmartChargingOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'SetChargingProfileRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.SetChargingProfile,
+    (_instance: SmartChargingOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'SetChargingProfileRequestSchema',
+      ),
   )
   async setChargingProfile(
     identifier: string[],
@@ -526,11 +532,13 @@ export class SmartChargingOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.ClearedChargingLimit, (_instance: SmartChargingOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'ClearedChargingLimitRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.ClearedChargingLimit,
+    (_instance: SmartChargingOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'ClearedChargingLimitRequestSchema',
+      ),
   )
   clearedChargingLimit(
     identifier: string[],
@@ -550,11 +558,13 @@ export class SmartChargingOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.GetCompositeSchedule, (_instance: SmartChargingOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'GetCompositeScheduleRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.GetCompositeSchedule,
+    (_instance: SmartChargingOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'GetCompositeScheduleRequestSchema',
+      ),
   )
   async getCompositeSchedule(
     identifier: string[],

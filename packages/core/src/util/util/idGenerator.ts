@@ -7,7 +7,11 @@ import type { IChargingStationSequenceRepository } from '@dal/interfaces/reposit
 export class IdGenerator {
   private _stationSequenceRepository: IChargingStationSequenceRepository;
 
-  constructor({ chargingStationSequenceRepository }: { chargingStationSequenceRepository: IChargingStationSequenceRepository }) {
+  constructor({
+    chargingStationSequenceRepository,
+  }: {
+    chargingStationSequenceRepository: IChargingStationSequenceRepository;
+  }) {
     this._stationSequenceRepository = chargingStationSequenceRepository;
   }
 

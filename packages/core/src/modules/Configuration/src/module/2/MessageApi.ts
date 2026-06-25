@@ -117,11 +117,13 @@ export class ConfigurationOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.ClearDisplayMessage, (_instance: ConfigurationOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'ClearDisplayMessageRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.ClearDisplayMessage,
+    (_instance: ConfigurationOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'ClearDisplayMessageRequestSchema',
+      ),
   )
   clearDisplayMessage(
     identifier: string[],
@@ -141,11 +143,13 @@ export class ConfigurationOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.GetDisplayMessages, (_instance: ConfigurationOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'GetDisplayMessagesRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.GetDisplayMessages,
+    (_instance: ConfigurationOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'GetDisplayMessagesRequestSchema',
+      ),
   )
   getDisplayMessages(
     identifier: string[],
@@ -189,11 +193,13 @@ export class ConfigurationOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.SetDisplayMessage, (_instance: ConfigurationOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'SetDisplayMessageRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.SetDisplayMessage,
+    (_instance: ConfigurationOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'SetDisplayMessageRequestSchema',
+      ),
   )
   async setDisplayMessage(
     identifier: string[],
@@ -228,11 +234,13 @@ export class ConfigurationOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.UnpublishFirmware, (_instance: ConfigurationOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'UnpublishFirmwareRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.UnpublishFirmware,
+    (_instance: ConfigurationOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'UnpublishFirmwareRequestSchema',
+      ),
   )
   unpublishFirmware(
     identifier: string[],
@@ -300,11 +308,13 @@ export class ConfigurationOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.ChangeAvailability, (_instance: ConfigurationOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'ChangeAvailabilityRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.ChangeAvailability,
+    (_instance: ConfigurationOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'ChangeAvailabilityRequestSchema',
+      ),
   )
   changeAvailability(
     identifier: string[],

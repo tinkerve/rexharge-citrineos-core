@@ -25,7 +25,10 @@ describe('CostCalculator', () => {
       recalculateTotalKwh: vi.fn(),
     } as unknown as Mocked<TransactionService>;
 
-    costCalculator = getTestInstance(container, CostCalculator, { tariffRepository, transactionService });
+    costCalculator = getTestInstance(container, CostCalculator, {
+      tariffRepository,
+      transactionService,
+    });
   });
 
   afterEach(() => {

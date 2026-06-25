@@ -62,11 +62,13 @@ export class EVDriverOcpp2Api
   }
 
   //TODO: 2.1 needs extended code for this request
-  @AsMessageEndpoint(OCPP_CallAction.RequestStartTransaction, (_instance: EVDriverOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'RequestStartTransactionRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.RequestStartTransaction,
+    (_instance: EVDriverOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'RequestStartTransactionRequestSchema',
+      ),
   )
   async requestStartTransaction(
     identifier: string[],
@@ -206,11 +208,13 @@ export class EVDriverOcpp2Api
     return results;
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.RequestStopTransaction, (_instance: EVDriverOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'RequestStopTransactionRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.RequestStopTransaction,
+    (_instance: EVDriverOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'RequestStopTransactionRequestSchema',
+      ),
   )
   async requestStopTransaction(
     identifier: string[],

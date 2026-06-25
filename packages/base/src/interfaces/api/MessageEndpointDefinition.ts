@@ -11,7 +11,7 @@ export interface IMessageEndpointDefinition {
   action: CallAction;
   method: (...args: any[]) => any;
   methodName: string;
-  // The schema getter receives the OCPP version the route is being registered for, 
+  // The schema getter receives the OCPP version the route is being registered for,
   // so a single API instance can resolve version-specific schemas.
   bodySchema: object | ((instance: any, version: OCPPVersion | null) => object);
   optionalQuerystrings?: Record<string, any>;

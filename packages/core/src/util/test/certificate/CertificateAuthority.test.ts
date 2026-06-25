@@ -56,13 +56,19 @@ describe('CertificateAuthorityService', () => {
 
     type WithFactoryHooks = typeof CertificateAuthorityService & {
       _instantiateV2GClient: (...args: unknown[]) => IV2GCertificateAuthorityClient;
-      _instantiateChargingStationClient: (...args: unknown[]) => Promise<IChargingStationCertificateAuthorityClient>;
+      _instantiateChargingStationClient: (
+        ...args: unknown[]
+      ) => Promise<IChargingStationCertificateAuthorityClient>;
     };
 
-    vi.spyOn(CertificateAuthorityService as WithFactoryHooks, '_instantiateV2GClient').mockReturnValue(mockV2GClient);
-    vi.spyOn(CertificateAuthorityService as WithFactoryHooks, '_instantiateChargingStationClient').mockReturnValue(
-      Promise.resolve(mockChargingStationClient),
-    );
+    vi.spyOn(
+      CertificateAuthorityService as WithFactoryHooks,
+      '_instantiateV2GClient',
+    ).mockReturnValue(mockV2GClient);
+    vi.spyOn(
+      CertificateAuthorityService as WithFactoryHooks,
+      '_instantiateChargingStationClient',
+    ).mockReturnValue(Promise.resolve(mockChargingStationClient));
 
     const fileStorage: IFileStorage = {
       saveFile: vi.fn() as IFileStorage['saveFile'],

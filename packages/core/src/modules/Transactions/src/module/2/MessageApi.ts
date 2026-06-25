@@ -84,11 +84,13 @@ export class TransactionsOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.GetTransactionStatus, (_instance: TransactionsOcpp2Api, version) =>
-    getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-      'GetTransactionStatusRequestSchema',
-    ),
+  @AsMessageEndpoint(
+    OCPP_CallAction.GetTransactionStatus,
+    (_instance: TransactionsOcpp2Api, version) =>
+      getOcpp2Schema(
+        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        'GetTransactionStatusRequestSchema',
+      ),
   )
   getTransactionStatus(
     identifier: string[],
