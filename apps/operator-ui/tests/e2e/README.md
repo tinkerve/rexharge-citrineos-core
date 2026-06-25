@@ -49,7 +49,7 @@ pnpm run test:e2e:report
 | Area              | Specs                                                                                                                                                                  |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Auth              | `specs/auth/login.spec.ts`, `specs/auth/logout.spec.ts`                                                                                                                |
-| Overview          | `specs/overview/dashboard.spec.ts`, `welcome-modal.spec.ts`, `theme.spec.ts`                                                                                           |
+| Overview          | `specs/overview/dashboard.spec.ts`, `welcome-modal.spec.ts`                                                                                                            |
 | Locations         | `specs/locations/crud.spec.ts`, `map.spec.ts`, `form-conditional.spec.ts`                                                                                              |
 | Charging stations | `specs/charging-stations/list.spec.ts`, `crud.spec.ts`, `detail-tabs.spec.ts`, `realtime.spec.ts`, `onboarding.spec.ts`, `admin-toggles.spec.ts`, `commands-*.spec.ts` |
 | Transactions      | `specs/transactions/list.spec.ts`, `detail-charts.spec.ts`                                                                                                             |
