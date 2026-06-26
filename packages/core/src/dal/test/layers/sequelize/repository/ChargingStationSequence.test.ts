@@ -7,7 +7,6 @@ import { Sequelize } from 'sequelize-typescript';
 import { ILogObj, Logger } from 'tslog';
 import { ChargingStationSequence } from '../../../../layers/sequelize/model/ChargingStationSequence/ChargingStationSequence';
 import { SequelizeChargingStationSequenceRepository } from '../../../../layers/sequelize/repository/ChargingStationSequence';
-import { createTestContainer, getTestInstance } from '../../../../../test/testContainer.js';
 
 // Mock the util module to avoid circular dependency issues during test loading
 vi.mock('../../../../src/layers/sequelize/util', () => ({
@@ -17,7 +16,6 @@ vi.mock('../../../../src/layers/sequelize/util', () => ({
 }));
 
 describe('SequelizeChargingStationSequenceRepository', () => {
-  const { container } = createTestContainer();
   let repository: SequelizeChargingStationSequenceRepository;
   let mockSequelize: Mocked<Sequelize>;
   let mockTransaction: Mock;
@@ -46,11 +44,11 @@ describe('SequelizeChargingStationSequenceRepository', () => {
 
     mockConfig = {} as BootstrapConfig;
 
-    repository = getTestInstance(container, SequelizeChargingStationSequenceRepository, {
-      config: mockConfig,
-      logger: mockLogger,
-      sequelizeInstance: mockSequelize,
-    });
+    repository = new SequelizeChargingStationSequenceRepository(
+      mockConfig,
+      mockLogger,
+      mockSequelize,
+    );
   });
 
   describe('getNextSequenceValue', () => {

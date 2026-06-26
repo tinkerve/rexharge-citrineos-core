@@ -1,8 +1,12 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
+import type { BootstrapConfig } from '@citrineos/base';
 import { CrudRepository, OCPP2_0_1 } from '@citrineos/base';
 import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
 import { type VariableAttributeQuerystring } from '../../../interfaces/queries/VariableAttribute.js';
 import { type IDeviceModelRepository } from '../../../interfaces/repositories.js';
 import { Component } from '../model/DeviceModel/Component.js';
@@ -12,7 +16,7 @@ import { Variable } from '../model/DeviceModel/Variable.js';
 import { VariableAttribute } from '../model/DeviceModel/VariableAttribute.js';
 import { VariableCharacteristics } from '../model/DeviceModel/VariableCharacteristics.js';
 import { VariableStatus } from '../model/DeviceModel/VariableStatus.js';
-import { SequelizeRepository, type SequelizeRepositoryDependencies } from './Base.js';
+import { SequelizeRepository } from './Base.js';
 
 // TODO: Document this
 
@@ -27,44 +31,51 @@ export class SequelizeDeviceModelRepository
   componentVariable: CrudRepository<ComponentVariable>;
   variableStatus: CrudRepository<VariableStatus>;
 
-  constructor({ config, logger, sequelizeInstance }: SequelizeRepositoryDependencies) {
-    super({ config, namespace: VariableAttribute.MODEL_NAME, logger, sequelizeInstance });
-    this.variable = new SequelizeRepository<Variable>({
-      config,
-      namespace: Variable.MODEL_NAME,
-      logger,
-      sequelizeInstance,
-    });
-    this.component = new SequelizeRepository<Component>({
-      config,
-      namespace: Component.MODEL_NAME,
-      logger,
-      sequelizeInstance,
-    });
-    this.evse = new SequelizeRepository<EvseType>({
-      config,
-      namespace: EvseType.MODEL_NAME,
-      logger,
-      sequelizeInstance,
-    });
-    this.componentVariable = new SequelizeRepository<ComponentVariable>({
-      config,
-      namespace: ComponentVariable.MODEL_NAME,
-      logger,
-      sequelizeInstance,
-    });
-    this.variableCharacteristics = new SequelizeRepository<VariableCharacteristics>({
-      config,
-      namespace: VariableCharacteristics.MODEL_NAME,
-      logger,
-      sequelizeInstance,
-    });
-    this.variableStatus = new SequelizeRepository<VariableStatus>({
-      config,
-      namespace: VariableStatus.MODEL_NAME,
-      logger,
-      sequelizeInstance,
-    });
+  constructor(
+    config: BootstrapConfig,
+    logger?: Logger<ILogObj>,
+    sequelizeInstance?: Sequelize,
+    variable?: CrudRepository<Variable>,
+    component?: CrudRepository<Component>,
+    evse?: CrudRepository<EvseType>,
+    componentVariable?: CrudRepository<ComponentVariable>,
+    variableCharacteristics?: CrudRepository<VariableCharacteristics>,
+    variableStatus?: CrudRepository<VariableStatus>,
+  ) {
+    super(config, VariableAttribute.MODEL_NAME, logger, sequelizeInstance);
+    this.variable = variable
+      ? variable
+      : new SequelizeRepository<Variable>(config, Variable.MODEL_NAME, logger, sequelizeInstance);
+    this.component = component
+      ? component
+      : new SequelizeRepository<Component>(config, Component.MODEL_NAME, logger, sequelizeInstance);
+    this.evse = evse
+      ? evse
+      : new SequelizeRepository<EvseType>(config, EvseType.MODEL_NAME, logger, sequelizeInstance);
+    this.componentVariable = componentVariable
+      ? componentVariable
+      : new SequelizeRepository<ComponentVariable>(
+          config,
+          ComponentVariable.MODEL_NAME,
+          logger,
+          sequelizeInstance,
+        );
+    this.variableCharacteristics = variableCharacteristics
+      ? variableCharacteristics
+      : new SequelizeRepository<VariableCharacteristics>(
+          config,
+          VariableCharacteristics.MODEL_NAME,
+          logger,
+          sequelizeInstance,
+        );
+    this.variableStatus = variableStatus
+      ? variableStatus
+      : new SequelizeRepository<VariableStatus>(
+          config,
+          VariableStatus.MODEL_NAME,
+          logger,
+          sequelizeInstance,
+        );
   }
 
   async createOrUpdateDeviceModelByStationId(
@@ -622,5 +633,3 @@ export class SequelizeDeviceModelRepository
     };
   }
 }
-
-export default SequelizeDeviceModelRepository;

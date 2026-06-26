@@ -6,7 +6,6 @@ import 'reflect-metadata';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { v4 as uuidv4 } from 'uuid';
-import type { BootstrapConfig } from '@config/bootstrap.config.js';
 import type { SystemConfig } from '@config/types.js';
 import type { OcppRequest, OcppResponse } from '@ocpp/internal-types.js';
 import type { CallAction, OCPPVersionType } from '@ocpp/rpc/message.js';
@@ -27,19 +26,6 @@ import type { IModule } from '@interfaces/modules/Module.js';
 import type { IHandlerDefinition } from '@interfaces/modules/HandlerDefinition.js';
 import { AS_HANDLER_METADATA } from '@interfaces/modules/AsHandler.js';
 import { OCPPValidator } from './OCPPValidator.js';
-
-/**
- * The dependencies every OCPP module receives through the container. Each concrete
- * module extends this with its own repositories and internal services.
- */
-export interface OcppModuleDependencies {
-  config: BootstrapConfig & SystemConfig;
-  cache: ICache;
-  sender: IMessageSender;
-  handler: IMessageHandler;
-  logger: Logger<ILogObj>;
-  ocppValidator: OCPPValidator;
-}
 
 export abstract class AbstractModule implements IModule {
   public static readonly CALLBACK_URL_CACHE_PREFIX: string = 'CALLBACK_URL_';

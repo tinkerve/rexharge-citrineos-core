@@ -30,16 +30,8 @@ export class EVDriverDataApi
    * @param {FastifyInstance} server - The Fastify server instance.
    * @param {Logger<ILogObj>} [logger] - The logger for logging.
    */
-  constructor({
-    evDriverModule,
-    server,
-    logger,
-  }: {
-    evDriverModule: EVDriverModule;
-    server: FastifyInstance;
-    logger?: Logger<ILogObj>;
-  }) {
-    super(evDriverModule, server, logger);
+  constructor(evDriverModule: EVDriverModule, server: FastifyInstance, logger?: Logger<ILogObj>) {
+    super(evDriverModule, server, null, logger);
   }
 
   @AsDataEndpoint(OCPP2_Namespace.LocalListVersion, HttpMethod.Get, ChargingStationKeyQuerySchema)

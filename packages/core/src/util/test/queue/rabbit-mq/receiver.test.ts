@@ -13,10 +13,8 @@ import {
   aMockConnectionManager,
   aSystemConfigWithAmqp,
 } from '../../providers/RabbitMqProvider.js';
-import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 
 describe('RabbitMqReceiver', () => {
-  const { container } = createTestContainer();
   // ---------------------------------------------------------------------------
   // MODULE_MODE — default behaviour, no routerMode flag
   // Each identifier gets its own dedicated queue and consumer(s).
@@ -29,23 +27,17 @@ describe('RabbitMqReceiver', () => {
     beforeEach(() => {
       mockChannel = aMockAmqpChannel();
       mockChannelManager = aMockChannelManager(mockChannel);
-      receiver = getTestInstance(container, RabbitMqReceiver, {
-        config: aSystemConfigWithAmqp(),
-        channelManager: mockChannelManager,
-        module: undefined,
-        routerMode: undefined,
-      });
+      receiver = new RabbitMqReceiver(aSystemConfigWithAmqp(), mockChannelManager);
     });
 
     describe('constructor', () => {
       it('should throw when AMQP exchange is not configured', () => {
-        expect(() =>
-          getTestInstance(container, RabbitMqReceiver, {
-            config: aSystemConfigWithAmqp({ noAmqp: true }),
-            channelManager: mockChannelManager,
-            module: undefined,
-            routerMode: undefined,
-          }),
+        expect(
+          () =>
+            new RabbitMqReceiver(
+              { util: { messageBroker: { amqp: undefined } } } as any,
+              mockChannelManager,
+            ),
         ).toThrow('RabbitMQ exchange is not configured');
       });
 
@@ -186,12 +178,13 @@ describe('RabbitMqReceiver', () => {
       mockChannel = aMockAmqpChannel();
       mockConnectionManager = aMockConnectionManager();
       mockChannelManager = aMockChannelManager(mockChannel, mockConnectionManager);
-      receiver = getTestInstance(container, RabbitMqReceiver, {
-        config: aSystemConfigWithAmqp({ instanceIdentifier: 'pod-1' }),
-        channelManager: mockChannelManager,
-        module: undefined,
-        routerMode: true,
-      });
+      receiver = new RabbitMqReceiver(
+        aSystemConfigWithAmqp({ instanceIdentifier: 'pod-1' }),
+        mockChannelManager,
+        undefined,
+        undefined,
+        /* routerMode */ true,
+      );
     });
 
     describe('constructor', () => {
@@ -205,12 +198,13 @@ describe('RabbitMqReceiver', () => {
       });
 
       it('should fall back to a timestamp-based name when instanceIdentifier is absent', async () => {
-        const fallbackReceiver = getTestInstance(container, RabbitMqReceiver, {
-          config: aSystemConfigWithAmqp(),
-          channelManager: mockChannelManager,
-          module: undefined,
-          routerMode: true,
-        });
+        const fallbackReceiver = new RabbitMqReceiver(
+          aSystemConfigWithAmqp(), // no instanceIdentifier
+          mockChannelManager,
+          undefined,
+          undefined,
+          true,
+        );
 
         await fallbackReceiver.subscribe('charger-1', undefined, { ocppConnectionName: 'CS001' });
 
@@ -221,12 +215,13 @@ describe('RabbitMqReceiver', () => {
       });
 
       it('should NOT activate router mode when routerMode is false', async () => {
-        const moduleReceiver = getTestInstance(container, RabbitMqReceiver, {
-          config: aSystemConfigWithAmqp({ instanceIdentifier: 'pod-1' }),
-          channelManager: mockChannelManager,
-          module: undefined,
-          routerMode: false,
-        });
+        const moduleReceiver = new RabbitMqReceiver(
+          aSystemConfigWithAmqp({ instanceIdentifier: 'pod-1' }),
+          mockChannelManager,
+          undefined,
+          undefined,
+          false,
+        );
 
         await moduleReceiver.subscribe('ModuleX', [OCPP_CallAction.BootNotification], {});
 
@@ -381,12 +376,7 @@ describe('RabbitMqReceiver', () => {
 
     beforeEach(() => {
       mockChannel = aMockAmqpChannel();
-      receiver = getTestInstance(container, RabbitMqReceiver, {
-        config: aSystemConfigWithAmqp(),
-        channelManager: aMockChannelManager(mockChannel),
-        module: undefined,
-        routerMode: undefined,
-      });
+      receiver = new RabbitMqReceiver(aSystemConfigWithAmqp(), aMockChannelManager(mockChannel));
       // Prevent handle() from throwing due to no registered handlers
       vi.spyOn(receiver, 'handle').mockResolvedValue(undefined);
     });

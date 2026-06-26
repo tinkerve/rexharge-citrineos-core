@@ -18,9 +18,6 @@ It is one workspace member of the `citrineos-core` pnpm monorepo. For repository
 `pnpm install`, building, the full-stack Docker Compose files, and the operator UI), see the
 [root README](../../README.md).
 
-How the server wires its dependencies — the Awilix container, module/service registration, and the
-bootstrap sequence — is documented in [`DEPENDENCY_INJECTION.md`](./DEPENDENCY_INJECTION.md).
-
 ## Table of Contents
 
 - [Running the Server](#running-the-server)
@@ -208,12 +205,13 @@ field-level validation that the official schemas lack.
 
 It is possible to add custom JSON schemas to validate the data fields of DataTransfer messages, which are supported by
 all OCPP versions.
-The OCPP message validator is created in `apps/Server/src/citrineOSServer.ts`. Register a DataTransfer schema by
-compiling it onto that validator's AJV and passing it in:
+In the `apps/Server/src/index.ts` code, there is a function `ajvInstance()` that creates the AJV instance. Here, you
+could register DataTransfer schemas:
 
-```ts
-const ocppAjv = OCPPValidator.createValidatorAjvInstance();
-ocppAjv.compile(MyDataTransferRequestSchema);
+```
+import { MyDataTransferRequestSchema } from './path'
+...
+ajvInstance.compile(MyDataTransferRequestSchema);
 ```
 
 Note: The schema's `$id` field must follow this format:

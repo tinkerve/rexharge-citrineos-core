@@ -2,17 +2,21 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { SequelizeRepository, type SequelizeRepositoryDependencies } from './Base.js';
+import { SequelizeRepository } from './Base.js';
 import { MessageInfo } from '../model/MessageInfo/MessageInfo.js';
 import type { IMessageInfoRepository } from '../../../interfaces/repositories.js';
+import type { BootstrapConfig } from '@citrineos/base';
 import { OCPP2_0_1 } from '@citrineos/base';
+import { Sequelize } from 'sequelize-typescript';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
 
 export class SequelizeMessageInfoRepository
   extends SequelizeRepository<MessageInfo>
   implements IMessageInfoRepository
 {
-  constructor({ config, logger, sequelizeInstance }: SequelizeRepositoryDependencies) {
-    super({ config, namespace: MessageInfo.MODEL_NAME, logger, sequelizeInstance });
+  constructor(config: BootstrapConfig, logger?: Logger<ILogObj>, sequelizeInstance?: Sequelize) {
+    super(config, MessageInfo.MODEL_NAME, logger, sequelizeInstance);
   }
 
   async deactivateAllByStationId(tenantId: number, ocppConnectionName: string): Promise<void> {
@@ -72,5 +76,3 @@ export class SequelizeMessageInfoRepository
     });
   }
 }
-
-export default SequelizeMessageInfoRepository;

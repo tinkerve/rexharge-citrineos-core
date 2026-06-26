@@ -25,19 +25,13 @@ export class StatusNotificationService {
   protected _cache: ICache;
   protected _logger: Logger<ILogObj>;
 
-  constructor({
-    componentRepository,
-    deviceModelRepository,
-    locationRepository,
-    cache,
-    logger,
-  }: {
-    componentRepository: CrudRepository<Component>;
-    deviceModelRepository: IDeviceModelRepository;
-    locationRepository: ILocationRepository;
-    cache: ICache;
-    logger?: Logger<ILogObj>;
-  }) {
+  constructor(
+    componentRepository: CrudRepository<Component>,
+    deviceModelRepository: IDeviceModelRepository,
+    locationRepository: ILocationRepository,
+    cache: ICache,
+    logger?: Logger<ILogObj>,
+  ) {
     this._componentRepository = componentRepository;
     this._deviceModelRepository = deviceModelRepository;
     this._locationRepository = locationRepository;

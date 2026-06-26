@@ -6,10 +6,8 @@ import { MonitoringService } from '../../src/module/MonitoringService.js';
 import { DEFAULT_TENANT_ID, OCPP2_0_1 } from '@citrineos/base';
 import { aClearMonitoringResult } from '../providers/Monitoring.js';
 import { beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
-import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 
 describe('MonitoringService', () => {
-  const { container } = createTestContainer();
   let mockVariableMonitoringRepository: Mocked<IVariableMonitoringRepository>;
   let monitoringService: MonitoringService;
 
@@ -18,9 +16,7 @@ describe('MonitoringService', () => {
       rejectVariableMonitoringByIdAndStationId: vi.fn(),
     } as unknown as Mocked<IVariableMonitoringRepository>;
 
-    monitoringService = getTestInstance(container, MonitoringService, {
-      variableMonitoringRepository: mockVariableMonitoringRepository,
-    });
+    monitoringService = new MonitoringService(mockVariableMonitoringRepository);
   });
 
   describe('processClearMonitoringResult', () => {

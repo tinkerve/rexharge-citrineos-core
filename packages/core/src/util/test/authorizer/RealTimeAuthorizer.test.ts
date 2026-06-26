@@ -13,7 +13,6 @@ import type { Authorization } from '@dal/layers/sequelize/index.js';
 import type { ILocationRepository } from '@dal/interfaces/repositories.js';
 import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest';
 import { RealTimeAuthorizer } from '../../authorizer/RealTimeAuthorizer.js';
-import { createTestContainer, getTestInstance } from '../../../test/testContainer.js';
 
 function buildMockLocationRepository(chargingStation: unknown): Mocked<ILocationRepository> {
   return {
@@ -48,7 +47,6 @@ const evse = { id: 10 } as EvseDto;
 const connector = { id: 100 } as ConnectorDto;
 
 describe('RealTimeAuthorizer', () => {
-  const { container } = createTestContainer();
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -64,10 +62,7 @@ describe('RealTimeAuthorizer', () => {
   it('does not throw when ChargingStation has no Location (locationId is null)', async () => {
     const chargingStation = { locationId: null, evses: [] };
     const repo = buildMockLocationRepository(chargingStation);
-    const authorizer = getTestInstance(container, RealTimeAuthorizer, {
-      locationRepository: repo,
-      config: {} as SystemConfig,
-    });
+    const authorizer = new RealTimeAuthorizer(repo, {} as SystemConfig);
 
     const result = await authorizer.authorize(
       buildAuthorization(),

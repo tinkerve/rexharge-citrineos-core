@@ -14,15 +14,11 @@ export class CostCalculator {
   private readonly _tariffRepository: ITariffRepository;
   private readonly _transactionService: TransactionService;
 
-  constructor({
-    tariffRepository,
-    transactionService,
-    logger,
-  }: {
-    tariffRepository: ITariffRepository;
-    transactionService: TransactionService;
-    logger: Logger<ILogObj>;
-  }) {
+  constructor(
+    tariffRepository: ITariffRepository,
+    transactionService: TransactionService,
+    logger?: Logger<ILogObj>,
+  ) {
     this._tariffRepository = tariffRepository;
     this._transactionService = transactionService;
     this._logger = logger

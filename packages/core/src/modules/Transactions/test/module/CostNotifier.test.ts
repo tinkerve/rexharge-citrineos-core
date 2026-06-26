@@ -2,20 +2,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import { ITransactionEventRepository, Transaction } from '@citrineos/core';
-import { DEFAULT_TENANT_ID, OCPPVersion } from '@citrineos/base';
+import { AbstractModule, DEFAULT_TENANT_ID, OCPP_CallAction, OCPPVersion } from '@citrineos/base';
 import { CostCalculator } from '../../src/module/CostCalculator.js';
-import { CostNotifier, CostUpdatedNotifier } from '../../src/module/CostNotifier.js';
+import { CostNotifier } from '../../src/module/CostNotifier.js';
 import { aTransaction } from '../providers/TransactionProvider.js';
-import { afterEach, beforeEach, describe, expect, it, Mock, Mocked, vi } from 'vitest';
-import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
+import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
 
 describe('CostNotifier', () => {
-  const { container } = createTestContainer();
   const anyTenantId = DEFAULT_TENANT_ID;
-  const anyProtocol = OCPPVersion.OCPP2_0_1;
 
   let transactionEventRepository: Mocked<ITransactionEventRepository>;
-  let costUpdatedNotifier: Mock<CostUpdatedNotifier>;
+  let module: Mocked<AbstractModule>;
   let costCalculator: Mocked<CostCalculator>;
   let costNotifier: CostNotifier;
 
@@ -27,29 +24,29 @@ describe('CostNotifier', () => {
       updateTransactionTotalCostById: vi.fn(),
     } as unknown as Mocked<ITransactionEventRepository>;
 
-    costUpdatedNotifier = vi.fn();
+    module = {
+      sendCall: vi.fn(),
+    } as unknown as Mocked<AbstractModule>;
 
     costCalculator = {
       calculateTotalCost: vi.fn(),
     } as unknown as Mocked<CostCalculator>;
 
-    costNotifier = getTestInstance(container, CostNotifier, {
-      transactionEventRepository,
-      costCalculator,
-      costUpdatedNotifier,
-    });
+    costNotifier = new CostNotifier(module, transactionEventRepository, costCalculator);
   });
 
   afterEach(() => {
     transactionEventRepository.readTransactionByStationIdAndTransactionId.mockReset();
-    costUpdatedNotifier.mockReset();
+    module.sendCall.mockReset();
     costCalculator.calculateTotalCost.mockReset();
     vi.clearAllTimers();
   });
 
   describe('notifyWhileActive', () => {
     beforeEach(() => {
-      costUpdatedNotifier.mockResolvedValue(undefined);
+      module.sendCall.mockResolvedValue({
+        success: true,
+      });
     });
 
     it('should periodically send cost updates', async () => {
@@ -61,24 +58,23 @@ describe('CostNotifier', () => {
         transaction.transactionId,
         anyTenantId,
         intervalSeconds,
-        anyProtocol,
       );
 
-      expect(costUpdatedNotifier).toHaveBeenCalledTimes(0);
+      expect(module.sendCall).toHaveBeenCalledTimes(0);
 
       const firstTotalCost = givenTotalCost(3.41);
       await vi.advanceTimersByTimeAsync(intervalSeconds * 1000);
-      expect(costUpdatedNotifier).toHaveBeenCalledTimes(1);
+      expect(module.sendCall).toHaveBeenCalledTimes(1);
       assertLastCostUpdatedCall(transaction, anyTenantId, firstTotalCost);
 
       const secondTotalCost = givenTotalCost(6.84);
       await vi.advanceTimersByTimeAsync(intervalSeconds * 1000);
-      expect(costUpdatedNotifier).toHaveBeenCalledTimes(2);
+      expect(module.sendCall).toHaveBeenCalledTimes(2);
       assertLastCostUpdatedCall(transaction, anyTenantId, secondTotalCost);
 
       const thirdTotalCost = givenTotalCost(11.14);
       await vi.advanceTimersByTimeAsync(intervalSeconds * 1000);
-      expect(costUpdatedNotifier).toHaveBeenCalledTimes(3);
+      expect(module.sendCall).toHaveBeenCalledTimes(3);
       assertLastCostUpdatedCall(transaction, anyTenantId, thirdTotalCost);
     });
 
@@ -91,20 +87,19 @@ describe('CostNotifier', () => {
         transaction.transactionId,
         anyTenantId,
         intervalSeconds,
-        anyProtocol,
       );
 
-      expect(costUpdatedNotifier).toHaveBeenCalledTimes(0);
+      expect(module.sendCall).toHaveBeenCalledTimes(0);
 
       await vi.advanceTimersByTimeAsync(intervalSeconds * 1000);
-      expect(costUpdatedNotifier).toHaveBeenCalledTimes(1);
+      expect(module.sendCall).toHaveBeenCalledTimes(1);
 
       await vi.advanceTimersByTimeAsync(intervalSeconds * 1000);
-      expect(costUpdatedNotifier).toHaveBeenCalledTimes(2);
+      expect(module.sendCall).toHaveBeenCalledTimes(2);
 
       givenTransaction({ ...transaction, isActive: false } as Transaction);
       await vi.advanceTimersByTimeAsync(intervalSeconds * 1000);
-      expect(costUpdatedNotifier).toHaveBeenCalledTimes(2);
+      expect(module.sendCall).toHaveBeenCalledTimes(2);
     });
 
     it('should not duplicate schedules for the same station and transaction', async () => {
@@ -116,7 +111,6 @@ describe('CostNotifier', () => {
         transaction.transactionId,
         anyTenantId,
         intervalSeconds,
-        anyProtocol,
       );
 
       costNotifier.notifyWhileActive(
@@ -124,11 +118,10 @@ describe('CostNotifier', () => {
         transaction.transactionId,
         anyTenantId,
         intervalSeconds,
-        anyProtocol,
       );
 
       await vi.advanceTimersByTimeAsync(intervalSeconds * 1000);
-      expect(costUpdatedNotifier).toHaveBeenCalledTimes(1);
+      expect(module.sendCall).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -137,13 +130,16 @@ describe('CostNotifier', () => {
     tenantId: number,
     totalCost: number,
   ) {
-    expect(costUpdatedNotifier).toHaveBeenLastCalledWith({
-      ocppConnectionName: transaction.ocppConnectionName,
+    expect(module.sendCall).toHaveBeenLastCalledWith(
+      transaction.ocppConnectionName,
       tenantId,
-      totalCost,
-      transactionId: transaction.transactionId,
-      protocol: anyProtocol,
-    });
+      OCPPVersion.OCPP2_0_1,
+      OCPP_CallAction.CostUpdated,
+      {
+        totalCost: totalCost,
+        transactionId: transaction.transactionId,
+      },
+    );
   }
 
   function givenTotalCost(cost: number) {

@@ -7,12 +7,8 @@ import type { IChargingStationSequenceRepository } from '@dal/interfaces/reposit
 export class IdGenerator {
   private _stationSequenceRepository: IChargingStationSequenceRepository;
 
-  constructor({
-    chargingStationSequenceRepository,
-  }: {
-    chargingStationSequenceRepository: IChargingStationSequenceRepository;
-  }) {
-    this._stationSequenceRepository = chargingStationSequenceRepository;
+  constructor(stationSequenceRepository: IChargingStationSequenceRepository) {
+    this._stationSequenceRepository = stationSequenceRepository;
   }
 
   async generateRequestId(
@@ -23,5 +19,3 @@ export class IdGenerator {
     return this._stationSequenceRepository.getNextSequenceValue(tenantId, ocppConnectionName, type);
   }
 }
-
-export default IdGenerator;

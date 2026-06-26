@@ -43,34 +43,20 @@ export class ConfigurationOcpp2Api
    * @param {FastifyInstance} server - The server instance.
    * @param {Logger<ILogObj>} [logger] - Optional logger instance.
    */
-  constructor({
-    configurationModule,
-    server,
-    logger,
-  }: {
-    configurationModule: ConfigurationModule;
-    server: FastifyInstance;
-    logger?: Logger<ILogObj>;
-  }) {
-    // The OCPP version is no longer instance state — it is supplied per route /
-    // per request via supportedVersions() and the handler `version` parameter.
-    super(configurationModule, server, logger);
-  }
-
-  /**
-   * This API serves both OCPP 2.0.1 and 2.1 from a single instance; each
-   * message endpoint is registered once per version with the version threaded
-   * into schema selection, the route path, and the handler.
-   */
-  protected get supportedVersions(): OCPPVersion[] {
-    return [OCPPVersion.OCPP2_0_1, OCPPVersion.OCPP2_1];
+  constructor(
+    ConfigurationComponent: ConfigurationModule,
+    server: FastifyInstance,
+    version: OCPPVersion = DEFAULT_VERSION,
+    logger?: Logger<ILogObj>,
+  ) {
+    super(ConfigurationComponent, server, version, logger);
   }
 
   @AsMessageEndpoint(
     OCPP_CallAction.SetNetworkProfile,
-    (_instance: ConfigurationOcpp2Api, version) =>
+    (instance: ConfigurationOcpp2Api) =>
       getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+        (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
         'SetNetworkProfileRequestSchema',
       ),
     {
@@ -81,9 +67,8 @@ export class ConfigurationOcpp2Api
     identifier: string[],
     request: OCPP2_request_types.SetNetworkProfileRequest,
     callbackUrl?: string,
-    tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
     extraQueries?: Record<string, any>,
+    tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     const correlationId = uuidv4();
     if (extraQueries) {
@@ -109,7 +94,7 @@ export class ConfigurationOcpp2Api
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.SetNetworkProfile,
       request,
       callbackUrl,
@@ -117,61 +102,55 @@ export class ConfigurationOcpp2Api
     );
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.ClearDisplayMessage,
-    (_instance: ConfigurationOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'ClearDisplayMessageRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.ClearDisplayMessage, (instance: ConfigurationOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'ClearDisplayMessageRequestSchema',
+    ),
   )
   clearDisplayMessage(
     identifier: string[],
     request: OCPP2_request_types.ClearDisplayMessageRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.ClearDisplayMessage,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.GetDisplayMessages,
-    (_instance: ConfigurationOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'GetDisplayMessagesRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.GetDisplayMessages, (instance: ConfigurationOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetDisplayMessagesRequestSchema',
+    ),
   )
   getDisplayMessages(
     identifier: string[],
     request: OCPP2_request_types.GetDisplayMessagesRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.GetDisplayMessages,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.PublishFirmware, (_instance: ConfigurationOcpp2Api, version) =>
+  @AsMessageEndpoint(OCPP_CallAction.PublishFirmware, (instance: ConfigurationOcpp2Api) =>
     getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
       'PublishFirmwareRequestSchema',
     ),
   )
@@ -180,33 +159,29 @@ export class ConfigurationOcpp2Api
     request: OCPP2_request_types.PublishFirmwareRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.PublishFirmware,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.SetDisplayMessage,
-    (_instance: ConfigurationOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'SetDisplayMessageRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.SetDisplayMessage, (instance: ConfigurationOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'SetDisplayMessageRequestSchema',
+    ),
   )
   async setDisplayMessage(
     identifier: string[],
     request: OCPP2_request_types.SetDisplayMessageRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     const messageInfo = request.message as OCPP2_common_types.MessageInfoType;
 
@@ -227,42 +202,39 @@ export class ConfigurationOcpp2Api
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.SetDisplayMessage,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.UnpublishFirmware,
-    (_instance: ConfigurationOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'UnpublishFirmwareRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.UnpublishFirmware, (instance: ConfigurationOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'UnpublishFirmwareRequestSchema',
+    ),
   )
   unpublishFirmware(
     identifier: string[],
     request: OCPP2_request_types.UnpublishFirmwareRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.UnpublishFirmware,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.UpdateFirmware, (_instance: ConfigurationOcpp2Api, version) =>
+  @AsMessageEndpoint(OCPP_CallAction.UpdateFirmware, (instance: ConfigurationOcpp2Api) =>
     getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
       'UpdateFirmwareRequestSchema',
     ),
   )
@@ -271,22 +243,21 @@ export class ConfigurationOcpp2Api
     request: OCPP2_request_types.UpdateFirmwareRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.UpdateFirmware,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.Reset, (_instance: ConfigurationOcpp2Api, version) =>
+  @AsMessageEndpoint(OCPP_CallAction.Reset, (instance: ConfigurationOcpp2Api) =>
     getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
       'ResetRequestSchema',
     ),
   )
@@ -295,48 +266,44 @@ export class ConfigurationOcpp2Api
     request: OCPP2_request_types.ResetRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.Reset,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.ChangeAvailability,
-    (_instance: ConfigurationOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'ChangeAvailabilityRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.ChangeAvailability, (instance: ConfigurationOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'ChangeAvailabilityRequestSchema',
+    ),
   )
   changeAvailability(
     identifier: string[],
     request: OCPP2_request_types.ChangeAvailabilityRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.ChangeAvailability,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.TriggerMessage, (_instance: ConfigurationOcpp2Api, version) =>
+  @AsMessageEndpoint(OCPP_CallAction.TriggerMessage, (instance: ConfigurationOcpp2Api) =>
     getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
       'TriggerMessageRequestSchema',
     ),
   )
@@ -345,22 +312,21 @@ export class ConfigurationOcpp2Api
     request: OCPP2_request_types.TriggerMessageRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.TriggerMessage,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.DataTransfer, (_instance: ConfigurationOcpp2Api, version) =>
+  @AsMessageEndpoint(OCPP_CallAction.DataTransfer, (instance: ConfigurationOcpp2Api) =>
     getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
       'DataTransferRequestSchema',
     ),
   )
@@ -369,13 +335,12 @@ export class ConfigurationOcpp2Api
     request: OCPP2_request_types.DataTransferRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     const results: Promise<IMessageConfirmation>[] = identifier.map((ocppConnectionName) =>
       this._module.sendCall(
         ocppConnectionName,
         tenantId,
-        version,
+        this._ocppVersion ?? DEFAULT_VERSION,
         OCPP_CallAction.DataTransfer,
         request,
         callbackUrl,
@@ -390,8 +355,8 @@ export class ConfigurationOcpp2Api
    * @param {CallAction} input - The input {@link CallAction}.
    * @return {string} - The generated URL path.
    */
-  protected _toMessagePath(input: CallAction, version?: OCPPVersion | null): string {
+  protected _toMessagePath(input: CallAction): string {
     const endpointPrefix = this._module.config.modules.configuration.endpointPrefix;
-    return super._toMessagePath(input, version, endpointPrefix);
+    return super._toMessagePath(input, endpointPrefix);
   }
 }
