@@ -33,6 +33,7 @@ import type { ILocationRepository } from '@citrineos/core';
 import { afterEach, beforeEach, describe, expect, it, type Mocked, vi } from 'vitest';
 import { MessageRouterImpl } from '../../src/module/router.js';
 import { WebhookDispatcher } from '../../src/module/webhook.dispatcher.js';
+import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -106,6 +107,7 @@ function buildMockLocationRepository(): Mocked<ILocationRepository> {
 // ─── Test Suite ────────────────────────────────────────────────────────────────
 
 describe('MessageRouterImpl', () => {
+  const { container } = createTestContainer();
   let config: any;
   let cache: Mocked<ICache>;
   let sender: Mocked<IMessageSender>;
@@ -124,17 +126,16 @@ describe('MessageRouterImpl', () => {
     networkHook = vi.fn().mockResolvedValue(undefined);
     locationRepository = buildMockLocationRepository();
 
-    router = new MessageRouterImpl(
+    router = getTestInstance(container, MessageRouterImpl, {
       config,
       cache,
-      sender,
-      handler,
-      dispatcher,
+      routerSender: sender,
+      routerHandler: handler,
+      webhookDispatcher: dispatcher,
       networkHook,
-      undefined, // logger
-      undefined, // ajv
+      ocppValidator: undefined,
       locationRepository,
-    );
+    });
   });
 
   afterEach(() => {

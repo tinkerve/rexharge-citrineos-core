@@ -1,29 +1,23 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { IDeviceModelRepository, VariableAttribute } from '@citrineos/core';
+import { VariableAttribute } from '@citrineos/core';
 import { DEFAULT_TENANT_ID, OCPP2_0_1 } from '@citrineos/base';
 import { faker } from '@faker-js/faker';
 import { aBasicAuthPasswordVariable } from '../../providers/VariableAttributeProvider.js';
 import { BasicAuthenticationFilter } from '../../../index.js';
 import { aRequestWithAuthorization, basicAuth } from '../../providers/IncomingMessageProvider.js';
 import { anAuthenticationOptions } from '../../providers/AuthenticationOptionsProvider.js';
-import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 
 describe('BasicAuthenticationFilter', () => {
+  const { container } = createTestContainer();
   const password = 'SEPtwLckb5QD5on0EXcCAmuQVmJ*bu3ZXmA:Clt3';
   const anotherPassword = '_Oec8yF4r1hH6ildo4yvM25:SU2hpL*jobDskYos';
 
-  let deviceModelRepository: Mocked<IDeviceModelRepository>;
-  let filter: BasicAuthenticationFilter;
-
-  beforeEach(() => {
-    deviceModelRepository = {
-      readAllByQuerystring: vi.fn(),
-    } as unknown as Mocked<IDeviceModelRepository>;
-
-    filter = new BasicAuthenticationFilter(deviceModelRepository);
-  });
+  const deviceModelRepository = { readAllByQuerystring: vi.fn() };
+  const filter = getTestInstance(container, BasicAuthenticationFilter, { deviceModelRepository });
 
   afterEach(() => {
     deviceModelRepository.readAllByQuerystring.mockReset();

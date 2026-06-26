@@ -43,13 +43,19 @@ export class WebhookDispatcher {
   protected _onMessageCallbacks: Map<string, OnMessageCallback[]> = new Map();
   protected _sentMessageCallbacks: Map<string, OnSentMessageCallback[]> = new Map();
 
-  constructor(
-    ocppMessageRepository: IOCPPMessageRepository,
-    subscriptionRepository: ISubscriptionRepository,
-    cache: ICache,
-    logger?: Logger<ILogObj>,
-    config?: BootstrapConfig & SystemConfig,
-  ) {
+  constructor({
+    ocppMessageRepository,
+    subscriptionRepository,
+    cache,
+    logger,
+    config,
+  }: {
+    ocppMessageRepository: IOCPPMessageRepository;
+    subscriptionRepository: ISubscriptionRepository;
+    cache: ICache;
+    logger?: Logger<ILogObj>;
+    config?: BootstrapConfig & SystemConfig;
+  }) {
     this._ocppMessageRepository = ocppMessageRepository;
     this._subscriptionRepository = subscriptionRepository;
     this._cache = cache;
@@ -480,3 +486,5 @@ export type OnSentMessageCallback = (
   message: string,
   info?: Map<string, string>,
 ) => Promise<boolean>;
+
+export default WebhookDispatcher;

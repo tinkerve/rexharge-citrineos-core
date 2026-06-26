@@ -1,11 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { BootstrapConfig } from '@citrineos/base';
 import { CrudRepository, OCPP2_0_1 } from '@citrineos/base';
-import { Sequelize } from 'sequelize-typescript';
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
 import type {
   IAuthorizationRepository,
   ILocalAuthListRepository,
@@ -18,7 +14,7 @@ import { LocalListVersionAuthorization } from '../model/Authorization/LocalListV
 import { SendLocalList } from '../model/Authorization/SendLocalList.js';
 import { SendLocalListAuthorization } from '../model/Authorization/SendLocalListAuthorization.js';
 import { SequelizeAuthorizationRepository } from './Authorization.js';
-import { SequelizeRepository } from './Base.js';
+import { SequelizeRepository, type SequelizeRepositoryDependencies } from './Base.js';
 
 export class SequelizeLocalAuthListRepository
   extends SequelizeRepository<LocalListVersion>
@@ -28,34 +24,25 @@ export class SequelizeLocalAuthListRepository
   localListAuthorization: CrudRepository<LocalListAuthorization>;
   sendLocalList: CrudRepository<SendLocalList>;
 
-  constructor(
-    config: BootstrapConfig,
-    logger?: Logger<ILogObj>,
-    sequelizeInstance?: Sequelize,
-    authorization?: IAuthorizationRepository,
-    localListAuthorization?: CrudRepository<LocalListAuthorization>,
-    sendLocalList?: CrudRepository<SendLocalList>,
-  ) {
-    super(config, Authorization.MODEL_NAME, logger, sequelizeInstance);
-    this.authorization = authorization
-      ? authorization
-      : new SequelizeAuthorizationRepository(config, logger);
-    this.localListAuthorization = localListAuthorization
-      ? localListAuthorization
-      : new SequelizeRepository<LocalListAuthorization>(
-          config,
-          LocalListAuthorization.MODEL_NAME,
-          logger,
-          sequelizeInstance,
-        );
-    this.sendLocalList = sendLocalList
-      ? sendLocalList
-      : new SequelizeRepository<SendLocalList>(
-          config,
-          SendLocalList.MODEL_NAME,
-          logger,
-          sequelizeInstance,
-        );
+  constructor({ config, logger, sequelizeInstance }: SequelizeRepositoryDependencies) {
+    super({ config, namespace: Authorization.MODEL_NAME, logger, sequelizeInstance });
+    this.authorization = new SequelizeAuthorizationRepository({
+      config,
+      logger,
+      sequelizeInstance,
+    });
+    this.localListAuthorization = new SequelizeRepository<LocalListAuthorization>({
+      config,
+      namespace: LocalListAuthorization.MODEL_NAME,
+      logger,
+      sequelizeInstance,
+    });
+    this.sendLocalList = new SequelizeRepository<SendLocalList>({
+      config,
+      namespace: SendLocalList.MODEL_NAME,
+      logger,
+      sequelizeInstance,
+    });
   }
 
   async createSendLocalListFromRequestData(
@@ -324,3 +311,5 @@ export class SequelizeLocalAuthListRepository
     return localListVersion;
   }
 }
+
+export default SequelizeLocalAuthListRepository;

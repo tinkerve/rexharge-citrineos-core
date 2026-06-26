@@ -7,10 +7,7 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type {
   BootstrapConfig,
-  CrudRepository,
-  IAuthorizer,
   ICache,
-  IFileStorage,
   IMessage,
   IMessageHandler,
   IMessageSender,
@@ -27,16 +24,10 @@ import {
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
-import type {
-  IAuthorizationRepository,
-  IDeviceModelRepository,
-  ILocationRepository,
-  IOCPPMessageRepository,
-  IReservationRepository,
-  ITariffRepository,
-  ITransactionEventRepository,
-} from '@dal/interfaces/repositories.js';
+import type { ITransactionEventRepository } from '@dal/interfaces/repositories.js';
 import { TransactionsModule } from '../../src/module/module.js';
+import { asValue } from 'awilix';
+import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 
 vi.mock('@util/security/SignedMeterValuesUtil.js', () => ({
   SignedMeterValuesUtil: vi.fn().mockImplementation(() => ({
@@ -102,6 +93,7 @@ function makeMessage<T extends OcppRequest>(payload: T, action: string): IMessag
 }
 
 describe('TransactionsModule - ended transaction guard', () => {
+  const { container } = createTestContainer();
   let module: TransactionsModule;
   let transactionEventRepository: Partial<ITransactionEventRepository>;
   let sendCallResultSpy: ReturnType<typeof vi.spyOn>;
@@ -140,42 +132,33 @@ describe('TransactionsModule - ended transaction guard', () => {
       set: vi.fn().mockResolvedValue(true),
     } as unknown as ICache;
 
-    module = new TransactionsModule(
-      config,
-      mockCache,
-      {} as IFileStorage,
-      mockSender,
-      mockHandler,
-      logger,
-      /* ocppValidator */ undefined,
-      transactionEventRepository as ITransactionEventRepository,
-      /* authorizeRepository */ {
-        readAllByQuerystring: vi.fn().mockResolvedValue([]),
-      } as unknown as IAuthorizationRepository,
-      /* deviceModelRepository */ {
-        readAllByQuerystring: vi.fn().mockResolvedValue([]),
-      } as unknown as IDeviceModelRepository,
-      /* componentRepository */ {
-        readAllByQuery: vi.fn().mockResolvedValue([]),
-      } as unknown as CrudRepository<any>,
-      /* locationRepository */ {} as ILocationRepository,
-      /* tariffRepository */ {
-        readAllByQuerystring: vi.fn().mockResolvedValue([]),
-      } as unknown as ITariffRepository,
-      /* reservationRepository */ {
-        updateAllByQuery: vi.fn().mockResolvedValue([]),
-      } as unknown as IReservationRepository,
-      /* ocppMessageRepository */ {
-        readOnlyOneByQuery: vi.fn().mockResolvedValue(null),
-      } as unknown as IOCPPMessageRepository,
-      /* realTimeAuthorizer */ {
-        authorize: vi.fn().mockResolvedValue(AuthorizationStatusEnum.Accepted),
-      } as unknown as IAuthorizer,
-      /* authorizers */ undefined,
-      /* chargingProfileRepository */ {
-        readAllByQuery: vi.fn().mockResolvedValue([]),
-      } as unknown as any,
-    );
+    container.register({
+      config: asValue(config),
+      logger: asValue(logger),
+      cache: asValue(mockCache),
+      sender: asValue(mockSender),
+      handler: asValue(mockHandler),
+      ocppValidator: asValue(undefined),
+      transactionEventRepository: asValue(transactionEventRepository),
+      authorizationRepository: asValue({ readAllByQuerystring: vi.fn().mockResolvedValue([]) }),
+      deviceModelRepository: asValue({ readAllByQuerystring: vi.fn().mockResolvedValue([]) }),
+      locationRepository: asValue({}),
+      tariffRepository: asValue({ readAllByQuerystring: vi.fn().mockResolvedValue([]) }),
+      ocppMessageRepository: asValue({ readOnlyOneByQuery: vi.fn().mockResolvedValue(null) }),
+      chargingProfileRepository: asValue({ readAllByQuery: vi.fn().mockResolvedValue([]) }),
+      transactionService: asValue({
+        authorizeOcpp21IdToken: vi.fn().mockResolvedValue({}),
+        authorizeOcpp201IdToken: vi.fn().mockResolvedValue({}),
+        deactivateReservation: vi.fn().mockResolvedValue(undefined),
+        deactivateOtherActiveTransactionsAtEvse: vi.fn().mockResolvedValue(undefined),
+      }),
+      statusNotificationService: asValue({}),
+      costCalculator: asValue({}),
+      costNotifier: asValue({}),
+      signedMeterValuesUtil: asValue({ validateMeterValues: vi.fn().mockResolvedValue(true) }),
+    });
+
+    module = getTestInstance(container, TransactionsModule, {});
 
     sendCallResultSpy = vi
       .spyOn(module, 'sendCallResultWithMessage')
