@@ -102,13 +102,22 @@ export class SequelizeLocalAuthListRepository
           );
         }
       }
-      // No longer create IdTokenInfo, just use Authorization fields
-      const { id, ...authorizationFields } = auth;
       const localListAuthorization = await this.localListAuthorization.create(
         tenantId,
         LocalListAuthorization.build({
-          ...authorizationFields,
-          authorizationId: id,
+          authorizationId: auth.id,
+          idToken: auth.idToken,
+          idTokenType: auth.idTokenType,
+          status: auth.status,
+          allowedConnectorTypes: auth.allowedConnectorTypes,
+          disallowedEvseIdPrefixes: auth.disallowedEvseIdPrefixes,
+          additionalInfo: auth.additionalInfo,
+          cacheExpiryDateTime: auth.cacheExpiryDateTime,
+          chargingPriority: auth.chargingPriority,
+          language1: auth.language1,
+          language2: auth.language2,
+          personalMessage: auth.personalMessage,
+          groupAuthorizationId: auth.groupAuthorizationId,
         }),
       );
       await SendLocalListAuthorization.create({
