@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type { BootstrapConfig } from '@citrineos/base';
-import { CrudRepository, OCPP2_0_1 } from '@citrineos/base';
+import { CrudRepository, OCPP1_6, OCPP2_0_1 } from '@citrineos/base';
 import { Sequelize } from 'sequelize-typescript';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -11,6 +11,7 @@ import type {
   ILocalAuthListRepository,
 } from '../../../interfaces/repositories.js';
 import { AuthorizationMapper } from '../mapper/2.0.1/AuthorizationMapper.js';
+import { LocalAuthListMapper } from '../mapper/1.6/LocalAuthListMapper.js';
 import { Authorization } from '../model/Authorization/Authorization.js';
 import { LocalListAuthorization } from '../model/Authorization/LocalListAuthorization.js';
 import { LocalListVersion } from '../model/Authorization/LocalListVersion.js';
@@ -36,7 +37,14 @@ export class SequelizeLocalAuthListRepository
     localListAuthorization?: CrudRepository<LocalListAuthorization>,
     sendLocalList?: CrudRepository<SendLocalList>,
   ) {
-    super(config, Authorization.MODEL_NAME, logger, sequelizeInstance);
+    // The repo's primary model is LocalListVersion (matches the
+    // ILocalAuthListRepository<LocalListVersion> contract). Earlier code passed
+    // Authorization.MODEL_NAME here, which made readOnlyOneByQuery/readAllByQuery
+    // query the Authorization model — and any include like
+    // `include: [LocalListAuthorization]` then threw
+    // "LocalListAuthorization is not associated to Authorization!" because no such
+    // association exists on Authorization.
+    super(config, LocalListVersion.MODEL_NAME, logger, sequelizeInstance);
     this.authorization = authorization
       ? authorization
       : new SequelizeAuthorizationRepository(config, logger);
@@ -133,6 +141,102 @@ export class SequelizeLocalAuthListRepository
     return sendLocalList;
   }
 
+  async createSendLocalListFromRequestData16(
+    tenantId: number,
+    stationId: string,
+    correlationId: string,
+    updateType: OCPP1_6.SendLocalListRequestUpdateType,
+    versionNumber: number,
+    localAuthorizationList?: NonNullable<OCPP1_6.SendLocalListRequest['localAuthorizationList']>,
+  ): Promise<SendLocalList> {
+    const sendLocalList = await this.sendLocalList.create(
+      tenantId,
+      SendLocalList.build({
+        tenantId,
+        ocppConnectionName: stationId,
+        correlationId,
+        versionNumber,
+        // The SendLocalList.updateType column is a plain string. Both 1.6 and 2.0.1
+        // use the values 'Full' and 'Differential', so coercion across enums is safe.
+        updateType: updateType as unknown as OCPP2_0_1.UpdateEnumType,
+      }),
+    );
+
+    for (const authData of localAuthorizationList ?? []) {
+      if (!authData.idTag) {
+        continue;
+      }
+
+      // For DIFFERENTIAL deletes the spec allows entries with no idTagInfo.
+      // These are recorded as tombstones (status Invalid) so the response handler
+      // can drop the matching authorization from LocalListVersion.
+      const isDelete =
+        updateType === OCPP1_6.SendLocalListRequestUpdateType.Differential && !authData.idTagInfo;
+
+      const auth = await Authorization.findOne({
+        where: { idToken: authData.idTag },
+      });
+
+      if (!auth && !isDelete) {
+        throw new Error(
+          `Authorization not found for idTag '${authData.idTag}' (create the Authorization before adding it to a local auth list)`,
+        );
+      }
+
+      let groupAuthorizationId: number | undefined;
+      if (authData.idTagInfo?.parentIdTag) {
+        const parent = await Authorization.findOne({
+          where: { idToken: authData.idTagInfo.parentIdTag },
+        });
+        if (!parent) {
+          throw new Error(
+            `Parent authorization not found for parentIdTag '${authData.idTagInfo.parentIdTag}'`,
+          );
+        }
+        groupAuthorizationId = parent.id;
+      }
+
+      const baseFields = auth
+        ? (() => {
+            const { id: _id, ...rest } = auth;
+            return rest;
+          })()
+        : {
+            idToken: authData.idTag,
+            idTokenType: null,
+          };
+
+      const localListAuthorization = await this.localListAuthorization.create(
+        tenantId,
+        LocalListAuthorization.build({
+          ...baseFields,
+          idToken: authData.idTag,
+          idTokenType: null,
+          status: isDelete
+            ? 'Invalid'
+            : LocalAuthListMapper.fromIdTagStatus(
+                authData.idTagInfo?.status ?? OCPP1_6.SendLocalListRequestStatus.Accepted,
+              ),
+          cacheExpiryDateTime: authData.idTagInfo?.expiryDate ?? null,
+          groupAuthorizationId: groupAuthorizationId ?? null,
+          authorizationId: auth?.id,
+        }),
+      );
+
+      await SendLocalListAuthorization.create({
+        tenantId,
+        sendLocalListId: sendLocalList.id,
+        authorizationId: localListAuthorization.id,
+      });
+    }
+
+    await sendLocalList.reload({ include: [LocalListAuthorization] });
+
+    this.sendLocalList.emit('created', [sendLocalList]);
+
+    return sendLocalList;
+  }
+
   async validateOrReplaceLocalListVersionForStation(
     tenantId: number,
     versionNumber: number,
@@ -171,8 +275,15 @@ export class SequelizeLocalAuthListRepository
     ocppConnectionName: string,
     correlationId: string,
   ): Promise<SendLocalList | undefined> {
+    // Eager-load the LocalListAuthorization rows that the SendLocalList row was
+    // created with. The Accept-path of replaceLocalListVersion / updateLocal-
+    // ListVersion iterates sendLocalList.localAuthorizationList to populate the
+    // LocalListVersionAuthorization junction; without the include the relation
+    // is undefined and both paths early-return, so the new LocalListVersion is
+    // saved with zero entries and the UI shows an empty list after Accept.
     return this.sendLocalList.readOnlyOneByQuery(tenantId, {
       where: { ocppConnectionName: ocppConnectionName, correlationId },
+      include: [LocalListAuthorization],
     });
   }
 
@@ -288,19 +399,31 @@ export class SequelizeLocalAuthListRepository
       }
 
       for (const sendAuth of sendLocalList.localAuthorizationList) {
-        // If there is already an association with the same authorizationId, remove it
-        const oldAuth = localListVersion.localAuthorizationList?.find(
-          (localAuth) => localAuth.authorizationId === sendAuth.authorizationId,
-        );
-        if (oldAuth) {
+        // 1.6 differential delete: tombstone rows have no linked Authorization and status 'Invalid'.
+        // Drop existing entries on the version that match the tombstone's idToken and skip insertion.
+        const isTombstone = !sendAuth.authorizationId && sendAuth.status === 'Invalid';
+
+        const matches =
+          localListVersion.localAuthorizationList?.filter((localAuth) =>
+            isTombstone
+              ? localAuth.idToken === sendAuth.idToken
+              : localAuth.authorizationId === sendAuth.authorizationId,
+          ) ?? [];
+
+        for (const oldAuth of matches) {
           await LocalListVersionAuthorization.destroy({
             where: {
               localListVersionId: localListVersion.id,
-              authorizationId: oldAuth.authorizationId,
+              authorizationId: oldAuth.id,
             },
             transaction,
           });
         }
+
+        if (isTombstone) {
+          continue;
+        }
+
         await LocalListVersionAuthorization.create(
           {
             tenantId,

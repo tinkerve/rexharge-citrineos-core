@@ -17,7 +17,7 @@ import {
 } from '@citrineos/base';
 import type { ChargingStationKeyQuerystring } from '@dal/interfaces/queries/ChargingStation.js';
 import { ChargingStationKeyQuerySchema } from '@dal/interfaces/queries/ChargingStation.js';
-import { LocalListVersion } from '@dal/index.js';
+import { LocalListAuthorization, LocalListVersion } from '@dal/index.js';
 
 export class EVDriverDataApi
   extends AbstractModuleApi<EVDriverModule>
@@ -40,8 +40,11 @@ export class EVDriverDataApi
   ): Promise<LocalListVersion | undefined> {
     const tenantId = request.query.tenantId;
     return await this._module.localAuthListRepository.readOnlyOneByQuery(tenantId, {
-      tenantId: tenantId,
-      ocppConnectionName: request.query.ocppConnectionName,
+      where: {
+        tenantId: tenantId,
+        ocppConnectionName: request.query.ocppConnectionName,
+      },
+      include: [LocalListAuthorization],
     });
   }
 

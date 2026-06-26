@@ -100,6 +100,7 @@ export {
   HUBJECT_DEFAULT_TOKENURL,
   OCPP_VERSION_LIST,
   RbacRulesSchema,
+  systemConfigInputSchema,
   systemConfigSchema,
 } from './src/config/types.js';
 export type { RbacRules, SystemConfig, WebsocketServerConfig } from './src/config/types.js';
