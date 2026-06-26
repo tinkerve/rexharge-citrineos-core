@@ -15,7 +15,6 @@ import { aDeleteCertificateRequest } from '../../providers/DeleteCertificateRequ
 import { aSystemConfig } from '../../providers/SystemConfig';
 import { mockFastifyInstance } from '../../../vitest.setup';
 import { MOCK_CHARGING_STATION_ID } from '../../providers/ChargingStation';
-import { createTestContainer, getTestInstance } from '../../../../../test/testContainer.js';
 
 const mockSave = vi.fn().mockResolvedValue({ id: 100 });
 let createdDeleteCertificateAttemptInstances: any[] = [];
@@ -58,7 +57,6 @@ const mockDeleteCertificateRepository = {
 const mockSendCall = vi.fn();
 
 describe('CertificatesOcpp201Api', () => {
-  const { container } = createTestContainer();
   let messageApi: CertificatesOcpp2Api;
   let mockCertificatesModule: CertificatesModule;
   const mockInstallCertificateRequest = aInstallCertificateRequest();
@@ -74,10 +72,7 @@ describe('CertificatesOcpp201Api', () => {
       sendCall: mockSendCall,
     } as unknown as CertificatesModule;
 
-    messageApi = getTestInstance(container, CertificatesOcpp2Api, {
-      certificatesModule: mockCertificatesModule,
-      server: mockFastifyInstance,
-    });
+    messageApi = new CertificatesOcpp2Api(mockCertificatesModule, mockFastifyInstance);
   });
 
   describe('installCertificate', () => {

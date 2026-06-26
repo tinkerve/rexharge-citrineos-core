@@ -43,27 +43,18 @@ export class TransactionService {
   private _logger: Logger<ILogObj>;
   private _authorizers: IAuthorizer[];
 
-  constructor({
-    transactionEventRepository,
-    authorizationRepository,
-    locationRepository,
-    reservationRepository,
-    ocppMessageRepository,
-    realTimeAuthorizer,
-    authorizers,
-    logger,
-  }: {
-    transactionEventRepository: ITransactionEventRepository;
-    authorizationRepository: IAuthorizationRepository;
-    locationRepository: ILocationRepository;
-    reservationRepository: IReservationRepository;
-    ocppMessageRepository: IOCPPMessageRepository;
-    realTimeAuthorizer: IAuthorizer;
-    authorizers?: IAuthorizer[];
-    logger: Logger<ILogObj>;
-  }) {
+  constructor(
+    transactionEventRepository: ITransactionEventRepository,
+    authorizeRepository: IAuthorizationRepository,
+    locationRepository: ILocationRepository,
+    reservationRepository: IReservationRepository,
+    ocppMessageRepository: IOCPPMessageRepository,
+    realTimeAuthorizer: IAuthorizer,
+    authorizers?: IAuthorizer[],
+    logger?: Logger<ILogObj>,
+  ) {
     this._transactionEventRepository = transactionEventRepository;
-    this._authorizeRepository = authorizationRepository;
+    this._authorizeRepository = authorizeRepository;
     this._locationRepository = locationRepository;
     this._reservationRepository = reservationRepository;
     this._ocppMessageRepository = ocppMessageRepository;

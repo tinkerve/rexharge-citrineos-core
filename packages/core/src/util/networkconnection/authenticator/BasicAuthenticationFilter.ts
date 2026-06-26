@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { AuthenticationOptions } from '@citrineos/base';
 import { OCPP2_0_1 } from '@citrineos/base';
-import type { VariableAttribute } from '@dal/layers/sequelize/model/DeviceModel/VariableAttribute.js';
-import type { VariableAttributeQuerystring } from '@dal/interfaces/queries/VariableAttribute.js';
+import type { IDeviceModelRepository } from '@dal/interfaces/repositories.js';
 import { IncomingMessage } from 'http';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -16,23 +15,10 @@ import { UpgradeAuthenticationError } from './errors/AuthenticationError.js';
  * Filter used to authenticate incoming HTTP requests based on basic authorization header.
  * It only applies when the security profile is set to 1 or 2.
  */
-interface IDeviceModelLookup {
-  readAllByQuerystring(
-    tenantId: number,
-    query: VariableAttributeQuerystring,
-  ): Promise<VariableAttribute[]>;
-}
-
 export class BasicAuthenticationFilter extends AuthenticatorFilter {
-  private _deviceModelRepository: IDeviceModelLookup;
+  private _deviceModelRepository: IDeviceModelRepository;
 
-  constructor({
-    deviceModelRepository,
-    logger,
-  }: {
-    deviceModelRepository: IDeviceModelLookup;
-    logger: Logger<ILogObj>;
-  }) {
+  constructor(deviceModelRepository: IDeviceModelRepository, logger?: Logger<ILogObj>) {
     super(logger);
     this._deviceModelRepository = deviceModelRepository;
   }
@@ -83,5 +69,3 @@ export class BasicAuthenticationFilter extends AuthenticatorFilter {
       });
   }
 }
-
-export default BasicAuthenticationFilter;

@@ -7,12 +7,10 @@ import { ICache, OCPP1_6, OCPP2_0_1, SystemConfig } from '@citrineos/base';
 import { aValidBootConfig } from '../providers/BootConfigProvider.js';
 import { aMessageConfirmation, MOCK_REQUEST_ID } from '../providers/SendCall.js';
 import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
-import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 
 type Configuration = SystemConfig['modules']['configuration'];
 
 describe('BootService', () => {
-  const { container } = createTestContainer();
   let mockBootRepository: Mocked<IBootRepository>;
   let mockCache: Mocked<ICache>;
   let mockConfig: Mocked<Configuration>;
@@ -48,11 +46,7 @@ describe('BootService', () => {
       },
     };
 
-    bootService = getTestInstance(container, BootNotificationService, {
-      bootRepository: mockBootRepository,
-      cache: mockCache,
-      config: mockConfig,
-    });
+    bootService = new BootNotificationService(mockBootRepository, mockCache, mockConfig);
   });
 
   afterEach(() => {

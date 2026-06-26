@@ -35,34 +35,23 @@ export class TransactionsOcpp2Api
   /**
    * Constructor for the class.
    *
-   * @param {TransactionsModule} transactionsModule - The transaction module.
+   * @param {TransactionsModule} transactionModule - The transaction module.
    * @param {FastifyInstance} server - The server instance.
+   * @param {OCPPVersion} version - The OCPP version
    * @param {Logger<ILogObj>} [logger] - Optional logger.
    */
-  constructor({
-    transactionsModule,
-    server,
-    logger,
-  }: {
-    transactionsModule: TransactionsModule;
-    server: FastifyInstance;
-    logger?: Logger<ILogObj>;
-  }) {
-    super(transactionsModule, server, logger);
+  constructor(
+    transactionModule: TransactionsModule,
+    server: FastifyInstance,
+    version: OCPPVersion = DEFAULT_VERSION,
+    logger?: Logger<ILogObj>,
+  ) {
+    super(transactionModule, server, version, logger);
   }
 
-  /**
-   * This API serves both OCPP 2.0.1 and 2.1 from a single instance; each
-   * message endpoint is registered once per version with the version threaded
-   * into schema selection, the route path, and the handler.
-   */
-  protected get supportedVersions(): OCPPVersion[] {
-    return [OCPPVersion.OCPP2_0_1, OCPPVersion.OCPP2_1];
-  }
-
-  @AsMessageEndpoint(OCPP_CallAction.CostUpdated, (_instance: TransactionsOcpp2Api, version) =>
+  @AsMessageEndpoint(OCPP_CallAction.CostUpdated, (instance: TransactionsOcpp2Api) =>
     getOcpp2Schema(
-      (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
       'CostUpdatedRequestSchema',
     ),
   )
@@ -71,48 +60,44 @@ export class TransactionsOcpp2Api
     request: OCPP2_request_types.CostUpdatedRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version ?? DEFAULT_VERSION,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.CostUpdated,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.GetTransactionStatus,
-    (_instance: TransactionsOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'GetTransactionStatusRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.GetTransactionStatus, (instance: TransactionsOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetTransactionStatusRequestSchema',
+    ),
   )
   getTransactionStatus(
     identifier: string[],
     request: OCPP2_request_types.GetTransactionStatusRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version ?? DEFAULT_VERSION,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.GetTransactionStatus,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.SetDefaultTariff, (_instance: TransactionsOcpp2Api, version) =>
+  @AsMessageEndpoint(OCPP_CallAction.SetDefaultTariff, (instance: TransactionsOcpp2Api) =>
     getOcpp2Schema(
-      (version ?? OCPPVersion.OCPP2_1) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      (instance._ocppVersion ?? OCPPVersion.OCPP2_1) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
       'SetDefaultTariffRequestSchema',
     ),
   )
@@ -121,7 +106,6 @@ export class TransactionsOcpp2Api
     request: OCPP2_1.SetDefaultTariffRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     const validation = validateTariffConditionsTimeFields(request.tariff);
     if (!validation.isValid) {
@@ -131,7 +115,7 @@ export class TransactionsOcpp2Api
       this._module,
       identifier,
       tenantId,
-      version ?? OCPPVersion.OCPP2_1,
+      this._ocppVersion ?? OCPPVersion.OCPP2_1,
       OCPP_CallAction.SetDefaultTariff,
       request,
       callbackUrl,
@@ -145,8 +129,8 @@ export class TransactionsOcpp2Api
    * @param {CallAction} input - The input {@link CallAction}.
    * @return {string} - The generated URL path.
    */
-  protected _toMessagePath(input: CallAction, version?: OCPPVersion | null): string {
+  protected _toMessagePath(input: CallAction): string {
     const endpointPrefix = this._module.config.modules.transactions.endpointPrefix;
-    return super._toMessagePath(input, version, endpointPrefix);
+    return super._toMessagePath(input, endpointPrefix);
   }
 }

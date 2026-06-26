@@ -4,7 +4,6 @@
 import { CrudRepository, DEFAULT_TENANT_ID } from '@citrineos/base';
 import { Component, IDeviceModelRepository, ILocationRepository } from '@citrineos/core';
 import { beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
-import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 import { StatusNotification } from '../../../../dal/layers/sequelize/index.js';
 import { StatusNotificationService } from '../../src/module/StatusNotificationService.js';
 import {
@@ -57,7 +56,6 @@ vi.mock('../../../../dal/layers/sequelize/model/Location/index.js', async (impor
 });
 
 describe('StatusNotificationService', () => {
-  const { container } = createTestContainer();
   let statusNotificationService: StatusNotificationService;
   let componentRepository: Mocked<CrudRepository<Component>>;
   let deviceModelRepository: Mocked<IDeviceModelRepository>;
@@ -90,12 +88,12 @@ describe('StatusNotificationService', () => {
       get: vi.fn().mockResolvedValue(JSON.stringify(mockConnection)),
     } as unknown as Mocked<ICache>;
 
-    statusNotificationService = getTestInstance(container, StatusNotificationService, {
+    statusNotificationService = new StatusNotificationService(
       componentRepository,
       deviceModelRepository,
       locationRepository,
       cache,
-    });
+    );
   });
 
   it('should save StatusNotification for Charging Station because Charging Station exists', async () => {

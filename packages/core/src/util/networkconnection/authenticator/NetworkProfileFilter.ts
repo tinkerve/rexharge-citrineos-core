@@ -20,13 +20,7 @@ import { UpgradeAuthenticationError } from './errors/AuthenticationError.js';
 export class NetworkProfileFilter extends AuthenticatorFilter {
   private _deviceModelRepository: IDeviceModelRepository;
 
-  constructor({
-    deviceModelRepository,
-    logger,
-  }: {
-    deviceModelRepository: IDeviceModelRepository;
-    logger: Logger<ILogObj>;
-  }) {
+  constructor(deviceModelRepository: IDeviceModelRepository, logger?: Logger<ILogObj>) {
     super(logger);
     this._deviceModelRepository = deviceModelRepository;
   }
@@ -126,5 +120,3 @@ export class NetworkProfileFilter extends AuthenticatorFilter {
     return true;
   }
 }
-
-export default NetworkProfileFilter;

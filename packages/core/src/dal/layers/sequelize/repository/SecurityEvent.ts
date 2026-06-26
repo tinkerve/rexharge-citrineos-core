@@ -1,18 +1,22 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
+import type { BootstrapConfig } from '@citrineos/base';
 import { OCPP2_0_1 } from '@citrineos/base';
 import { SecurityEvent } from '../model/SecurityEvent.js';
-import { SequelizeRepository, type SequelizeRepositoryDependencies } from './Base.js';
+import { SequelizeRepository } from './Base.js';
 import { Op } from 'sequelize';
 import type { ISecurityEventRepository } from '../../../interfaces/repositories.js';
+import { Sequelize } from 'sequelize-typescript';
+import type { ILogObj } from 'tslog';
+import { Logger } from 'tslog';
 
 export class SequelizeSecurityEventRepository
   extends SequelizeRepository<SecurityEvent>
   implements ISecurityEventRepository
 {
-  constructor({ config, logger, sequelizeInstance }: SequelizeRepositoryDependencies) {
-    super({ config, namespace: SecurityEvent.MODEL_NAME, logger, sequelizeInstance });
+  constructor(config: BootstrapConfig, logger?: Logger<ILogObj>, sequelizeInstance?: Sequelize) {
+    super(config, SecurityEvent.MODEL_NAME, logger, sequelizeInstance);
   }
 
   async createByStationId(
@@ -65,5 +69,3 @@ export class SequelizeSecurityEventRepository
     return { timestamp: { [Op.between]: [from, to] } };
   }
 }
-
-export default SequelizeSecurityEventRepository;

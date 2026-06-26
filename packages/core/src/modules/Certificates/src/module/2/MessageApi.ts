@@ -35,71 +35,53 @@ export class CertificatesOcpp2Api
    * @param {FastifyInstance} server - The Fastify server instance.
    * @param {Logger<ILogObj>} [logger] - The logger instance.
    */
-  constructor({
-    certificatesModule,
-    server,
-    logger,
-  }: {
-    certificatesModule: CertificatesModule;
-    server: FastifyInstance;
-    logger?: Logger<ILogObj>;
-  }) {
-    super(certificatesModule, server, logger);
-  }
-
-  /**
-   * This API serves both OCPP 2.0.1 and 2.1 from a single instance; each
-   * message endpoint is registered once per version with the version threaded
-   * into schema selection, the route path, and the handler.
-   */
-  protected get supportedVersions(): OCPPVersion[] {
-    return [OCPPVersion.OCPP2_0_1, OCPPVersion.OCPP2_1];
+  constructor(
+    certificatesModule: CertificatesModule,
+    server: FastifyInstance,
+    version: OCPPVersion = DEFAULT_VERSION,
+    logger?: Logger<ILogObj>,
+  ) {
+    super(certificatesModule, server, version, logger);
   }
 
   /**
    * Interface implementation
    */
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.CertificateSigned,
-    (_instance: CertificatesOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'CertificateSignedRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.CertificateSigned, (instance: CertificatesOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'CertificateSignedRequestSchema',
+    ),
   )
   certificateSigned(
     identifier: string[],
     request: OCPP2_request_types.CertificateSignedRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.CertificateSigned,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.InstallCertificate,
-    (_instance: CertificatesOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'InstallCertificateRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.InstallCertificate, (instance: CertificatesOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'InstallCertificateRequestSchema',
+    ),
   )
   installCertificate(
     identifier: string[],
     request: OCPP2_request_types.InstallCertificateRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     const results: Promise<IMessageConfirmation>[] = identifier.map(async (ocppConnectionName) => {
       await this._module.installCertificateHelperService.prepareToInstallCertificate(
@@ -111,7 +93,7 @@ export class CertificatesOcpp2Api
       return this._module.sendCall(
         ocppConnectionName,
         tenantId,
-        version,
+        this._ocppVersion ?? DEFAULT_VERSION,
         OCPP_CallAction.InstallCertificate,
         request,
         callbackUrl,
@@ -120,46 +102,40 @@ export class CertificatesOcpp2Api
     return Promise.all(results);
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.GetInstalledCertificateIds,
-    (_instance: CertificatesOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'GetInstalledCertificateIdsRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.GetInstalledCertificateIds, (instance: CertificatesOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetInstalledCertificateIdsRequestSchema',
+    ),
   )
   getInstalledCertificateIds(
     identifier: string[],
     request: OCPP2_request_types.GetInstalledCertificateIdsRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
       this._module,
       identifier,
       tenantId,
-      version,
+      this._ocppVersion ?? DEFAULT_VERSION,
       OCPP_CallAction.GetInstalledCertificateIds,
       request,
       callbackUrl,
     );
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.DeleteCertificate,
-    (_instance: CertificatesOcpp2Api, version) =>
-      getOcpp2Schema(
-        (version ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
-        'DeleteCertificateRequestSchema',
-      ),
+  @AsMessageEndpoint(OCPP_CallAction.DeleteCertificate, (instance: CertificatesOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'DeleteCertificateRequestSchema',
+    ),
   )
   deleteCertificate(
     identifier: string[],
     request: OCPP2_request_types.DeleteCertificateRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
-    version: OCPPVersion = DEFAULT_VERSION,
   ): Promise<IMessageConfirmation[]> {
     const results: Promise<IMessageConfirmation>[] = identifier.map(async (ocppConnectionName) => {
       const certificateHashData = request.certificateHashData;
@@ -186,7 +162,7 @@ export class CertificatesOcpp2Api
       return this._module.sendCall(
         ocppConnectionName,
         tenantId,
-        version,
+        this._ocppVersion ?? DEFAULT_VERSION,
         OCPP_CallAction.DeleteCertificate,
         request,
         callbackUrl,
@@ -202,8 +178,8 @@ export class CertificatesOcpp2Api
    * @param {CallAction} input - The input {@link CallAction}.
    * @return {string} - The generated URL path.
    */
-  protected _toMessagePath(input: CallAction, version?: OCPPVersion | null): string {
+  protected _toMessagePath(input: CallAction): string {
     const endpointPrefix = this._module.config.modules.certificates?.endpointPrefix;
-    return super._toMessagePath(input, version, endpointPrefix);
+    return super._toMessagePath(input, endpointPrefix);
   }
 }

@@ -13,10 +13,8 @@ import {
 import { LocalAuthListService } from '../../src/module/LocalAuthListService.js';
 import { DEFAULT_TENANT_ID, OCPP2_0_1 } from '@citrineos/base';
 import { beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
-import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 
 describe('LocalAuthListService', () => {
-  const { container } = createTestContainer();
   let mockLocalAuthListRepository: Mocked<ILocalAuthListRepository>;
   let mockDeviceModelRepository: Mocked<IDeviceModelRepository>;
   let localAuthListService: LocalAuthListService;
@@ -44,10 +42,10 @@ describe('LocalAuthListService', () => {
       readAllByQuerystring: vi.fn(),
     } as unknown as Mocked<IDeviceModelRepository>;
 
-    localAuthListService = getTestInstance(container, LocalAuthListService, {
-      localAuthListRepository: mockLocalAuthListRepository,
-      deviceModelRepository: mockDeviceModelRepository,
-    });
+    localAuthListService = new LocalAuthListService(
+      mockLocalAuthListRepository,
+      mockDeviceModelRepository,
+    );
   });
 
   it('should persist SendLocalListRequest and return the SendLocalList, validating input arguments', async () => {

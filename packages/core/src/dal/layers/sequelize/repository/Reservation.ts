@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
+import type { BootstrapConfig } from '@citrineos/base';
 import { CrudRepository, OCPP2_0_1 } from '@citrineos/base';
 import type { IReservationRepository } from '../../../interfaces/repositories.js';
-import { SequelizeRepository, type SequelizeRepositoryDependencies } from './Base.js';
+import { SequelizeRepository } from './Base.js';
+import { Sequelize } from 'sequelize-typescript';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { EvseType } from '../model/DeviceModel/EvseType.js';
@@ -16,14 +18,17 @@ export class SequelizeReservationRepository
   evse: CrudRepository<EvseType>;
   logger: Logger<ILogObj>;
 
-  constructor({ config, logger, sequelizeInstance }: SequelizeRepositoryDependencies) {
-    super({ config, namespace: Reservation.MODEL_NAME, logger, sequelizeInstance });
-    this.evse = new SequelizeRepository<EvseType>({
-      config,
-      namespace: EvseType.MODEL_NAME,
-      logger,
-      sequelizeInstance,
-    });
+  constructor(
+    config: BootstrapConfig,
+    logger?: Logger<ILogObj>,
+    sequelizeInstance?: Sequelize,
+    evse?: CrudRepository<EvseType>,
+  ) {
+    super(config, Reservation.MODEL_NAME, logger, sequelizeInstance);
+    this.evse = evse
+      ? evse
+      : new SequelizeRepository<EvseType>(config, EvseType.MODEL_NAME, logger, sequelizeInstance);
+
     this.logger = logger
       ? logger.getSubLogger({ name: this.constructor.name })
       : new Logger<ILogObj>({ name: this.constructor.name });
@@ -91,5 +96,3 @@ export class SequelizeReservationRepository
     });
   }
 }
-
-export default SequelizeReservationRepository;

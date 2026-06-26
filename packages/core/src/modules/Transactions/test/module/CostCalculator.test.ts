@@ -5,13 +5,11 @@ import { DEFAULT_TENANT_ID } from '@citrineos/base';
 import { ITariffRepository, Tariff } from '@citrineos/core';
 import { faker } from '@faker-js/faker';
 import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
-import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 import { CostCalculator } from '../../src/module/CostCalculator.js';
 import { TransactionService } from '../../src/module/TransactionService.js';
 import { aTariff } from '../providers/Tariff.js';
 
 describe('CostCalculator', () => {
-  const { container } = createTestContainer();
   let tariffRepository: Mocked<ITariffRepository>;
   let transactionService: Mocked<TransactionService>;
   let costCalculator: CostCalculator;
@@ -25,10 +23,7 @@ describe('CostCalculator', () => {
       recalculateTotalKwh: vi.fn(),
     } as unknown as Mocked<TransactionService>;
 
-    costCalculator = getTestInstance(container, CostCalculator, {
-      tariffRepository,
-      transactionService,
-    });
+    costCalculator = new CostCalculator(tariffRepository, transactionService);
   });
 
   afterEach(() => {

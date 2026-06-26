@@ -31,20 +31,12 @@ export class SmartChargingOcpp16Api
    * @param {FastifyInstance} server - The Fastify server instance.
    * @param {Logger<ILogObj>} [logger] - The logger instance.
    */
-  constructor({
-    smartChargingModule,
-    server,
-    logger,
-  }: {
-    smartChargingModule: SmartChargingModule;
-    server: FastifyInstance;
-    logger?: Logger<ILogObj>;
-  }) {
-    super(smartChargingModule, server, logger);
-  }
-
-  protected get supportedVersions(): OCPPVersion[] {
-    return [OCPPVersion.OCPP1_6];
+  constructor(
+    smartChargingModule: SmartChargingModule,
+    server: FastifyInstance,
+    logger?: Logger<ILogObj>,
+  ) {
+    super(smartChargingModule, server, OCPPVersion.OCPP1_6, logger);
   }
 
   @AsMessageEndpoint(OCPP_CallAction.SetChargingProfile, OCPP1_6.SetChargingProfileRequestSchema)
@@ -123,8 +115,8 @@ export class SmartChargingOcpp16Api
    * @param {CallAction} input - The input {@link CallAction}.
    * @return {string} - The generated URL path.
    */
-  protected _toMessagePath(input: CallAction, version?: OCPPVersion | null): string {
+  protected _toMessagePath(input: CallAction): string {
     const endpointPrefix = this._module.config.modules.smartcharging?.endpointPrefix;
-    return super._toMessagePath(input, version, endpointPrefix);
+    return super._toMessagePath(input, endpointPrefix);
   }
 }

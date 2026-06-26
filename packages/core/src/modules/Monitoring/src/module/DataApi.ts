@@ -43,16 +43,12 @@ export class MonitoringDataApi
    * @param {FastifyInstance} server - The server instance.
    * @param {Logger<ILogObj>} [logger] - The logger instance.
    */
-  constructor({
-    monitoringModule,
-    server,
-    logger,
-  }: {
-    monitoringModule: MonitoringModule;
-    server: FastifyInstance;
-    logger?: Logger<ILogObj>;
-  }) {
-    super(monitoringModule, server, logger);
+  constructor(
+    monitoringModule: MonitoringModule,
+    server: FastifyInstance,
+    logger?: Logger<ILogObj>,
+  ) {
+    super(monitoringModule, server, null, logger);
   }
 
   @AsDataEndpoint(

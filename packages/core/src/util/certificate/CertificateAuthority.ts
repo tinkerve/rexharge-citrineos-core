@@ -31,6 +31,7 @@ import type {
 } from './client/interface.js';
 import OCSPRequest = jsrsasign.KJUR.asn1.ocsp.OCSPRequest;
 import Request = jsrsasign.KJUR.asn1.ocsp.Request;
+import { LocalStorage } from '@/util/index.js';
 const cryptoEngine = new pkijs.CryptoEngine({
   crypto: new Crypto(),
 });
@@ -40,28 +41,33 @@ export class CertificateAuthorityService {
   private readonly _v2gClient: IV2GCertificateAuthorityClient;
   private readonly _chargingStationClientPromise: Promise<IChargingStationCertificateAuthorityClient>;
   private readonly _logger: Logger<ILogObj>;
+  private readonly _cache: ICache;
+  private readonly _config: SystemConfig;
   private readonly _fileStorage: IFileStorage;
 
-  constructor({
-    config,
-    cache,
-    logger,
-    fileStorage,
-  }: {
-    config: SystemConfig;
-    cache: ICache;
-    logger: Logger<ILogObj>;
-    fileStorage: IFileStorage;
-  }) {
-    this._logger = logger.getSubLogger({ name: this.constructor.name });
-    this._fileStorage = fileStorage;
-    this._v2gClient = CertificateAuthorityService._instantiateV2GClient(config, cache, logger);
-    this._chargingStationClientPromise =
-      CertificateAuthorityService._instantiateChargingStationClient(
-        config,
-        this._fileStorage,
-        logger,
-      );
+  constructor(
+    config: SystemConfig,
+    cache: ICache,
+    logger?: Logger<ILogObj>,
+    chargingStationClient?: IChargingStationCertificateAuthorityClient,
+    v2gClient?: IV2GCertificateAuthorityClient,
+    fileStorage?: IFileStorage,
+  ) {
+    this._config = config;
+    this._cache = cache;
+    this._logger = logger
+      ? logger.getSubLogger({ name: this.constructor.name })
+      : new Logger<ILogObj>({ name: this.constructor.name });
+    this._fileStorage = fileStorage || new LocalStorage('', '', undefined, this._logger);
+    this._v2gClient =
+      v2gClient || CertificateAuthorityService._instantiateV2GClient(config, cache, logger);
+    this._chargingStationClientPromise = chargingStationClient
+      ? Promise.resolve(chargingStationClient)
+      : CertificateAuthorityService._instantiateChargingStationClient(
+          config,
+          this._fileStorage,
+          logger,
+        );
   }
 
   /**
@@ -288,20 +294,20 @@ export class CertificateAuthorityService {
     return certificateChain;
   }
 
-  protected static _instantiateV2GClient(
+  private static _instantiateV2GClient(
     config: SystemConfig,
     cache: ICache,
     logger?: Logger<ILogObj>,
   ): IV2GCertificateAuthorityClient {
     switch (config.util.certificateAuthority.v2gCA.name) {
       case 'hubject':
-        return new Hubject({ config, cache, logger });
+        return new Hubject(config, cache, logger);
       default:
         throw new Error(`Unsupported V2G CA: ${config.util.certificateAuthority.v2gCA.name}`);
     }
   }
 
-  protected static async _instantiateChargingStationClient(
+  private static async _instantiateChargingStationClient(
     config: SystemConfig,
     fileStorage: IFileStorage,
     logger?: Logger<ILogObj>,
@@ -316,5 +322,3 @@ export class CertificateAuthorityService {
     }
   }
 }
-
-export default CertificateAuthorityService;
