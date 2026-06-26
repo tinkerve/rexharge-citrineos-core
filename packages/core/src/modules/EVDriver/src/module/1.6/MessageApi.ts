@@ -173,10 +173,7 @@ export class EVDriverOcpp16Api
     return results;
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.GetLocalListVersion,
-    OCPP1_6.GetLocalListVersionRequestSchema,
-  )
+  @AsMessageEndpoint(OCPP_CallAction.GetLocalListVersion, OCPP1_6.GetLocalListVersionRequestSchema)
   async getLocalListVersion(
     identifier: string[],
     request: OCPP1_6.GetLocalListVersionRequest,
