@@ -50,10 +50,11 @@
     "@citrineos/base": "workspace:*",
     "@citrineos/core": "workspace:*",
     "@fastify/cors": "10.1.0",
+    "awilix": "^13.0.3",
     "cross-env": "7.0.3",
     "fastify": "^5.8.5",
-    "tslog": "^4.9.2",
     "sqlite3": "5.1.7",
+    "tslog": "^4.9.2",
     "ws": "8.20.1"
   },
   "optionalDependencies": {
