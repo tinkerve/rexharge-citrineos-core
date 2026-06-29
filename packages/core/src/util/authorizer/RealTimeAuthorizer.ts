@@ -42,16 +42,18 @@ export class RealTimeAuthorizer implements IAuthorizer {
   private readonly _logger: Logger<ILogObj>;
   private readonly _oidcTokenProvider?: OidcTokenProvider;
 
-  constructor(
-    locationRepository: ILocationRepository,
-    config: SystemConfig,
-    logger?: Logger<ILogObj>,
-  ) {
+  constructor({
+    locationRepository,
+    config,
+    logger,
+  }: {
+    locationRepository: ILocationRepository;
+    config: SystemConfig;
+    logger: Logger<ILogObj>;
+  }) {
     this._locationRepository = locationRepository;
     this._config = config;
-    this._logger = logger
-      ? logger.getSubLogger({ name: this.constructor.name })
-      : new Logger<ILogObj>({ name: this.constructor.name });
+    this._logger = logger.getSubLogger({ name: this.constructor.name });
     if (config.oidcClient) {
       this._oidcTokenProvider = new OidcTokenProvider(config.oidcClient, this._logger);
     }
@@ -217,3 +219,5 @@ export class RealTimeAuthorizer implements IAuthorizer {
     return result;
   }
 }
+
+export default RealTimeAuthorizer;

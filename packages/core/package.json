@@ -59,6 +59,7 @@
     "ws": "^8.17.0"
   },
   "devDependencies": {
+    "awilix": "^13.0.3",
     "@eslint/js": "catalog:",
     "@faker-js/faker": "^8.0.0",
     "@types/amqplib": "0.10.4",

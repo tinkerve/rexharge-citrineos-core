@@ -18,9 +18,11 @@ import {
 import { faker } from '@faker-js/faker';
 import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from 'vitest';
 import { WebhookDispatcher } from '../../src';
+import { createTestContainer, getTestInstance } from '../../../../test/testContainer.js';
 import { aSubscription } from '../providers/SubscriptionProvider.js';
 
 describe('WebhookDispatcher', () => {
+  const { container } = createTestContainer();
   const fetch = vi.fn(() =>
     Promise.resolve({
       ok: true,
@@ -57,7 +59,12 @@ describe('WebhookDispatcher', () => {
       remove: vi.fn().mockResolvedValue(true),
     } as unknown as Mocked<ICache>;
 
-    webhookDispatcher = new WebhookDispatcher(ocppMessageRepository, subscriptionRepository, cache);
+    webhookDispatcher = getTestInstance(container, WebhookDispatcher, {
+      ocppMessageRepository,
+      subscriptionRepository,
+      cache,
+      config: undefined,
+    });
   });
 
   afterEach(() => {
