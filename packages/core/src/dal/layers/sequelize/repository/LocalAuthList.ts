@@ -1,11 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { BootstrapConfig } from '@citrineos/base';
 import { CrudRepository, OCPP1_6, OCPP2_0_1 } from '@citrineos/base';
-import { Sequelize } from 'sequelize-typescript';
-import type { ILogObj } from 'tslog';
-import { Logger } from 'tslog';
 import type {
   IAuthorizationRepository,
   ILocalAuthListRepository,
@@ -19,7 +15,7 @@ import { LocalListVersionAuthorization } from '../model/Authorization/LocalListV
 import { SendLocalList } from '../model/Authorization/SendLocalList.js';
 import { SendLocalListAuthorization } from '../model/Authorization/SendLocalListAuthorization.js';
 import { SequelizeAuthorizationRepository } from './Authorization.js';
-import { SequelizeRepository } from './Base.js';
+import { SequelizeRepository, type SequelizeRepositoryDependencies } from './Base.js';
 
 export class SequelizeLocalAuthListRepository
   extends SequelizeRepository<LocalListVersion>
@@ -29,41 +25,29 @@ export class SequelizeLocalAuthListRepository
   localListAuthorization: CrudRepository<LocalListAuthorization>;
   sendLocalList: CrudRepository<SendLocalList>;
 
-  constructor(
-    config: BootstrapConfig,
-    logger?: Logger<ILogObj>,
-    sequelizeInstance?: Sequelize,
-    authorization?: IAuthorizationRepository,
-    localListAuthorization?: CrudRepository<LocalListAuthorization>,
-    sendLocalList?: CrudRepository<SendLocalList>,
-  ) {
-    // The repo's primary model is LocalListVersion (matches the
-    // ILocalAuthListRepository<LocalListVersion> contract). Earlier code passed
-    // Authorization.MODEL_NAME here, which made readOnlyOneByQuery/readAllByQuery
-    // query the Authorization model — and any include like
-    // `include: [LocalListAuthorization]` then threw
-    // "LocalListAuthorization is not associated to Authorization!" because no such
-    // association exists on Authorization.
-    super(config, LocalListVersion.MODEL_NAME, logger, sequelizeInstance);
-    this.authorization = authorization
-      ? authorization
-      : new SequelizeAuthorizationRepository(config, logger);
-    this.localListAuthorization = localListAuthorization
-      ? localListAuthorization
-      : new SequelizeRepository<LocalListAuthorization>(
-          config,
-          LocalListAuthorization.MODEL_NAME,
-          logger,
-          sequelizeInstance,
-        );
-    this.sendLocalList = sendLocalList
-      ? sendLocalList
-      : new SequelizeRepository<SendLocalList>(
-          config,
-          SendLocalList.MODEL_NAME,
-          logger,
-          sequelizeInstance,
-        );
+  constructor({ config, logger, sequelizeInstance }: SequelizeRepositoryDependencies) {
+    // The repo's primary model is LocalListVersion, matching the
+    // ILocalAuthListRepository<LocalListVersion> contract: the inherited CRUD
+    // queries operate on LocalListVersion and resolve associations such as
+    // LocalListAuthorization through it.
+    super({ config, namespace: LocalListVersion.MODEL_NAME, logger, sequelizeInstance });
+    this.authorization = new SequelizeAuthorizationRepository({
+      config,
+      logger,
+      sequelizeInstance,
+    });
+    this.localListAuthorization = new SequelizeRepository<LocalListAuthorization>({
+      config,
+      namespace: LocalListAuthorization.MODEL_NAME,
+      logger,
+      sequelizeInstance,
+    });
+    this.sendLocalList = new SequelizeRepository<SendLocalList>({
+      config,
+      namespace: SendLocalList.MODEL_NAME,
+      logger,
+      sequelizeInstance,
+    });
   }
 
   async createSendLocalListFromRequestData(
@@ -118,13 +102,22 @@ export class SequelizeLocalAuthListRepository
           );
         }
       }
-      // No longer create IdTokenInfo, just use Authorization fields
-      const { id, ...authorizationFields } = auth;
       const localListAuthorization = await this.localListAuthorization.create(
         tenantId,
         LocalListAuthorization.build({
-          ...authorizationFields,
-          authorizationId: id,
+          authorizationId: auth.id,
+          idToken: auth.idToken,
+          idTokenType: auth.idTokenType,
+          status: auth.status,
+          allowedConnectorTypes: auth.allowedConnectorTypes,
+          disallowedEvseIdPrefixes: auth.disallowedEvseIdPrefixes,
+          additionalInfo: auth.additionalInfo,
+          cacheExpiryDateTime: auth.cacheExpiryDateTime,
+          chargingPriority: auth.chargingPriority,
+          language1: auth.language1,
+          language2: auth.language2,
+          personalMessage: auth.personalMessage,
+          groupAuthorizationId: auth.groupAuthorizationId,
         }),
       );
       await SendLocalListAuthorization.create({
@@ -447,3 +440,5 @@ export class SequelizeLocalAuthListRepository
     return localListVersion;
   }
 }
+
+export default SequelizeLocalAuthListRepository;

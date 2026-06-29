@@ -29,8 +29,20 @@ export class EVDriverOcpp16Api
    * @param {FastifyInstance} server - The Fastify server instance.
    * @param {Logger<ILogObj>} [logger] - The logger for logging.
    */
-  constructor(evDriverModule: EVDriverModule, server: FastifyInstance, logger?: Logger<ILogObj>) {
-    super(evDriverModule, server, OCPPVersion.OCPP1_6, logger);
+  constructor({
+    evDriverModule,
+    server,
+    logger,
+  }: {
+    evDriverModule: EVDriverModule;
+    server: FastifyInstance;
+    logger?: Logger<ILogObj>;
+  }) {
+    super(evDriverModule, server, logger);
+  }
+
+  protected get supportedVersions(): OCPPVersion[] {
+    return [OCPPVersion.OCPP1_6];
   }
 
   @AsMessageEndpoint(
@@ -161,10 +173,7 @@ export class EVDriverOcpp16Api
     return results;
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.GetLocalListVersion,
-    OCPP1_6.GetLocalListVersionRequestSchema,
-  )
+  @AsMessageEndpoint(OCPP_CallAction.GetLocalListVersion, OCPP1_6.GetLocalListVersionRequestSchema)
   async getLocalListVersion(
     identifier: string[],
     request: OCPP1_6.GetLocalListVersionRequest,
@@ -191,8 +200,8 @@ export class EVDriverOcpp16Api
    * @param {CallAction} input - The input {@link CallAction}.
    * @return {string} - The generated URL path.
    */
-  protected _toMessagePath(input: CallAction): string {
+  protected _toMessagePath(input: CallAction, version?: OCPPVersion | null): string {
     const endpointPrefix = this._module.config.modules.evdriver.endpointPrefix;
-    return super._toMessagePath(input, endpointPrefix);
+    return super._toMessagePath(input, version, endpointPrefix);
   }
 }
