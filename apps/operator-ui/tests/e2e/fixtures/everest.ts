@@ -155,10 +155,10 @@ export async function ensureEverestOnline(timeoutMs = RECONNECT_TIMEOUT_MS): Pro
 }
 
 // Spawn `docker compose` directly with the same cwd + env as the upstream
-// `start-everest` npm script in apps/Server. Going through the npm script
-// would require apps/Server/node_modules to have cross-env installed, but in
+// `start-everest` npm script in apps/ocpp-server. Going through the npm script
+// would require apps/ocpp-server/node_modules to have cross-env installed, but in
 // the pnpm-workspace layout those deps are hoisted to the monorepo root and
-// apps/Server may not have a local node_modules at all. Calling docker
+// apps/ocpp-server may not have a local node_modules at all. Calling docker
 // compose ourselves removes that dependency.
 const EVEREST_COMPOSE_ENV: Record<string, string> = {
   OCPP_VERSION: '2.1',

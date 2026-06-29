@@ -290,7 +290,7 @@ jobs:
         env:
           OCPP_VERSION: "2.1"
           EVEREST_IMAGE_TAG: 2025.6.1-dt-esdp
-        working-directory: apps/Server/everest
+        working-directory: apps/ocpp-server/everest
         # Retry: Docker Hub / ghcr pulls intermittently fail with a transient
         # "registry ... manifests ...: unknown" error.
         run: |
@@ -343,7 +343,7 @@ jobs:
 
       - name: Tear down EVerest stack
         if: always()
-        working-directory: apps/Server/everest
+        working-directory: apps/ocpp-server/everest
         run: docker compose down -v
 
       - name: Tear down backend stack

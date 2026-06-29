@@ -197,7 +197,7 @@ field-level validation that the official schemas lack.
 
 It is possible to add custom JSON schemas to validate the data fields of DataTransfer messages, which are supported by
 all OCPP versions.
-The OCPP message validator is created in `apps/Server/src/citrineOSServer.ts`. Register a DataTransfer schema by
+The OCPP message validator is created in `apps/ocpp-server/src/citrineOSServer.ts`. Register a DataTransfer schema by
 compiling it onto that validator's AJV and passing it in:
 
 ```ts
@@ -233,7 +233,7 @@ evse as inactive, leading to an inconsistent state with the charging station.
 ## Hasura Metadata
 
 In order for Hasura to track the existing Citrine tables and relationships, this repository comes with Hasura metadata
-already exported into the `apps/Server/hasura-metadata` folder.
+already exported into the `apps/ocpp-server/hasura-metadata` folder.
 Running the Docker container will automatically import this metadata and track all tables and relationships.
 
 Unfortunately, Hasura doesn't currently support importing metadata from a JSON (which is the format if you export your
@@ -277,7 +277,7 @@ hasura metadata export
 ```
 
 - Find the exported files in the `graphql-engine` container's files in the metadata filepath `<name of project i.e. citrine>/metadata` and pull that metadata backup onto your local machine
-- Copy the contents of the copied `metadata` folder into the `apps/Server/hasura-metadata` folder in this repository
+- Copy the contents of the copied `metadata` folder into the `apps/ocpp-server/hasura-metadata` folder in this repository
 
 ## Testing with EVerest
 

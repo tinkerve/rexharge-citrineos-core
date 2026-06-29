@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # Dependency Injection (Awilix)
 
-How DI is orchestrated in the server. Read this alongside `apps/Server/src/container.ts` and `apps/Server/src/citrineOSServer.ts`
+How DI is orchestrated in the server. Read this alongside `apps/ocpp-server/src/container.ts` and `apps/ocpp-server/src/citrineOSServer.ts`
 
 ## The model
 
@@ -39,15 +39,16 @@ Those few primitives are built before the container because the container depend
 
 ## Lifetimes
 
-| Lifetime | Meaning | Used for |
-|---|---|---|
-| `value` | a prebuilt instance/constant | config, the Sequelize instance, the Fastify server, cache |
-| `singleton` | one app-wide instance | repositories, shared services, the network stack, broker connection/channel |
-| `scoped` | one per module | each module + its `sender`/`handler` + its internal services + its APIs |
+| Lifetime    | Meaning                      | Used for                                                                    |
+| ----------- | ---------------------------- | --------------------------------------------------------------------------- |
+| `value`     | a prebuilt instance/constant | config, the Sequelize instance, the Fastify server, cache                   |
+| `singleton` | one app-wide instance        | repositories, shared services, the network stack, broker connection/channel |
+| `scoped`    | one per module               | each module + its `sender`/`handler` + its internal services + its APIs     |
 
-The rule: a dependency must live at least as long as its consumer (`singleton` ≥ `scoped`). Break it and Awilix throws at startup. 
+The rule: a dependency must live at least as long as its consumer (`singleton` ≥ `scoped`). Break it and Awilix throws at startup.
+
 - Modules are scoped, so `sender`/`handler` are scoped too (a scoped module is allowed to depend on them).
-- The router is a singleton, so it gets its *own* singleton `routerSender`/`routerHandler` — a singleton can't depend on the scoped pair.
+- The router is a singleton, so it gets its _own_ singleton `routerSender`/`routerHandler` — a singleton can't depend on the scoped pair.
 
 Per-module scopes: each module is resolved in its own child scope (`initModuleInScope`) together with its sender/handler, internal services, and APIs.
 
@@ -55,53 +56,55 @@ Per-module scopes: each module is resolved in its own child scope (`initModuleIn
 
 `buildContainer()` calls one registrar per layer. To find a registration, open `container.ts` and go to:
 
-| Registrar | What it registers |
-|---|---|
-| `registerPrimitives` | config + derived scalars, the Sequelize instance, prebuilt infra (all values) |
-| `registerMessaging` | RabbitMQ connection/channel managers, `sender`/`handler`, `routerSender`/`routerHandler` |
-| `registerRepositories` | every repository (singletons) |
-| `registerServices` | shared services + `apiAuthProvider` |
-| `registerModuleServices` | calls each module package's own `register<Module>Services` (see next section) |
-| `registerNetwork` | filters, authenticator, router, network connection, `adminApi` |
-| `registerModules` / `registerModuleApis` | the 8 modules and their APIs (scoped) |
+| Registrar                                | What it registers                                                                        |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `registerPrimitives`                     | config + derived scalars, the Sequelize instance, prebuilt infra (all values)            |
+| `registerMessaging`                      | RabbitMQ connection/channel managers, `sender`/`handler`, `routerSender`/`routerHandler` |
+| `registerRepositories`                   | every repository (singletons)                                                            |
+| `registerServices`                       | shared services + `apiAuthProvider`                                                      |
+| `registerModuleServices`                 | calls each module package's own `register<Module>Services` (see next section)            |
+| `registerNetwork`                        | filters, authenticator, router, network connection, `adminApi`                           |
+| `registerModules` / `registerModuleApis` | the 8 modules and their APIs (scoped)                                                    |
 
 ## Module-internal services live in the module packages
 
-Services that belong to a single module (e.g. `TransactionService`, `BootNotificationService`) are not registered in `container.ts`. 
+Services that belong to a single module (e.g. `TransactionService`, `BootNotificationService`) are not registered in `container.ts`.
 Each module package owns a `src/register.ts` exporting `register<Module>Services(container)`, and `registerModuleServices` just calls all six.
 
-Why it's done this way: the service classes stay private to their package (only the registrar is exported). 
+Why it's done this way: the service classes stay private to their package (only the registrar is exported).
 To add or change a module's internal service, edit that package's `register.ts`.
 
 ## Patterns worth knowing
 
-- Breaking a dependency cycle. `CostNotifier` has to call back into its module to send a message. Instead of holding the module (a cycle), it injects a `costUpdatedNotifier` function token whose factory reads the module lazily, only when invoked — so there's no cycle at construction time. 
+- Breaking a dependency cycle. `CostNotifier` has to call back into its module to send a message. Instead of holding the module (a cycle), it injects a `costUpdatedNotifier` function token whose factory reads the module lazily, only when invoked — so there's no cycle at construction time.
 - One API instance serves multiple OCPP versions; the version is threaded through as a parameter (`AbstractModuleApi.supportedVersions`)
 
 ## Intentionally NOT in the container
 
 Deliberate — don't "fix" these:
 
-| Thing | Why |
-|---|---|
-| `TlsCredentialManager` | per-config private internal helper inside `WebsocketNetworkConnection` |
-| `RbacRulesLoader` | private internal helper inside `OIDCAuthProvider` |
-| `HealthCheckService` | depends on `networkConnection`; resolving it through the container would start the websocket servers in modules-only mode, so it's built in the bootstrap |
+| Thing                  | Why                                                                                                                                                       |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TlsCredentialManager` | per-config private internal helper inside `WebsocketNetworkConnection`                                                                                    |
+| `RbacRulesLoader`      | private internal helper inside `OIDCAuthProvider`                                                                                                         |
+| `HealthCheckService`   | depends on `networkConnection`; resolving it through the container would start the websocket servers in modules-only mode, so it's built in the bootstrap |
 
 ## Tests
 
 `packages/core/src/test/testContainer.ts` gives tests the same container settings as production
+
 - `createTestContainer()` → a container with a mock logger pre-registered.
 - `getTestInstance(container, Class, mocks)` → registers your mocks + the class, then resolves it. `mocks` is typed against the constructor, so a wrong or missing dependency name is a compile error.
 
 ## Adding things
 
 All of these follow the same model from the top of this doc: register under a token, then name the constructor param to match.
-See start of document regarding singleton vs scoped vs value. We do not use transient in this application as there isn't an applicable case worth doing. 
+See start of document regarding singleton vs scoped vs value. We do not use transient in this application as there isn't an applicable case worth doing.
 
 ### …a dependency on an existing class
 
 Add the parameter to the class's destructured constructor. A token of that name is registered and visible where the class resolves.
+
 - `singleton` and `value` tokens are visible everywhere;
 - a `scoped` token (e.g. another module-internal service) is only visible inside that module's scope — so it must be registered in that module's `register.ts`.
 
@@ -122,8 +125,14 @@ Any class can now inject it by naming an `xRepository` constructor param.
 
 ```ts
 export class SequelizeAsyncJobStatusRepository extends SequelizeRepository<AsyncJobStatus> {
-  constructor({ config, logger, sequelizeInstance }: {
-    config: BootstrapConfig; logger?: Logger<ILogObj>; sequelizeInstance?: Sequelize;
+  constructor({
+    config,
+    logger,
+    sequelizeInstance,
+  }: {
+    config: BootstrapConfig;
+    logger?: Logger<ILogObj>;
+    sequelizeInstance?: Sequelize;
   }) {
     super({ config, namespace: AsyncJobStatus.MODEL_NAME, logger, sequelizeInstance });
   }
