@@ -8,7 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { makeApiClient, type ApiClient } from './api-client';
 
 // EVerest fixture using the citrineos-core docker-compose prototype
-// (apps/Server/everest/docker-compose.yml). The fixture brings the simulator
+// (apps/ocpp-server/everest/docker-compose.yml). The fixture brings the simulator
 // up, waits for cp001's OCPP BootNotification to register in citrineos-core's
 // DB (visible via Hasura), and tears the stack down on dispose.
 //
@@ -62,12 +62,9 @@ interface EverestStartOptions {
 function defaultCorePath(): string {
   // The operator-ui repo is a sibling of citrineos-core. The Server package
   // (docker-compose.yml + everest/ subdirectory) lives at
-  // citrineos-core/apps/Server. Override via CITRINE_CORE_PATH if your layout
+  // citrineos-core/apps/ocpp-server. Override via CITRINE_CORE_PATH if your layout
   // differs.
-  return (
-    process.env.CITRINE_CORE_PATH ??
-    resolve(__dirname, '..', '..', '..', '..', 'citrineos-core', 'apps', 'Server')
-  );
+  return process.env.CITRINE_CORE_PATH ?? resolve(__dirname, '..', '..', '..', '..', 'ocpp-server');
 }
 
 async function awaitStationOnline(
@@ -158,10 +155,10 @@ export async function ensureEverestOnline(timeoutMs = RECONNECT_TIMEOUT_MS): Pro
 }
 
 // Spawn `docker compose` directly with the same cwd + env as the upstream
-// `start-everest` npm script in apps/Server. Going through the npm script
-// would require apps/Server/node_modules to have cross-env installed, but in
+// `start-everest` npm script in apps/ocpp-server. Going through the npm script
+// would require apps/ocpp-server/node_modules to have cross-env installed, but in
 // the pnpm-workspace layout those deps are hoisted to the monorepo root and
-// apps/Server may not have a local node_modules at all. Calling docker
+// apps/ocpp-server may not have a local node_modules at all. Calling docker
 // compose ourselves removes that dependency.
 const EVEREST_COMPOSE_ENV: Record<string, string> = {
   OCPP_VERSION: '2.1',
@@ -503,7 +500,7 @@ export async function startEverest(options: EverestStartOptions = {}): Promise<E
       const everestDir = resolve(cwd, 'everest');
       // `docker compose down` from the everest directory tears the
       // stack down. Wrapped in npm so we use the same toolchain shell as
-      // start-everest. Errors are non-fatal so a failed teardown doesn't
+      // start:everest. Errors are non-fatal so a failed teardown doesn't
       // mask test results.
       await new Promise<void>((res) => {
         const proc = spawn(

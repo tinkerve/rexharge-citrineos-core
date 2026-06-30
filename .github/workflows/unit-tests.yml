@@ -39,7 +39,7 @@ jobs:
               - 'packages/core/**'
               - 'packages/base/**'
             server:
-              - 'apps/Server/**'
+              - 'apps/ocpp-server/**'
               - 'packages/**'
             operator-ui:
               - 'apps/operator-ui/**'
@@ -63,7 +63,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.16.0"
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
@@ -95,7 +95,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.16.0"
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
@@ -127,7 +127,7 @@ jobs:
         # Retry the bring-up: Docker Hub image pulls intermittently fail with a
         # transient "registry-1.docker.io ... manifests ...: unknown" error.
         run: |
-          COMPOSE="docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml"
+          COMPOSE="docker compose -f ${{ github.workspace }}/docker-compose.yml -f ${{ github.workspace }}/docker-compose.local.yml"
           n=0
           until $COMPOSE up -d --build; do
             n=$((n + 1))
@@ -188,7 +188,7 @@ jobs:
 
       - name: Tear down backend stack
         if: always()
-        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml down -v
+        run: docker compose -f ${{ github.workspace }}/docker-compose.yml -f ${{ github.workspace }}/docker-compose.local.yml down -v
 
   operator-ui-e2e-everest:
     needs: changes
@@ -209,7 +209,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.16.0"
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
@@ -238,7 +238,7 @@ jobs:
         # Retry the bring-up: Docker Hub image pulls intermittently fail with a
         # transient "registry-1.docker.io ... manifests ...: unknown" error.
         run: |
-          COMPOSE="docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml"
+          COMPOSE="docker compose -f ${{ github.workspace }}/docker-compose.yml -f ${{ github.workspace }}/docker-compose.local.yml"
           n=0
           until $COMPOSE up -d --build; do
             n=$((n + 1))
@@ -290,7 +290,7 @@ jobs:
         env:
           OCPP_VERSION: "2.1"
           EVEREST_IMAGE_TAG: 2025.6.1-dt-esdp
-        working-directory: apps/Server/everest
+        working-directory: apps/ocpp-server/everest
         # Retry: Docker Hub / ghcr pulls intermittently fail with a transient
         # "registry ... manifests ...: unknown" error.
         run: |
@@ -318,7 +318,7 @@ jobs:
           ALLOW_IMAGE_UPLOAD: "false"
           OCPP_VERSION: "2.1"
           EVEREST_IMAGE_TAG: 2025.6.1-dt-esdp
-          CITRINE_CORE_PATH: ${{ github.workspace }}/apps/Server
+          CITRINE_CORE_PATH: ${{ github.workspace }}/apps/ocpp-server
         working-directory: apps/operator-ui
         run: pnpm exec playwright test --project=everest-serial
 
@@ -343,9 +343,9 @@ jobs:
 
       - name: Tear down EVerest stack
         if: always()
-        working-directory: apps/Server/everest
+        working-directory: apps/ocpp-server/everest
         run: docker compose down -v
 
       - name: Tear down backend stack
         if: always()
-        run: docker compose -f ${{ github.workspace }}/apps/Server/docker-compose.yml down -v
+        run: docker compose -f ${{ github.workspace }}/docker-compose.yml -f ${{ github.workspace }}/docker-compose.local.yml down -v

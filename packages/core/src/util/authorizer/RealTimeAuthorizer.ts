@@ -12,8 +12,8 @@ import {
   type IMessageContext,
   type SystemConfig,
 } from '@citrineos/base';
-import type { Authorization } from '@dal/layers/sequelize/index.js';
 import type { ILocationRepository } from '@dal/interfaces/repositories.js';
+import type { Authorization } from '@dal/layers/sequelize/index.js';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import { OidcTokenProvider } from '../authorization/index.js';
@@ -198,7 +198,7 @@ export class RealTimeAuthorizer implements IAuthorizer {
       }
     } catch (error) {
       this._logger.error(`Real-Time Auth failed: ${error}`);
-      if (authorization.realTimeAuth === 'AllowedOffline') {
+      if (authorization.realTimeAuth === AuthorizationWhitelistEnum.AllowedOffline) {
         result = AuthorizationStatusEnum.Accepted;
       }
     }
