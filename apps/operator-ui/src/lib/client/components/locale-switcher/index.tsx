@@ -22,10 +22,12 @@ import { setUserLocale } from '@lib/server/hooks/getUserLocale';
 import { LOCALES } from '@lib/utils/consts';
 import { Languages } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 
 export const LocaleSwitcher = ({ expanded }: { expanded: boolean }) => {
   const locale = useLocale();
+  const router = useRouter();
   const t = useTranslations('menu');
   const [, startTransition] = useTransition();
 
@@ -33,13 +35,9 @@ export const LocaleSwitcher = ({ expanded }: { expanded: boolean }) => {
 
   const onSelectLocale = (nextLocale: string) => {
     if (nextLocale === locale) return;
-    // Setting the locale cookie in a server action automatically refreshes the
-    // server tree, re-rendering NextIntlClientProvider with a matching
-    // locale + messages pair. A manual router.refresh() here would queue a
-    // second, competing refresh and intermittently leave the client with a
-    // locale that doesn't match its messages, which next-intl throws on.
     startTransition(async () => {
       await setUserLocale(nextLocale);
+      router.refresh();
     });
   };
 
