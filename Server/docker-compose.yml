@@ -192,4 +192,5 @@ networks:
     name: citrineos-network
     driver: bridge
   rexharge-network:
-    external: true
+    name: rexharge-network
+    driver: bridge
