@@ -1,0 +1,33 @@
+# Local rig for the scripted OCPP 1.6 charger (REX-96).
+# Infrastructure only: Postgres (PostGIS) and RabbitMQ. CitrineOS itself runs on the host
+# from this checkout (see README.md), so a code change only needs a rebuild and restart.
+name: citrine-rig
+
+services:
+  database:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: citrine
+      POSTGRES_PASSWORD: citrine
+      POSTGRES_DB: citrine
+    ports:
+      - '${RIG_DB_PORT:-15433}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U citrine -d citrine']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  amqp-broker:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - '${RIG_AMQP_PORT:-5672}:5672'
+      - '${RIG_AMQP_MGMT_PORT:-15672}:15672'
+    healthcheck:
+      test: rabbitmq-diagnostics -q check_port_connectivity
+      interval: 5s
+      timeout: 10s
+      retries: 20

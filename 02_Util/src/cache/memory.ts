@@ -59,6 +59,7 @@ export class MemoryCache implements ICache {
   async remove(key: string, namespace?: string): Promise<boolean> {
     namespace = namespace || 'default';
     const namespaceKey = `${namespace}:${key}`;
+    this._clearExpiry(namespaceKey);
     return this._cache.delete(namespaceKey);
   }
 
@@ -136,16 +137,9 @@ export class MemoryCache implements ICache {
     namespace = namespace || 'default';
     const namespaceKey = `${namespace}:${key}`;
     this._cache.set(namespaceKey, value);
-    if (this._timeoutMap.has(namespaceKey)) {
-      clearTimeout(this._timeoutMap.get(namespaceKey));
-    }
+    this._clearExpiry(namespaceKey);
     if (expireSeconds) {
-      this._timeoutMap.set(
-        namespaceKey,
-        setTimeout(() => {
-          this._cache.delete(namespaceKey);
-        }, expireSeconds * 1000),
-      );
+      this._setExpiry(namespaceKey, expireSeconds);
     }
     this.resolveOnChange(namespaceKey, value);
     return true;
@@ -163,19 +157,34 @@ export class MemoryCache implements ICache {
       return false;
     }
     this._cache.set(namespaceKey, value);
-    if (this._timeoutMap.has(namespaceKey)) {
-      clearTimeout(this._timeoutMap.get(namespaceKey));
-    }
+    this._clearExpiry(namespaceKey);
     if (expireSeconds) {
-      this._timeoutMap.set(
-        namespaceKey,
-        setTimeout(() => {
-          this._cache.delete(namespaceKey);
-        }, expireSeconds * 1000),
-      );
+      this._setExpiry(namespaceKey, expireSeconds);
     }
     this.resolveOnChange(namespaceKey, value);
     return true;
+  }
+
+  /**
+   * Arms the expiry timer of a key. The timer record is dropped when it fires, so the timer map
+   * only ever holds keys that still exist (REX-96: one TTL key per OCPP message).
+   */
+  private _setExpiry(namespaceKey: string, expireSeconds: number) {
+    const timeout = setTimeout(() => {
+      if (this._timeoutMap.get(namespaceKey) === timeout) {
+        this._timeoutMap.delete(namespaceKey);
+      }
+      this._cache.delete(namespaceKey);
+    }, expireSeconds * 1000);
+    this._timeoutMap.set(namespaceKey, timeout);
+  }
+
+  private _clearExpiry(namespaceKey: string) {
+    const timeout = this._timeoutMap.get(namespaceKey);
+    if (timeout) {
+      clearTimeout(timeout);
+      this._timeoutMap.delete(namespaceKey);
+    }
   }
 
   private resolveOnChange(namespaceKey: string, value: string) {

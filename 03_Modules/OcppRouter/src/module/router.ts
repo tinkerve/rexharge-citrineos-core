@@ -361,32 +361,29 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     let message: CallResult = [MessageTypeId.CallResult, correlationId, payload];
     const identifier = createIdentifier(tenantId, stationId);
 
-    const cachedActionMessageId = await this._cache.get<string>(
-      identifier,
-      CacheNamespace.Transactions,
-    );
-    if (!cachedActionMessageId) {
+    const inboundCallNamespace = this._inboundCallNamespace(identifier);
+    const cachedAction = await this._cache.get<string>(correlationId, inboundCallNamespace);
+    if (!cachedAction) {
       this._logger.error(
-        'Failed to send callResult due to missing message id',
+        'Failed to send callResult, no pending call with this message id',
         identifier,
         message,
       );
       return { success: false };
     }
-    let [cachedAction, cachedMessageId] = cachedActionMessageId?.split(/:(.*)/); // Returns all characters after first ':' in case ':' is used in messageId
-    if (cachedAction === action && cachedMessageId === correlationId) {
+    if (cachedAction === action) {
       message = this.removeNulls(message);
       const rawMessage = JSON.stringify(message);
       const success = await Promise.all([
         this._sendMessage(identifier, protocol, rawMessage, message),
-        this._cache.remove(identifier, CacheNamespace.Transactions),
+        this._cache.remove(correlationId, inboundCallNamespace),
       ]).then((successes) => successes.every(Boolean));
       return { success };
     } else {
       this._logger.error(
-        'Failed to send callResult due to mismatch in message id',
+        'Failed to send callResult due to mismatch in action',
         identifier,
-        cachedActionMessageId,
+        cachedAction,
         message,
       );
       return { success: false };
@@ -417,32 +414,23 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     let message: CallError = error.asCallError();
     const identifier = createIdentifier(tenantId, stationId);
 
-    const cachedActionMessageId = await this._cache.get<string>(
-      identifier,
-      CacheNamespace.Transactions,
-    );
-    if (!cachedActionMessageId) {
-      this._logger.error('Failed to send callError due to missing message id', identifier, message);
-      return { success: false };
-    }
-    let [cachedAction, cachedMessageId] = cachedActionMessageId?.split(/:(.*)/); // Returns all characters after first ':' in case ':' is used in messageId
-    if (cachedMessageId === correlationId) {
-      message = this.removeNulls(message);
-      const rawMessage = JSON.stringify(message);
-      const success = await Promise.all([
-        this._sendMessage(identifier, protocol, rawMessage, message),
-        this._cache.remove(identifier, CacheNamespace.Transactions),
-      ]).then((successes) => successes.every(Boolean));
-      return { success };
-    } else {
+    const inboundCallNamespace = this._inboundCallNamespace(identifier);
+    const cachedAction = await this._cache.get<string>(correlationId, inboundCallNamespace);
+    if (!cachedAction) {
       this._logger.error(
-        'Failed to send callError due to mismatch in message id',
+        'Failed to send callError, no pending call with this message id',
         identifier,
-        cachedActionMessageId,
         message,
       );
       return { success: false };
     }
+    message = this.removeNulls(message);
+    const rawMessage = JSON.stringify(message);
+    const success = await Promise.all([
+      this._sendMessage(identifier, protocol, rawMessage, message),
+      this._cache.remove(correlationId, inboundCallNamespace),
+    ]).then((successes) => successes.every(Boolean));
+    return { success };
   }
 
   async shutdown(): Promise<void> {
@@ -490,16 +478,21 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
         });
       }
 
-      // Ensure only one call is processed at a time
-      const successfullySet = await this._cache.setIfNotExist(
-        identifier,
-        `${action}:${messageId}`,
-        CacheNamespace.Transactions,
+      // Track the charger's call by its message id so sendCallResult / sendCallError can answer it.
+      // OCPP allows one open call per direction, so a call the CSMS has sent to this charger
+      // (tracked separately under `identifier`) must never block the charger's own call.
+      const trackedNew = await this._cache.setIfNotExist(
+        messageId,
+        action,
+        this._inboundCallNamespace(identifier),
         this._config.maxCallLengthSeconds,
       );
-
-      if (!successfullySet) {
-        throw new OcppError(messageId, ErrorCode.RpcFrameworkError, 'Call already in progress', {});
+      if (!trackedNew) {
+        this._logger.warn(
+          'Call with the same message id is already pending, processing it anyway',
+          identifier,
+          message,
+        );
       }
     } catch (error) {
       this._logger.error('Failed to process Call message', identifier, message, error);
@@ -540,7 +533,7 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
 
       this.sendCallError(messageId, stationId, tenantId, protocol, action, callError).finally(
         () => {
-          this._cache.remove(identifier, CacheNamespace.Transactions);
+          this._cache.remove(messageId, this._inboundCallNamespace(identifier));
         },
       );
     }
@@ -677,6 +670,15 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
         // TODO: Ideally the error log is also stored in the database in a failed invocations table to ensure these are visible outside of a log file.
         this._logger.error('Failed processing call error: ', error);
       });
+  }
+
+  /**
+   * Cache namespace for the charger's own calls that are waiting for a CSMS answer, keyed by
+   * message id. The CSMS's outgoing call uses a separate single key (`identifier` in
+   * {@link CacheNamespace.Transactions}), so the two directions never block each other.
+   */
+  private _inboundCallNamespace(identifier: string): string {
+    return `${CacheNamespace.Transactions}:in:${identifier}`;
   }
 
   /**
