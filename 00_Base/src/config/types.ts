@@ -138,6 +138,11 @@ export const systemConfigInputSchema = z.object({
       port: z.number().int().positive().default(8081).optional(),
       costUpdatedInterval: z.number().int().positive().default(60).optional(),
       sendCostUpdatedOnMeterValue: z.boolean().default(false).optional(),
+      // Close a transaction still active this long after its connector reported Available with
+      // no StopTransaction (REX-96). Keep it longer than the gateway's 3-minute synthetic end.
+      orphanTransactionTimeoutSeconds: z.number().int().positive().default(600).optional(),
+      // Transactions created longer ago than this are never closed automatically (server time).
+      orphanTransactionMaxAgeHours: z.number().int().positive().default(24).optional(),
       signedMeterValuesConfiguration: z
         .object({
           publicKeyFileId: z.string(),
@@ -402,6 +407,8 @@ export const systemConfigSchema = z
           port: z.number().int().positive().optional(),
           costUpdatedInterval: z.number().int().positive().optional(),
           sendCostUpdatedOnMeterValue: z.boolean().optional(),
+          orphanTransactionTimeoutSeconds: z.number().int().positive().optional(),
+          orphanTransactionMaxAgeHours: z.number().int().positive().optional(),
           requests: z.array(CallActionSchema),
           responses: z.array(CallActionSchema),
           signedMeterValuesConfiguration: z

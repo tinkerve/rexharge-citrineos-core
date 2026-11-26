@@ -55,11 +55,18 @@ import { TransactionService } from './TransactionService';
 import { StatusNotificationService } from './StatusNotificationService';
 import { CostNotifier } from './CostNotifier';
 import { CostCalculator } from './CostCalculator';
+import {
+  OrphanTransactionCloser,
+  SequelizeOrphanTransactionStore,
+} from './OrphanTransactionCloser';
 
 /**
  * Component that handles transaction related messages.
  */
 export class TransactionsModule extends AbstractModule {
+  static readonly DEFAULT_ORPHAN_TRANSACTION_TIMEOUT_SECONDS = 600;
+  static readonly DEFAULT_ORPHAN_TRANSACTION_MAX_AGE_HOURS = 24;
+
   _requests: CallAction[] = [];
 
   _responses: CallAction[] = [];
@@ -82,6 +89,7 @@ export class TransactionsModule extends AbstractModule {
 
   private readonly _signedMeterValuesUtil: SignedMeterValuesUtil;
   private _costNotifier: CostNotifier;
+  private _orphanTransactionCloser: OrphanTransactionCloser;
   private _costCalculator: CostCalculator;
 
   private readonly _sendCostUpdatedOnMeterValue: boolean | undefined;
@@ -242,6 +250,25 @@ export class TransactionsModule extends AbstractModule {
       this._costCalculator,
       this._logger,
     );
+
+    this._orphanTransactionCloser = new OrphanTransactionCloser(
+      new SequelizeOrphanTransactionStore(),
+      {
+        timeoutSeconds:
+          config.modules.transactions.orphanTransactionTimeoutSeconds ??
+          TransactionsModule.DEFAULT_ORPHAN_TRANSACTION_TIMEOUT_SECONDS,
+        maxAgeHours:
+          config.modules.transactions.orphanTransactionMaxAgeHours ??
+          TransactionsModule.DEFAULT_ORPHAN_TRANSACTION_MAX_AGE_HOURS,
+      },
+      this._logger,
+    );
+    this._orphanTransactionCloser.start();
+  }
+
+  async shutdown(): Promise<void> {
+    this._orphanTransactionCloser.stop();
+    await super.shutdown();
   }
 
   get transactionEventRepository(): ITransactionEventRepository {
@@ -596,6 +623,7 @@ export class TransactionsModule extends AbstractModule {
       request.idTag,
     );
 
+    let startedTransaction: Transaction | undefined;
     // Send response to charger
     if (response.idTagInfo.status !== OCPP1_6.StartTransactionResponseStatus.Accepted) {
       await this.sendCallResultWithMessage(message, response);
@@ -609,6 +637,7 @@ export class TransactionsModule extends AbstractModule {
             stationId,
           );
         response.transactionId = parseInt(newTransaction.transactionId);
+        startedTransaction = newTransaction;
       } catch (error) {
         this._logger.error(`Failed to create transaction for idTag ${request.idTag}`, error);
         response.idTagInfo = {
@@ -616,6 +645,21 @@ export class TransactionsModule extends AbstractModule {
         };
       }
       await this.sendCallResultWithMessage(message, response);
+    }
+
+    // A new transaction on a connector proves any older active one there is over (REX-96).
+    if (startedTransaction?.connectorId) {
+      try {
+        await this._orphanTransactionCloser.closeSupersededBy({
+          id: startedTransaction.id,
+          tenantId,
+          stationId,
+          connectorId: startedTransaction.connectorId,
+          createdAt: new Date(startedTransaction.createdAt),
+        });
+      } catch (error) {
+        this._logger.error(`Failed to close transactions superseded by ${request.idTag}`, error);
+      }
     }
 
     // Deactivate reservation

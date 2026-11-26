@@ -60,6 +60,12 @@ const SCENARIOS = [
   'dup-answered',
   'orphan',
   'orphan-stop',
+  'orphan-skew',
+  'orphan-old',
+  'orphan-201',
+  'orphan-plugin',
+  'orphan-next',
+  'triple',
 ];
 const scenario = process.argv[2] || 'late';
 if (!SCENARIOS.includes(scenario)) {
@@ -71,17 +77,21 @@ const WS = process.env.CITRINE_WS || 'ws://localhost:18092';
 const STATION = process.env.STATION || 'testing';
 const TENANT_ID = Number(process.env.TENANT_ID || 1);
 const IDTAG = process.env.IDTAG || `RIG${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+// The next driver's card, for the scenarios where someone else plugs in after a lost stop.
+const NEXT_IDTAG = `${IDTAG}N`;
 const DATABASE_URL =
   process.env.DATABASE_URL || 'postgres://citrine:citrine@localhost:15433/citrine';
 const AMQP_URL = process.env.AMQP_URL || 'amqp://guest:guest@localhost:5672';
 const AMQP_EXCHANGE = process.env.AMQP_EXCHANGE || 'citrineos';
 const RABBIT_MGMT = new URL(process.env.RABBIT_MGMT || 'http://guest:guest@localhost:15672');
-const ORPHAN_WAIT_MS = Number(process.env.ORPHAN_WAIT_MS || 15000);
+const ORPHAN_WAIT_MS = Number(process.env.ORPHAN_WAIT_MS || 18000);
 
 const t0 = Date.now();
 const log = (...a) => console.log(`[${String(Date.now() - t0).padStart(5)}ms]`, ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const now = () => new Date().toISOString();
+// Charger clock offset; the orphan-skew scenario runs the charger 8 h ahead of the server.
+let clockSkewMs = 0;
+const now = () => new Date(Date.now() + clockSkewMs).toISOString();
 
 const failures = [];
 const expect = (ok, what) => {
@@ -160,20 +170,20 @@ class Charger {
     return this.call('BootNotification', { chargePointVendor: 'Rex96', chargePointModel: 'Rig' });
   }
 
-  status(status) {
+  status(status, timestamp = now()) {
     return this.call('StatusNotification', {
       connectorId: 1,
       errorCode: 'NoError',
       status,
-      timestamp: now(),
+      timestamp,
     });
   }
 
-  async start() {
+  async start(idTag = IDTAG) {
     await this.status('Preparing');
     const st = await this.call('StartTransaction', {
       connectorId: 1,
-      idTag: IDTAG,
+      idTag,
       meterStart: 1000,
       timestamp: now(),
     });
@@ -256,12 +266,14 @@ function seedOnce() {
         LIMIT 1`,
       [STATION, TENANT_ID],
     );
-    await db.query(
-      `INSERT INTO "Authorizations" ("idToken", "idTokenType", status, "tenantId", "createdAt", "updatedAt")
-       SELECT $1::varchar, 'Central', 'Accepted', $2::int, now(), now()
-        WHERE NOT EXISTS (SELECT 1 FROM "Authorizations" WHERE "idToken" = $1::varchar AND "tenantId" = $2::int)`,
-      [IDTAG, TENANT_ID],
-    );
+    for (const idTag of [IDTAG, NEXT_IDTAG]) {
+      await db.query(
+        `INSERT INTO "Authorizations" ("idToken", "idTokenType", status, "tenantId", "createdAt", "updatedAt")
+         SELECT $1::varchar, 'Central', 'Accepted', $2::int, now(), now()
+          WHERE NOT EXISTS (SELECT 1 FROM "Authorizations" WHERE "idToken" = $1::varchar AND "tenantId" = $2::int)`,
+        [idTag, TENANT_ID],
+      );
+    }
   });
 }
 
@@ -303,6 +315,14 @@ async function stationQueues() {
   const names = (await r.json()).map((q) => q.name).filter((n) => n.startsWith(prefix));
   log('station queues', JSON.stringify(names));
   return names;
+}
+
+// One connection subscribes twice (requests, responses); the two queues are named by creation time
+// in ms and may share a name. A set belongs to one connection when it has 1-2 queues created within
+// a second of each other; a leftover of an earlier socket is seconds older.
+function isOneConnectionsQueues(names) {
+  const times = names.map((n) => Number(n.split('_').pop()));
+  return names.length >= 1 && names.length <= 2 && Math.max(...times) - Math.min(...times) < 1000;
 }
 
 // Taps the CSMS -> station request deliveries on the broker, so a scenario can publish the same
@@ -412,8 +432,6 @@ async function overlapScenario() {
   await first.boot();
   await seed();
   await sleep(500);
-  const queuesPerConnection = (await stationQueues()).length;
-  log('queues created by one connection:', queuesPerConnection);
 
   // The charger reconnects while the server still holds the first socket.
   const second = new Charger('second');
@@ -427,8 +445,8 @@ async function overlapScenario() {
 
   const queues = await stationQueues();
   expect(
-    queues.length === queuesPerConnection,
-    `station has one connection's queues (${queuesPerConnection}), got ${queues.length}`,
+    isOneConnectionsQueues(queues),
+    `station has one connection's queues (got ${JSON.stringify(queues)})`,
   );
   expect((await readStationOnline()) === true, 'station isOnline=true after the reconnect');
 
@@ -498,28 +516,64 @@ async function duplicateDeliveryScenario(mode) {
 }
 
 async function orphanScenario(mode) {
+  if (mode === 'orphan-skew') clockSkewMs = 8 * 3600 * 1000; // charger clock 8 h ahead
+  const excluded = mode === 'orphan-old' || mode === 'orphan-201';
   const cs = new Charger('cs');
   const txId = await bootAndStart(cs);
+  if (mode === 'orphan-old') {
+    // A transaction CitrineOS created 25 h ago: older than orphanTransactionMaxAgeHours (24).
+    await withDb((db) =>
+      db.query(
+        `UPDATE "Transactions" SET "createdAt" = now() - interval '25 hours'
+          WHERE "transactionId" = $1 AND "stationId" = $2`,
+        [String(txId), STATION],
+      ),
+    );
+  }
+  if (mode === 'orphan-201') {
+    // The closer only handles OCPP 1.6 stations.
+    await setStationProtocol('ocpp2.0.1');
+  }
   await sleep(500);
   // The charger stops and the cable is unplugged, but its StopTransaction never reaches CitrineOS.
   await cs.status('Finishing');
-  await cs.status('Available');
+  const firstAvailableAt = now();
+  await cs.status('Available', firstAvailableAt);
   let stopReply;
   if (mode === 'orphan-stop') {
     await sleep(2000);
     stopReply = await cs.stop(txId); // a late but in-time StopTransaction
+    await sleep(ORPHAN_WAIT_MS - 2000);
+  } else {
+    // Firmware that re-sends Available (e.g. after a reconnect) must not restart the window.
+    await sleep(6000);
+    await cs.status('Available');
+    log(`waiting for the orphan timeout`);
+    await sleep(ORPHAN_WAIT_MS - 6000);
   }
-  log(`waiting ${ORPHAN_WAIT_MS} ms for the orphan timeout`);
-  await sleep(ORPHAN_WAIT_MS);
 
   if (mode === 'orphan-stop') {
     const tx = await expectClosedNormally(txId, stopReply);
-    expect(tx && tx.stoppedReason !== 'Other', `orphan close did not fire (stoppedReason ${tx?.stoppedReason})`);
+    expect(
+      tx && tx.stoppedReason !== 'Other',
+      `orphan close did not fire (stoppedReason ${tx?.stoppedReason})`,
+    );
+  } else if (excluded) {
+    const tx = await readTransaction(txId);
+    expect(tx && tx.isActive === true, `${mode}: transaction left active (out of scope)`);
+    if (mode === 'orphan-201') await setStationProtocol('ocpp1.6');
+    const stop = await cs.stop(txId);
+    expect(stop?.[0] === 3, 'clean-up StopTransaction answered');
+    await cs.close();
+    return;
   } else {
     const tx = await readTransaction(txId);
     expect(tx && tx.isActive === false, 'orphaned transaction is inactive');
     expect(tx && tx.stoppedReason === 'Other', `stoppedReason is Other (got ${tx?.stoppedReason})`);
-    expect(tx && !!tx.endTime, `transaction has an end time (got ${tx?.endTime})`);
+    expect(
+      tx && tx.endTime && new Date(tx.endTime).getTime() === new Date(firstAvailableAt).getTime(),
+      `end time is the charger time of the first Available ${firstAvailableAt} (got ${tx?.endTime && new Date(tx.endTime).toISOString()})`,
+    );
     expect(tx && tx.stopRows === 0, 'no StopTransactions row was invented');
   }
 
@@ -534,6 +588,118 @@ async function orphanScenario(mode) {
   await cs.close();
 }
 
+function setStationProtocol(protocol) {
+  return withDb((db) =>
+    db.query(`UPDATE "ChargingStations" SET protocol = $1 WHERE id = $2 AND "tenantId" = $3`, [
+      protocol,
+      STATION,
+      TENANT_ID,
+    ]),
+  );
+}
+
+// The charger loses the StopTransaction, the cable is unplugged, and the next driver plugs in
+// before the orphan timeout. orphan-plugin: the next driver only plugs in (connector Preparing);
+// the old transaction must still close when the timeout passes. orphan-next: the next driver starts
+// a session; the old transaction must close at once and the new one start normally.
+async function nextDriverScenario(mode) {
+  const cs = new Charger('cs');
+  const txId = await bootAndStart(cs);
+  await sleep(500);
+  await cs.status('Finishing');
+  const firstAvailableAt = now();
+  await cs.status('Available', firstAvailableAt);
+  await sleep(3000);
+  if (mode === 'orphan-plugin') {
+    await cs.status('Preparing'); // next driver plugs in, has not started yet
+    log('waiting for the orphan timeout with the connector Preparing');
+    await sleep(ORPHAN_WAIT_MS - 3000);
+    const tx = await readTransaction(txId);
+    expect(
+      tx && tx.isActive === false,
+      'old transaction is inactive although the connector is Preparing',
+    );
+    expect(tx && tx.stoppedReason === 'Other', `stoppedReason is Other (got ${tx?.stoppedReason})`);
+    expect(
+      tx && tx.endTime && new Date(tx.endTime).getTime() === new Date(firstAvailableAt).getTime(),
+      `end time is the first Available ${firstAvailableAt} (got ${tx?.endTime && new Date(tx.endTime).toISOString()})`,
+    );
+    const next = await cs.start(NEXT_IDTAG);
+    expect(next?.[2]?.idTagInfo?.status === 'Accepted', 'next driver starts normally');
+    await cs.stop(next?.[2]?.transactionId);
+  } else {
+    const next = await cs.start(NEXT_IDTAG); // well before the timeout
+    const nextTxId = next?.[2]?.transactionId;
+    expect(next?.[2]?.idTagInfo?.status === 'Accepted', 'next driver starts normally');
+    await sleep(1000);
+    const old = await readTransaction(txId);
+    expect(old && old.isActive === false, 'old transaction closed as soon as the new one started');
+    expect(
+      old && old.stoppedReason === 'Other',
+      `stoppedReason is Other (got ${old?.stoppedReason})`,
+    );
+    expect(
+      old &&
+        old.endTime &&
+        new Date(old.endTime).getTime() === new Date(firstAvailableAt).getTime(),
+      `end time is the first Available ${firstAvailableAt} (got ${old?.endTime && new Date(old.endTime).toISOString()})`,
+    );
+    const current = await readTransaction(nextTxId);
+    expect(current && current.isActive === true, 'new transaction stays active');
+    const stop = await cs.stop(nextTxId);
+    await expectClosedNormally(nextTxId, stop);
+  }
+  await cs.close();
+}
+
+// A charger that reconnects in a tight loop: three sockets for the station open at once.
+async function tripleScenario() {
+  const probe = new Charger('probe');
+  await probe.connect();
+  await probe.boot();
+  await seed();
+  await sleep(500);
+  await probe.close();
+  await sleep(1000);
+
+  const sockets = [new Charger('a'), new Charger('b'), new Charger('c')];
+  await Promise.all(sockets.map((c) => c.connect()));
+  await sleep(3000);
+
+  const open = sockets.filter((c) => c.ws.readyState === WebSocket.OPEN);
+  expect(open.length === 1, `exactly one socket stays open (got ${open.length})`);
+  const queues = await stationQueues();
+  expect(
+    isOneConnectionsQueues(queues),
+    `station has one connection's queues (got ${JSON.stringify(queues)})`,
+  );
+  expect((await readStationOnline()) === true, 'station isOnline=true');
+  if (open.length !== 1) return;
+
+  const survivor = open[0];
+  await survivor.boot();
+  const st = await survivor.start();
+  const txId = st?.[2]?.transactionId;
+  let stopReply;
+  survivor.onRemoteStop = async (id) => {
+    survivor.reply(id, { status: 'Accepted' });
+    if (survivor.remoteStops.length === 1) {
+      await sleep(500);
+      stopReply = await survivor.stop(txId);
+    }
+  };
+  await remoteStop(1, txId);
+  await sleep(2500);
+  expect(
+    survivor.remoteStops.length === 1,
+    `RemoteStop received once (got ${survivor.remoteStops.length})`,
+  );
+  await expectClosedNormally(txId, stopReply);
+  await survivor.close();
+  await sleep(1500);
+  expect((await stationQueues()).length === 0, 'final disconnect deletes the station queues');
+}
+
 const RUN = {
   ctrl: () => remoteStopScenario('ctrl'),
   late: () => remoteStopScenario('late'),
@@ -543,6 +709,12 @@ const RUN = {
   'dup-answered': () => duplicateDeliveryScenario('dup-answered'),
   orphan: () => orphanScenario('orphan'),
   'orphan-stop': () => orphanScenario('orphan-stop'),
+  'orphan-skew': () => orphanScenario('orphan-skew'),
+  'orphan-old': () => orphanScenario('orphan-old'),
+  'orphan-201': () => orphanScenario('orphan-201'),
+  'orphan-plugin': () => nextDriverScenario('orphan-plugin'),
+  'orphan-next': () => nextDriverScenario('orphan-next'),
+  triple: tripleScenario,
 };
 
 const timer = setTimeout(
