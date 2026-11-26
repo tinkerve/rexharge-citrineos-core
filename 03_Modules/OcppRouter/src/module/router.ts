@@ -320,6 +320,22 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
 
     let message: Call = [MessageTypeId.Call, correlationId, action, payload];
     if (await this._sendCallIsAllowed(identifier, protocol, message)) {
+      // Claim the message id first. A call with the same id that is outstanding or was sent less
+      // than maxCallLengthSeconds ago is a duplicate delivery (e.g. a leaked queue or a redelivery)
+      // and must not reach the charger twice (REX-96).
+      const sentCallNamespace = this._sentCallNamespace(identifier);
+      const claimed = await this._cache.setIfNotExist(
+        correlationId,
+        action,
+        sentCallNamespace,
+        this._config.maxCallLengthSeconds,
+      );
+      if (!claimed) {
+        this._logger.warn(
+          `Dropping duplicate ${action} for ${identifier}, message id ${correlationId} was already sent`,
+        );
+        return { success: true };
+      }
       if (
         await this._cache.setIfNotExist(
           identifier,
@@ -333,6 +349,8 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
         const success = await this._sendMessage(identifier, protocol, rawMessage, message);
         return { success };
       } else {
+        // Not sent: release the claim so the retried delivery can go out later.
+        await this._cache.remove(correlationId, sentCallNamespace);
         this._logger.info(
           'Call already in progress, throwing retry exception',
           identifier,
@@ -688,6 +706,14 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
    */
   private _inboundCallNamespace(identifier: string): string {
     return `${CacheNamespace.Transactions}:in:${identifier}`;
+  }
+
+  /**
+   * Cache namespace recording the message ids of CSMS calls sent to the charger in the last
+   * maxCallLengthSeconds, used to drop duplicate deliveries of the same call.
+   */
+  private _sentCallNamespace(identifier: string): string {
+    return `${CacheNamespace.Transactions}:sent:${identifier}`;
   }
 
   /**

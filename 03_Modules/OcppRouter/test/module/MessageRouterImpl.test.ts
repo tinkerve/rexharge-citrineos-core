@@ -36,6 +36,7 @@ describe('MessageRouterImpl call tracking (REX-96)', () => {
   let routeResult: IMessageConfirmation;
   let router: MessageRouterImpl;
   let handlerCalls: string[];
+  let warnings: string[];
 
   beforeEach(() => {
     sentToCharger = [];
@@ -52,6 +53,18 @@ describe('MessageRouterImpl call tracking (REX-96)', () => {
       shutdown: async () => {},
     };
     handlerCalls = [];
+    warnings = [];
+    const logger = new Logger<any>({ type: 'hidden' });
+    logger.attachTransport((log: any) => {
+      if (log._meta?.logLevelName === 'WARN') {
+        warnings.push(
+          Object.keys(log)
+            .filter((k) => /^\d+$/.test(k))
+            .map((k) => (typeof log[k] === 'string' ? log[k] : JSON.stringify(log[k])))
+            .join(' '),
+        );
+      }
+    });
     const handler = {
       initConnection: jest.fn(),
       shutdown: jest.fn(),
@@ -81,7 +94,7 @@ describe('MessageRouterImpl call tracking (REX-96)', () => {
       handler as any,
       dispatcher,
       networkHook,
-      new Logger({ minLevel: 6 }),
+      logger,
       undefined,
       locationRepository as any,
       {} as any,
@@ -244,5 +257,37 @@ describe('MessageRouterImpl call tracking (REX-96)', () => {
 
     expect(registered).toBe(true);
     expect(handlerCalls).toEqual(['unsubscribe', 'subscribe', 'subscribe']);
+  });
+
+  it('drops a duplicate of a CSMS call that is still outstanding', async () => {
+    await remoteStop('csms-1');
+
+    await expect(remoteStop('csms-1')).resolves.toBeDefined();
+
+    expect(sentToCharger.map((m) => m[1])).toEqual(['csms-1']);
+    expect(
+      warnings.some(
+        (w) => /Dropping duplicate/.test(w) && w.includes(IDENTIFIER) && w.includes('csms-1'),
+      ),
+    ).toBe(true);
+  });
+
+  it('drops a duplicate of a CSMS call that arrives just after the charger answered it', async () => {
+    await remoteStop('csms-1');
+    await chargerSends([MessageTypeId.CallResult, 'csms-1', { status: 'Accepted' }]);
+
+    await remoteStop('csms-1');
+
+    expect(sentToCharger.map((m) => m[1])).toEqual(['csms-1']);
+  });
+
+  it('still sends a different CSMS call after the first was answered', async () => {
+    await remoteStop('csms-1');
+    await chargerSends([MessageTypeId.CallResult, 'csms-1', { status: 'Accepted' }]);
+
+    await remoteStop('csms-2');
+
+    expect(sentToCharger.map((m) => m[1])).toEqual(['csms-1', 'csms-2']);
+    expect(warnings.filter((w) => /Dropping duplicate/.test(w))).toEqual([]);
   });
 });
