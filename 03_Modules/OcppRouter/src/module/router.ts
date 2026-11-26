@@ -142,6 +142,15 @@ export class MessageRouterImpl extends AbstractMessageRouter implements IMessage
     const dispatcherRegistration = this._webhookDispatcher.register(tenantId, stationId);
 
     const connectionIdentifier = createIdentifier(tenantId, stationId);
+
+    // Delete any queue a previous connection of this station left behind, so commands are not
+    // delivered once per leftover queue (REX-96). Best effort: a failure must not block the charger.
+    try {
+      await this._handler.unsubscribe(connectionIdentifier);
+    } catch (error) {
+      this._logger.warn(`Failed to delete stale queues for ${connectionIdentifier}: ${error}`);
+    }
+
     const requestSubscription = this._handler.subscribe(connectionIdentifier, undefined, {
       tenantId: tenantId.toString(),
       stationId,

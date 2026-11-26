@@ -35,6 +35,7 @@ describe('MessageRouterImpl call tracking (REX-96)', () => {
   let routedToModules: any[];
   let routeResult: IMessageConfirmation;
   let router: MessageRouterImpl;
+  let handlerCalls: string[];
 
   beforeEach(() => {
     sentToCharger = [];
@@ -50,11 +51,29 @@ describe('MessageRouterImpl call tracking (REX-96)', () => {
       },
       shutdown: async () => {},
     };
-    const handler = { initConnection: jest.fn(), shutdown: jest.fn() };
+    handlerCalls = [];
+    const handler = {
+      initConnection: jest.fn(),
+      shutdown: jest.fn(),
+      subscribe: async () => {
+        handlerCalls.push('subscribe');
+        return true;
+      },
+      unsubscribe: async () => {
+        handlerCalls.push('unsubscribe');
+        return true;
+      },
+    };
     const dispatcher = {
       dispatchMessageSent: jest.fn(),
       dispatchMessageReceived: jest.fn(),
+      register: jest.fn(async () => {}),
+      deregister: jest.fn(async () => {}),
     } as unknown as WebhookDispatcher;
+    const locationRepository = {
+      setChargingStationIsOnlineAndOCPPVersion: jest.fn(async () => ({})),
+      readChargingStationByStationId: jest.fn(async () => null),
+    };
     router = new MessageRouterImpl(
       { maxCallLengthSeconds: 30 } as any,
       new MemoryCache(),
@@ -64,7 +83,7 @@ describe('MessageRouterImpl call tracking (REX-96)', () => {
       networkHook,
       new Logger({ minLevel: 6 }),
       undefined,
-      {} as any,
+      locationRepository as any,
       {} as any,
     );
   });
@@ -218,5 +237,12 @@ describe('MessageRouterImpl call tracking (REX-96)', () => {
 
     expect((await answerStopTransaction('cs-1')).success).toBe(true);
     expect((await answerStopTransaction('cs-1')).success).toBe(false);
+  });
+
+  it('deletes stale station queues before subscribing a new connection', async () => {
+    const registered = await router.registerConnection(TENANT_ID, STATION_ID, PROTOCOL);
+
+    expect(registered).toBe(true);
+    expect(handlerCalls).toEqual(['unsubscribe', 'subscribe', 'subscribe']);
   });
 });

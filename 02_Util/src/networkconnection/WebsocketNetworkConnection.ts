@@ -32,6 +32,11 @@ export class WebsocketNetworkConnection {
   protected _config: SystemConfig;
   protected _logger: Logger<ILogObj>;
   private _identifierConnections: Map<string, WebSocket> = new Map();
+  // Close listener of each live socket, so a replaced socket's late close event can be detached
+  private _closeHandlers: Map<string, () => void> = new Map();
+  // Tail of each station's chain of connect / close steps. Steps for one station run one at a
+  // time, so a connect (through registration) and a cleanup never interleave (REX-96).
+  private _stationLocks: Map<string, Promise<void>> = new Map();
   // Map to track ping timeout timers for each connection
   private _pingTimeouts: Map<string, NodeJS.Timeout> = new Map();
   // websocketServers id as key and http server as value
@@ -305,46 +310,122 @@ export class WebsocketNetworkConnection {
       const tenantId = websocketServerConfig.tenantId;
       const identifier = createIdentifier(tenantId, stationId);
 
-      this._identifierConnections.set(identifier, ws);
-
-      try {
-        // Get IP address of client
-        const ip =
-          req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
-          req.socket.remoteAddress ||
-          'N/A';
-        const port = req.socket.remotePort as number;
-        this._logger.info('Client websocket connected', identifier, ip, port, ws.protocol);
-
-        // Register client
-        const websocketConnection: IWebsocketConnection = {
-          id: websocketServerConfig.id,
-          protocol: ws.protocol,
-        };
-        let registered = await this._cache.set(
+      // Connects and closes of one station run one at a time: a charger that reconnects in a tight
+      // loop must not have a later socket's cleanup undo an earlier one's half-done registration.
+      await this._runExclusive(identifier, () =>
+        this._connect(
           identifier,
-          JSON.stringify(websocketConnection),
-          CacheNamespace.Connections,
-        );
-        registered =
-          registered && (await this._router.registerConnection(tenantId, stationId, ws.protocol));
-        if (!registered) {
-          this._logger.fatal('Failed to register websocket client', identifier);
-          throw new Error('Failed to register websocket client');
-        }
-
-        this._logger.info('Successfully connected new charging station.', identifier);
-
-        // Register all websocket events
-        this._registerWebsocketEvents(identifier, ws, pingInterval);
-
-        // Resume the WebSocket event emitter after events have been subscribed to
-        ws.resume();
-      } catch (error) {
-        this._logger.fatal('Failed to subscribe to message broker for ', identifier);
-        ws.close(1011, 'Failed to subscribe to message broker for ' + identifier);
-      }
+          tenantId,
+          stationId,
+          ws,
+          websocketServerConfig,
+          pingInterval,
+          req,
+        ),
+      );
     }
+  }
+
+  /**
+   * Replaces any previous socket of the station and registers this one. Runs under the station's
+   * lock (see {@link _runExclusive}).
+   */
+  private async _connect(
+    identifier: string,
+    tenantId: number,
+    stationId: string,
+    ws: WebSocket,
+    websocketServerConfig: WebsocketServerConfig,
+    pingInterval: number,
+    req: http.IncomingMessage,
+  ): Promise<void> {
+    if (ws.readyState !== WebSocket.OPEN) {
+      this._logger.debug('Socket closed before it could register', identifier);
+      return;
+    }
+
+    // The charger reconnected before the server saw its old socket close. Detach the old socket's
+    // close listener, terminate it and clean it up now, before this connection registers, so the
+    // late close event cannot tear down the new connection (port of upstream 5c255b816).
+    const staleWs = this._identifierConnections.get(identifier);
+    if (staleWs && staleWs !== ws) {
+      const staleCloseHandler = this._closeHandlers.get(identifier);
+      if (staleCloseHandler) {
+        staleWs.removeListener('close', staleCloseHandler);
+        this._closeHandlers.delete(identifier);
+      }
+      staleWs.terminate();
+      await this._cleanUpConnection(identifier, staleWs);
+      this._logger.warn(`Terminated stale websocket connection for ${identifier}`);
+    }
+
+    this._identifierConnections.set(identifier, ws);
+    // Listen for the close before registering, so a socket that closes or fails while it
+    // registers is still cleaned up (its cleanup waits for this step to finish).
+    const closeHandler = () => {
+      this._runExclusive(identifier, () => this._cleanUpConnection(identifier, ws)).catch((error) =>
+        this._logger.error(`Failed to clean up connection ${identifier}`, error),
+      );
+    };
+    ws.once('close', closeHandler);
+    this._closeHandlers.set(identifier, closeHandler);
+
+    try {
+      // Get IP address of client
+      const ip =
+        req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
+        req.socket.remoteAddress ||
+        'N/A';
+      const port = req.socket.remotePort as number;
+      this._logger.info('Client websocket connected', identifier, ip, port, ws.protocol);
+
+      // Register client
+      const websocketConnection: IWebsocketConnection = {
+        id: websocketServerConfig.id,
+        protocol: ws.protocol,
+      };
+      let registered = await this._cache.set(
+        identifier,
+        JSON.stringify(websocketConnection),
+        CacheNamespace.Connections,
+      );
+      registered =
+        registered && (await this._router.registerConnection(tenantId, stationId, ws.protocol));
+      if (!registered) {
+        this._logger.fatal('Failed to register websocket client', identifier);
+        throw new Error('Failed to register websocket client');
+      }
+
+      this._logger.info('Successfully connected new charging station.', identifier);
+
+      // Register all websocket events
+      this._registerWebsocketEvents(identifier, ws, pingInterval);
+
+      // Resume the WebSocket event emitter after events have been subscribed to
+      ws.resume();
+    } catch (error) {
+      this._logger.fatal('Failed to subscribe to message broker for ', identifier);
+      ws.close(1011, 'Failed to subscribe to message broker for ' + identifier);
+      // ws.close() needs the paused socket to complete the closing handshake; end it now so the
+      // close listener runs and cleans up what was registered.
+      ws.terminate();
+    }
+  }
+
+  /**
+   * Runs `step` after every earlier connect / close step of the same station has finished.
+   */
+  private _runExclusive(identifier: string, step: () => Promise<void>): Promise<void> {
+    const previous = this._stationLocks.get(identifier) ?? Promise.resolve();
+    const current = previous.then(step, step);
+    const tail = current.catch(() => undefined);
+    this._stationLocks.set(identifier, tail);
+    tail.then(() => {
+      if (this._stationLocks.get(identifier) === tail) {
+        this._stationLocks.delete(identifier);
+      }
+    });
+    return current;
   }
 
   /**
@@ -369,23 +450,6 @@ export class WebsocketNetworkConnection {
     ws.onmessage = (event: MessageEvent) => {
       this._onMessage(identifier, event.data.toString(), ws.protocol as OCPPVersionType);
     };
-
-    ws.once('close', () => {
-      // Unregister client
-      this._logger.info('Connection closed for', identifier);
-      // Clear any pending ping timeout
-      const pingTimeout = this._pingTimeouts.get(identifier);
-      if (pingTimeout) {
-        clearTimeout(pingTimeout);
-        this._pingTimeouts.delete(identifier);
-      }
-      this._cache.remove(identifier, CacheNamespace.Connections);
-      this._identifierConnections.delete(identifier);
-      this._router.deregisterConnection(
-        getTenantIdFromIdentifier(identifier),
-        getStationIdFromIdentifier(identifier),
-      );
-    });
 
     ws.on('ping', async (message) => {
       this._logger.debug(`Ping received for ${identifier} with message ${JSON.stringify(message)}`);
@@ -418,6 +482,42 @@ export class WebsocketNetworkConnection {
     });
 
     this._ping(identifier, ws, pingInterval);
+  }
+
+  /**
+   * Tears down the connection state of a closed socket: ping timer, connection cache entry, socket
+   * mapping and router registration (queues, online flag). Only acts if the socket is still the
+   * station's current one, so a replaced socket can never tear down its successor.
+   *
+   * @param {string} identifier - The unique identifier of the connection.
+   * @param {WebSocket} ws - The socket that closed.
+   * @return {Promise<void>} Resolves when the cleanup has finished.
+   */
+  private async _cleanUpConnection(identifier: string, ws: WebSocket): Promise<void> {
+    if (this._identifierConnections.get(identifier) !== ws) {
+      this._logger.debug('Ignoring close of a socket that is no longer current for', identifier);
+      return;
+    }
+    this._logger.info('Connection closed for', identifier);
+    this._identifierConnections.delete(identifier);
+    if (this._closeHandlers.get(identifier)) {
+      ws.removeListener('close', this._closeHandlers.get(identifier)!);
+      this._closeHandlers.delete(identifier);
+    }
+    const pingTimeout = this._pingTimeouts.get(identifier);
+    if (pingTimeout) {
+      clearTimeout(pingTimeout);
+      this._pingTimeouts.delete(identifier);
+    }
+    try {
+      await this._cache.remove(identifier, CacheNamespace.Connections);
+      await this._router.deregisterConnection(
+        getTenantIdFromIdentifier(identifier),
+        getStationIdFromIdentifier(identifier),
+      );
+    } catch (error) {
+      this._logger.error(`Failed to clean up connection ${identifier}`, error);
+    }
   }
 
   /**
@@ -465,6 +565,9 @@ export class WebsocketNetworkConnection {
    */
   private async _ping(identifier: string, ws: WebSocket, pingInterval: number): Promise<void> {
     setTimeout(async () => {
+      if (ws.readyState !== WebSocket.OPEN || this._identifierConnections.get(identifier) !== ws) {
+        return; // the socket closed or was replaced meanwhile
+      }
       const clientConnection: string | null = await this._cache.get(
         identifier,
         CacheNamespace.Connections,

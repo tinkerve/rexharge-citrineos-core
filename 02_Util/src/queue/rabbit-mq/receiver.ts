@@ -42,6 +42,12 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
   private _abortReconnectController?: AbortController;
   private _circuitBreaker: CircuitBreaker;
   private _reconnectInterval?: NodeJS.Timeout;
+  /**
+   * Every queue this receiver created, per identifier, until it deletes it. Unlike the queue list in
+   * the cache, a racing cleanup cannot drop an entry from here, so unsubscribe always finds a
+   * station's queues (REX-96).
+   */
+  protected _queuesByIdentifier: Map<string, Set<string>> = new Map();
 
   constructor(
     config: SystemConfig,
@@ -118,6 +124,9 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
       autoDelete: true,
       exclusive: false,
     });
+    const knownQueues = this._queuesByIdentifier.get(identifier) ?? new Set<string>();
+    knownQueues.add(queueName);
+    this._queuesByIdentifier.set(identifier, knownQueues);
 
     // Bind queue based on provided actions and filters
     if (actions && actions.length > 0) {
@@ -155,38 +164,47 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
     return true;
   }
 
-  unsubscribe(identifier: string): Promise<boolean> {
+  /**
+   * Deletes every queue of the identifier: those in the cached queue list and those this receiver
+   * created itself. Deleting a queue also removes its bindings.
+   *
+   * @return {Promise<boolean>} true if at least one queue was deleted.
+   */
+  async unsubscribe(identifier: string): Promise<boolean> {
     const cacheKey = `${RabbitMqReceiver.CACHE_PREFIX}${identifier}`;
-    return this._cache
-      .get<Array<string>>(cacheKey, CacheNamespace.Other, () => Array<string>)
-      .then(async (queues) => {
-        if (queues) {
-          if (!this._channel) {
-            throw new Error('RabbitMQ is down: cannot unsubscribe.');
-          }
-          const channel = this._channel;
-          this._channel = channel;
-          for (const queue of queues) {
-            await channel.unbindQueue(
-              queue,
-              this._config.util.messageBroker.amqp?.exchange || '',
-              '',
-            );
-            const messageCount = await this._channel?.deleteQueue(queue);
-            this._logger.info(
-              `Queue ${identifier} deleted with ${messageCount?.messageCount} messages remaining.`,
-            );
-          }
-          // Remove the cache entry after successfully deleting all queues
-          await this._cache.remove(cacheKey, CacheNamespace.Other);
-          return true;
-        } else {
-          this._logger.warn(
-            `Failed to delete queue for ${identifier}, queue name not found in cache.`,
-          );
-          return false;
-        }
-      });
+    const cachedQueues =
+      (await this._cache.get<Array<string>>(cacheKey, CacheNamespace.Other, () => Array<string>)) ??
+      [];
+    const knownQueues = this._queuesByIdentifier.get(identifier) ?? new Set<string>();
+    const queues = new Set<string>([...cachedQueues, ...knownQueues]);
+    if (queues.size === 0) {
+      this._logger.debug(`No queues to delete for ${identifier}.`);
+      return false;
+    }
+    if (!this._channel) {
+      throw new Error('RabbitMQ is down: cannot unsubscribe.');
+    }
+    const channel = this._channel;
+    for (const queue of queues) {
+      // The broker may already have dropped the queue (autoDelete after a reconnect, or a manual
+      // cleanup). RabbitMQ treats deleting a missing queue as a no-op; still, one failed delete
+      // must not stop the others.
+      try {
+        const messageCount = await channel.deleteQueue(queue);
+        this._logger.info(
+          `Queue ${queue} of ${identifier} deleted with ${messageCount?.messageCount} messages remaining.`,
+        );
+      } catch (error) {
+        this._logger.warn(`Failed to delete queue ${queue} of ${identifier}`, error);
+      }
+      knownQueues.delete(queue);
+    }
+    if (knownQueues.size === 0) {
+      this._queuesByIdentifier.delete(identifier);
+    }
+    // Remove the cache entry after successfully deleting all queues
+    await this._cache.remove(cacheKey, CacheNamespace.Other);
+    return true;
   }
 
   shutdown(): Promise<void> {
@@ -222,6 +240,9 @@ export class RabbitMqReceiver extends AbstractMessageHandler {
         const connection = await amqplib.connect(url);
         this._connection = connection;
         const channel = await connection.createChannel();
+        // Queues are non-durable and autoDelete: the ones made on the previous connection are gone,
+        // so forget them instead of deleting them again on the next connect of their station.
+        this._queuesByIdentifier.clear();
         channel.on('error', (err) => {
           this._logger.error('AMQP channel error', err);
         });
